@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   BookOpen, Compass, Clock, Gamepad2, FileText, Users, Plus, 
-  Trash2, Edit, Save, CheckCircle, AlertCircle, RefreshCw, Upload, Image as ImageIcon, Sparkles, Shield, Eye, Code, X
+  Trash2, Edit, Save, CheckCircle, AlertCircle, RefreshCw, Upload, Image as ImageIcon, Sparkles, Shield, Eye, Code, X, Bold, Italic, Heading, Quote, Link as LinkIcon
 } from 'lucide-react';
 import { 
   getAdminPosts, createPost, deletePost,
@@ -113,7 +113,7 @@ export default function AdminDashboardPage() {
     setTimeout(() => setMessage(null), 4000);
   };
 
-  // Import file .html trực tiếp từ máy tính
+  // Import file .html 3D trực tiếp từ máy tính
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -129,6 +129,28 @@ export default function AdminDashboardPage() {
       showMsg('Đã đọc và nạp mã file HTML 3D thành công!');
     };
     reader.readAsText(file);
+  };
+
+  // Tải ảnh trực tiếp từ máy tính làm Ảnh Đại Diện
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const imgDataUrl = event.target?.result as string;
+      setNewPost(prev => ({ ...prev, featured_image: imgDataUrl }));
+      showMsg('Đã tải ảnh trực tiếp thành công!');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Chèn thẻ định dạng trực quan (Rich Text Tools)
+  const insertFormatting = (tagOpen: string, tagClose: string = '') => {
+    setNewPost(prev => ({
+      ...prev,
+      content: prev.content + `${tagOpen}nội dung${tagClose}`
+    }));
   };
 
   const handleCreatePost = async (e: React.FormEvent) => {
@@ -310,17 +332,17 @@ export default function AdminDashboardPage() {
         </button>
       </div>
 
-      {/* TAB 1: POSTS & HTML 3D WITH FILE IMPORT & LIVE PREVIEW */}
+      {/* TAB 1: POSTS & HTML 3D WITH FILE UPLOAD & RICH TEXT TOOLBAR */}
       {activeTab === 'posts' && (
         <div className="max-w-7xl mx-auto space-y-8">
           <form onSubmit={handleCreatePost} className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl">
             
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[var(--border-card)]">
               <h2 className="text-xl font-bold text-amber-500 flex items-center gap-2 font-serif">
-                <Plus className="w-5 h-5" /> Đăng Bài Viết Mới / Bài Tương Tác HTML 3D
+                <Plus className="w-5 h-5" /> Trình Soạn Thảo Bài Viết & Bài Tương Tác HTML 3D
               </h2>
 
-              {/* ACTION BUTTONS FOR HTML IMPORT & LIVE PREVIEW */}
+              {/* ACTION BUTTONS */}
               <div className="flex items-center gap-3 w-full sm:w-auto">
                 <label className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl cursor-pointer shadow-md transition-all">
                   <Upload className="w-4 h-4" /> Import File .HTML 3D Từ Máy Tính
@@ -351,7 +373,7 @@ export default function AdminDashboardPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">Thể Loạt / Chuyên Mục</label>
+                <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">Thể Loại / Chuyên Mục</label>
                 <select
                   className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] focus:outline-none focus:border-amber-500"
                   value={newPost.category}
@@ -366,15 +388,22 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
+            {/* FEATURED IMAGE WITH DIRECT FILE UPLOAD */}
             <div>
-              <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">URL Ảnh Đại Diện (Featured Image / CDN)</label>
-              <input
-                type="text"
-                placeholder="VD: https://media.thapgia.com/open-gospel.jpg"
-                className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] focus:outline-none focus:border-amber-500"
-                value={newPost.featured_image}
-                onChange={e => setNewPost({...newPost, featured_image: e.target.value})}
-              />
+              <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">Ảnh Đại Diện Bài Viết</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="text"
+                  placeholder="URL Ảnh đại diện (VD: https://media.thapgia.com/open-gospel.jpg)"
+                  className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] focus:outline-none focus:border-amber-500"
+                  value={newPost.featured_image}
+                  onChange={e => setNewPost({...newPost, featured_image: e.target.value})}
+                />
+                <label className="flex items-center gap-2 px-4 py-3 bg-[var(--bg-card)] border border-[var(--border-card)] hover:bg-amber-500 hover:text-slate-950 font-bold text-xs rounded-xl cursor-pointer shadow-md transition-all whitespace-nowrap">
+                  <ImageIcon className="w-4 h-4" /> Tải Ảnh Từ Máy
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                </label>
+              </div>
             </div>
 
             <div>
@@ -388,11 +417,23 @@ export default function AdminDashboardPage() {
               />
             </div>
 
+            {/* RICH TEXT FORMATTING TOOLBAR */}
             <div>
-              <label className="block text-xs font-bold text-amber-500 uppercase mb-2 flex items-center justify-between">
-                <span className="flex items-center gap-1.5"><Code className="w-4 h-4" /> Mã Nội Dung (Văn bản hoặc Mã HTML/CSS/JS 3D)</span>
-                <span className="text-[10px] text-[var(--text-muted)] lowercase">Hỗ trợ dán hoặc nạp file .html</span>
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-bold text-amber-500 uppercase flex items-center gap-1.5">
+                  <Code className="w-4 h-4" /> Khung Soạn Thảo Nội Dung (Văn Bản hoặc Mã HTML/CSS 3D)
+                </label>
+
+                {/* WORDPRESS STYLE FORMATTING BUTTONS */}
+                <div className="flex items-center gap-1 bg-[var(--bg-main)] p-1 rounded-xl border border-[var(--border-card)]">
+                  <button type="button" onClick={() => insertFormatting('<b>', '</b>')} className="p-1.5 hover:bg-amber-500/20 text-amber-400 rounded-lg text-xs font-bold" title="In Đậm"><b>B</b></button>
+                  <button type="button" onClick={() => insertFormatting('<i>', '</i>')} className="p-1.5 hover:bg-amber-500/20 text-amber-400 rounded-lg text-xs font-italic" title="In Nghiêng"><i>I</i></button>
+                  <button type="button" onClick={() => insertFormatting('<h2>', '</h2>')} className="p-1.5 hover:bg-amber-500/20 text-amber-400 rounded-lg text-xs font-bold" title="Tiêu đề H2">H2</button>
+                  <button type="button" onClick={() => insertFormatting('<blockquote>', '</blockquote>')} className="p-1.5 hover:bg-amber-500/20 text-amber-400 rounded-lg text-xs" title="Trích Dẫn">""</button>
+                  <button type="button" onClick={() => insertFormatting('<img src="', '" />')} className="p-1.5 hover:bg-amber-500/20 text-amber-400 rounded-lg text-xs" title="Chèn Ảnh">🖼️</button>
+                </div>
+              </div>
+
               <textarea
                 rows={12}
                 placeholder="Nhập nội dung văn bản hoặc Bấm nút 'Import File .HTML 3D Từ Máy Tính' phía trên để nạp code..."
