@@ -1,13 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
 const getValidUrl = (url: string | undefined): string => {
-  if (url && typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'))) {
-    return url;
+  if (url && typeof url === 'string' && url.startsWith('http')) {
+    // N?u url k?t thúc b?ng /rest/v1/ th? c?t b? ph?n ðuôi
+    return url.replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
   }
-  return 'https://tamhjdyiwvhzzrtwmoai.supabase.co';
+  return 'https://cljglzhuwdniynfkzkxc.supabase.co';
 };
 
 const supabaseUrl = getValidUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_placeholder_key_for_build';
+const supabaseAnonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== 'sb_publishable_placeholder_key_for_build')
+  ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNsamdsemh1d2RuaXluZmt6a3hjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAwMDAwMDAsImV4cCI6MjA1NTU1NTU1NX0';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
