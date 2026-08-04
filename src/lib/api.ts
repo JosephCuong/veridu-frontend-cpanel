@@ -1,271 +1,16 @@
-const WP_API_BASE = process.env.NEXT_PUBLIC_WP_API_URL || 'https://data.thapgia.com/wp-json/veridu/v1';
-
-// ─── Interfaces ──────────────────────────────────────────────────────────────
-
-export interface Lesson {
-  id: string | number;
-  title: string;
-  slug: string;
-  chapterTitle?: string;
-  chapterNumber?: number;
-  orderNumber?: number;
-  duration?: string;
-  scriptureReference?: string;
-  scripture?: string;
-  isCompleted?: boolean;
-  article_type?: 'standard' | 'meditation' | 'interactive' | string;
-  contentHtml?: string;
-  scriptureQuote?: string;
-  interactiveHtml?: string;
-  videoUrl?: string;
-  audioUrl?: string;
-  lessonType?: string;
-  prayer?: string;
-}
-
-export const MOCK_LESSONS: Lesson[] = [];
-
-export interface Course {
-  id: string | number;
-  title: string;
-  slug: string;
-  description: string;
-  category: string;
-  level: string;
-  duration: string;
-  lessonsCount: number;
-  totalLessons?: number;
-  thumbnail: string;
-  instructor: string;
-}
-
-export interface CourseDetail extends Course {
-  lessons: Lesson[];
-}
+import { supabase } from './supabaseClient';
 
 export interface Article {
-  id: string | number;
+  id: number | string;
   title: string;
   slug: string;
   excerpt: string;
+  contentHtml: string;
   category?: string;
-  date?: string;
-  thumbnail?: string;
+  featured_image?: string;
   article_type?: string;
-  contentHtml?: string;
-  scriptureQuote?: string;
-  interactiveHtml?: string;
-  seo?: any;
+  created_at?: string;
 }
-
-// ─── Courses (LMS) ────────────────────────────────────────────────────────────
-
-export async function fetchCourses(): Promise<Course[]> {
-  try {
-    const res = await fetch(`${WP_API_BASE}/courses`, {
-      next: { revalidate: 60 },
-    });
-    if (!res.ok) return [];
-    return await res.json();
-  } catch (e) {
-    console.error('fetchCourses error:', e);
-    return [];
-  }
-}
-
-export async function fetchCourseBySlug(slug: string): Promise<CourseDetail | null> {
-  try {
-    const res = await fetch(`${WP_API_BASE}/courses/detail?slug=${encodeURIComponent(slug)}`, {
-      cache: 'no-store',
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (e) {
-    console.error('fetchCourseBySlug error:', e);
-    return null;
-  }
-}
-
-export async function fetchLessonBySlug(slug: string): Promise<Lesson | null> {
-  try {
-    const res = await fetch(`${WP_API_BASE}/articles/detail?slug=${encodeURIComponent(slug)}`, {
-      cache: 'no-store',
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (e) {
-    console.error('fetchLessonBySlug error:', e);
-    return null;
-  }
-}
-
-// ─── Library Articles ────────────────────────────────────────────────────────
-
-export async function getLibraryArticles(): Promise<Article[]> {
-  try {
-    const res = await fetch(`${WP_API_BASE}/veridu_library?_embed=1`, {
-      next: { revalidate: 60 },
-    });
-    if (!res.ok) return [];
-    return await res.json();
-  } catch (e) {
-    console.error('getLibraryArticles error:', e);
-    return [];
-  }
-}
-
-export async function getLibraryArticleBySlug(slug: string): Promise<Article | null> {
-  try {
-    const res = await fetch(`${WP_API_BASE}/veridu_library?slug=${encodeURIComponent(slug)}&_embed=1`, {
-      next: { revalidate: 60 },
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (Array.isArray(data) && data.length > 0) {
-      const item = data[0];
-      return {
-        id: item.id,
-        title: item.title?.rendered || item.title || '',
-        slug: item.slug,
-        excerpt: item.excerpt?.rendered || item.excerpt || '',
-        contentHtml: item.content?.rendered || item.contentHtml || '',
-        article_type: item.article_type || 'standard'
-      };
-    }
-    return null;
-  } catch (e) {
-    console.error('getLibraryArticleBySlug error:', e);
-    return null;
-  }
-}
-
-// ─── Auth ─────────────────────────────────────────────────────────────────────
-
-export interface AuthUser {
-  id: number;
-  username: string;
-  email: string;
-  displayName: string;
-  christianName: string;
-  parish: string;
-  diocese: string;
-  role: string;
-  streak: number;
-  isAdmin: boolean;
-}
-
-export interface AuthResponse {
-  status: string;
-  token: string;
-  user: AuthUser;
-  message?: string;
-}
-
-export async function loginUser(username: string, password: string): Promise<AuthResponse> {
-  const res = await fetch(`${WP_API_BASE}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
-    cache: 'no-store',
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.message || 'Đăng nhập thất bại');
-  }
-  return res.json();
-}
-
-export async function registerUser(data: {
-  email: string;
-  password: string;
-  displayName: string;
-  christianName: string;
-  parish: string;
-  diocese: string;
-  role: string;
-}): Promise<AuthResponse> {
-  const res = await fetch(`${WP_API_BASE}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-    cache: 'no-store',
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.message || 'Đăng ký thất bại');
-  }
-  return res.json();
-}
-
-export async function getProfile(token: string): Promise<AuthUser> {
-  const res = await fetch(`${WP_API_BASE}/auth/profile`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
-  });
-  if (!res.ok) throw new Error('Không thể tải hồ sơ người dùng');
-  return res.json();
-}
-
-// ─── Bible Reader ─────────────────────────────────────────────────────────────
-
-export interface BibleVerse {
-  id: number;
-  verse: string;
-  content: string;
-  contentSecondary?: string;
-  heading?: string;
-}
-
-export interface BibleChapterData {
-  commentary: {
-    bookName: string;
-    chapter: number;
-    authorNote?: string;
-    audioUrl?: string;
-    videoUrl?: string;
-    historicalContext?: string;
-    theologicalMeaning?: string;
-    practicalApplication?: string;
-  };
-  verses: BibleVerse[];
-}
-
-export async function fetchBibleMetadata() {
-  try {
-    const res = await fetch(`${WP_API_BASE}/bible/metadata`, {
-      next: { revalidate: 60 }
-    });
-    if (!res.ok) return { books: [], translations: [] };
-    const data = await res.json();
-    return {
-      books: (data.books || []).map((b: any) => ({
-        slug: b.slug,
-        nameVi: b.name_vi,
-        testament: b.testament,
-        totalChapters: parseInt(b.total_chapters, 10)
-      })),
-      translations: data.translations || []
-    };
-  } catch (err) {
-    console.error('fetchBibleMetadata error:', err);
-    return { books: [], translations: [] };
-  }
-}
-
-export async function fetchBibleChapter(translationSlug: string, bookSlug: string, chapter: number) {
-  try {
-    const res = await fetch(`${WP_API_BASE}/bible/chapter?translation=${translationSlug}&book=${bookSlug}&chapter=${chapter}`, {
-      next: { revalidate: 60 }
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (err) {
-    console.error('fetchBibleChapter error:', err);
-    return null;
-  }
-}
-
-// ─── Character Fetcher ────────────────────────────────────────────────────────
 
 export interface Character {
   id: string | number;
@@ -277,94 +22,182 @@ export interface Character {
   avatar_url: string;
 }
 
-export async function fetchCharacters(): Promise<Character[]> {
-  try {
-    const res = await fetch(`${WP_API_BASE}/characters`, { next: { revalidate: 3600 } });
-    if (!res.ok) return [];
-    return await res.json();
-  } catch (error) {
-    console.error('Lỗi khi tải danh sách nhân vật từ API', error);
-    return [];
-  }
-}
-
-// ─── Search ───────────────────────────────────────────────────────────────────
-
-export interface SearchResults {
-  courses: Course[];
-  articles: Article[];
-}
-
-export async function fetchGlobalSearch(query: string): Promise<SearchResults> {
-  if (!query) return { courses: [], articles: [] };
-  try {
-    const res = await fetch(`${WP_API_BASE}/search?q=${encodeURIComponent(query)}`, {
-      cache: 'no-store'
-    });
-    if (!res.ok) return { courses: [], articles: [] };
-    return await res.json();
-  } catch (e) {
-    console.error('fetchGlobalSearch error:', e);
-    return { courses: [], articles: [] };
-  }
-}
-
-// ─── Timeline ─────────────────────────────────────────────────────────────────
-
 export interface TimelineEventData {
-  id: string;
-  wpPostId?: number;
-  eraId: string;
-  eraName: string;
+  id: string | number;
+  eraId?: string;
+  eraName?: string;
   title: string;
   timePeriod: string;
-  icon: string;
-  category: string;
-  scripture: string;
-  summary: string;
-  contentHtml?: string;
-  theologicalMeaning: string;
+  icon?: string;
+  category?: string;
   articleSlug?: string;
   interactiveHtmlUrl?: string;
   thumbnail?: string;
+  description?: string;
 }
 
+// ─── Library Articles (Supabase Integration) ───────────────────
+export async function getLibraryArticles(): Promise<Article[]> {
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error || !data) {
+      console.error('Supabase getLibraryArticles error:', error);
+      return [];
+    }
+
+    return data.map((item: any) => ({
+      id: item.id,
+      title: item.title,
+      slug: item.slug,
+      excerpt: item.excerpt || '',
+      contentHtml: item.content || '',
+      category: item.category || 'Các Thánh',
+      featured_image: item.featured_image || '',
+      article_type: (item.category === 'Bài Tương Tác HTML 3D' || item.category === 'Tương Tác 3D') ? 'interactive' : (item.category === 'Suy Niệm' ? 'meditation' : 'standard'),
+      created_at: item.created_at
+    }));
+  } catch (e) {
+    console.error('getLibraryArticles error:', e);
+    return [];
+  }
+}
+
+export async function getLibraryArticleBySlug(slug: string): Promise<Article | null> {
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('slug', slug)
+      .single();
+
+    if (error || !data) return null;
+
+    return {
+      id: data.id,
+      title: data.title,
+      slug: data.slug,
+      excerpt: data.excerpt || '',
+      contentHtml: data.content || '',
+      category: data.category || 'Các Thánh',
+      featured_image: data.featured_image || '',
+      article_type: (data.category === 'Bài Tương Tác HTML 3D' || data.category === 'Tương Tác 3D') ? 'interactive' : (data.category === 'Suy Niệm' ? 'meditation' : 'standard'),
+      created_at: data.created_at
+    };
+  } catch (e) {
+    console.error('getLibraryArticleBySlug error:', e);
+    return null;
+  }
+}
+
+// ─── Timeline Events (Supabase Integration) ─────────────────────
 export async function fetchTimelineEvents(): Promise<TimelineEventData[]> {
   try {
-    const res = await fetch(`${WP_API_BASE}/timeline`, {
-      next: { revalidate: 60 }
-    });
-    if (res.ok) {
-      return await res.json();
-    }
-    return [];
+    const { data, error } = await supabase
+      .from('timeline_events')
+      .select('*')
+      .order('order_year', { ascending: true });
+
+    if (error || !data) return [];
+
+    return data.map((t: any) => ({
+      id: t.id,
+      title: t.title,
+      timePeriod: t.year_label,
+      description: t.description,
+      category: t.category || 'Lịch Sử Cứu Độ',
+      thumbnail: t.image_url,
+      eraId: 'salvation_history',
+      eraName: 'Lịch Sử Cứu Độ'
+    }));
   } catch (error) {
     console.error('Error fetching timeline events:', error);
     return [];
   }
 }
 
-// ─── Homepage ─────────────────────────────────────────────────────────────────
+// ─── Characters Fetcher (Supabase Integration) ─────────────────
+export async function fetchCharacters(): Promise<Character[]> {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-export interface HomepageData {
-  settings: {
-    hero_image: string;
-    youtube_url: string;
-  };
-  articles: Article[];
+    if (error || !data) return [];
+
+    return data.map((p: any) => ({
+      id: p.id,
+      name: p.full_name || p.email,
+      biography: `Tín hữu ${p.full_name || p.email}`,
+      role: p.role || 'Học Viên',
+      era: 'Hiện đại',
+      theology: 'Công Giáo',
+      avatar_url: p.avatar_url || ''
+    }));
+  } catch (error) {
+    console.error('Lỗi khi tải danh sách nhân vật từ Supabase', error);
+    return [];
+  }
 }
 
-export async function fetchHomepageData(): Promise<HomepageData | null> {
+// ─── Bible Reader Metadata ─────────────────────────────────────
+export async function fetchBibleMetadata() {
   try {
-    const res = await fetch(`${WP_API_BASE}/homepage`, {
-      next: { revalidate: 60 }
-    });
-    if (res.ok) {
-      return await res.json();
-    }
-    return null;
-  } catch (error) {
-    console.error('Error fetching homepage data:', error);
+    const { data, error } = await supabase
+      .from('bible_books')
+      .select('*')
+      .order('order_index', { ascending: true });
+
+    if (error || !data) return { books: [], translations: [] };
+
+    return {
+      books: data.map((b: any) => ({
+        slug: b.code,
+        nameVi: b.name,
+        testament: b.testament,
+        totalChapters: b.chapters_count
+      })),
+      translations: [{ slug: 'vi_pdv', name: 'Bản dịch Phụng Vụ KTCG' }]
+    };
+  } catch (err) {
+    console.error('fetchBibleMetadata error:', err);
+    return { books: [], translations: [] };
+  }
+}
+
+export async function fetchBibleChapter(translationSlug: string, bookSlug: string, chapter: number) {
+  try {
+    const { data: book } = await supabase
+      .from('bible_books')
+      .select('id, name')
+      .eq('code', bookSlug)
+      .single();
+
+    if (!book) return null;
+
+    const { data: verses } = await supabase
+      .from('bible_verses')
+      .select('*')
+      .eq('book_id', book.id)
+      .eq('chapter', chapter)
+      .order('verse', { ascending: true });
+
+    return {
+      bookName: book.name,
+      chapter: chapter,
+      verses: (verses || []).map((v: any) => ({
+        id: v.id,
+        verse: v.verse.toString(),
+        content: v.text,
+        footnote: v.footnote
+      }))
+    };
+  } catch (err) {
+    console.error('fetchBibleChapter error:', err);
     return null;
   }
 }
