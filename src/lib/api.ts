@@ -20,6 +20,7 @@ export interface Article {
   views?: number;
   likes?: number;
   seo?: any;
+  scriptureQuote?: string;
 }
 
 export interface Lesson {
