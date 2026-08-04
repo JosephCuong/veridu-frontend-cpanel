@@ -8,8 +8,10 @@ export interface Article {
   contentHtml: string;
   category?: string;
   featured_image?: string;
+  thumbnail?: string;
   article_type?: string;
   created_at?: string;
+  seo?: any;
 }
 
 export interface Character {
@@ -36,6 +38,30 @@ export interface TimelineEventData {
   description?: string;
 }
 
+export interface Lesson {
+  id: number | string;
+  title: string;
+  orderIndex: number;
+  videoUrl?: string;
+  content?: string;
+  durationMinutes?: number;
+}
+
+export interface Course {
+  id: number | string;
+  slug: string;
+  title: string;
+  description: string;
+  thumbnail?: string;
+  category?: string;
+  level?: string;
+  lessonsCount?: number;
+}
+
+export interface CourseDetail extends Course {
+  lessons: Lesson[];
+}
+
 // ─── Library Articles (Supabase Integration) ───────────────────
 export async function getLibraryArticles(): Promise<Article[]> {
   try {
@@ -57,6 +83,7 @@ export async function getLibraryArticles(): Promise<Article[]> {
       contentHtml: item.content || '',
       category: item.category || 'Các Thánh',
       featured_image: item.featured_image || '',
+      thumbnail: item.featured_image || '',
       article_type: (item.category === 'Bài Tương Tác HTML 3D' || item.category === 'Tương Tác 3D') ? 'interactive' : (item.category === 'Suy Niệm' ? 'meditation' : 'standard'),
       created_at: item.created_at
     }));
@@ -84,11 +111,100 @@ export async function getLibraryArticleBySlug(slug: string): Promise<Article | n
       contentHtml: data.content || '',
       category: data.category || 'Các Thánh',
       featured_image: data.featured_image || '',
+      thumbnail: data.featured_image || '',
       article_type: (data.category === 'Bài Tương Tác HTML 3D' || data.category === 'Tương Tác 3D') ? 'interactive' : (data.category === 'Suy Niệm' ? 'meditation' : 'standard'),
       created_at: data.created_at
     };
   } catch (e) {
     console.error('getLibraryArticleBySlug error:', e);
+    return null;
+  }
+}
+
+// ─── LMS Courses Fetchers ──────────────────────────────────────
+export async function fetchCourses(): Promise<Course[]> {
+  try {
+    const { data, error } = await supabase
+      .from('courses')
+      .select('*, lessons(*)')
+      .order('created_at', { ascending: false });
+
+    if (error || !data) return [];
+
+    return data.map((c: any) => ({
+      id: c.id,
+      slug: c.slug,
+      title: c.title,
+      description: c.description || '',
+      thumbnail: c.thumbnail || '',
+      category: c.category || 'Kinh Thánh',
+      level: c.level || 'Cơ Bản',
+      lessonsCount: c.lessons?.length || 0
+    }));
+  } catch (e) {
+    console.error('fetchCourses error:', e);
+    return [];
+  }
+}
+
+export async function fetchCourseBySlug(slug: string): Promise<CourseDetail | null> {
+  try {
+    const { data, error } = await supabase
+      .from('courses')
+      .select('*, lessons(*)')
+      .eq('slug', slug)
+      .single();
+
+    if (error || !data) return null;
+
+    return {
+      id: data.id,
+      slug: data.slug,
+      title: data.title,
+      description: data.description || '',
+      thumbnail: data.thumbnail || '',
+      category: data.category || 'Kinh Thánh',
+      level: data.level || 'Cơ Bản',
+      lessons: (data.lessons || []).map((l: any) => ({
+        id: l.id,
+        title: l.title,
+        orderIndex: l.order_index || 1,
+        videoUrl: l.video_url || '',
+        content: l.content || '',
+        durationMinutes: l.duration_minutes || 15
+      }))
+    };
+  } catch (e) {
+    console.error('fetchCourseBySlug error:', e);
+    return null;
+  }
+}
+
+// ─── Search Fetcher ───────────────────────────────────────────
+export async function fetchGlobalSearch(query: string) {
+  if (!query) return { courses: [], articles: [] };
+  try {
+    const articles = await getLibraryArticles();
+    const courses = await fetchCourses();
+    const q = query.toLowerCase();
+    return {
+      courses: courses.filter(c => c.title.toLowerCase().includes(q)),
+      articles: articles.filter(a => a.title.toLowerCase().includes(q))
+    };
+  } catch (e) {
+    return { courses: [], articles: [] };
+  }
+}
+
+// ─── Homepage Data Fetcher ─────────────────────────────────────
+export async function fetchHomepageData() {
+  try {
+    const articles = await getLibraryArticles();
+    return {
+      settings: { hero_image: '', youtube_url: '' },
+      articles: articles
+    };
+  } catch (e) {
     return null;
   }
 }
