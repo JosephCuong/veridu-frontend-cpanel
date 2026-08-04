@@ -142,7 +142,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
   // 2. TEMPLATE TRANG RỘNG / TẠP CHÍ (Wide / Magazine)
   if (articleType === 'magazine' || articleType === 'wide') {
     return (
-      <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
+      <div className="w-full min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
         <HeroBanner imageUrl={coverImage} />
 
         <main className={`max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-20 ${coverImage ? '-mt-32' : 'pt-12'}`}>
@@ -171,7 +171,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
   // 3. TEMPLATE BÀI SUY NIỆM LỜI CHÚA (Scripture Meditation Template)
   if (articleType === 'meditation') {
     return (
-      <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
+      <div className="w-full min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
         <HeroBanner imageUrl={coverImage} />
 
         <main className={`max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-20 ${coverImage ? '-mt-24' : 'pt-12'}`}>
@@ -227,7 +227,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
   // 4. TEMPLATE BÀI THẦN HỌC TẠP CHÍ / CHUYÊN ĐỀ NGHIÊN CỨU (Academic Essay Template)
   if (articleType === 'theological') {
     return (
-      <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
+      <div className="w-full min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
         <HeroBanner imageUrl={coverImage} />
 
         <main className={`max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-20 ${coverImage ? '-mt-24' : 'pt-12'}`}>
@@ -256,7 +256,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
 
   // 5. TEMPLATE TIÊU CHUẨN MẶC ĐỊNH (Standard)
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
+    <div className="w-full min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
       <HeroBanner imageUrl={coverImage} />
 
       <main className={`max-w-3xl mx-auto px-4 space-y-6 relative z-20 ${coverImage ? '-mt-24' : 'pt-12'}`}>
