@@ -69,7 +69,7 @@ export default function SettingsPage() {
 
     } catch (err: any) {
       setMessage({ text: err.message, type: 'error' });
-    } fontally {
+    } finally {
       setIsUpdating(false);
     }
   };
