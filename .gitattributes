@@ -1,2 +1,14 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+*.json text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.md text eol=lf
+*.html text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Các tệp sau nên được coi là tệp nhị phân và không bị thay đổi
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.svg binary
