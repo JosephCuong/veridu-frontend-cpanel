@@ -1,52 +1,46 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-
-import { getStoredUser, getAuthToken, saveAuthSession, UserProfile } from '@/lib/auth';
+import { useAuth } from '@/context/AuthContext';
 import { fetchCharacters, Character } from '@/lib/api';
-import { User, Key, Shield, LogOut, Loader2, Save, Church, Compass, ChevronRight, Phone, Mail, Image as ImageIcon, Settings } from 'lucide-react';
-
-const WP_API_BASE = process.env.NEXT_PUBLIC_WP_API_URL || 'https://data.thapgia.com/wp-json/veridu/v1';
+import { User, Mail, Phone, Church, Compass, Save, Loader2, Image as ImageIcon, Settings } from 'lucide-react';
+import { saveAuthSession } from '@/lib/auth';
 
 export default function SettingsPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [message, setMessage] = useState({ text: '', type: '' });
-  const [characters, setCharacters] = useState<Character[]>([]);
-  const [showAvatarModal, setShowAvatarModal] = useState(false);
-
+  const { user, token } = useAuth();
+  
   const [formData, setFormData] = useState({
-    displayName: '',
     christianName: '',
-    parish: '',
-    diocese: '',
+    displayName: '',
     email: '',
     phone: '',
+    parish: '',
+    diocese: '',
     avatar: ''
   });
 
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | { text: ''; type: '' }>({ text: '', type: '' });
+
   useEffect(() => {
-    const storedUser = getStoredUser();
-    if (!storedUser) {
-      router.push('/dang-nhap');
-    } else {
-      setUser(storedUser);
+    if (user) {
       setFormData({
-        displayName: storedUser.displayName || '',
-        christianName: storedUser.christianName || '',
-        parish: storedUser.parish || '',
-        diocese: storedUser.diocese || '',
-        email: storedUser.email || '',
-        phone: storedUser.phone || '',
-        avatar: storedUser.avatar || ''
+        christianName: user.christianName || '',
+        displayName: user.displayName || user.username || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        parish: user.parish || '',
+        diocese: user.diocese || '',
+        avatar: user.avatar || ''
       });
     }
-    
-    // Load characters for Avatar picking
-    fetchCharacters().then(setCharacters).catch(console.error);
-  }, [router]);
+  }, [user]);
+
+  useEffect(() => {
+    fetchCharacters().then(data => setCharacters(data)).catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,9 +48,9 @@ export default function SettingsPage() {
     setMessage({ text: '', type: '' });
 
     try {
-      const token = getAuthToken();
-      const res = await fetch(`${WP_API_BASE}/auth/update-profile`, {
-        method: 'POST',
+      const WP_API_BASE = process.env.NEXT_PUBLIC_WP_API_BASE || 'https://data.thapgia.com/wp-json/veridu/v1';
+      const res = await fetch(`${WP_API_BASE}/auth/profile`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -75,7 +69,7 @@ export default function SettingsPage() {
 
     } catch (err: any) {
       setMessage({ text: err.message, type: 'error' });
-    } finally {
+    } fontally {
       setIsUpdating(false);
     }
   };
@@ -163,7 +157,7 @@ export default function SettingsPage() {
             </div>
             <div className="p-6 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
               {characters.filter(c => c.avatar_url).map(char => (
-                <div key={char.id} onClick={() => { setFormData({...formData, avatar: char.avatar_url}); setShowAvatarModal(false); }} className={`cursor-pointer rounded-xl border-2 transition-all overflow-hidden ${formData.avatar === char.avatar_url ? 'border-amber-500 shadow-lg shadow-amber-500/30' : 'border-transparent hover:border-amber-500/50'}`}>
+                <div key={char.id} onClick={() => { setFormData({...formData, avatar: char.avatar_url || ''}); setShowAvatarModal(false); }} className={`cursor-pointer rounded-xl border-2 transition-all overflow-hidden ${formData.avatar === char.avatar_url ? 'border-amber-500 shadow-lg shadow-amber-500/30' : 'border-transparent hover:border-amber-500/50'}`}>
                   <img src={char.avatar_url} alt={char.name} className="w-full aspect-square object-cover bg-[var(--bg-main)]" />
                   <div className="p-2 text-center text-xs font-bold bg-[var(--bg-main)] truncate">{char.name}</div>
                 </div>
