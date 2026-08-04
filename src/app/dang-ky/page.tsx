@@ -1,10 +1,12 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
 
 import { saveAuthSession } from '@/lib/auth';
-import { UserPlus, Lock, Mail, User, Church, Compass, ArrowRight, ShieldCheck, Cross } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
+import { UserPlus, Lock, Mail, User, Church, Compass, ArrowRight, ShieldCheck } from 'lucide-react';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -12,8 +14,7 @@ export default function RegisterPage() {
   const [displayName, setDisplayName] = useState('');
   const [christianName, setChristianName] = useState('Giuse');
   const [parish, setParish] = useState('');
-  const [diocese, setDiocese] = useState('Gi√°o Ph·∫≠n S√†i G√≤n');
-  const [role, setRole] = useState('H·ªçc Vi√™n');
+  const [diocese, setDiocese] = useState('Gi·o Ph?n S‡i G?n');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -23,31 +24,39 @@ export default function RegisterPage() {
     setErrorMsg('');
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_WP_API_URL || 'https://data.thapgia.com/wp-json/veridu/v1';
-      const res = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          password,
-          displayName,
-          christianName,
-          parish,
-          diocese,
-          role
-        })
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: displayName,
+            christian_name: christianName,
+            parish,
+            diocese,
+            role: 'student'
+          }
+        }
       });
 
-      const data = await res.json();
-      if (res.ok && data.status === 'success') {
-        saveAuthSession(data.token, data.user);
-        window.location.href = '/ho-so';
+      if (error) {
+        setErrorMsg(error.message || '–„ng k? th?t b?i. Vui l?ng ki?m tra l?i thÙng tin.');
       } else {
-        setErrorMsg(data.message || 'ƒêƒÉng k√Ω kh√¥ng th√†nh c√¥ng. Vui l√≤ng ki·ªÉm tra l·∫°i th√¥ng tin.');
+        const userProfile: any = {
+          id: data.user?.id || '1',
+          email: email,
+          displayName: displayName || email,
+          christianName: christianName,
+          parish: parish,
+          diocese: diocese,
+          role: 'H?c ViÍn',
+          streak: 1
+        };
+        saveAuthSession(data.session?.access_token || 'sb_token', userProfile);
+        window.location.href = '/ho-so';
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Register error:', err);
-      setErrorMsg('Kh√¥ng th·ªÉ k·∫øt n·ªëi ƒë·∫øn m√°y ch·ªß. Vui l√≤ng th·ª≠ l·∫°i sau.');
+      setErrorMsg('KhÙng th? k?t n?i ?n m·y ch? Supabase. Vui l?ng ki?m tra l?i c?u h?nh.');
     } finally {
       setIsLoading(false);
     }
@@ -55,27 +64,18 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 relative overflow-hidden">
-      
-
-      {/* Decorative Background Elements */}
-      <div className="absolute top-20 left-1/4 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-20 right-1/4 w-[400px] h-[400px] bg-red-500/5 rounded-full blur-[100px] pointer-events-none"></div>
-
-      <main className="max-w-2xl mx-auto px-4 py-12 relative z-10">
+      <main className="max-w-xl mx-auto px-4 py-16 relative z-10 flex flex-col justify-center min-h-[calc(100vh-80px)]">
         <div className="p-8 sm:p-10 rounded-3xl bg-[var(--bg-card)]/80 border border-[var(--border-card)] backdrop-blur-2xl shadow-2xl space-y-8 relative overflow-hidden group">
-          {/* Shine Effect */}
-          <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
-
           <div className="space-y-3 text-center relative">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-700/20 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400 shadow-xl shadow-amber-500/10 transform transition-transform duration-500 hover:scale-110 hover:rotate-3">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-700/20 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400 shadow-xl shadow-amber-500/10">
               <UserPlus className="w-8 h-8" />
             </div>
-            <h1 className="font-serif font-black text-3xl text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-500">T·∫°o T√†i Kho·∫£n C√¥ng Gi√°o</h1>
-            <p className="text-sm text-[var(--text-muted)]">Tham gia c·ªông ƒë·ªìng h·ªçc t·∫≠p & suy ni·ªám L·ªùi Ch√∫a VERIDU</p>
+            <h1 className="font-serif font-black text-3xl text-amber-400">T?o T‡i Kho?n CÙng Gi·o</h1>
+            <p className="text-sm text-[var(--text-muted)]">Tham gia c?ng ?ng h?c t?p & suy ni?m L?i Ch˙a VERIDU</p>
           </div>
 
           {errorMsg && (
-            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center animate-pulse flex items-center justify-center space-x-2">
+            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center flex items-center justify-center space-x-2">
               <ShieldCheck className="w-4 h-4" />
               <span>{errorMsg}</span>
             </div>
@@ -85,117 +85,89 @@ export default function RegisterPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center">
-                  <span className="text-amber-400 font-serif mr-1.5 font-black">‚úù</span> T√™n Th√°nh
+                  <span className="text-amber-400 font-serif mr-1.5 font-black">?</span> TÍn Th·nh
                 </label>
                 <input 
-                  type="text"
-                  required
-                  value={christianName}
-                  onChange={(e) => setChristianName(e.target.value)}
+                  type="text" required value={christianName} onChange={(e) => setChristianName(e.target.value)}
                   placeholder="Giuse, Maria..."
-                  className="w-full bg-[var(--bg-main)]/50 border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] placeholder-slate-600 focus:outline-none focus:border-amber-500/80 focus:ring-1 focus:ring-amber-500/50 transition-all duration-300"
+                  className="w-full bg-[var(--bg-main)]/50 border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center">
-                  <User className="w-3 h-3 mr-1.5" /> H·ªç v√† T√™n
+                  <User className="w-3 h-3 mr-1.5" /> H? v‡ TÍn
                 </label>
                 <input 
-                  type="text"
-                  required
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Nguy·ªÖn VƒÉn A"
-                  className="w-full bg-[var(--bg-main)]/50 border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] placeholder-slate-600 focus:outline-none focus:border-amber-500/80 focus:ring-1 focus:ring-amber-500/50 transition-all duration-300"
+                  type="text" required value={displayName} onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Nguy?n V„n A"
+                  className="w-full bg-[var(--bg-main)]/50 border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center">
-                  <Mail className="w-3 h-3 mr-1.5" /> ƒê·ªãa Ch·ªâ Email
+                  <Mail className="w-3 h-3 mr-1.5" /> –?a Ch? Email
                 </label>
                 <input 
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
                   placeholder="email@thapgia.com"
-                  className="w-full bg-[var(--bg-main)]/50 border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] placeholder-slate-600 focus:outline-none focus:border-amber-500/80 focus:ring-1 focus:ring-amber-500/50 transition-all duration-300"
+                  className="w-full bg-[var(--bg-main)]/50 border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center">
-                  <Lock className="w-3 h-3 mr-1.5" /> M·∫≠t Kh·∫©u
+                  <Lock className="w-3 h-3 mr-1.5" /> M?t Kh?u
                 </label>
                 <input 
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢"
-                  className="w-full bg-[var(--bg-main)]/50 border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] placeholder-slate-600 focus:outline-none focus:border-amber-500/80 focus:ring-1 focus:ring-amber-500/50 transition-all duration-300"
+                  type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
+                  placeholder="ïïïïïïïï"
+                  className="w-full bg-[var(--bg-main)]/50 border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center">
-                  <Church className="w-3 h-3 mr-1.5" /> Gi√°o X·ª©
+                  <Church className="w-3 h-3 mr-1.5" /> Gi·o X?
                 </label>
                 <input 
-                  type="text"
-                  required
-                  value={parish}
-                  onChange={(e) => setParish(e.target.value)}
-                  placeholder="T√¢n ƒê·ªãnh"
-                  className="w-full bg-[var(--bg-main)]/50 border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] placeholder-slate-600 focus:outline-none focus:border-amber-500/80 focus:ring-1 focus:ring-amber-500/50 transition-all duration-300"
+                  type="text" required value={parish} onChange={(e) => setParish(e.target.value)}
+                  placeholder="T‚n –?nh"
+                  className="w-full bg-[var(--bg-main)]/50 border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center">
-                  <Compass className="w-3 h-3 mr-1.5" /> Gi√°o Ph·∫≠n
+                  <Compass className="w-3 h-3 mr-1.5" /> Gi·o Ph?n
                 </label>
                 <select 
-                  value={diocese}
-                  onChange={(e) => setDiocese(e.target.value)}
-                  className="w-full bg-[var(--bg-main)]/50 border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] focus:outline-none focus:border-amber-500/80 focus:ring-1 focus:ring-amber-500/50 transition-all duration-300 appearance-none"
-                  style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E\")", backgroundPosition: "right 1rem center", backgroundRepeat: "no-repeat", backgroundSize: "1.5em 1.5em" }}
+                  value={diocese} onChange={(e) => setDiocese(e.target.value)}
+                  className="w-full bg-[var(--bg-main)]/50 border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
                 >
-                  <option value="Gi√°o Ph·∫≠n S√†i G√≤n">Gi√°o Ph·∫≠n S√†i G√≤n</option>
-                  <option value="Gi√°o Ph·∫≠n Xu√¢n L·ªôc">Gi√°o Ph·∫≠n Xu√¢n L·ªôc</option>
-                  <option value="Gi√°o Ph·∫≠n Ph√∫ C∆∞·ªùng">Gi√°o Ph·∫≠n Ph√∫ C∆∞·ªùng</option>
-                  <option value="Gi√°o Ph·∫≠n H√† N·ªôi">Gi√°o Ph·∫≠n H√† N·ªôi</option>
-                  <option value="Kh√°c">Kh√°c</option>
+                  <option value="Gi·o Ph?n S‡i G?n">Gi·o Ph?n S‡i G?n</option>
+                  <option value="Gi·o Ph?n Xu‚n L?c">Gi·o Ph?n Xu‚n L?c</option>
+                  <option value="Gi·o Ph?n Ph˙ C˝?ng">Gi·o Ph?n Ph˙ C˝?ng</option>
+                  <option value="Gi·o Ph?n H‡ N?i">Gi·o Ph?n H‡ N?i</option>
+                  <option value="Kh·c">Kh·c</option>
                 </select>
               </div>
             </div>
 
             <button 
-              type="submit"
-              disabled={isLoading}
-              className="w-full relative group/btn overflow-hidden rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 text-slate-950 font-bold py-4 px-4 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center mt-4"
+              type="submit" disabled={isLoading}
+              className="w-full rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-4 px-4 shadow-lg transition-all flex items-center justify-center mt-4"
             >
-              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300 ease-out"></div>
-              <span className="relative flex items-center text-base">
-                {isLoading ? (
-                  <span className="animate-pulse">ƒêang x·ª≠ l√Ω...</span>
-                ) : (
-                  <>
-                    Ho√†n T·∫•t ƒêƒÉng K√Ω
-                    <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </span>
+              {isLoading ? '–ang x? l?...' : 'Ho‡n T?t –„ng K?'}
             </button>
           </form>
 
           <div className="text-center pt-5 border-t border-[var(--border-card)]/50">
             <p className="text-sm text-[var(--text-muted)]">
-              ƒê√£ c√≥ t√†i kho·∫£n?{' '}
-              <Link href="/dang-nhap" className="text-amber-400 hover:text-amber-300 font-bold hover:underline transition-colors">
-                ƒêƒÉng nh·∫≠p ngay
+              –? cÛ t‡i kho?n?{' '}
+              <Link href="/dang-nhap" className="text-amber-400 font-bold hover:underline">
+                –„ng nh?p ngay
               </Link>
             </p>
           </div>
