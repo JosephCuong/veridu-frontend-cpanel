@@ -364,7 +364,11 @@ export async function fetchBibleChapter(translationSlug: string, bookSlug: strin
         id: v.id,
         verse: v.verse.toString(),
         content: v.text,
-        footnote: v.footnote
+        contentSec: null,
+        heading: v.heading || null,
+        footnotes: v.footnote || null,
+        chapter: chapter,
+        bookSlug: bookSlug
       }))
     };
   } catch (err) {
