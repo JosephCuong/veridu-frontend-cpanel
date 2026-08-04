@@ -6,6 +6,7 @@ export interface Article {
   slug: string;
   excerpt: string;
   contentHtml: string;
+  interactiveHtml?: string;
   category?: string;
   featured_image?: string;
   thumbnail?: string;
@@ -81,6 +82,7 @@ export async function getLibraryArticles(): Promise<Article[]> {
       slug: item.slug,
       excerpt: item.excerpt || '',
       contentHtml: item.content || '',
+      interactiveHtml: item.content || '',
       category: item.category || 'Các Thánh',
       featured_image: item.featured_image || '',
       thumbnail: item.featured_image || '',
@@ -109,6 +111,7 @@ export async function getLibraryArticleBySlug(slug: string): Promise<Article | n
       slug: data.slug,
       excerpt: data.excerpt || '',
       contentHtml: data.content || '',
+      interactiveHtml: data.content || '',
       category: data.category || 'Các Thánh',
       featured_image: data.featured_image || '',
       thumbnail: data.featured_image || '',
