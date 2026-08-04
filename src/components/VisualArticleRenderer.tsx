@@ -124,7 +124,7 @@ export default function VisualArticleRenderer({ contentHtml, className = '' }: V
   return (
     <div 
       ref={containerRef}
-      className={`prose prose-invert prose-amber prose-veridu-sanitized max-w-none font-serif text-[var(--text-main)] leading-relaxed text-base sm:text-lg ${className}`}
+      className={`prose dark:prose-invert prose-amber prose-veridu-sanitized max-w-none font-serif text-[var(--text-main)] leading-relaxed text-base sm:text-lg has-drop-cap ${className}`}
       dangerouslySetInnerHTML={{ __html: contentHtml }}
     />
   );

@@ -118,3 +118,31 @@ h1, h2, h3, h4, h5, h6 {
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-out forwards;
 }
+
+/* DROP CAP STYLING */
+.has-drop-cap > p:first-of-type::first-letter {
+  float: left;
+  font-size: 5rem;
+  line-height: 0.8;
+  padding-top: 0.15em;
+  padding-right: 0.1em;
+  padding-left: 0.05em;
+  font-family: var(--font-lora), Georgia, serif;
+  color: var(--accent-gold);
+  font-weight: 900;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* ARTICLE IMAGE STYLING */
+.prose-veridu-sanitized img {
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.prose-veridu-sanitized img:hover {
+  transform: scale(1.01);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
