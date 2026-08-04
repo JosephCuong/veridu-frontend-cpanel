@@ -79,9 +79,12 @@ export async function fetchQuizQuestions(category?: string, limit: number = 50):
       }
     }
   } catch (e) {
-    console.error('Fetch Quiz questions error:', e);
+    console.error('Lỗi khi tải câu hỏi quiz:', e);
+    // Ném lỗi để component có thể xử lý
+    throw new Error('Không thể tải dữ liệu câu hỏi từ máy chủ.');
   }
-  return MOCK_QUIZ_QUESTIONS;
+  // Nếu API trả về mảng rỗng, trả về mảng rỗng thay vì dữ liệu giả
+  return [];
 }
 
 export function shuffleArray<T>(array: T[]): T[] {

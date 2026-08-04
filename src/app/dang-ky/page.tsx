@@ -2,10 +2,11 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-import { saveAuthSession } from '@/lib/auth';
-import { supabase } from '@/lib/supabaseClient';
+import { saveAuthSession, UserProfile } from '@/lib/auth';
+import { supabase } from '@/lib/supabaseClient'; // Giả sử tệp này tồn tại
 import { UserPlus, Lock, Mail, User, Church, Compass, ArrowRight, ShieldCheck, CheckCircle } from 'lucide-react';
 
 export default function RegisterPage() {
@@ -18,6 +19,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,8 +45,9 @@ export default function RegisterPage() {
       if (error) {
         setErrorMsg(error.message || 'Đăng ký thất bại. Vui lòng kiểm tra lại.');
       } else {
-        const userProfile: any = {
+        const userProfile: UserProfile = {
           id: data.user?.id || '1',
+          username: email.split('@')[0],
           email: email,
           displayName: displayName || email,
           christianName: christianName,
@@ -58,7 +61,7 @@ export default function RegisterPage() {
 
         if (data.session) {
           setSuccessMsg('Đăng ký thành công! Đang chuyển hướng...');
-          setTimeout(() => { window.location.href = '/ho-so'; }, 1000);
+          setTimeout(() => { router.push('/ho-so'); }, 1000);
         } else {
           setSuccessMsg('Đã khởi tạo tài khoản! Vui lòng kiểm tra Email để xác nhận (hoặc đăng nhập ngay nếu đã tắt Confirm Email).');
         }

@@ -1,7 +1,7 @@
 import Cookies from 'js-cookie';
 
 export interface UserProfile {
-  id: number;
+  id: string | number;
   username: string;
   email: string;
   phone?: string;

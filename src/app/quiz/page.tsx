@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getStoredUser, UserProfile } from '@/lib/auth';
 import AuthModal from '@/components/AuthModal';
+import { fetchQuizQuestions } from '@/lib/quiz';
 
-import { Gamepad2, Users, Trophy, Play, Sparkles, BookOpen, Clock, Heart } from 'lucide-react';
+import { Gamepad2, Users, Trophy, Play, BookOpen, AlertTriangle, Loader2 } from 'lucide-react';
 
 export default function QuizPage() {
   const router = useRouter();
@@ -14,6 +15,8 @@ export default function QuizPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [user, setUser] = useState<UserProfile | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     setUser(getStoredUser());
@@ -32,7 +35,8 @@ export default function QuizPage() {
     }
   };
 
-  const handleStartSolo = () => {
+  const handleStartSolo = async () => {
+    setErrorMsg('');
     if (!user) {
       const attempts = localStorage.getItem('veridu_solo_attempts') || '0';
       if (parseInt(attempts) >= 1) {
@@ -40,7 +44,20 @@ export default function QuizPage() {
         return;
       }
     }
-    router.push(`/quiz/room?mode=solo&category=${selectedCategory}`);
+
+    setIsLoading(true);
+    try {
+      const questions = await fetchQuizQuestions(selectedCategory, 10);
+      if (questions.length > 0) {
+        router.push(`/quiz/room?mode=solo&category=${selectedCategory}`);
+      } else {
+        setErrorMsg(`Hiện không có câu hỏi cho chủ đề này. Vui lòng chọn chủ đề khác.`);
+      }
+    } catch (error: any) {
+      setErrorMsg(error.message || 'Không thể bắt đầu. Vui lòng thử lại sau.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -149,17 +166,25 @@ export default function QuizPage() {
                 </select>
               </div>
 
+              {errorMsg && (
+                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-medium flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+
               <button 
                 onClick={handleStartSolo}
-                className="w-full py-4 rounded-2xl bg-indigo-500 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-indigo-400 transition-all shadow-xl shadow-indigo-500/20"
+                disabled={isLoading}
+                className="w-full py-4 rounded-2xl bg-indigo-500 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-indigo-400 transition-all shadow-xl shadow-indigo-500/20 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                <BookOpen className="w-5 h-5" /> Bắt Đầu Ôn Luyện
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <BookOpen className="w-5 h-5" />}
+                {isLoading ? 'Đang tải câu hỏi...' : 'Bắt Đầu Ôn Luyện'}
               </button>
             </div>
           </div>
 
         </div>
-
       </main>
 
       <AuthModal 
