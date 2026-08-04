@@ -57,6 +57,8 @@ export interface Course {
   thumbnail?: string;
   category?: string;
   level?: string;
+  instructor?: string;
+  duration?: string;
   lessonsCount?: number;
 }
 
@@ -143,6 +145,8 @@ export async function fetchCourses(): Promise<Course[]> {
       thumbnail: c.thumbnail || '',
       category: c.category || 'Kinh Thánh',
       level: c.level || 'Cơ Bản',
+      instructor: c.instructor || 'VERIDU Team',
+      duration: c.duration || '12 Bài Học',
       lessonsCount: c.lessons?.length || 0
     }));
   } catch (e) {
@@ -169,6 +173,8 @@ export async function fetchCourseBySlug(slug: string): Promise<CourseDetail | nu
       thumbnail: data.thumbnail || '',
       category: data.category || 'Kinh Thánh',
       level: data.level || 'Cơ Bản',
+      instructor: data.instructor || 'VERIDU Team',
+      duration: data.duration || '12 Bài Học',
       lessons: (data.lessons || []).map((l: any) => ({
         id: l.id,
         title: l.title,
