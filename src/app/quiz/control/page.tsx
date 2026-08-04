@@ -1,5 +1,5 @@
-export const dynamic = 'force-dynamic';
 'use client';
+export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect, useRef } from 'react';
 
@@ -384,4 +384,5 @@ export default function GLVRoomControlPage() {
     </div>
   );
 }
+
 

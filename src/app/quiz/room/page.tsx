@@ -1,5 +1,5 @@
-export const dynamic = 'force-dynamic';
 'use client';
+export const dynamic = 'force-dynamic';
 
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -42,4 +42,5 @@ export default function LiveRoomPage() {
     </div>
   );
 }
+
 
