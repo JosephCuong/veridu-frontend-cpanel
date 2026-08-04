@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   BookOpen, Compass, Clock, Gamepad2, FileText, Users, Plus, 
-  Trash2, Edit, Save, CheckCircle, AlertCircle, RefreshCw, Upload, Image as ImageIcon, Sparkles, Shield
+  Trash2, Edit, Save, CheckCircle, AlertCircle, RefreshCw, Upload, Image as ImageIcon, Sparkles, Shield, Eye, Code, X
 } from 'lucide-react';
 import { 
   getAdminPosts, createPost, deletePost,
@@ -21,6 +21,7 @@ export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<'posts' | 'courses' | 'map' | 'timeline' | 'quiz' | 'users'>('posts');
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   // Data States
   const [posts, setPosts] = useState<any[]>([]);
@@ -112,9 +113,27 @@ export default function AdminDashboardPage() {
     setTimeout(() => setMessage(null), 4000);
   };
 
+  // Import file .html trực tiếp từ máy tính
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const htmlText = event.target?.result as string;
+      setNewPost(prev => ({
+        ...prev,
+        content: htmlText,
+        title: prev.title || file.name.replace(/\.[^/.]+$/, '')
+      }));
+      showMsg('Đã đọc và nạp mã file HTML 3D thành công!');
+    };
+    reader.readAsText(file);
+  };
+
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPost.title || !newPost.content) return showMsg('Vui lòng nhập Tiêu đề và Nội dung!', 'error');
+    if (!newPost.title || !newPost.content) return showMsg('Vui lòng nhập Tiêu đề và Nội dung bài viết!', 'error');
     try {
       const slug = newPost.slug || newPost.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       await createPost({ ...newPost, slug });
@@ -197,18 +216,19 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8 font-sans">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] p-4 sm:p-8 font-sans transition-colors duration-300">
+      
       {/* HEADER */}
-      <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-8 border-b border-slate-800">
+      <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-8 border-b border-[var(--border-card)]">
         <div>
           <div className="flex items-center gap-2 text-amber-500 font-bold text-xs uppercase tracking-widest">
             <Shield className="w-4 h-4" /> VERIDU VISUAL MANAGEMENT SYSTEM
           </div>
-          <h1 className="text-3xl font-black text-white font-serif mt-1">Trang Quản Trị Hệ Thống</h1>
+          <h1 className="text-3xl font-black text-[var(--text-main)] font-serif mt-1">Trang Quản Trị Hệ Thống</h1>
         </div>
         <button 
           onClick={loadAllData}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-xs rounded-xl border border-slate-700 transition-all"
+          className="flex items-center gap-2 px-5 py-2.5 bg-[var(--bg-card)] hover:bg-amber-500 hover:text-slate-950 font-bold text-xs rounded-xl border border-[var(--border-card)] shadow-lg transition-all"
         >
           <RefreshCw className={loading ? "w-4 h-4 animate-spin" : "w-4 h-4"} /> Làm mới dữ liệu
         </button>
@@ -216,102 +236,124 @@ export default function AdminDashboardPage() {
 
       {/* ALERT MESSAGE */}
       {message && (
-        <div className={message.type === 'success' ? "max-w-7xl mx-auto my-4 p-4 rounded-xl flex items-center gap-3 border bg-emerald-950/80 border-emerald-500/40 text-emerald-300" : "max-w-7xl mx-auto my-4 p-4 rounded-xl flex items-center gap-3 border bg-rose-950/80 border-rose-500/40 text-rose-300"}>
+        <div className={message.type === 'success' ? "max-w-7xl mx-auto my-4 p-4 rounded-xl flex items-center gap-3 border bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold text-sm" : "max-w-7xl mx-auto my-4 p-4 rounded-xl flex items-center gap-3 border bg-red-500/10 border-red-500/30 text-red-400 font-bold text-sm"}>
           {message.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-          <span className="font-semibold text-sm">{message.text}</span>
+          <span>{message.text}</span>
         </div>
       )}
 
-      {/* STATS OVERVIEW */}
+      {/* STATS OVERVIEW CARDS */}
       <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-6 gap-4 my-8">
-        <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl">
-          <div className="text-slate-400 text-xs font-semibold">Bài viết</div>
-          <div className="text-2xl font-black text-amber-400 mt-1">{posts.length}</div>
+        <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl shadow-xl">
+          <div className="text-[var(--text-muted)] text-xs font-bold uppercase">Bài viết</div>
+          <div className="text-3xl font-black text-amber-500 mt-1">{posts.length}</div>
         </div>
-        <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl">
-          <div className="text-slate-400 text-xs font-semibold">Khóa học LMS</div>
-          <div className="text-2xl font-black text-indigo-400 mt-1">{courses.length}</div>
+        <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl shadow-xl">
+          <div className="text-[var(--text-muted)] text-xs font-bold uppercase">Khóa học LMS</div>
+          <div className="text-3xl font-black text-indigo-500 mt-1">{courses.length}</div>
         </div>
-        <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl">
-          <div className="text-slate-400 text-xs font-semibold">Địa danh 3D</div>
-          <div className="text-2xl font-black text-emerald-400 mt-1">{mapLocations.length}</div>
+        <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl shadow-xl">
+          <div className="text-[var(--text-muted)] text-xs font-bold uppercase">Địa danh 3D</div>
+          <div className="text-3xl font-black text-emerald-500 mt-1">{mapLocations.length}</div>
         </div>
-        <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl">
-          <div className="text-slate-400 text-xs font-semibold">Dòng thời gian</div>
-          <div className="text-2xl font-black text-purple-400 mt-1">{timelineEvents.length}</div>
+        <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl shadow-xl">
+          <div className="text-[var(--text-muted)] text-xs font-bold uppercase">Dòng thời gian</div>
+          <div className="text-3xl font-black text-purple-500 mt-1">{timelineEvents.length}</div>
         </div>
-        <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl">
-          <div className="text-slate-400 text-xs font-semibold">Câu hỏi Quiz</div>
-          <div className="text-2xl font-black text-rose-400 mt-1">{quizQuestions.length}</div>
+        <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl shadow-xl">
+          <div className="text-[var(--text-muted)] text-xs font-bold uppercase">Câu hỏi Quiz</div>
+          <div className="text-3xl font-black text-rose-500 mt-1">{quizQuestions.length}</div>
         </div>
-        <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl">
-          <div className="text-slate-400 text-xs font-semibold">Tài khoản User</div>
-          <div className="text-2xl font-black text-blue-400 mt-1">{profiles.length}</div>
+        <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl shadow-xl">
+          <div className="text-[var(--text-muted)] text-xs font-bold uppercase">Tài khoản User</div>
+          <div className="text-3xl font-black text-blue-500 mt-1">{profiles.length}</div>
         </div>
       </div>
 
       {/* TABS NAVIGATION */}
-      <div className="max-w-7xl mx-auto flex flex-wrap gap-2 mb-8 border-b border-slate-800 pb-4">
+      <div className="max-w-7xl mx-auto flex flex-wrap gap-2 mb-8 border-b border-[var(--border-card)] pb-4">
         <button
           onClick={() => setActiveTab('posts')}
-          className={activeTab === 'posts' ? "px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20" : "px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-slate-900 text-slate-400 hover:text-white"}
+          className={activeTab === 'posts' ? "px-5 py-3 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20" : "px-5 py-3 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-main)]"}
         >
           <FileText className="w-4 h-4" /> Đăng Bài Viết & HTML 3D
         </button>
         <button
           onClick={() => setActiveTab('courses')}
-          className={activeTab === 'courses' ? "px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20" : "px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-slate-900 text-slate-400 hover:text-white"}
+          className={activeTab === 'courses' ? "px-5 py-3 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20" : "px-5 py-3 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-main)]"}
         >
           <BookOpen className="w-4 h-4" /> Khóa Học LMS
         </button>
         <button
           onClick={() => setActiveTab('map')}
-          className={activeTab === 'map' ? "px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20" : "px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-slate-900 text-slate-400 hover:text-white"}
+          className={activeTab === 'map' ? "px-5 py-3 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20" : "px-5 py-3 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-main)]"}
         >
           <Compass className="w-4 h-4" /> Bản Đồ 3D
         </button>
         <button
           onClick={() => setActiveTab('timeline')}
-          className={activeTab === 'timeline' ? "px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20" : "px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-slate-900 text-slate-400 hover:text-white"}
+          className={activeTab === 'timeline' ? "px-5 py-3 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20" : "px-5 py-3 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-main)]"}
         >
           <Clock className="w-4 h-4" /> Dòng Thời Gian
         </button>
         <button
           onClick={() => setActiveTab('quiz')}
-          className={activeTab === 'quiz' ? "px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20" : "px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-slate-900 text-slate-400 hover:text-white"}
+          className={activeTab === 'quiz' ? "px-5 py-3 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20" : "px-5 py-3 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-main)]"}
         >
           <Gamepad2 className="w-4 h-4" /> Ngân Hàng Quiz
         </button>
         <button
           onClick={() => setActiveTab('users')}
-          className={activeTab === 'users' ? "px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20" : "px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-slate-900 text-slate-400 hover:text-white"}
+          className={activeTab === 'users' ? "px-5 py-3 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20" : "px-5 py-3 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-main)]"}
         >
           <Users className="w-4 h-4" /> Quản Lý User & Phân Quyền
         </button>
       </div>
 
-      {/* TAB 1: POSTS & HTML 3D */}
+      {/* TAB 1: POSTS & HTML 3D WITH FILE IMPORT & LIVE PREVIEW */}
       {activeTab === 'posts' && (
         <div className="max-w-7xl mx-auto space-y-8">
-          <form onSubmit={handleCreatePost} className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 space-y-6 shadow-2xl">
-            <h2 className="text-xl font-bold text-amber-400 flex items-center gap-2 font-serif">
-              <Plus className="w-5 h-5" /> Đăng Bài Viết Mới / Bài Tương Tác HTML 3D
-            </h2>
+          <form onSubmit={handleCreatePost} className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl">
+            
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[var(--border-card)]">
+              <h2 className="text-xl font-bold text-amber-500 flex items-center gap-2 font-serif">
+                <Plus className="w-5 h-5" /> Đăng Bài Viết Mới / Bài Tương Tác HTML 3D
+              </h2>
+
+              {/* ACTION BUTTONS FOR HTML IMPORT & LIVE PREVIEW */}
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <label className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl cursor-pointer shadow-md transition-all">
+                  <Upload className="w-4 h-4" /> Import File .HTML 3D Từ Máy Tính
+                  <input type="file" accept=".html,.htm" onChange={handleFileUpload} className="hidden" />
+                </label>
+
+                {newPost.content && (
+                  <button 
+                    type="button" 
+                    onClick={() => setShowPreviewModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition-all"
+                  >
+                    <Eye className="w-4 h-4" /> Xem Trước Trực Quan
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Tiêu đề bài viết</label>
+                <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">Tiêu đề bài viết</label>
                 <input
                   type="text"
                   placeholder="VD: Thánh Phêrô Kim Ngôn hay Khám Phá Quy Điển 3D"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
+                  className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] focus:outline-none focus:border-amber-500"
                   value={newPost.title}
                   onChange={e => setNewPost({...newPost, title: e.target.value})}
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Thể Loại / Chuyên Mục</label>
+                <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">Thể Loạt / Chuyên Mục</label>
                 <select
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
+                  className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] focus:outline-none focus:border-amber-500"
                   value={newPost.category}
                   onChange={e => setNewPost({...newPost, category: e.target.value})}
                 >
@@ -325,55 +367,58 @@ export default function AdminDashboardPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-2">URL Ảnh Đại Diện (Featured Image / CDN)</label>
+              <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">URL Ảnh Đại Diện (Featured Image / CDN)</label>
               <input
                 type="text"
                 placeholder="VD: https://media.thapgia.com/open-gospel.jpg"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
+                className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] focus:outline-none focus:border-amber-500"
                 value={newPost.featured_image}
                 onChange={e => setNewPost({...newPost, featured_image: e.target.value})}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Tóm tắt ngắn (Excerpt)</label>
+              <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">Tóm tắt ngắn (Excerpt)</label>
               <textarea
                 rows={2}
                 placeholder="Tóm tắt 1-2 câu về nội dung bài viết..."
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
+                className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] focus:outline-none focus:border-amber-500"
                 value={newPost.excerpt}
                 onChange={e => setNewPost({...newPost, excerpt: e.target.value})}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-amber-400 uppercase mb-2 flex items-center gap-2">
-                <Sparkles className="w-4 h-4" /> Nội dung bài viết (Chấp nhận Văn bản hoặc Code HTML 3D Tương Tác)
+              <label className="block text-xs font-bold text-amber-500 uppercase mb-2 flex items-center justify-between">
+                <span className="flex items-center gap-1.5"><Code className="w-4 h-4" /> Mã Nội Dung (Văn bản hoặc Mã HTML/CSS/JS 3D)</span>
+                <span className="text-[10px] text-[var(--text-muted)] lowercase">Hỗ trợ dán hoặc nạp file .html</span>
               </label>
               <textarea
-                rows={10}
-                placeholder="Nhập nội dung văn bản hoặc DÁN TOÀN BỘ CODE HTML/CSS/JS 3D VÀO ĐÂY..."
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-mono text-emerald-300 focus:outline-none focus:border-amber-500"
+                rows={12}
+                placeholder="Nhập nội dung văn bản hoặc Bấm nút 'Import File .HTML 3D Từ Máy Tính' phía trên để nạp code..."
+                className="w-full bg-slate-950 border border-[var(--border-card)] rounded-xl px-4 py-3 text-xs font-mono text-emerald-400 focus:outline-none focus:border-amber-500"
                 value={newPost.content}
                 onChange={e => setNewPost({...newPost, content: e.target.value})}
               />
             </div>
 
-            <button type="submit" className="px-6 py-3 bg-amber-500 text-slate-950 font-bold text-xs rounded-xl hover:bg-amber-400 transition-all flex items-center gap-2">
-              <Save className="w-4 h-4" /> Xuất Bản Bài Viết Này
-            </button>
+            <div className="flex justify-end gap-3 pt-2">
+              <button type="submit" className="px-8 py-3 bg-amber-500 text-slate-950 font-bold text-xs rounded-xl hover:bg-amber-400 transition-all flex items-center gap-2 shadow-lg shadow-amber-500/20">
+                <Save className="w-4 h-4" /> Xuất Bản Bài Viết Này
+              </button>
+            </div>
           </form>
 
           {/* LIST POSTS */}
-          <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 space-y-4">
-            <h3 className="text-lg font-bold text-white font-serif">Danh Sách Bài Viết Đã Đăng ({posts.length})</h3>
-            <div className="divide-y divide-slate-800">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 space-y-4">
+            <h3 className="text-lg font-bold text-[var(--text-main)] font-serif">Danh Sách Bài Viết Đã Đăng ({posts.length})</h3>
+            <div className="divide-y divide-[var(--border-card)]">
               {posts.map(p => (
                 <div key={p.id} className="py-4 flex items-center justify-between gap-4">
                   <div>
-                    <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30 uppercase mr-2">{p.category}</span>
-                    <span className="font-bold text-sm text-white">{p.title}</span>
-                    <p className="text-xs text-slate-400 line-clamp-1 mt-1">{p.excerpt || p.slug}</p>
+                    <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30 uppercase mr-2">{p.category}</span>
+                    <span className="font-bold text-sm text-[var(--text-main)]">{p.title}</span>
+                    <p className="text-xs text-[var(--text-muted)] line-clamp-1 mt-1">{p.excerpt || p.slug}</p>
                   </div>
                   <button onClick={() => deletePost(p.id).then(loadAllData)} className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all">
                     <Trash2 className="w-4 h-4" />
@@ -388,25 +433,25 @@ export default function AdminDashboardPage() {
       {/* TAB 2: LMS COURSES */}
       {activeTab === 'courses' && (
         <div className="max-w-7xl mx-auto space-y-8">
-          <form onSubmit={handleCreateCourse} className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl">
-            <h2 className="text-xl font-bold text-indigo-400 flex items-center gap-2 font-serif">
+          <form onSubmit={handleCreateCourse} className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 space-y-4 shadow-2xl">
+            <h2 className="text-xl font-bold text-indigo-500 flex items-center gap-2 font-serif">
               <Plus className="w-5 h-5" /> Tạo Khóa Học LMS Mới
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input
                 type="text" placeholder="Tên khóa học (VD: Nhập Môn Cựu Ước)"
-                className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                className="bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] focus:outline-none focus:border-indigo-500"
                 value={newCourse.title} onChange={e => setNewCourse({...newCourse, title: e.target.value})}
               />
               <input
                 type="text" placeholder="URL Thumbnail (VD: https://media.thapgia.com/course-thumb.jpg)"
-                className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                className="bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] focus:outline-none focus:border-indigo-500"
                 value={newCourse.thumbnail} onChange={e => setNewCourse({...newCourse, thumbnail: e.target.value})}
               />
             </div>
             <textarea
               rows={3} placeholder="Mô tả tóm tắt nội dung khóa học LMS..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+              className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] focus:outline-none focus:border-indigo-500"
               value={newCourse.description} onChange={e => setNewCourse({...newCourse, description: e.target.value})}
             />
             <button type="submit" className="px-6 py-3 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-500 transition-all flex items-center gap-2">
@@ -414,21 +459,17 @@ export default function AdminDashboardPage() {
             </button>
           </form>
 
-          {/* LIST COURSES */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {courses.map(c => (
-              <div key={c.id} className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
+              <div key={c.id} className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full">{c.category} • {c.level}</span>
+                  <span className="text-xs font-bold text-indigo-500 bg-indigo-500/10 px-3 py-1 rounded-full">{c.category} • {c.level}</span>
                   <button onClick={() => deleteCourse(c.id).then(loadAllData)} className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-xl">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
-                <h3 className="font-serif font-bold text-lg text-white">{c.title}</h3>
-                <p className="text-xs text-slate-400">{c.description}</p>
-                <div className="pt-2 border-t border-slate-800 flex justify-between items-center text-xs text-slate-400">
-                  <span>Số bài học: {c.lessons?.length || 0}</span>
-                </div>
+                <h3 className="font-serif font-bold text-lg text-[var(--text-main)]">{c.title}</h3>
+                <p className="text-xs text-[var(--text-muted)]">{c.description}</p>
               </div>
             ))}
           </div>
@@ -438,30 +479,30 @@ export default function AdminDashboardPage() {
       {/* TAB 3: MAP 3D */}
       {activeTab === 'map' && (
         <div className="max-w-7xl mx-auto space-y-8">
-          <form onSubmit={handleCreateMap} className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl">
-            <h2 className="text-xl font-bold text-emerald-400 flex items-center gap-2 font-serif">
+          <form onSubmit={handleCreateMap} className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 space-y-4 shadow-2xl">
+            <h2 className="text-xl font-bold text-emerald-500 flex items-center gap-2 font-serif">
               <Plus className="w-5 h-5" /> Thêm Địa Danh Bản Đồ 3D Thánh Địa
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <input
                 type="text" placeholder="Tên địa danh (VD: Jerusalem, Bethlehem)"
-                className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white"
+                className="bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
                 value={newMap.name} onChange={e => setNewMap({...newMap, name: e.target.value})}
               />
               <input
                 type="number" step="0.0001" placeholder="Vĩ độ (Latitude, VD: 31.7683)"
-                className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white"
+                className="bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
                 value={newMap.latitude} onChange={e => setNewMap({...newMap, latitude: Number(e.target.value)})}
               />
               <input
                 type="number" step="0.0001" placeholder="Kinh độ (Longitude, VD: 35.2137)"
-                className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white"
+                className="bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
                 value={newMap.longitude} onChange={e => setNewMap({...newMap, longitude: Number(e.target.value)})}
               />
             </div>
             <textarea
               rows={2} placeholder="Mô tả ý nghĩa địa danh và tham chiếu Kinh Thánh..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white"
+              className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
               value={newMap.description} onChange={e => setNewMap({...newMap, description: e.target.value})}
             />
             <button type="submit" className="px-6 py-3 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-500 flex items-center gap-2">
@@ -471,10 +512,10 @@ export default function AdminDashboardPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {mapLocations.map(m => (
-              <div key={m.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex justify-between items-start">
+              <div key={m.id} className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-4 flex justify-between items-start">
                 <div>
-                  <h4 className="font-bold text-sm text-emerald-400">{m.name}</h4>
-                  <p className="text-[11px] text-slate-400 mt-1">Tọa độ: {m.latitude}, {m.longitude}</p>
+                  <h4 className="font-bold text-sm text-emerald-500">{m.name}</h4>
+                  <p className="text-[11px] text-[var(--text-muted)] mt-1">Tọa độ: {m.latitude}, {m.longitude}</p>
                 </div>
                 <button onClick={() => deleteMapLocation(m.id).then(loadAllData)} className="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg">
                   <Trash2 className="w-4 h-4" />
@@ -488,30 +529,30 @@ export default function AdminDashboardPage() {
       {/* TAB 4: TIMELINE */}
       {activeTab === 'timeline' && (
         <div className="max-w-7xl mx-auto space-y-8">
-          <form onSubmit={handleCreateTimeline} className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl">
-            <h2 className="text-xl font-bold text-purple-400 flex items-center gap-2 font-serif">
+          <form onSubmit={handleCreateTimeline} className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 space-y-4 shadow-2xl">
+            <h2 className="text-xl font-bold text-purple-500 flex items-center gap-2 font-serif">
               <Plus className="w-5 h-5" /> Thêm Mốc Dòng Thời Gian Lịch Sử Cứu Độ
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <input
                 type="text" placeholder="Nhãn năm (VD: 2000 TCN, 33 SCN)"
-                className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white"
+                className="bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
                 value={newTimeline.year_label} onChange={e => setNewTimeline({...newTimeline, year_label: e.target.value})}
               />
               <input
                 type="number" placeholder="Số năm để sắp xếp (VD: -2000 hoặc 33)"
-                className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white"
+                className="bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
                 value={newTimeline.order_year} onChange={e => setNewTimeline({...newTimeline, order_year: Number(e.target.value)})}
               />
               <input
                 type="text" placeholder="Tên sự kiện (VD: Giao ước với Áp-ra-ham)"
-                className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white"
+                className="bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
                 value={newTimeline.title} onChange={e => setNewTimeline({...newTimeline, title: e.target.value})}
               />
             </div>
             <textarea
               rows={2} placeholder="Chi tiết lịch sử sự kiện..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white"
+              className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
               value={newTimeline.description} onChange={e => setNewTimeline({...newTimeline, description: e.target.value})}
             />
             <button type="submit" className="px-6 py-3 bg-purple-600 text-white font-bold text-xs rounded-xl hover:bg-purple-500 flex items-center gap-2">
@@ -521,12 +562,12 @@ export default function AdminDashboardPage() {
 
           <div className="space-y-3">
             {timelineEvents.map(t => (
-              <div key={t.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex justify-between items-center">
+              <div key={t.id} className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-4 flex justify-between items-center">
                 <div className="flex items-center gap-4">
-                  <span className="px-3 py-1 bg-purple-500/10 border border-purple-500/30 text-purple-300 font-bold text-xs rounded-xl">{t.year_label}</span>
+                  <span className="px-3 py-1 bg-purple-500/10 border border-purple-500/30 text-purple-400 font-bold text-xs rounded-xl">{t.year_label}</span>
                   <div>
-                    <h4 className="font-bold text-sm text-white">{t.title}</h4>
-                    <p className="text-xs text-slate-400 line-clamp-1">{t.description}</p>
+                    <h4 className="font-bold text-sm text-[var(--text-main)]">{t.title}</h4>
+                    <p className="text-xs text-[var(--text-muted)] line-clamp-1">{t.description}</p>
                   </div>
                 </div>
                 <button onClick={() => deleteTimelineEvent(t.id).then(loadAllData)} className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-xl">
@@ -541,25 +582,25 @@ export default function AdminDashboardPage() {
       {/* TAB 5: QUIZ */}
       {activeTab === 'quiz' && (
         <div className="max-w-7xl mx-auto space-y-8">
-          <form onSubmit={handleCreateQuiz} className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl">
-            <h2 className="text-xl font-bold text-rose-400 flex items-center gap-2 font-serif">
+          <form onSubmit={handleCreateQuiz} className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 space-y-4 shadow-2xl">
+            <h2 className="text-xl font-bold text-rose-500 flex items-center gap-2 font-serif">
               <Plus className="w-5 h-5" /> Thêm Câu Hỏi Đấu Trường Quiz Giáo Lý
             </h2>
             <textarea
               rows={2} placeholder="Nội dung câu hỏi..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white"
+              className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
               value={newQuiz.question} onChange={e => setNewQuiz({...newQuiz, question: e.target.value})}
             />
             <div className="grid grid-cols-2 gap-4">
-              <input type="text" placeholder="Đáp án A" className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white" value={newQuiz.opt0} onChange={e => setNewQuiz({...newQuiz, opt0: e.target.value})} />
-              <input type="text" placeholder="Đáp án B" className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white" value={newQuiz.opt1} onChange={e => setNewQuiz({...newQuiz, opt1: e.target.value})} />
-              <input type="text" placeholder="Đáp án C" className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white" value={newQuiz.opt2} onChange={e => setNewQuiz({...newQuiz, opt2: e.target.value})} />
-              <input type="text" placeholder="Đáp án D" className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white" value={newQuiz.opt3} onChange={e => setNewQuiz({...newQuiz, opt3: e.target.value})} />
+              <input type="text" placeholder="Đáp án A" className="bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-xs text-[var(--text-main)]" value={newQuiz.opt0} onChange={e => setNewQuiz({...newQuiz, opt0: e.target.value})} />
+              <input type="text" placeholder="Đáp án B" className="bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-xs text-[var(--text-main)]" value={newQuiz.opt1} onChange={e => setNewQuiz({...newQuiz, opt1: e.target.value})} />
+              <input type="text" placeholder="Đáp án C" className="bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-xs text-[var(--text-main)]" value={newQuiz.opt2} onChange={e => setNewQuiz({...newQuiz, opt2: e.target.value})} />
+              <input type="text" placeholder="Đáp án D" className="bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-xs text-[var(--text-main)]" value={newQuiz.opt3} onChange={e => setNewQuiz({...newQuiz, opt3: e.target.value})} />
             </div>
             <div className="flex items-center gap-4">
-              <label className="text-xs font-bold text-slate-400">Đáp án đúng:</label>
+              <label className="text-xs font-bold text-[var(--text-muted)]">Đáp án đúng:</label>
               <select
-                className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white"
+                className="bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-2 text-xs text-[var(--text-main)]"
                 value={newQuiz.correct_option} onChange={e => setNewQuiz({...newQuiz, correct_option: Number(e.target.value)})}
               >
                 <option value={0}>A</option><option value={1}>B</option><option value={2}>C</option><option value={3}>D</option>
@@ -574,17 +615,17 @@ export default function AdminDashboardPage() {
 
       {/* TAB 6: USERS */}
       {activeTab === 'users' && (
-        <div className="max-w-7xl mx-auto bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
-          <h2 className="text-xl font-bold text-white font-serif">Quản Lý Phân Quyền Người Dùng ({profiles.length})</h2>
-          <div className="divide-y divide-slate-800">
+        <div className="max-w-7xl mx-auto bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 space-y-4">
+          <h2 className="text-xl font-bold text-[var(--text-main)] font-serif">Quản Lý Phân Quyền Người Dùng ({profiles.length})</h2>
+          <div className="divide-y divide-[var(--border-card)]">
             {profiles.map(usr => (
               <div key={usr.id} className="py-4 flex items-center justify-between gap-4">
                 <div>
-                  <div className="font-bold text-sm text-white">{usr.full_name || usr.email}</div>
-                  <div className="text-xs text-slate-400">{usr.email}</div>
+                  <div className="font-bold text-sm text-[var(--text-main)]">{usr.full_name || usr.email}</div>
+                  <div className="text-xs text-[var(--text-muted)]">{usr.email}</div>
                 </div>
                 <select
-                  className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-amber-400 font-bold"
+                  className="bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-3 py-1.5 text-xs text-amber-500 font-bold"
                   value={usr.role || 'student'}
                   onChange={e => handleRoleChange(usr.id, e.target.value)}
                 >
@@ -597,6 +638,35 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       )}
+
+      {/* LIVE PREVIEW MODAL FOR 3D HTML POSTS */}
+      {showPreviewModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[var(--bg-card)] rounded-3xl w-full max-w-5xl h-[85vh] flex flex-col border border-[var(--border-card)] shadow-2xl overflow-hidden">
+            <div className="p-4 sm:p-6 border-b border-[var(--border-card)] flex justify-between items-center bg-[var(--bg-main)]">
+              <div className="flex items-center gap-2 text-amber-500 font-bold text-sm">
+                <Eye className="w-5 h-5" /> Xem Trước Trực Quan HTML 3D: <span className="text-[var(--text-main)]">{newPost.title || 'Bài Tương Tác'}</span>
+              </div>
+              <button 
+                onClick={() => setShowPreviewModal(false)}
+                className="w-9 h-9 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-rose-600 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 w-full h-full bg-slate-950">
+              <iframe
+                title="HTML Live Preview"
+                srcDoc={newPost.content}
+                className="w-full h-full border-0"
+                sandbox="allow-scripts allow-same-origin"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
