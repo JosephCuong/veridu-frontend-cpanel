@@ -43,9 +43,15 @@ export interface Lesson {
   id: number | string;
   title: string;
   orderIndex?: number;
+  orderNumber?: number;
   chapterTitle?: string;
   videoUrl?: string;
+  audioUrl?: string;
   content?: string;
+  contentHtml?: string;
+  lessonType?: string;
+  scripture?: string;
+  prayer?: string;
   durationMinutes?: number;
 }
 
@@ -175,13 +181,19 @@ export async function fetchCourseBySlug(slug: string): Promise<CourseDetail | nu
       level: data.level || 'Cơ Bản',
       instructor: data.instructor || 'VERIDU Team',
       duration: data.duration || '12 Bài Học',
-      lessons: (data.lessons || []).map((l: any) => ({
+      lessons: (data.lessons || []).map((l: any, idx: number) => ({
         id: l.id,
         title: l.title,
-        orderIndex: l.order_index || 1,
+        orderIndex: l.order_index || idx + 1,
+        orderNumber: l.order_number || l.order_index || idx + 1,
         chapterTitle: l.chapter_title || 'Chương chung',
         videoUrl: l.video_url || '',
+        audioUrl: l.audio_url || '',
         content: l.content || '',
+        contentHtml: l.content || '',
+        lessonType: l.lesson_type || 'reading',
+        scripture: l.scripture || '',
+        prayer: l.prayer || '',
         durationMinutes: l.duration_minutes || 15
       }))
     };
