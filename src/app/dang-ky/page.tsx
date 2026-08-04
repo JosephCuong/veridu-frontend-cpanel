@@ -14,7 +14,7 @@ export default function RegisterPage() {
   const [displayName, setDisplayName] = useState('');
   const [christianName, setChristianName] = useState('Giuse');
   const [parish, setParish] = useState('');
-  const [diocese, setDiocese] = useState('Gi�o Ph?n S�i G?n');
+  const [diocese, setDiocese] = useState('Giáo Phận Sài Gòn');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -41,7 +41,7 @@ export default function RegisterPage() {
       });
 
       if (error) {
-        setErrorMsg(error.message || '��ng k? th?t b?i. Vui l?ng ki?m tra l?i.');
+        setErrorMsg(error.message || 'Đăng ký thất bại. Vui lòng kiểm tra lại.');
       } else {
         const userProfile: any = {
           id: data.user?.id || '1',
@@ -50,22 +50,22 @@ export default function RegisterPage() {
           christianName: christianName,
           parish: parish,
           diocese: diocese,
-          role: 'H?c Vi�n',
+          role: 'Học Viên',
           streak: 1
         };
 
         saveAuthSession(data.session?.access_token || 'sb_session_active', userProfile);
 
         if (data.session) {
-          setSuccessMsg('��ng k? th�nh c�ng! �ang chuy?n h�?ng...');
+          setSuccessMsg('Đăng ký thành công! Đang chuyển hướng...');
           setTimeout(() => { window.location.href = '/ho-so'; }, 1000);
         } else {
-          setSuccessMsg('�? kh?i t?o t�i kho?n! Vui l?ng ki?m tra Email �? x�c nh?n (ho?c ��ng nh?p ngay n?u t?t Confirm Email).');
+          setSuccessMsg('Đã khởi tạo tài khoản! Vui lòng kiểm tra Email để xác nhận (hoặc đăng nhập ngay nếu đã tắt Confirm Email).');
         }
       }
     } catch (err: any) {
       console.error('Register error:', err);
-      setErrorMsg(err.message || 'Kh�ng th? k?t n?i d?ch v? Supabase. Ki?m tra l?i API Keys.');
+      setErrorMsg(err.message || 'Không thể kết nối dịch vụ Supabase. Kiểm tra lại API Keys.');
     } finally {
       setIsLoading(false);
     }
@@ -79,8 +79,8 @@ export default function RegisterPage() {
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-700/20 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400 shadow-xl shadow-amber-500/10">
               <UserPlus className="w-8 h-8" />
             </div>
-            <h1 className="font-serif font-black text-3xl text-amber-400">T?o T�i Kho?n C�ng Gi�o</h1>
-            <p className="text-sm text-[var(--text-muted)]">Tham gia c?ng �?ng h?c t?p & suy ni?m L?i Ch�a VERIDU</p>
+            <h1 className="font-serif font-black text-3xl text-amber-400">Tạo Tài Khoản Công Giáo</h1>
+            <p className="text-sm text-[var(--text-muted)]">Tham gia cộng đồng học tập & suy niệm Lời Chúa VERIDU</p>
           </div>
 
           {errorMsg && (
@@ -101,7 +101,7 @@ export default function RegisterPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center">
-                  <span className="text-amber-400 font-serif mr-1.5 font-black">?</span> T�n Th�nh
+                  <span className="text-amber-400 font-serif mr-1.5 font-black">✝</span> Tên Thánh
                 </label>
                 <input 
                   type="text" required value={christianName} onChange={(e) => setChristianName(e.target.value)}
@@ -112,18 +112,18 @@ export default function RegisterPage() {
 
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center">
-                  <User className="w-3 h-3 mr-1.5" /> H? v� T�n
+                  <User className="w-3 h-3 mr-1.5" /> Họ và Tên
                 </label>
                 <input 
                   type="text" required value={displayName} onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Nguy?n V�n A"
+                  placeholder="Nguyễn Văn A"
                   className="w-full bg-[var(--bg-main)]/50 border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center">
-                  <Mail className="w-3 h-3 mr-1.5" /> �?a Ch? Email
+                  <Mail className="w-3 h-3 mr-1.5" /> Địa Chỉ Email
                 </label>
                 <input 
                   type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
@@ -134,39 +134,39 @@ export default function RegisterPage() {
 
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center">
-                  <Lock className="w-3 h-3 mr-1.5" /> M?t Kh?u
+                  <Lock className="w-3 h-3 mr-1.5" /> Mật Khẩu
                 </label>
                 <input 
                   type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-                  placeholder="��������"
+                  placeholder="••••••••"
                   className="w-full bg-[var(--bg-main)]/50 border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center">
-                  <Church className="w-3 h-3 mr-1.5" /> Gi�o X?
+                  <Church className="w-3 h-3 mr-1.5" /> Giáo Xứ
                 </label>
                 <input 
                   type="text" required value={parish} onChange={(e) => setParish(e.target.value)}
-                  placeholder="T�n �?nh"
+                  placeholder="Tân Định"
                   className="w-full bg-[var(--bg-main)]/50 border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center">
-                  <Compass className="w-3 h-3 mr-1.5" /> Gi�o Ph?n
+                  <Compass className="w-3 h-3 mr-1.5" /> Giáo Phận
                 </label>
                 <select 
                   value={diocese} onChange={(e) => setDiocese(e.target.value)}
                   className="w-full bg-[var(--bg-main)]/50 border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
                 >
-                  <option value="Gi�o Ph?n S�i G?n">Gi�o Ph?n S�i G?n</option>
-                  <option value="Gi�o Ph?n Xu�n L?c">Gi�o Ph?n Xu�n L?c</option>
-                  <option value="Gi�o Ph?n Ph� C�?ng">Gi�o Ph?n Ph� C�?ng</option>
-                  <option value="Gi�o Ph?n H� N?i">Gi�o Ph?n H� N?i</option>
-                  <option value="Kh�c">Kh�c</option>
+                  <option value="Giáo Phận Sài Gòn">Giáo Phận Sài Gòn</option>
+                  <option value="Giáo Phận Xuân Lộc">Giáo Phận Xuân Lộc</option>
+                  <option value="Giáo Phận Phú Cường">Giáo Phận Phú Cường</option>
+                  <option value="Giáo Phận Hà Nội">Giáo Phận Hà Nội</option>
+                  <option value="Khác">Khác</option>
                 </select>
               </div>
             </div>
@@ -175,15 +175,15 @@ export default function RegisterPage() {
               type="submit" disabled={isLoading}
               className="w-full rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-4 px-4 shadow-lg transition-all flex items-center justify-center mt-4"
             >
-              {isLoading ? '�ang x? l?...' : 'Ho�n T?t ��ng K?'}
+              {isLoading ? 'Đang xử lý...' : 'Hoàn Tất Đăng Ký'}
             </button>
           </form>
 
           <div className="text-center pt-5 border-t border-[var(--border-card)]/50">
             <p className="text-sm text-[var(--text-muted)]">
-              �? c� t�i kho?n?{' '}
+              Đã có tài khoản?{' '}
               <Link href="/dang-nhap" className="text-amber-400 font-bold hover:underline">
-                ��ng nh?p ngay
+                Đăng nhập ngay
               </Link>
             </p>
           </div>

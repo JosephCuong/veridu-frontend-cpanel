@@ -29,9 +29,9 @@ export default function LoginPage() {
       });
 
       if (error) {
-        setErrorMsg(error.message || 'Email ho?c m?t kh?u kh�ng ch�nh x�c.');
+        setErrorMsg(error.message || 'Email hoặc mật khẩu không chính xác.');
       } else {
-        setSuccessMsg('��ng nh?p th�nh c�ng!');
+        setSuccessMsg('Đăng nhập thành công!');
         const userProfile: any = {
           id: data.user?.id || '1',
           email: data.user?.email || username,
@@ -39,7 +39,7 @@ export default function LoginPage() {
           christianName: data.user?.user_metadata?.christian_name || '',
           parish: data.user?.user_metadata?.parish || '',
           diocese: data.user?.user_metadata?.diocese || '',
-          role: data.user?.user_metadata?.role === 'admin' ? 'Qu?n Tr? Vi�n' : 'H?c Vi�n',
+          role: data.user?.user_metadata?.role === 'admin' ? 'Quản Trị Viên' : 'Học Viên',
           streak: 1
         };
         saveAuthSession(data.session?.access_token || 'sb_session_active', userProfile, rememberMe);
@@ -47,7 +47,7 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      setErrorMsg(err.message || 'Kh�ng th? k?t n?i �?n m�y ch? Supabase.');
+      setErrorMsg(err.message || 'Không thể kết nối đến máy chủ Supabase.');
     } finally {
       setIsLoading(false);
     }
@@ -61,8 +61,8 @@ export default function LoginPage() {
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-700/20 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400 shadow-xl shadow-amber-500/10">
               <LogIn className="w-8 h-8" />
             </div>
-            <h1 className="font-serif font-black text-3xl text-amber-400">��ng Nh?p VERIDU</h1>
-            <p className="text-sm text-[var(--text-muted)]">Ch�o m?ng b?n quay tr? l?i v?i n?n t?ng h?c t?p L?i Ch�a</p>
+            <h1 className="font-serif font-black text-3xl text-amber-400">Đăng Nhập VERIDU</h1>
+            <p className="text-sm text-[var(--text-muted)]">Chào mừng bạn quay trở lại với nền tảng học tập Lời Chúa</p>
           </div>
 
           {errorMsg && (
@@ -82,7 +82,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center">
-                <Mail className="w-3 h-3 mr-1.5" /> �?a Ch? Email
+                <Mail className="w-3 h-3 mr-1.5" /> Địa Chỉ Email
               </label>
               <input 
                 type="email" required value={username} onChange={(e) => setUsername(e.target.value)}
@@ -93,12 +93,12 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center justify-between">
-                <span className="flex items-center"><Lock className="w-3 h-3 mr-1.5" /> M?t Kh?u</span>
-                <Link href="/quen-mat-khau" className="text-xs text-amber-400 hover:underline">Qu�n m?t kh?u?</Link>
+                <span className="flex items-center"><Lock className="w-3 h-3 mr-1.5" /> Mật Khẩu</span>
+                <Link href="/quen-mat-khau" className="text-xs text-amber-400 hover:underline">Quên mật khẩu?</Link>
               </label>
               <input 
                 type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-                placeholder="��������"
+                placeholder="••••••••"
                 className="w-full bg-[var(--bg-main)]/50 border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
               />
             </div>
@@ -107,15 +107,15 @@ export default function LoginPage() {
               type="submit" disabled={isLoading}
               className="w-full rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-4 px-4 shadow-lg transition-all flex items-center justify-center mt-4"
             >
-              {isLoading ? '�ang x? l?...' : '��ng Nh?p'}
+              {isLoading ? 'Đang xử lý...' : 'Đăng Nhập'}
             </button>
           </form>
 
           <div className="text-center pt-5 border-t border-[var(--border-card)]/50">
             <p className="text-sm text-[var(--text-muted)]">
-              Ch�a c� t�i kho?n?{' '}
+              Chưa có tài khoản?{' '}
               <Link href="/dang-ky" className="text-amber-400 font-bold hover:underline">
-                ��ng k? ngay
+                Đăng ký ngay
               </Link>
             </p>
           </div>
