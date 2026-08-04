@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient';
 
-// --- POSTS / THÝ VI?N & BÀI H?C HTML 3D ---
+// --- POSTS / THï¿½ VI?N & Bï¿½I H?C HTML 3D ---
 export async function getAdminPosts() {
   const { data, error } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
   if (error) throw error;
@@ -48,7 +48,7 @@ export async function deleteCourse(id: number | string) {
   if (error) throw error;
 }
 
-// --- B?N Ð? 3D (MAP LOCATIONS) ---
+// --- B?N ï¿½? 3D (MAP LOCATIONS) ---
 export async function getAdminMapLocations() {
   const { data, error } = await supabase.from('map_locations').select('*').order('id', { ascending: true });
   if (error) throw error;
@@ -84,7 +84,7 @@ export async function deleteTimelineEvent(id: number | string) {
   if (error) throw error;
 }
 
-// --- NGÂN HÀNG QUIZ ---
+// --- NGï¿½N Hï¿½NG QUIZ ---
 export async function getAdminQuizQuestions() {
   const { data, error } = await supabase.from('quiz_questions').select('*').order('id', { ascending: false });
   if (error) throw error;
@@ -102,7 +102,7 @@ export async function deleteQuizQuestion(id: number | string) {
   if (error) throw error;
 }
 
-// --- PROFILES / TÀI KHO?N NGÝ?I DÙNG ---
+// --- PROFILES / Tï¿½I KHO?N NGï¿½?I Dï¿½NG ---
 export async function getAdminProfiles() {
   const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
   if (error) throw error;

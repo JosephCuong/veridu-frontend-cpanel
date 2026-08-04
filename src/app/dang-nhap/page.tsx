@@ -29,9 +29,9 @@ export default function LoginPage() {
       });
 
       if (error) {
-        setErrorMsg(error.message || 'Email ho?c m?t kh?u không chính xác.');
+        setErrorMsg(error.message || 'Email ho?c m?t kh?u khï¿½ng chï¿½nh xï¿½c.');
       } else {
-        setSuccessMsg('Ðãng nh?p thành công!');
+        setSuccessMsg('ï¿½ï¿½ng nh?p thï¿½nh cï¿½ng!');
         const userProfile: any = {
           id: data.user?.id || '1',
           email: data.user?.email || username,
@@ -39,7 +39,7 @@ export default function LoginPage() {
           christianName: data.user?.user_metadata?.christian_name || '',
           parish: data.user?.user_metadata?.parish || '',
           diocese: data.user?.user_metadata?.diocese || '',
-          role: data.user?.user_metadata?.role === 'admin' ? 'Qu?n Tr? Viên' : 'H?c Viên',
+          role: data.user?.user_metadata?.role === 'admin' ? 'Qu?n Tr? Viï¿½n' : 'H?c Viï¿½n',
           streak: 1
         };
         saveAuthSession(data.session?.access_token || 'sb_session_active', userProfile, rememberMe);
@@ -47,7 +47,7 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      setErrorMsg(err.message || 'Không th? k?t n?i ð?n máy ch? Supabase.');
+      setErrorMsg(err.message || 'Khï¿½ng th? k?t n?i ï¿½?n mï¿½y ch? Supabase.');
     } finally {
       setIsLoading(false);
     }
@@ -61,8 +61,8 @@ export default function LoginPage() {
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-700/20 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400 shadow-xl shadow-amber-500/10">
               <LogIn className="w-8 h-8" />
             </div>
-            <h1 className="font-serif font-black text-3xl text-amber-400">Ðãng Nh?p VERIDU</h1>
-            <p className="text-sm text-[var(--text-muted)]">Chào m?ng b?n quay tr? l?i v?i n?n t?ng h?c t?p L?i Chúa</p>
+            <h1 className="font-serif font-black text-3xl text-amber-400">ï¿½ï¿½ng Nh?p VERIDU</h1>
+            <p className="text-sm text-[var(--text-muted)]">Chï¿½o m?ng b?n quay tr? l?i v?i n?n t?ng h?c t?p L?i Chï¿½a</p>
           </div>
 
           {errorMsg && (
@@ -82,7 +82,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center">
-                <Mail className="w-3 h-3 mr-1.5" /> Ð?a Ch? Email
+                <Mail className="w-3 h-3 mr-1.5" /> ï¿½?a Ch? Email
               </label>
               <input 
                 type="email" required value={username} onChange={(e) => setUsername(e.target.value)}
@@ -94,11 +94,11 @@ export default function LoginPage() {
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center justify-between">
                 <span className="flex items-center"><Lock className="w-3 h-3 mr-1.5" /> M?t Kh?u</span>
-                <Link href="/quen-mat-khau" className="text-xs text-amber-400 hover:underline">Quên m?t kh?u?</Link>
+                <Link href="/quen-mat-khau" className="text-xs text-amber-400 hover:underline">Quï¿½n m?t kh?u?</Link>
               </label>
               <input 
                 type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"
                 className="w-full bg-[var(--bg-main)]/50 border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
               />
             </div>
@@ -107,15 +107,15 @@ export default function LoginPage() {
               type="submit" disabled={isLoading}
               className="w-full rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-4 px-4 shadow-lg transition-all flex items-center justify-center mt-4"
             >
-              {isLoading ? 'Ðang x? l?...' : 'Ðãng Nh?p'}
+              {isLoading ? 'ï¿½ang x? l?...' : 'ï¿½ï¿½ng Nh?p'}
             </button>
           </form>
 
           <div className="text-center pt-5 border-t border-[var(--border-card)]/50">
             <p className="text-sm text-[var(--text-muted)]">
-              Chýa có tài kho?n?{' '}
+              Chï¿½a cï¿½ tï¿½i kho?n?{' '}
               <Link href="/dang-ky" className="text-amber-400 font-bold hover:underline">
-                Ðãng k? ngay
+                ï¿½ï¿½ng k? ngay
               </Link>
             </p>
           </div>

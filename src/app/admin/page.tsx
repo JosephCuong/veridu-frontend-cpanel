@@ -34,7 +34,7 @@ export default function AdminDashboardPage() {
   const [newPost, setNewPost] = useState({
     title: '',
     slug: '',
-    category: 'Bài Týõng Tác HTML',
+    category: 'Bï¿½i Tï¿½ï¿½ng Tï¿½c HTML',
     excerpt: '',
     content: '',
     featured_image: '',
@@ -46,8 +46,8 @@ export default function AdminDashboardPage() {
     title: '',
     slug: '',
     description: '',
-    category: 'Kinh Thánh',
-    level: 'Cõ B?n',
+    category: 'Kinh Thï¿½nh',
+    level: 'Cï¿½ B?n',
     thumbnail: ''
   });
 
@@ -76,7 +76,7 @@ export default function AdminDashboardPage() {
     opt0: '', opt1: '', opt2: '', opt3: '',
     correct_option: 0,
     explanation: '',
-    category: 'Giáo L?'
+    category: 'Giï¿½o L?'
   });
 
   useEffect(() => {
@@ -115,62 +115,62 @@ export default function AdminDashboardPage() {
   // --- SUBMIT HANDLERS ---
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPost.title || !newPost.content) return showMsg('Vui l?ng nh?p Tiêu ð? và N?i dung!', 'error');
+    if (!newPost.title || !newPost.content) return showMsg('Vui l?ng nh?p Tiï¿½u ï¿½? vï¿½ N?i dung!', 'error');
     try {
       const slug = newPost.slug || newPost.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       await createPost({ ...newPost, slug });
-      showMsg('Ð? ðãng bài vi?t thành công!');
-      setNewPost({ title: '', slug: '', category: 'Bài Týõng Tác HTML', excerpt: '', content: '', featured_image: '', status: 'published' });
+      showMsg('ï¿½? ï¿½ï¿½ng bï¿½i vi?t thï¿½nh cï¿½ng!');
+      setNewPost({ title: '', slug: '', category: 'Bï¿½i Tï¿½ï¿½ng Tï¿½c HTML', excerpt: '', content: '', featured_image: '', status: 'published' });
       loadAllData();
     } catch (err: any) {
-      showMsg('L?i ðãng bài: ' + err.message, 'error');
+      showMsg('L?i ï¿½ï¿½ng bï¿½i: ' + err.message, 'error');
     }
   };
 
   const handleCreateCourse = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCourse.title) return showMsg('Vui l?ng nh?p Tên khóa h?c!', 'error');
+    if (!newCourse.title) return showMsg('Vui l?ng nh?p Tï¿½n khï¿½a h?c!', 'error');
     try {
       const slug = newCourse.slug || newCourse.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
       await createCourse({ ...newCourse, slug });
-      showMsg('Ð? t?o Khóa h?c LMS thành công!');
-      setNewCourse({ title: '', slug: '', description: '', category: 'Kinh Thánh', level: 'Cõ B?n', thumbnail: '' });
+      showMsg('ï¿½? t?o Khï¿½a h?c LMS thï¿½nh cï¿½ng!');
+      setNewCourse({ title: '', slug: '', description: '', category: 'Kinh Thï¿½nh', level: 'Cï¿½ B?n', thumbnail: '' });
       loadAllData();
     } catch (err: any) {
-      showMsg('L?i t?o khóa h?c: ' + err.message, 'error');
+      showMsg('L?i t?o khï¿½a h?c: ' + err.message, 'error');
     }
   };
 
   const handleCreateMap = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMap.name) return showMsg('Vui l?ng nh?p Tên ð?a danh!', 'error');
+    if (!newMap.name) return showMsg('Vui l?ng nh?p Tï¿½n ï¿½?a danh!', 'error');
     try {
       const slug = newMap.slug || newMap.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
       await createMapLocation({ ...newMap, slug });
-      showMsg('Ð? thêm Ð?a danh 3D thành công!');
+      showMsg('ï¿½? thï¿½m ï¿½?a danh 3D thï¿½nh cï¿½ng!');
       setNewMap({ name: '', slug: '', latitude: 31.7683, longitude: 35.2137, description: '', image_url: '' });
       loadAllData();
     } catch (err: any) {
-      showMsg('L?i thêm ð?a danh: ' + err.message, 'error');
+      showMsg('L?i thï¿½m ï¿½?a danh: ' + err.message, 'error');
     }
   };
 
   const handleCreateTimeline = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTimeline.title) return showMsg('Vui l?ng nh?p Tiêu ð? s? ki?n!', 'error');
+    if (!newTimeline.title) return showMsg('Vui l?ng nh?p Tiï¿½u ï¿½? s? ki?n!', 'error');
     try {
       await createTimelineEvent(newTimeline);
-      showMsg('Ð? thêm m?c D?ng th?i gian thành công!');
+      showMsg('ï¿½? thï¿½m m?c D?ng th?i gian thï¿½nh cï¿½ng!');
       setNewTimeline({ year_label: '2000 TCN', order_year: -2000, title: '', description: '', image_url: '' });
       loadAllData();
     } catch (err: any) {
-      showMsg('L?i thêm d?ng th?i gian: ' + err.message, 'error');
+      showMsg('L?i thï¿½m d?ng th?i gian: ' + err.message, 'error');
     }
   };
 
   const handleCreateQuiz = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newQuiz.question || !newQuiz.opt0 || !newQuiz.opt1) return showMsg('Vui l?ng nh?p câu h?i và ít nh?t 2 ðáp án!', 'error');
+    if (!newQuiz.question || !newQuiz.opt0 || !newQuiz.opt1) return showMsg('Vui l?ng nh?p cï¿½u h?i vï¿½ ï¿½t nh?t 2 ï¿½ï¿½p ï¿½n!', 'error');
     try {
       await createQuizQuestion({
         question: newQuiz.question,
@@ -179,21 +179,21 @@ export default function AdminDashboardPage() {
         explanation: newQuiz.explanation,
         category: newQuiz.category
       });
-      showMsg('Ð? thêm câu h?i Quiz thành công!');
-      setNewQuiz({ question: '', opt0: '', opt1: '', opt2: '', opt3: '', correct_option: 0, explanation: '', category: 'Giáo L?' });
+      showMsg('ï¿½? thï¿½m cï¿½u h?i Quiz thï¿½nh cï¿½ng!');
+      setNewQuiz({ question: '', opt0: '', opt1: '', opt2: '', opt3: '', correct_option: 0, explanation: '', category: 'Giï¿½o L?' });
       loadAllData();
     } catch (err: any) {
-      showMsg('L?i thêm câu h?i Quiz: ' + err.message, 'error');
+      showMsg('L?i thï¿½m cï¿½u h?i Quiz: ' + err.message, 'error');
     }
   };
 
   const handleRoleChange = async (userId: string, role: string) => {
     try {
       await updateProfileRole(userId, role);
-      showMsg('Ð? c?p nh?t phân quy?n tài kho?n!');
+      showMsg('ï¿½? c?p nh?t phï¿½n quy?n tï¿½i kho?n!');
       loadAllData();
     } catch (err: any) {
-      showMsg('L?i c?p nh?t phân quy?n: ' + err.message, 'error');
+      showMsg('L?i c?p nh?t phï¿½n quy?n: ' + err.message, 'error');
     }
   };
 
@@ -211,7 +211,7 @@ export default function AdminDashboardPage() {
           onClick={loadAllData}
           className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-xs rounded-xl border border-slate-700 transition-all"
         >
-          <RefreshCw className={w-4 h-4 \} /> Làm m?i d? li?u
+          <RefreshCw className={w-4 h-4 \} /> Lï¿½m m?i d? li?u
         </button>
       </div>
 
@@ -226,15 +226,15 @@ export default function AdminDashboardPage() {
       {/* STATS OVERVIEW */}
       <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-6 gap-4 my-8">
         <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl">
-          <div className="text-slate-400 text-xs font-semibold">Bài vi?t</div>
+          <div className="text-slate-400 text-xs font-semibold">Bï¿½i vi?t</div>
           <div className="text-2xl font-black text-amber-400 mt-1">{posts.length}</div>
         </div>
         <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl">
-          <div className="text-slate-400 text-xs font-semibold">Khóa h?c LMS</div>
+          <div className="text-slate-400 text-xs font-semibold">Khï¿½a h?c LMS</div>
           <div className="text-2xl font-black text-indigo-400 mt-1">{courses.length}</div>
         </div>
         <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl">
-          <div className="text-slate-400 text-xs font-semibold">Ð?a danh 3D</div>
+          <div className="text-slate-400 text-xs font-semibold">ï¿½?a danh 3D</div>
           <div className="text-2xl font-black text-emerald-400 mt-1">{mapLocations.length}</div>
         </div>
         <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl">
@@ -242,11 +242,11 @@ export default function AdminDashboardPage() {
           <div className="text-2xl font-black text-purple-400 mt-1">{timelineEvents.length}</div>
         </div>
         <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl">
-          <div className="text-slate-400 text-xs font-semibold">Câu h?i Quiz</div>
+          <div className="text-slate-400 text-xs font-semibold">Cï¿½u h?i Quiz</div>
           <div className="text-2xl font-black text-rose-400 mt-1">{quizQuestions.length}</div>
         </div>
         <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl">
-          <div className="text-slate-400 text-xs font-semibold">Tài kho?n User</div>
+          <div className="text-slate-400 text-xs font-semibold">Tï¿½i kho?n User</div>
           <div className="text-2xl font-black text-blue-400 mt-1">{profiles.length}</div>
         </div>
       </div>
@@ -257,19 +257,19 @@ export default function AdminDashboardPage() {
           onClick={() => setActiveTab('posts')}
           className={px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all \}
         >
-          <FileText className="w-4 h-4" /> Ðãng Bài Vi?t & HTML 3D
+          <FileText className="w-4 h-4" /> ï¿½ï¿½ng Bï¿½i Vi?t & HTML 3D
         </button>
         <button
           onClick={() => setActiveTab('courses')}
           className={px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all \}
         >
-          <BookOpen className="w-4 h-4" /> Khóa H?c LMS
+          <BookOpen className="w-4 h-4" /> Khï¿½a H?c LMS
         </button>
         <button
           onClick={() => setActiveTab('map')}
           className={px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all \}
         >
-          <Compass className="w-4 h-4" /> B?n Ð? 3D
+          <Compass className="w-4 h-4" /> B?n ï¿½? 3D
         </button>
         <button
           onClick={() => setActiveTab('timeline')}
@@ -281,13 +281,13 @@ export default function AdminDashboardPage() {
           onClick={() => setActiveTab('quiz')}
           className={px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all \}
         >
-          <Gamepad2 className="w-4 h-4" /> Ngân Hàng Quiz
+          <Gamepad2 className="w-4 h-4" /> Ngï¿½n Hï¿½ng Quiz
         </button>
         <button
           onClick={() => setActiveTab('users')}
           className={px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all \}
         >
-          <Users className="w-4 h-4" /> Qu?n L? User & Phân Quy?n
+          <Users className="w-4 h-4" /> Qu?n L? User & Phï¿½n Quy?n
         </button>
       </div>
 
@@ -296,37 +296,37 @@ export default function AdminDashboardPage() {
         <div className="max-w-7xl mx-auto space-y-8">
           <form onSubmit={handleCreatePost} className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 space-y-6 shadow-2xl">
             <h2 className="text-xl font-bold text-amber-400 flex items-center gap-2 font-serif">
-              <Plus className="w-5 h-5" /> Ðãng Bài Vi?t M?i / Bài Týõng Tác HTML 3D
+              <Plus className="w-5 h-5" /> ï¿½ï¿½ng Bï¿½i Vi?t M?i / Bï¿½i Tï¿½ï¿½ng Tï¿½c HTML 3D
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Tiêu ð? bài vi?t</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Tiï¿½u ï¿½? bï¿½i vi?t</label>
                 <input
                   type="text"
-                  placeholder="VD: Thánh Phêrô Kim Ngôn hay Khám Phá Quy Ði?n 3D"
+                  placeholder="VD: Thï¿½nh Phï¿½rï¿½ Kim Ngï¿½n hay Khï¿½m Phï¿½ Quy ï¿½i?n 3D"
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
                   value={newPost.title}
                   onChange={e => setNewPost({...newPost, title: e.target.value})}
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Th? Lo?i / Chuyên M?c</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Th? Lo?i / Chuyï¿½n M?c</label>
                 <select
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
                   value={newPost.category}
                   onChange={e => setNewPost({...newPost, category: e.target.value})}
                 >
-                  <option value="Bài Týõng Tác HTML">Bài Týõng Tác HTML 3D</option>
-                  <option value="Các Thánh">Các Thánh</option>
-                  <option value="Kinh Thánh">Kinh Thánh</option>
-                  <option value="Giáo L?">Giáo L?</option>
+                  <option value="Bï¿½i Tï¿½ï¿½ng Tï¿½c HTML">Bï¿½i Tï¿½ï¿½ng Tï¿½c HTML 3D</option>
+                  <option value="Cï¿½c Thï¿½nh">Cï¿½c Thï¿½nh</option>
+                  <option value="Kinh Thï¿½nh">Kinh Thï¿½nh</option>
+                  <option value="Giï¿½o L?">Giï¿½o L?</option>
                   <option value="Suy Ni?m">Suy Ni?m</option>
                 </select>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-2">URL ?nh Ð?i Di?n (Featured Image / CDN)</label>
+              <label className="block text-xs font-bold text-slate-400 uppercase mb-2">URL ?nh ï¿½?i Di?n (Featured Image / CDN)</label>
               <input
                 type="text"
                 placeholder="VD: https://media.thapgia.com/open-gospel.jpg"
@@ -337,10 +337,10 @@ export default function AdminDashboardPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Tóm t?t ng?n (Excerpt)</label>
+              <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Tï¿½m t?t ng?n (Excerpt)</label>
               <textarea
                 rows={2}
-                placeholder="Tóm t?t 1-2 câu v? n?i dung bài vi?t..."
+                placeholder="Tï¿½m t?t 1-2 cï¿½u v? n?i dung bï¿½i vi?t..."
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
                 value={newPost.excerpt}
                 onChange={e => setNewPost({...newPost, excerpt: e.target.value})}
@@ -349,11 +349,11 @@ export default function AdminDashboardPage() {
 
             <div>
               <label className="block text-xs font-bold text-amber-400 uppercase mb-2 flex items-center gap-2">
-                <Sparkles className="w-4 h-4" /> N?i dung bài vi?t (Ch?p nh?n Vãn b?n ho?c Code HTML 3D Týõng Tác)
+                <Sparkles className="w-4 h-4" /> N?i dung bï¿½i vi?t (Ch?p nh?n Vï¿½n b?n ho?c Code HTML 3D Tï¿½ï¿½ng Tï¿½c)
               </label>
               <textarea
                 rows={10}
-                placeholder="Nh?p n?i dung vãn b?n ho?c DÁN TOÀN B? CODE HTML/CSS/JS 3D VÀO ÐÂY..."
+                placeholder="Nh?p n?i dung vï¿½n b?n ho?c Dï¿½N TOï¿½N B? CODE HTML/CSS/JS 3D Vï¿½O ï¿½ï¿½Y..."
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-mono text-emerald-300 focus:outline-none focus:border-amber-500"
                 value={newPost.content}
                 onChange={e => setNewPost({...newPost, content: e.target.value})}
@@ -361,13 +361,13 @@ export default function AdminDashboardPage() {
             </div>
 
             <button type="submit" className="px-6 py-3 bg-amber-500 text-slate-950 font-bold text-xs rounded-xl hover:bg-amber-400 transition-all flex items-center gap-2">
-              <Save className="w-4 h-4" /> Xu?t B?n Bài Vi?t Này
+              <Save className="w-4 h-4" /> Xu?t B?n Bï¿½i Vi?t Nï¿½y
             </button>
           </form>
 
           {/* LIST POSTS */}
           <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 space-y-4">
-            <h3 className="text-lg font-bold text-white font-serif">Danh Sách Bài Vi?t Ð? Ðãng ({posts.length})</h3>
+            <h3 className="text-lg font-bold text-white font-serif">Danh Sï¿½ch Bï¿½i Vi?t ï¿½? ï¿½ï¿½ng ({posts.length})</h3>
             <div className="divide-y divide-slate-800">
               {posts.map(p => (
                 <div key={p.id} className="py-4 flex items-center justify-between gap-4">
@@ -391,11 +391,11 @@ export default function AdminDashboardPage() {
         <div className="max-w-7xl mx-auto space-y-8">
           <form onSubmit={handleCreateCourse} className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl">
             <h2 className="text-xl font-bold text-indigo-400 flex items-center gap-2 font-serif">
-              <Plus className="w-5 h-5" /> T?o Khóa H?c LMS M?i
+              <Plus className="w-5 h-5" /> T?o Khï¿½a H?c LMS M?i
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input
-                type="text" placeholder="Tên khóa h?c (VD: Nh?p Môn C?u Ý?c)"
+                type="text" placeholder="Tï¿½n khï¿½a h?c (VD: Nh?p Mï¿½n C?u ï¿½?c)"
                 className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
                 value={newCourse.title} onChange={e => setNewCourse({...newCourse, title: e.target.value})}
               />
@@ -406,12 +406,12 @@ export default function AdminDashboardPage() {
               />
             </div>
             <textarea
-              rows={3} placeholder="Mô t? tóm t?t n?i dung khóa h?c LMS..."
+              rows={3} placeholder="Mï¿½ t? tï¿½m t?t n?i dung khï¿½a h?c LMS..."
               className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
               value={newCourse.description} onChange={e => setNewCourse({...newCourse, description: e.target.value})}
             />
             <button type="submit" className="px-6 py-3 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-500 transition-all flex items-center gap-2">
-              <Save className="w-4 h-4" /> T?o Khóa H?c
+              <Save className="w-4 h-4" /> T?o Khï¿½a H?c
             </button>
           </form>
 
@@ -420,7 +420,7 @@ export default function AdminDashboardPage() {
             {courses.map(c => (
               <div key={c.id} className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full">{c.category} • {c.level}</span>
+                  <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full">{c.category} ï¿½ {c.level}</span>
                   <button onClick={() => deleteCourse(c.id).then(loadAllData)} className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-xl">
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -428,7 +428,7 @@ export default function AdminDashboardPage() {
                 <h3 className="font-serif font-bold text-lg text-white">{c.title}</h3>
                 <p className="text-xs text-slate-400">{c.description}</p>
                 <div className="pt-2 border-t border-slate-800 flex justify-between items-center text-xs text-slate-400">
-                  <span>S? bài h?c: {c.lessons?.length || 0}</span>
+                  <span>S? bï¿½i h?c: {c.lessons?.length || 0}</span>
                 </div>
               </div>
             ))}
@@ -441,32 +441,32 @@ export default function AdminDashboardPage() {
         <div className="max-w-7xl mx-auto space-y-8">
           <form onSubmit={handleCreateMap} className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl">
             <h2 className="text-xl font-bold text-emerald-400 flex items-center gap-2 font-serif">
-              <Plus className="w-5 h-5" /> Thêm Ð?a Danh B?n Ð? 3D Thánh Ð?a
+              <Plus className="w-5 h-5" /> Thï¿½m ï¿½?a Danh B?n ï¿½? 3D Thï¿½nh ï¿½?a
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <input
-                type="text" placeholder="Tên ð?a danh (VD: Jerusalem, Bethlehem)"
+                type="text" placeholder="Tï¿½n ï¿½?a danh (VD: Jerusalem, Bethlehem)"
                 className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white"
                 value={newMap.name} onChange={e => setNewMap({...newMap, name: e.target.value})}
               />
               <input
-                type="number" step="0.0001" placeholder="V? ð? (Latitude, VD: 31.7683)"
+                type="number" step="0.0001" placeholder="V? ï¿½? (Latitude, VD: 31.7683)"
                 className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white"
                 value={newMap.latitude} onChange={e => setNewMap({...newMap, latitude: Number(e.target.value)})}
               />
               <input
-                type="number" step="0.0001" placeholder="Kinh ð? (Longitude, VD: 35.2137)"
+                type="number" step="0.0001" placeholder="Kinh ï¿½? (Longitude, VD: 35.2137)"
                 className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white"
                 value={newMap.longitude} onChange={e => setNewMap({...newMap, longitude: Number(e.target.value)})}
               />
             </div>
             <textarea
-              rows={2} placeholder="Mô t? ? ngh?a ð?a danh và tham chi?u Kinh Thánh..."
+              rows={2} placeholder="Mï¿½ t? ? ngh?a ï¿½?a danh vï¿½ tham chi?u Kinh Thï¿½nh..."
               className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white"
               value={newMap.description} onChange={e => setNewMap({...newMap, description: e.target.value})}
             />
             <button type="submit" className="px-6 py-3 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-500 flex items-center gap-2">
-              <Save className="w-4 h-4" /> Thêm Ð?a Danh 3D
+              <Save className="w-4 h-4" /> Thï¿½m ï¿½?a Danh 3D
             </button>
           </form>
 
@@ -475,7 +475,7 @@ export default function AdminDashboardPage() {
               <div key={m.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex justify-between items-start">
                 <div>
                   <h4 className="font-bold text-sm text-emerald-400">{m.name}</h4>
-                  <p className="text-[11px] text-slate-400 mt-1">T?a ð?: {m.latitude}, {m.longitude}</p>
+                  <p className="text-[11px] text-slate-400 mt-1">T?a ï¿½?: {m.latitude}, {m.longitude}</p>
                 </div>
                 <button onClick={() => deleteMapLocation(m.id).then(loadAllData)} className="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg">
                   <Trash2 className="w-4 h-4" />
@@ -491,21 +491,21 @@ export default function AdminDashboardPage() {
         <div className="max-w-7xl mx-auto space-y-8">
           <form onSubmit={handleCreateTimeline} className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl">
             <h2 className="text-xl font-bold text-purple-400 flex items-center gap-2 font-serif">
-              <Plus className="w-5 h-5" /> Thêm M?c D?ng Th?i Gian L?ch S? C?u Ð?
+              <Plus className="w-5 h-5" /> Thï¿½m M?c D?ng Th?i Gian L?ch S? C?u ï¿½?
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <input
-                type="text" placeholder="Nh?n nãm (VD: 2000 TCN, 33 SCN)"
+                type="text" placeholder="Nh?n nï¿½m (VD: 2000 TCN, 33 SCN)"
                 className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white"
                 value={newTimeline.year_label} onChange={e => setNewTimeline({...newTimeline, year_label: e.target.value})}
               />
               <input
-                type="number" placeholder="S? nãm ð? s?p x?p (VD: -2000 ho?c 33)"
+                type="number" placeholder="S? nï¿½m ï¿½? s?p x?p (VD: -2000 ho?c 33)"
                 className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white"
                 value={newTimeline.order_year} onChange={e => setNewTimeline({...newTimeline, order_year: Number(e.target.value)})}
               />
               <input
-                type="text" placeholder="Tên s? ki?n (VD: Giao ý?c v?i Áp-ra-ham)"
+                type="text" placeholder="Tï¿½n s? ki?n (VD: Giao ï¿½?c v?i ï¿½p-ra-ham)"
                 className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white"
                 value={newTimeline.title} onChange={e => setNewTimeline({...newTimeline, title: e.target.value})}
               />
@@ -516,7 +516,7 @@ export default function AdminDashboardPage() {
               value={newTimeline.description} onChange={e => setNewTimeline({...newTimeline, description: e.target.value})}
             />
             <button type="submit" className="px-6 py-3 bg-purple-600 text-white font-bold text-xs rounded-xl hover:bg-purple-500 flex items-center gap-2">
-              <Save className="w-4 h-4" /> Thêm S? Ki?n
+              <Save className="w-4 h-4" /> Thï¿½m S? Ki?n
             </button>
           </form>
 
@@ -544,21 +544,21 @@ export default function AdminDashboardPage() {
         <div className="max-w-7xl mx-auto space-y-8">
           <form onSubmit={handleCreateQuiz} className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl">
             <h2 className="text-xl font-bold text-rose-400 flex items-center gap-2 font-serif">
-              <Plus className="w-5 h-5" /> Thêm Câu H?i Ð?u Trý?ng Quiz Giáo L?
+              <Plus className="w-5 h-5" /> Thï¿½m Cï¿½u H?i ï¿½?u Trï¿½?ng Quiz Giï¿½o L?
             </h2>
             <textarea
-              rows={2} placeholder="N?i dung câu h?i..."
+              rows={2} placeholder="N?i dung cï¿½u h?i..."
               className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white"
               value={newQuiz.question} onChange={e => setNewQuiz({...newQuiz, question: e.target.value})}
             />
             <div className="grid grid-cols-2 gap-4">
-              <input type="text" placeholder="Ðáp án A" className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white" value={newQuiz.opt0} onChange={e => setNewQuiz({...newQuiz, opt0: e.target.value})} />
-              <input type="text" placeholder="Ðáp án B" className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white" value={newQuiz.opt1} onChange={e => setNewQuiz({...newQuiz, opt1: e.target.value})} />
-              <input type="text" placeholder="Ðáp án C" className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white" value={newQuiz.opt2} onChange={e => setNewQuiz({...newQuiz, opt2: e.target.value})} />
-              <input type="text" placeholder="Ðáp án D" className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white" value={newQuiz.opt3} onChange={e => setNewQuiz({...newQuiz, opt3: e.target.value})} />
+              <input type="text" placeholder="ï¿½ï¿½p ï¿½n A" className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white" value={newQuiz.opt0} onChange={e => setNewQuiz({...newQuiz, opt0: e.target.value})} />
+              <input type="text" placeholder="ï¿½ï¿½p ï¿½n B" className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white" value={newQuiz.opt1} onChange={e => setNewQuiz({...newQuiz, opt1: e.target.value})} />
+              <input type="text" placeholder="ï¿½ï¿½p ï¿½n C" className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white" value={newQuiz.opt2} onChange={e => setNewQuiz({...newQuiz, opt2: e.target.value})} />
+              <input type="text" placeholder="ï¿½ï¿½p ï¿½n D" className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white" value={newQuiz.opt3} onChange={e => setNewQuiz({...newQuiz, opt3: e.target.value})} />
             </div>
             <div className="flex items-center gap-4">
-              <label className="text-xs font-bold text-slate-400">Ðáp án ðúng:</label>
+              <label className="text-xs font-bold text-slate-400">ï¿½ï¿½p ï¿½n ï¿½ï¿½ng:</label>
               <select
                 className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white"
                 value={newQuiz.correct_option} onChange={e => setNewQuiz({...newQuiz, correct_option: Number(e.target.value)})}
@@ -567,7 +567,7 @@ export default function AdminDashboardPage() {
               </select>
             </div>
             <button type="submit" className="px-6 py-3 bg-rose-600 text-white font-bold text-xs rounded-xl hover:bg-rose-500 flex items-center gap-2">
-              <Save className="w-4 h-4" /> Thêm Câu H?i Quiz
+              <Save className="w-4 h-4" /> Thï¿½m Cï¿½u H?i Quiz
             </button>
           </form>
         </div>
@@ -576,7 +576,7 @@ export default function AdminDashboardPage() {
       {/* TAB 6: USERS */}
       {activeTab === 'users' && (
         <div className="max-w-7xl mx-auto bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
-          <h2 className="text-xl font-bold text-white font-serif">Qu?n L? Phân Quy?n Ngý?i Dùng ({profiles.length})</h2>
+          <h2 className="text-xl font-bold text-white font-serif">Qu?n L? Phï¿½n Quy?n Ngï¿½?i Dï¿½ng ({profiles.length})</h2>
           <div className="divide-y divide-slate-800">
             {profiles.map(usr => (
               <div key={usr.id} className="py-4 flex items-center justify-between gap-4">
@@ -589,9 +589,9 @@ export default function AdminDashboardPage() {
                   value={usr.role || 'student'}
                   onChange={e => handleRoleChange(usr.id, e.target.value)}
                 >
-                  <option value="student">H?c Viên (student)</option>
-                  <option value="teacher">Giáo L? Viên (teacher)</option>
-                  <option value="admin">Qu?n Tr? Viên (admin)</option>
+                  <option value="student">H?c Viï¿½n (student)</option>
+                  <option value="teacher">Giï¿½o L? Viï¿½n (teacher)</option>
+                  <option value="admin">Qu?n Tr? Viï¿½n (admin)</option>
                 </select>
               </div>
             ))}
