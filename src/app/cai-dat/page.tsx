@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { getStoredUser, getAuthToken, saveAuthSession, UserProfile } from '@/lib/auth';
 import { fetchCharacters, Character } from '@/lib/api';
 import { User, Mail, Phone, Church, Compass, Save, Loader2, Image as ImageIcon, Settings } from 'lucide-react';
-import { saveAuthSession } from '@/lib/auth';
 
 export default function SettingsPage() {
-  const { user, token } = useAuth();
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     christianName: '',
@@ -25,18 +25,23 @@ export default function SettingsPage() {
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | { text: ''; type: '' }>({ text: '', type: '' });
 
   useEffect(() => {
-    if (user) {
+    const current = getStoredUser();
+    const currentToken = getAuthToken();
+    setUser(current);
+    setToken(currentToken);
+
+    if (current) {
       setFormData({
-        christianName: user.christianName || '',
-        displayName: user.displayName || user.username || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        parish: user.parish || '',
-        diocese: user.diocese || '',
-        avatar: user.avatar || ''
+        christianName: current.christianName || '',
+        displayName: current.displayName || current.username || '',
+        email: current.email || '',
+        phone: current.phone || '',
+        parish: current.parish || '',
+        diocese: current.diocese || '',
+        avatar: current.avatar || ''
       });
     }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     fetchCharacters().then(data => setCharacters(data)).catch(() => {});
@@ -48,25 +53,10 @@ export default function SettingsPage() {
     setMessage({ text: '', type: '' });
 
     try {
-      const WP_API_BASE = process.env.NEXT_PUBLIC_WP_API_BASE || 'https://data.thapgia.com/wp-json/veridu/v1';
-      const res = await fetch(`${WP_API_BASE}/auth/profile`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Lỗi hệ thống');
-
-      setMessage({ text: data.message, type: 'success' });
-      
       if (user && token) {
          saveAuthSession(token, { ...user, ...formData });
       }
-
+      setMessage({ text: 'Đã cập nhật thông tin hồ sơ thành công!', type: 'success' });
     } catch (err: any) {
       setMessage({ text: err.message, type: 'error' });
     } finally {
@@ -74,17 +64,23 @@ export default function SettingsPage() {
     }
   };
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex items-center justify-center p-4">
+        <p className="text-sm font-bold text-[var(--text-muted)]">Vui lòng đăng nhập để cài đặt hồ sơ.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)]">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] font-sans">
       
       <main className="max-w-4xl mx-auto px-4 py-12">
         <h1 className="font-serif font-black text-3xl mb-8 flex items-center gap-3">
-          <Settings className="w-8 h-8 text-amber-500" /> Cài Đặt Hồ Sơ
+          <Settings className="w-8 h-8 text-amber-500" /> Cài Đặt Hồ Sơ Tín Hữu
         </h1>
 
-        <div className="bg-[var(--bg-card)] rounded-3xl border border-[var(--border-card)] p-8">
+        <div className="bg-[var(--bg-card)] rounded-3xl border border-[var(--border-card)] p-8 shadow-2xl">
           {message.text && (
             <div className={`p-4 rounded-xl mb-6 font-bold text-sm ${message.type === 'error' ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'}`}>
               {message.text}
@@ -94,7 +90,7 @@ export default function SettingsPage() {
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Avatar Section */}
             <div className="flex flex-col sm:flex-row items-center gap-6 pb-8 border-b border-[var(--border-card)]">
-              <div className="w-24 h-24 rounded-full border-4 border-amber-500/30 overflow-hidden flex items-center justify-center bg-[var(--bg-main)] text-amber-500 text-3xl font-black">
+              <div className="w-24 h-24 rounded-full border-4 border-amber-500/30 overflow-hidden flex items-center justify-center bg-[var(--bg-main)] text-amber-500 text-3xl font-black shadow-inner">
                 {formData.avatar ? (
                   <img src={formData.avatar} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
@@ -113,33 +109,33 @@ export default function SettingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-bold text-[var(--text-muted)] flex items-center gap-2"><User className="w-4 h-4"/> Tên Thánh</label>
-                <input type="text" value={formData.christianName} onChange={(e)=>setFormData({...formData, christianName: e.target.value})} className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-all" />
+                <input type="text" value={formData.christianName} onChange={(e)=>setFormData({...formData, christianName: e.target.value})} className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-all text-sm" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-[var(--text-muted)] flex items-center gap-2"><User className="w-4 h-4"/> Họ & Tên</label>
-                <input type="text" value={formData.displayName} onChange={(e)=>setFormData({...formData, displayName: e.target.value})} className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none" required />
+                <input type="text" value={formData.displayName} onChange={(e)=>setFormData({...formData, displayName: e.target.value})} className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none text-sm" required />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-[var(--text-muted)] flex items-center gap-2"><Mail className="w-4 h-4"/> Email</label>
-                <input type="email" value={formData.email} onChange={(e)=>setFormData({...formData, email: e.target.value})} className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none" disabled={!!user.email} />
+                <input type="email" value={formData.email} onChange={(e)=>setFormData({...formData, email: e.target.value})} className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none text-sm" disabled={!!user.email} />
                 {user.email && <p className="text-xs text-[var(--text-muted)] italic">Email không thể tự thay đổi. Vui lòng liên hệ Admin.</p>}
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-[var(--text-muted)] flex items-center gap-2"><Phone className="w-4 h-4"/> Số điện thoại</label>
-                <input type="tel" value={formData.phone} onChange={(e)=>setFormData({...formData, phone: e.target.value})} className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none" />
+                <input type="tel" value={formData.phone} onChange={(e)=>setFormData({...formData, phone: e.target.value})} className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none text-sm" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-[var(--text-muted)] flex items-center gap-2"><Church className="w-4 h-4"/> Giáo Xứ</label>
-                <input type="text" value={formData.parish} onChange={(e)=>setFormData({...formData, parish: e.target.value})} className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none" />
+                <input type="text" value={formData.parish} onChange={(e)=>setFormData({...formData, parish: e.target.value})} className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none text-sm" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-[var(--text-muted)] flex items-center gap-2"><Compass className="w-4 h-4"/> Giáo Phận</label>
-                <input type="text" value={formData.diocese} onChange={(e)=>setFormData({...formData, diocese: e.target.value})} className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none" />
+                <input type="text" value={formData.diocese} onChange={(e)=>setFormData({...formData, diocese: e.target.value})} className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none text-sm" />
               </div>
             </div>
             
             <div className="pt-6 border-t border-[var(--border-card)] flex justify-end">
-              <button type="submit" disabled={isUpdating} className="px-8 py-3 bg-amber-500 text-slate-950 font-bold rounded-xl hover:bg-amber-400 transition flex items-center gap-2 disabled:opacity-70">
+              <button type="submit" disabled={isUpdating} className="px-8 py-3 bg-amber-500 text-slate-950 font-bold rounded-xl hover:bg-amber-400 transition flex items-center gap-2 disabled:opacity-70 shadow-lg shadow-amber-500/20">
                 {isUpdating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} Lưu Cập Nhật
               </button>
             </div>
