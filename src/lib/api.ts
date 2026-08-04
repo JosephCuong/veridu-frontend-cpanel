@@ -369,7 +369,8 @@ export async function fetchBibleChapter(translationSlug: string, bookSlug: strin
         footnotes: v.footnote || null,
         chapter: chapter,
         bookSlug: bookSlug
-      }))
+      })),
+      commentary: null
     };
   } catch (err) {
     console.error('fetchBibleChapter error:', err);
