@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 'use client';
 
 import React, { Suspense } from 'react';
@@ -41,3 +42,4 @@ export default function LiveRoomPage() {
     </div>
   );
 }
+
