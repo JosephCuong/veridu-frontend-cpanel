@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 import { saveAuthSession } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
-import { UserPlus, Lock, Mail, User, Church, Compass, ArrowRight, ShieldCheck } from 'lucide-react';
+import { UserPlus, Lock, Mail, User, Church, Compass, ArrowRight, ShieldCheck, CheckCircle } from 'lucide-react';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -17,11 +17,13 @@ export default function RegisterPage() {
   const [diocese, setDiocese] = useState('Giáo Ph?n Sài G?n');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMsg('');
+    setSuccessMsg('');
 
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -39,7 +41,7 @@ export default function RegisterPage() {
       });
 
       if (error) {
-        setErrorMsg(error.message || 'Ðãng k? th?t b?i. Vui l?ng ki?m tra l?i thông tin.');
+        setErrorMsg(error.message || 'Ðãng k? th?t b?i. Vui l?ng ki?m tra l?i.');
       } else {
         const userProfile: any = {
           id: data.user?.id || '1',
@@ -51,12 +53,19 @@ export default function RegisterPage() {
           role: 'H?c Viên',
           streak: 1
         };
-        saveAuthSession(data.session?.access_token || 'sb_token', userProfile);
-        window.location.href = '/ho-so';
+
+        saveAuthSession(data.session?.access_token || 'sb_session_active', userProfile);
+
+        if (data.session) {
+          setSuccessMsg('Ðãng k? thành công! Ðang chuy?n hý?ng...');
+          setTimeout(() => { window.location.href = '/ho-so'; }, 1000);
+        } else {
+          setSuccessMsg('Ð? kh?i t?o tài kho?n! Vui l?ng ki?m tra Email ð? xác nh?n (ho?c ðãng nh?p ngay n?u t?t Confirm Email).');
+        }
       }
     } catch (err: any) {
       console.error('Register error:', err);
-      setErrorMsg('Không th? k?t n?i ð?n máy ch? Supabase. Vui l?ng ki?m tra l?i c?u h?nh.');
+      setErrorMsg(err.message || 'Không th? k?t n?i d?ch v? Supabase. Ki?m tra l?i API Keys.');
     } finally {
       setIsLoading(false);
     }
@@ -76,8 +85,15 @@ export default function RegisterPage() {
 
           {errorMsg && (
             <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center flex items-center justify-center space-x-2">
-              <ShieldCheck className="w-4 h-4" />
+              <ShieldCheck className="w-4 h-4 flex-shrink-0" />
               <span>{errorMsg}</span>
+            </div>
+          )}
+
+          {successMsg && (
+            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm text-center flex items-center justify-center space-x-2">
+              <CheckCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{successMsg}</span>
             </div>
           )}
 

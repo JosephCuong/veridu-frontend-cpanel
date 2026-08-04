@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 import { saveAuthSession } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
-import { LogIn, Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
+import { LogIn, Lock, Mail, ArrowRight, ShieldCheck, CheckCircle } from 'lucide-react';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -14,11 +14,13 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMsg('');
+    setSuccessMsg('');
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -27,8 +29,9 @@ export default function LoginPage() {
       });
 
       if (error) {
-        setErrorMsg('Email ho?c m?t kh?u không chính xác.');
+        setErrorMsg(error.message || 'Email ho?c m?t kh?u không chính xác.');
       } else {
+        setSuccessMsg('Ðãng nh?p thành công!');
         const userProfile: any = {
           id: data.user?.id || '1',
           email: data.user?.email || username,
@@ -39,12 +42,12 @@ export default function LoginPage() {
           role: data.user?.user_metadata?.role === 'admin' ? 'Qu?n Tr? Viên' : 'H?c Viên',
           streak: 1
         };
-        saveAuthSession(data.session?.access_token || 'sb_token', userProfile, rememberMe);
-        window.location.href = '/ho-so';
+        saveAuthSession(data.session?.access_token || 'sb_session_active', userProfile, rememberMe);
+        setTimeout(() => { window.location.href = '/ho-so'; }, 800);
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      setErrorMsg('L?i ðãng nh?p: ' + (err.message || 'Không th? k?t n?i Supabase'));
+      setErrorMsg(err.message || 'Không th? k?t n?i ð?n máy ch? Supabase.');
     } finally {
       setIsLoading(false);
     }
@@ -64,8 +67,15 @@ export default function LoginPage() {
 
           {errorMsg && (
             <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center flex items-center justify-center space-x-2">
-              <ShieldCheck className="w-4 h-4" />
+              <ShieldCheck className="w-4 h-4 flex-shrink-0" />
               <span>{errorMsg}</span>
+            </div>
+          )}
+
+          {successMsg && (
+            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm text-center flex items-center justify-center space-x-2">
+              <CheckCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{successMsg}</span>
             </div>
           )}
 
