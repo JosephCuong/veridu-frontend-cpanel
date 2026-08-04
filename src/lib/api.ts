@@ -4,44 +4,28 @@ export interface Article {
   id: number | string;
   title: string;
   slug: string;
-  excerpt: string;
-  contentHtml: string;
+  excerpt?: string;
+  contentHtml?: string;
   interactiveHtml?: string;
+  content?: string;
   category?: string;
   featured_image?: string;
   thumbnail?: string;
   article_type?: string;
   created_at?: string;
+  updated_at?: string;
+  author?: string;
+  readingTime?: string;
+  reading_time?: string;
+  views?: number;
+  likes?: number;
   seo?: any;
-}
-
-export interface Character {
-  id: string | number;
-  name: string;
-  biography: string;
-  role: string;
-  era: string;
-  theology: string;
-  avatar_url: string;
-}
-
-export interface TimelineEventData {
-  id: string | number;
-  eraId?: string;
-  eraName?: string;
-  title: string;
-  timePeriod: string;
-  icon?: string;
-  category?: string;
-  articleSlug?: string;
-  interactiveHtmlUrl?: string;
-  thumbnail?: string;
-  description?: string;
 }
 
 export interface Lesson {
   id: number | string;
   title: string;
+  slug?: string;
   orderIndex?: number;
   orderNumber?: number;
   chapterTitle?: string;
@@ -53,6 +37,8 @@ export interface Lesson {
   scripture?: string;
   prayer?: string;
   durationMinutes?: number;
+  duration?: string;
+  isCompleted?: boolean;
 }
 
 export interface Course {
@@ -61,15 +47,46 @@ export interface Course {
   title: string;
   description: string;
   thumbnail?: string;
+  featured_image?: string;
   category?: string;
   level?: string;
   instructor?: string;
   duration?: string;
   lessonsCount?: number;
+  totalLessons?: number;
+  lessons?: Lesson[];
 }
 
 export interface CourseDetail extends Course {
   lessons: Lesson[];
+}
+
+export interface Character {
+  id: string | number;
+  name: string;
+  biography?: string;
+  role?: string;
+  era?: string;
+  theology?: string;
+  avatar_url?: string;
+  slug?: string;
+  description?: string;
+}
+
+export interface TimelineEventData {
+  id: string | number;
+  eraId?: string;
+  eraName?: string;
+  title: string;
+  timePeriod?: string;
+  icon?: string;
+  category?: string;
+  articleSlug?: string;
+  interactiveHtmlUrl?: string;
+  thumbnail?: string;
+  description?: string;
+  year_label?: string;
+  order_year?: number;
 }
 
 // ─── Library Articles (Supabase Integration) ───────────────────
@@ -96,7 +113,10 @@ export async function getLibraryArticles(): Promise<Article[]> {
       featured_image: item.featured_image || '',
       thumbnail: item.featured_image || '',
       article_type: (item.category === 'Bài Tương Tác HTML 3D' || item.category === 'Tương Tác 3D') ? 'interactive' : (item.category === 'Suy Niệm' ? 'meditation' : 'standard'),
-      created_at: item.created_at
+      created_at: item.created_at,
+      author: 'VERIDU Team',
+      readingTime: '5 phút',
+      reading_time: '5 phút'
     }));
   } catch (e) {
     console.error('getLibraryArticles error:', e);
@@ -125,7 +145,10 @@ export async function getLibraryArticleBySlug(slug: string): Promise<Article | n
       featured_image: data.featured_image || '',
       thumbnail: data.featured_image || '',
       article_type: (data.category === 'Bài Tương Tác HTML 3D' || data.category === 'Tương Tác 3D') ? 'interactive' : (data.category === 'Suy Niệm' ? 'meditation' : 'standard'),
-      created_at: data.created_at
+      created_at: data.created_at,
+      author: 'VERIDU Team',
+      readingTime: '5 phút',
+      reading_time: '5 phút'
     };
   } catch (e) {
     console.error('getLibraryArticleBySlug error:', e);
@@ -149,11 +172,13 @@ export async function fetchCourses(): Promise<Course[]> {
       title: c.title,
       description: c.description || '',
       thumbnail: c.thumbnail || '',
+      featured_image: c.thumbnail || '',
       category: c.category || 'Kinh Thánh',
       level: c.level || 'Cơ Bản',
       instructor: c.instructor || 'VERIDU Team',
       duration: c.duration || '12 Bài Học',
-      lessonsCount: c.lessons?.length || 0
+      lessonsCount: c.lessons?.length || 0,
+      totalLessons: c.lessons?.length || 0
     }));
   } catch (e) {
     console.error('fetchCourses error:', e);
@@ -177,13 +202,17 @@ export async function fetchCourseBySlug(slug: string): Promise<CourseDetail | nu
       title: data.title,
       description: data.description || '',
       thumbnail: data.thumbnail || '',
+      featured_image: data.thumbnail || '',
       category: data.category || 'Kinh Thánh',
       level: data.level || 'Cơ Bản',
       instructor: data.instructor || 'VERIDU Team',
       duration: data.duration || '12 Bài Học',
+      lessonsCount: data.lessons?.length || 0,
+      totalLessons: data.lessons?.length || 0,
       lessons: (data.lessons || []).map((l: any, idx: number) => ({
         id: l.id,
         title: l.title,
+        slug: l.slug || `bai-${idx + 1}`,
         orderIndex: l.order_index || idx + 1,
         orderNumber: l.order_number || l.order_index || idx + 1,
         chapterTitle: l.chapter_title || 'Chương chung',
@@ -194,7 +223,8 @@ export async function fetchCourseBySlug(slug: string): Promise<CourseDetail | nu
         lessonType: l.lesson_type || 'reading',
         scripture: l.scripture || '',
         prayer: l.prayer || '',
-        durationMinutes: l.duration_minutes || 15
+        durationMinutes: l.duration_minutes || 15,
+        duration: l.duration || `${l.duration_minutes || 15} phút`
       }))
     };
   } catch (e) {
@@ -246,6 +276,8 @@ export async function fetchTimelineEvents(): Promise<TimelineEventData[]> {
       id: t.id,
       title: t.title,
       timePeriod: t.year_label,
+      year_label: t.year_label,
+      order_year: t.order_year,
       description: t.description,
       category: t.category || 'Lịch Sử Cứu Độ',
       thumbnail: t.image_url,
