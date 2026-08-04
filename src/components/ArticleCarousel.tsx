@@ -68,7 +68,7 @@ export default function ArticleCarousel({ articles }: ArticleCarouselProps) {
             <div className="p-5 flex-1 flex flex-col">
               <div className="flex items-center gap-2 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-3">
                 <Calendar className="w-3 h-3" />
-                <span>{article.date}</span>
+                <span>{article.created_at}</span>
               </div>
               
               <h3 className="font-serif font-bold text-base text-[var(--text-main)] mb-2 line-clamp-2 leading-tight">
