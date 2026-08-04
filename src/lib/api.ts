@@ -88,6 +88,10 @@ export interface TimelineEventData {
   description?: string;
   year_label?: string;
   order_year?: number;
+  summary?: string;
+  theologicalMeaning?: string;
+  scripture?: string;
+  contentHtml?: string;
 }
 
 // ─── Library Articles (Supabase Integration) ───────────────────

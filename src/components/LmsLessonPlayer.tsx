@@ -24,7 +24,7 @@ export default function LmsLessonPlayer({ course, currentLesson }: LmsLessonPlay
   };
 
   const copyScripture = () => {
-    navigator.clipboard.writeText(`${currentLesson.title}\n(${currentLesson.scriptureReference || ''})\n\n${(currentLesson.contentHtml || '').replace(/<[^>]*>?/gm, '')}`);
+    navigator.clipboard.writeText(`${currentLesson.title}\n(${currentLesson.scripture || ''})\n\n${(currentLesson.contentHtml || '').replace(/<[^>]*>?/gm, '')}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -128,7 +128,7 @@ export default function LmsLessonPlayer({ course, currentLesson }: LmsLessonPlay
                 <span>{currentLesson.chapterTitle}</span>
                 <span>•</span>
                 <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-[var(--text-muted)]">
-                  {currentLesson.scriptureReference}
+                  {currentLesson.scripture}
                 </span>
               </div>
 
