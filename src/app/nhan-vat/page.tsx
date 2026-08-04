@@ -52,7 +52,7 @@ export default async function CharactersPage() {
                   </div>
                 </div>
 
-                <div className="text-sm text-[var(--text-muted)] line-clamp-3 leading-relaxed flex-1" dangerouslySetInnerHTML={{ __html: char.biography }} />
+                <div className="text-sm text-[var(--text-muted)] line-clamp-3 leading-relaxed flex-1" dangerouslySetInnerHTML={{ __html: char.biography || '' }} />
 
                 {char.theology && (
                   <div className="pt-4 border-t border-[var(--border-card)]">
