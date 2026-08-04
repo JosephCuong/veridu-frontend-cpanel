@@ -1,0 +1,15 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/dong-thoi-gian/layout,_N_T_/dong-thoi-gian/page,_N_T_/dong-thoi-gian"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/dong-thoi-gian/__PAGE__",
+    "/dong-thoi-gian",
+    "/_index",
+    "/_head"
+  ]
+}

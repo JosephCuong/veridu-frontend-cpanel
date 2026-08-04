@@ -1,0 +1,15 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/thu-vien/layout,_N_T_/thu-vien/page,_N_T_/thu-vien"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/thu-vien/__PAGE__",
+    "/thu-vien",
+    "/_index",
+    "/_head"
+  ]
+}

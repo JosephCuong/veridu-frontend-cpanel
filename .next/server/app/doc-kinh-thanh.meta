@@ -1,0 +1,17 @@
+{
+  "status": 307,
+  "headers": {
+    "location": "/doc-kinh-thanh/sang-the/1?t=ntt",
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/doc-kinh-thanh/layout,_N_T_/doc-kinh-thanh/page,_N_T_/doc-kinh-thanh"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/doc-kinh-thanh/__PAGE__",
+    "/doc-kinh-thanh",
+    "/_index",
+    "/_head"
+  ]
+}

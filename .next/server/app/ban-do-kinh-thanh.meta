@@ -1,0 +1,15 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/ban-do-kinh-thanh/layout,_N_T_/ban-do-kinh-thanh/page,_N_T_/ban-do-kinh-thanh"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/ban-do-kinh-thanh/__PAGE__",
+    "/ban-do-kinh-thanh",
+    "/_index",
+    "/_head"
+  ]
+}
