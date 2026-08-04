@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Course, Lesson, MOCK_LESSONS } from '@/lib/api';
+import { Course, Lesson } from '@/lib/api';
 import { 
   CheckCircle2, Circle, Eye, EyeOff, ChevronRight, ChevronLeft, 
   Copy, BookOpen, MessageSquare, Edit3, Award, Share2, PlayCircle, Sparkles 
@@ -88,7 +88,7 @@ export default function LmsLessonPlayer({ course, currentLesson }: LmsLessonPlay
                 </div>
                 
                 <div className="space-y-1">
-                  {MOCK_LESSONS.map((les) => {
+                  {(course.lessons || []).map((les) => {
                     const isSelected = les.id === currentLesson.id;
                     return (
                       <button
