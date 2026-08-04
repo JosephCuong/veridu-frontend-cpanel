@@ -178,9 +178,9 @@ export default async function SearchPage({
                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-950 bg-[var(--accent-gold)] px-2 py-1 rounded-full">
                              {article.category}
                            </span>
-                           {article.date && (
+                           {article.created_at && (
                              <span className="text-white text-xs font-bold flex items-center gap-1">
-                               <Calendar className="w-3 h-3 text-[var(--accent-gold)]" /> {article.date}
+                               <Calendar className="w-3 h-3 text-[var(--accent-gold)]" /> {article.created_at}
                              </span>
                            )}
                         </div>
