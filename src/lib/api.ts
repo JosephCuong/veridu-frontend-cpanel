@@ -42,7 +42,8 @@ export interface TimelineEventData {
 export interface Lesson {
   id: number | string;
   title: string;
-  orderIndex: number;
+  orderIndex?: number;
+  chapterTitle?: string;
   videoUrl?: string;
   content?: string;
   durationMinutes?: number;
@@ -172,6 +173,7 @@ export async function fetchCourseBySlug(slug: string): Promise<CourseDetail | nu
         id: l.id,
         title: l.title,
         orderIndex: l.order_index || 1,
+        chapterTitle: l.chapter_title || 'Chương chung',
         videoUrl: l.video_url || '',
         content: l.content || '',
         durationMinutes: l.duration_minutes || 15
