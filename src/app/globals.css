@@ -1,0 +1,120 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root, html.dark {
+  --bg-main: #020617;
+  --text-main: #f8fafc;
+  --header-bg: rgba(2, 6, 23, 0.85);
+  --bg-card: #0f172a;
+  --border-card: #1e293b;
+  --text-muted: #94a3b8;
+  --accent-gold: #fbbf24;
+  --accent-gold-text: #fbbf24;
+}
+
+html.light {
+  --bg-main: #fcfbfa;
+  --text-main: #0f172a;
+  --header-bg: rgba(255, 255, 255, 0.94);
+  --bg-card: #ffffff;
+  --border-card: #e2e8f0;
+  --text-muted: #475569;
+  --accent-gold: #d97706;
+  --accent-gold-text: #b45309;
+}
+
+@theme inline {
+  --color-background: var(--bg-main);
+  --color-foreground: var(--text-main);
+  --font-sans: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: var(--font-lora), ui-serif, Georgia, serif;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  color: var(--text-main);
+}
+
+/* COMPREHENSIVE LIGHT/DARK MODE TYPOGRAPHY & OVERRIDE RULES */
+.prose-veridu-sanitized {
+  color: var(--text-main) !important;
+}
+
+.prose-veridu-sanitized p,
+.prose-veridu-sanitized span,
+.prose-veridu-sanitized li {
+  color: var(--text-main) !important;
+}
+
+.prose-veridu-sanitized h1,
+.prose-veridu-sanitized h2,
+.prose-veridu-sanitized h3,
+.prose-veridu-sanitized h4,
+.prose-veridu-sanitized h5,
+.prose-veridu-sanitized h6 {
+  font-family: var(--font-lora), Georgia, serif !important;
+  color: var(--accent-gold-text) !important;
+  border-bottom-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+.prose-veridu-sanitized [style*="color: #8B0000"],
+.prose-veridu-sanitized [style*="color:#8B0000"],
+.prose-veridu-sanitized [style*="color: #722F37"],
+.prose-veridu-sanitized [style*="color:#722F37"],
+.prose-veridu-sanitized [style*="color: #C5A059"],
+.prose-veridu-sanitized [style*="color:#C5A059"] {
+  color: var(--accent-gold-text) !important;
+}
+
+.prose-veridu-sanitized [style*="color: #333"],
+.prose-veridu-sanitized [style*="color:#333"],
+.prose-veridu-sanitized [style*="color: #000"],
+.prose-veridu-sanitized [style*="color:#000"] {
+  color: var(--text-main) !important;
+}
+
+.prose-veridu-sanitized [style*="color: #555"],
+.prose-veridu-sanitized [style*="color:#555"],
+.prose-veridu-sanitized [style*="color: #666"],
+.prose-veridu-sanitized [style*="color:#666"],
+.prose-veridu-sanitized [style*="color: #777"],
+.prose-veridu-sanitized [style*="color:#777"],
+.prose-veridu-sanitized [style*="color: #888"],
+.prose-veridu-sanitized [style*="color:#888"] {
+  color: var(--text-muted) !important;
+}
+
+.prose-veridu-sanitized .canon-ref-box {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-card) !important;
+  border-radius: 1rem !important;
+  padding: 1.5rem !important;
+}
+
+.prose-veridu-sanitized .canon-title-sm {
+  color: var(--accent-gold-text) !important;
+  font-family: var(--font-lora), serif !important;
+}
+
+.prose-veridu-sanitized .canon-text,
+.prose-veridu-sanitized .canon-ref-item {
+  color: var(--text-main) !important;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
