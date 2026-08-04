@@ -55,7 +55,7 @@ export default function LiturgicalHeader() {
   const accentColor = season?.colorHex || '#F5C518';
 
   return (
-    <header className="sticky top-0 z-40 backdrop-blur-xl bg-[var(--header-bg)] border-b border-[var(--border-card)] transition-colors duration-300">
+    <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-[var(--header-bg)] border-b border-[var(--border-card)] transition-colors duration-300">
       {/* Top Banner Liturgical Season */}
       <div 
         className="w-full py-1 px-4 text-center text-xs font-semibold flex items-center justify-center gap-2 transition-all"

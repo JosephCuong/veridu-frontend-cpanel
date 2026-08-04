@@ -42,7 +42,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="mt-auto relative overflow-hidden bg-[var(--header-bg)] border-t border-[var(--border-card)] backdrop-blur-xl">
+    <footer className="mt-auto relative w-full overflow-hidden bg-[var(--header-bg)] border-t border-[var(--border-card)] backdrop-blur-xl">
       {/* Decorative Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-[var(--accent-gold)] to-transparent opacity-50"></div>
       
