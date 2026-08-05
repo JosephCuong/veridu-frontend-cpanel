@@ -160,7 +160,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
             <ArrowLeft className="w-4 h-4 mr-1.5" /> Quay Lại Thư Viện
           </Link>
 
-          <div className="flex flex-col lg:flex-row gap-8 items-start">
+          <div className="flex flex-col lg:flex-row gap-8">
             <main className="flex-1 w-full max-w-[1000px] mx-auto">
               <article className="p-6 sm:p-14 rounded-3xl glass-panel space-y-8 relative overflow-hidden">
                 <header className="border-b border-slate-200/50 dark:border-white/10 pb-8 relative z-10">
@@ -179,7 +179,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
               </article>
             </main>
 
-            <aside className="hidden lg:block w-72 xl:w-80 shrink-0 sticky top-24 self-start">
+            <aside className="hidden lg:block w-72 xl:w-80 shrink-0 relative">
               <TableOfContents />
             </aside>
           </div>
@@ -265,7 +265,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
             <ArrowLeft className="w-4 h-4 mr-1.5" /> Quay Lại Thư Viện
           </Link>
 
-          <div className="flex flex-col lg:flex-row gap-8 items-start">
+          <div className="flex flex-col lg:flex-row gap-8">
             <main className="flex-1 w-full max-w-[850px] mx-auto">
               <article className="p-6 sm:p-12 rounded-3xl glass-panel space-y-8 relative overflow-hidden">
                 <header className="space-y-4 border-b border-slate-200/50 dark:border-white/10 pb-8 text-center sm:text-left relative z-10">
@@ -283,7 +283,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
               </article>
             </main>
 
-            <aside className="hidden lg:block w-72 shrink-0">
+            <aside className="hidden lg:block w-72 xl:w-80 shrink-0 relative">
               <TableOfContents />
             </aside>
           </div>
@@ -304,7 +304,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
           <ArrowLeft className="w-4 h-4 mr-1.5" /> Quay Lại Thư Viện
         </Link>
         
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
+        <div className="flex flex-col lg:flex-row gap-8">
           <main className="flex-1 w-full max-w-[850px] mx-auto">
             <article className="p-6 sm:p-12 rounded-3xl glass-panel space-y-8 relative overflow-hidden">
               <header className="border-b border-slate-200/50 dark:border-white/10 pb-8 text-center sm:text-left space-y-4 relative z-10">
@@ -332,7 +332,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
             </article>
           </main>
 
-          <aside className="hidden lg:block w-72 shrink-0">
+          <aside className="hidden lg:block w-72 xl:w-80 shrink-0 relative">
             <TableOfContents />
           </aside>
         </div>
