@@ -84,7 +84,7 @@ export default function TableOfContents() {
         if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current);
       }}
       onMouseLeave={resetCollapseTimer}
-      className={`sticky top-32 transition-all duration-500 ease-in-out z-40 hidden lg:block ${
+      className={`transition-all duration-500 ease-in-out z-40 hidden lg:block relative ${
         isCollapsed ? 'w-14' : 'w-full'
       }`}
     >
