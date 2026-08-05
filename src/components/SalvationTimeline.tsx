@@ -79,7 +79,7 @@ export default function SalvationTimeline() {
         <Info className="w-12 h-12 text-amber-500 mx-auto" />
         <h3 className="text-xl font-bold text-[var(--text-main)] font-serif">Chưa Có Sự Kiện Dòng Thời Gian</h3>
         <p className="text-sm text-[var(--text-muted)] max-w-md mx-auto">
-          Hiện tại chưa có sự kiện nào được tạo trong Quản trị. Quản trị viên có thể vào menu <strong>"Dòng Thời Gian"</strong> trong WordPress Admin để nạp sự kiện mới.
+          Hiện tại chưa có sự kiện nào được tạo trong Quản trị. Quản trị viên có thể vào menu <strong>&quot;Dòng Thời Gian&quot;</strong> trong Quản Trị Hệ Thống để nạp sự kiện mới.
         </p>
       </div>
     );

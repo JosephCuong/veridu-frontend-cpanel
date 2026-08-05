@@ -219,7 +219,7 @@ export default function CoursePlayerPage({ params }: { params: Promise<{ slug: s
                         <BookOpen className="w-6 h-6 text-amber-500 shrink-0 mt-1" />
                         <div>
                             <h4 className="font-bold text-amber-600 dark:text-amber-400 mb-1">Lời Chúa</h4>
-                            <p className="font-serif italic text-lg text-[var(--text-main)]">"{activeLesson.scripture}"</p>
+                            <p className="font-serif italic text-lg text-[var(--text-main)]">&quot;{activeLesson.scripture}&quot;</p>
                         </div>
                     </div>
                   )}

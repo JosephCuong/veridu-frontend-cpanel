@@ -448,7 +448,7 @@ export default function AdminDashboardPage() {
                   <button type="button" onClick={() => insertFormatting('<b>', '</b>')} className="p-1.5 hover:bg-amber-500/20 text-amber-400 rounded-lg text-xs font-bold" title="In Đậm"><b>B</b></button>
                   <button type="button" onClick={() => insertFormatting('<i>', '</i>')} className="p-1.5 hover:bg-amber-500/20 text-amber-400 rounded-lg text-xs font-italic" title="In Nghiêng"><i>I</i></button>
                   <button type="button" onClick={() => insertFormatting('<h2>', '</h2>')} className="p-1.5 hover:bg-amber-500/20 text-amber-400 rounded-lg text-xs font-bold" title="Tiêu đề H2">H2</button>
-                  <button type="button" onClick={() => insertFormatting('<blockquote>', '</blockquote>')} className="p-1.5 hover:bg-amber-500/20 text-amber-400 rounded-lg text-xs" title="Trích Dẫn">""</button>
+                  <button type="button" onClick={() => insertFormatting('<blockquote>', '</blockquote>')} className="p-1.5 hover:bg-amber-500/20 text-amber-400 rounded-lg text-xs" title="Trích Dẫn">&quot;&quot;</button>
                   <button type="button" onClick={() => insertFormatting('<img src="', '" />')} className="p-1.5 hover:bg-amber-500/20 text-amber-400 rounded-lg text-xs" title="Chèn Ảnh">🖼️</button>
                 </div>
               </div>

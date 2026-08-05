@@ -233,7 +233,7 @@ export default function BibleMap() {
                 <BookOpen className="w-4 h-4" /> Trích Đoạn Kinh Thánh Liên Quan: <strong>{selectedLoc.scripture}</strong>
               </div>
               <p className="font-serif italic text-[var(--text-main)] text-sm leading-relaxed">
-                "{selectedLoc.verseText}"
+                &quot;{selectedLoc.verseText}&quot;
               </p>
             </div>
           </div>

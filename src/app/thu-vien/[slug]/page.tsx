@@ -219,7 +219,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
                       <BookOpen className="w-4 h-4" /> Trích Đoạn Kinh Thánh
                     </span>
                     <blockquote className="font-serif italic text-amber-800 dark:text-amber-100 text-lg sm:text-xl leading-relaxed">
-                      "{article.scriptureQuote}"
+                      &quot;{article.scriptureQuote}&quot;
                     </blockquote>
                   </div>
                 )}
@@ -236,7 +236,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
                       <Heart className="w-4 h-4 text-red-500" /> Cầu Nguyện Kính
                     </span>
                     <p className="font-serif italic text-indigo-950 dark:text-indigo-100 text-base leading-relaxed">
-                      "{prayerText}"
+                      &quot;{prayerText}&quot;
                     </p>
                   </div>
                 )}
