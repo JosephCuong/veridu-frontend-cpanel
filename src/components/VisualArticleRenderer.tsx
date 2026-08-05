@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import { normalizeAndSyncHtml } from '@/lib/htmlProcessor';
 
 interface VisualArticleRendererProps {
   contentHtml: string;
@@ -10,14 +11,8 @@ interface VisualArticleRendererProps {
 export default function VisualArticleRenderer({ contentHtml, className = '' }: VisualArticleRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Pre-process HTML to remove <style> tags and full-page layout wrappers that break the UI.
-  // We use a pure regex approach here to ensure Server and Client render the exact same HTML to prevent hydration mismatches.
-  const safeHtml = (contentHtml || '')
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-    .replace(/<!DOCTYPE[^>]*>/gi, '')
-    .replace(/<html[^>]*>|<\/html>/gi, '')
-    .replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '')
-    .replace(/<body[^>]*>|<\/body>/gi, '');
+  // Pre-process HTML to normalize inline styles, remove embedded TOCs, and strip full-page tags.
+  const safeHtml = normalizeAndSyncHtml(contentHtml || '');
 
   useEffect(() => {
     // 1. Dynamic Script Loader for Mermaid.js (CDN-based for maximum compatibility & zero bundle bloat)

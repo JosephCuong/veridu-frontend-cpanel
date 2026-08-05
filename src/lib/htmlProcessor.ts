@@ -102,36 +102,15 @@ function cleanInlineStyle(styleAttr: string): string {
     if (colonIdx === -1) return true;
 
     const prop = trimmed.slice(0, colonIdx).trim().toLowerCase();
-    const val = trimmed.slice(colonIdx + 1).trim().toLowerCase();
 
     // Strip text color rules that override dark/light theme variables
     if (prop === 'color' || prop === '-webkit-text-fill-color') {
-      if (
-        val.includes('black') ||
-        val.includes('white') ||
-        /#(000|111|222|333|444|555|666|777|888|999|aaa|bbb|ccc|ddd|eee|fff)\b/i.test(val) ||
-        /#([0-9a-f]{6})\b/i.test(val) ||
-        val.includes('rgb(') ||
-        val.includes('rgba(') ||
-        val.includes('hsl(')
-      ) {
-        return false;
-      }
+      return false;
     }
 
-    // Strip background and background-color rules
+    // Strip background and background-color rules that override dark/light theme variables
     if (prop === 'background' || prop === 'background-color') {
-      if (
-        val.includes('white') ||
-        val.includes('black') ||
-        /#(000|111|222|333|fff|eee|ddd|ccc)\b/i.test(val) ||
-        /#([0-9a-f]{6})\b/i.test(val) ||
-        val.includes('rgb(') ||
-        val.includes('rgba(') ||
-        val.includes('hsl(')
-      ) {
-        return false;
-      }
+      return false;
     }
 
     return true;
@@ -252,6 +231,9 @@ function normalizeAndSyncHtmlFallback(html: string, stripClasses: boolean = fals
   result = result.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
   result = result.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
 
+  // Strip embedded TOC elements from imported HTML files
+  result = result.replace(/<(div|nav|aside|section)[^>]*?(class|id)=["'][^"']*\btoc\b[^"']*["'][^>]*>[\s\S]*?<\/\1>/gi, '');
+
   // Strip <iframe> unless trusted embed
   const trustedIframeRegex = /(youtube\.com|youtube-nocookie\.com|youtu\.be|vimeo\.com|soundcloud\.com|google\.com\/maps|spotify\.com)/i;
   result = result.replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, (match) => {
@@ -307,6 +289,10 @@ export function normalizeAndSyncHtml(html: string, stripClasses: boolean = false
       // 2. Remove <style> tags
       const styles = doc.querySelectorAll('style');
       styles.forEach((s) => s.remove());
+
+      // 2b. Remove embedded TOC containers
+      const tocs = doc.querySelectorAll('.toc, #toc, [class*="toc-"], [id*="toc-"]');
+      tocs.forEach((t) => t.remove());
 
       // 3. Filter <iframe> (only allow trusted embeds)
       const iframes = doc.querySelectorAll('iframe');
