@@ -5,7 +5,7 @@
 :root, html.dark {
   --bg-main: #020617;
   --text-main: #f8fafc;
-  --header-bg: rgba(2, 6, 23, 0.85);
+  --header-bg: rgba(2, 6, 23, 0.65);
   --bg-card: #0f172a;
   --border-card: #1e293b;
   --text-muted: #94a3b8;
@@ -16,7 +16,7 @@
 html.light {
   --bg-main: #fcfbfa;
   --text-main: #0f172a;
-  --header-bg: rgba(255, 255, 255, 0.94);
+  --header-bg: rgba(255, 255, 255, 0.70);
   --bg-card: #ffffff;
   --border-card: #e2e8f0;
   --text-muted: #475569;
@@ -145,4 +145,58 @@ h1, h2, h3, h4, h5, h6 {
 .prose-veridu-sanitized img:hover {
   transform: scale(1.01);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* UIUX: STAINED-GLASS & GLASSMORPHISM */
+/* Optimized for performance: uses static radial gradients instead of heavy blur filters on the background */
+.stained-glass-bg {
+  position: relative;
+  background-color: var(--bg-main);
+  overflow: hidden;
+}
+
+.stained-glass-bg::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: 
+    radial-gradient(circle at 15% 50%, rgba(251, 191, 36, 0.08), transparent 40%), /* Amber/Gold */
+    radial-gradient(circle at 85% 30%, rgba(52, 211, 153, 0.08), transparent 40%), /* Emerald */
+    radial-gradient(circle at 50% 80%, rgba(99, 102, 241, 0.08), transparent 50%); /* Indigo */
+  transition: opacity 0.5s ease;
+}
+
+html.dark .stained-glass-bg::before {
+  background: 
+    radial-gradient(circle at 15% 50%, rgba(217, 119, 6, 0.15), transparent 40%),
+    radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.15), transparent 40%),
+    radial-gradient(circle at 50% 80%, rgba(79, 70, 229, 0.15), transparent 50%);
+}
+
+.glass-panel {
+  background-color: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+}
+
+html.dark .glass-panel {
+  background-color: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Hide scrollbar for clean custom scroll elements */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--border-card);
+  border-radius: 20px;
 }
