@@ -17,8 +17,8 @@ export default function TableOfContents() {
   const containerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    // Parse h2 and h3 from article content
-    const elements = Array.from(document.querySelectorAll('.article-content h2, .article-content h3'));
+    // Parse only h2 (highest level headings) from article content as requested
+    const elements = Array.from(document.querySelectorAll('.article-content h2'));
     
     const parsed = elements.map((el, index) => {
       if (!el.id) {
@@ -29,7 +29,7 @@ export default function TableOfContents() {
       return {
         id: el.id,
         text: el.textContent || '',
-        level: el.tagName.toLowerCase() === 'h2' ? 2 : 3
+        level: 2
       };
     });
 
@@ -84,15 +84,15 @@ export default function TableOfContents() {
         if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current);
       }}
       onMouseLeave={resetCollapseTimer}
-      className={`sticky top-32 transition-all duration-500 ease-in-out z-40 hidden lg:block ${
+      className={`transition-all duration-500 ease-in-out z-40 hidden lg:block relative ${
         isCollapsed ? 'w-14' : 'w-full'
       }`}
     >
       <div 
-        className={`relative glass-panel rounded-2xl border transition-all duration-500 overflow-hidden shadow-2xl ${
+        className={`glass-panel rounded-2xl border transition-all duration-500 overflow-hidden shadow-2xl ${
           isCollapsed 
-            ? 'p-3 bg-slate-900/40 border-amber-500/20 cursor-pointer hover:bg-slate-900/60' 
-            : 'p-6 bg-slate-900/70 border-amber-500/40 backdrop-blur-xl'
+            ? 'p-3.5 bg-[var(--bg-card)]/80 border-amber-500/30 cursor-pointer hover:bg-[var(--bg-card)]' 
+            : 'p-6 bg-[var(--bg-card)]/90 border-amber-500/40 backdrop-blur-xl'
         }`}
         onClick={() => {
           if (isCollapsed) {
@@ -102,23 +102,23 @@ export default function TableOfContents() {
         }}
       >
         {isCollapsed ? (
-          <div className="flex justify-center items-center h-8" title="Mở rộng Mục Lục">
-            <List className="w-6 h-6 text-amber-500 animate-pulse" />
+          <div className="flex justify-center items-center h-7" title="Mở rộng Mục Lục">
+            <List className="w-6 h-6 text-amber-500 hover:scale-110 transition-transform" />
           </div>
         ) : (
-          <div className="max-h-[75vh] overflow-y-auto scrollbar-thin scrollbar-thumb-amber-500/30 scrollbar-track-transparent pr-2">
-            <div className="flex items-center justify-between mb-5 border-b border-amber-500/20 pb-3">
-              <h3 className="font-serif font-bold text-amber-500 uppercase tracking-widest text-sm flex items-center gap-2">
+          <div className="max-h-[70vh] overflow-y-auto scrollbar-thin scrollbar-thumb-amber-500/30 scrollbar-track-transparent pr-2">
+            <div className="flex items-center justify-between mb-6 border-b border-amber-500/20 pb-4">
+              <h3 className="font-serif font-bold text-amber-500 uppercase tracking-widest text-[0.8rem] flex items-center gap-2">
                 <List className="w-4 h-4" /> Mục Lục
               </h3>
             </div>
-            <ul className="space-y-3 relative before:absolute before:inset-y-0 before:left-2 before:w-px before:bg-slate-700/50">
+            <ul className="space-y-4 relative before:absolute before:inset-y-0 before:left-2 before:w-px before:bg-[var(--border-card)]">
               {headings.map(h => {
                 const isActive = activeId === h.id;
                 return (
                   <li 
                     key={h.id} 
-                    className={`relative ${h.level === 3 ? 'ml-6 text-xs' : 'ml-2 text-sm font-medium'}`}
+                    className="relative ml-2 text-sm font-medium"
                   >
                     {/* Active Indicator Line */}
                     {isActive && (
@@ -134,13 +134,13 @@ export default function TableOfContents() {
                           window.scrollTo({ top: y, behavior: 'smooth' });
                         }
                       }}
-                      className={`group flex items-start gap-2 py-1 transition-all duration-300 ${
+                      className={`group flex items-start gap-2 py-0.5 transition-all duration-300 ${
                         isActive 
-                          ? 'text-amber-400 font-bold translate-x-1' 
-                          : 'text-slate-400 hover:text-amber-300 hover:translate-x-1'
+                          ? 'text-amber-500 font-bold translate-x-1' 
+                          : 'text-[var(--text-muted)] hover:text-amber-400 hover:translate-x-1'
                       }`}
                     >
-                      <ChevronRight className={`w-3.5 h-3.5 shrink-0 mt-0.5 transition-transform ${isActive ? 'text-amber-500 scale-125' : 'text-slate-600 group-hover:text-amber-400'}`} />
+                      <ChevronRight className={`w-3.5 h-3.5 shrink-0 mt-[3px] transition-transform ${isActive ? 'text-amber-500 scale-110' : 'text-[var(--border-card)] group-hover:text-amber-400'}`} />
                       <span className="leading-snug">{h.text}</span>
                     </a>
                   </li>
