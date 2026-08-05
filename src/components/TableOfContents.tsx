@@ -23,7 +23,14 @@ export default function TableOfContents() {
     const parsed = elements.map((el, index) => {
       if (!el.id) {
         const text = el.textContent || '';
-        const slug = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+        const slug = text
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/đ/g, 'd')
+          .replace(/Đ/g, 'd')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)+/g, '');
         el.id = slug || `heading-${index}`;
       }
       return {

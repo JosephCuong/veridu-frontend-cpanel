@@ -26,17 +26,9 @@ export default function LiturgicalHeader() {
     setSeason(getLiturgicalSeasonInfo(new Date()));
     setUser(getStoredUser());
 
-    // Initialize Theme from localStorage or default light
-    const savedTheme = localStorage.getItem('veridu-theme') || 'light';
-    if (savedTheme === 'dark') {
-      setIsDarkMode(true);
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-    } else {
-      setIsDarkMode(false);
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
-    }
+    // Sync React theme state from HTML element (initialized by layout.tsx inline script)
+    const isDark = document.documentElement.classList.contains('dark');
+    setIsDarkMode(isDark);
   }, []);
 
   const toggleTheme = () => {

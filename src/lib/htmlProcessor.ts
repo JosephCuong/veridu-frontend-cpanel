@@ -182,6 +182,7 @@ function mapElementClasses(el: Element): void {
       if (!el.classList.contains('text-amber-500')) {
         el.classList.add('text-amber-500', 'hover:text-amber-400', 'underline', 'transition-colors');
       }
+      break;
     case 'ul':
       if (!el.classList.contains('list-disc')) {
         el.classList.add('list-disc', 'list-inside', 'my-4', 'space-y-2', 'text-[var(--text-main)]');
