@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { List, ChevronRight } from 'lucide-react';
 
 interface Heading {
   id: string;
@@ -10,15 +11,17 @@ interface Heading {
 
 export default function TableOfContents() {
   const [headings, setHeadings] = useState<Heading[]>([]);
+  const [activeId, setActiveId] = useState<string>('');
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const collapseTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const containerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    // Phân tích các thẻ h2, h3 bên trong nội dung bài viết (article)
+    // Parse h2 and h3 from article content
     const elements = Array.from(document.querySelectorAll('.article-content h2, .article-content h3'));
     
     const parsed = elements.map((el, index) => {
-      // Đảm bảo mỗi heading có một id để anchor link
       if (!el.id) {
-        // Tạo slug từ text
         const text = el.textContent || '';
         const slug = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
         el.id = slug || `heading-${index}`;
@@ -31,27 +34,122 @@ export default function TableOfContents() {
     });
 
     setHeadings(parsed);
+
+    // Set up IntersectionObserver to highlight active heading
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Find all intersecting entries
+        const visibleEntries = entries.filter(entry => entry.isIntersecting);
+        if (visibleEntries.length > 0) {
+          // Sort by top offset to find the highest visible heading
+          visibleEntries.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+          setActiveId(visibleEntries[0].target.id);
+        }
+      },
+      { rootMargin: '0px 0px -60% 0px', threshold: 0.1 }
+    );
+
+    elements.forEach((el) => observer.observe(el));
+
+    return () => {
+      elements.forEach((el) => observer.unobserve(el));
+      observer.disconnect();
+    };
+  }, []);
+
+  // Auto-collapse logic
+  const resetCollapseTimer = () => {
+    if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current);
+    // Don't auto-collapse if manually interacted recently, but we'll re-arm it
+    collapseTimerRef.current = setTimeout(() => {
+      setIsCollapsed(true);
+    }, 5000);
+  };
+
+  useEffect(() => {
+    // Start initial timer
+    resetCollapseTimer();
+    return () => {
+      if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current);
+    };
   }, []);
 
   if (headings.length === 0) return null;
 
   return (
-    <nav className="sticky top-24 p-6 glass-panel rounded-2xl hidden xl:block text-sm border border-[var(--border-card)] shadow-xl max-h-[80vh] overflow-y-auto">
-      <h3 className="font-bold text-amber-500 mb-4 uppercase tracking-wider text-xs flex items-center gap-2">
-        Mục Lục Bài Viết
-      </h3>
-      <ul className="space-y-3">
-        {headings.map(h => (
-          <li key={h.id} className={`${h.level === 3 ? 'ml-4 text-xs' : 'font-medium'}`}>
-            <a 
-              href={`#${h.id}`} 
-              className="text-[var(--text-muted)] hover:text-amber-500 transition-colors block leading-relaxed"
-            >
-              {h.text}
-            </a>
-          </li>
-        ))}
-      </ul>
+    <nav 
+      ref={containerRef}
+      onMouseEnter={() => {
+        setIsCollapsed(false);
+        if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current);
+      }}
+      onMouseLeave={resetCollapseTimer}
+      className={`sticky top-32 transition-all duration-500 ease-in-out z-40 hidden lg:block ${
+        isCollapsed ? 'w-14' : 'w-full'
+      }`}
+    >
+      <div 
+        className={`relative glass-panel rounded-2xl border transition-all duration-500 overflow-hidden shadow-2xl ${
+          isCollapsed 
+            ? 'p-3 bg-slate-900/40 border-amber-500/20 cursor-pointer hover:bg-slate-900/60' 
+            : 'p-6 bg-slate-900/70 border-amber-500/40 backdrop-blur-xl'
+        }`}
+        onClick={() => {
+          if (isCollapsed) {
+            setIsCollapsed(false);
+            resetCollapseTimer();
+          }
+        }}
+      >
+        {isCollapsed ? (
+          <div className="flex justify-center items-center h-8" title="Mở rộng Mục Lục">
+            <List className="w-6 h-6 text-amber-500 animate-pulse" />
+          </div>
+        ) : (
+          <div className="max-h-[75vh] overflow-y-auto scrollbar-thin scrollbar-thumb-amber-500/30 scrollbar-track-transparent pr-2">
+            <div className="flex items-center justify-between mb-5 border-b border-amber-500/20 pb-3">
+              <h3 className="font-serif font-bold text-amber-500 uppercase tracking-widest text-sm flex items-center gap-2">
+                <List className="w-4 h-4" /> Mục Lục
+              </h3>
+            </div>
+            <ul className="space-y-3 relative before:absolute before:inset-y-0 before:left-2 before:w-px before:bg-slate-700/50">
+              {headings.map(h => {
+                const isActive = activeId === h.id;
+                return (
+                  <li 
+                    key={h.id} 
+                    className={`relative ${h.level === 3 ? 'ml-6 text-xs' : 'ml-2 text-sm font-medium'}`}
+                  >
+                    {/* Active Indicator Line */}
+                    {isActive && (
+                      <span className="absolute -left-[9px] top-1/2 -translate-y-1/2 w-0.5 h-full bg-amber-500 rounded-full" />
+                    )}
+                    <a 
+                      href={`#${h.id}`} 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const target = document.getElementById(h.id);
+                        if (target) {
+                          const y = target.getBoundingClientRect().top + window.scrollY - 100;
+                          window.scrollTo({ top: y, behavior: 'smooth' });
+                        }
+                      }}
+                      className={`group flex items-start gap-2 py-1 transition-all duration-300 ${
+                        isActive 
+                          ? 'text-amber-400 font-bold translate-x-1' 
+                          : 'text-slate-400 hover:text-amber-300 hover:translate-x-1'
+                      }`}
+                    >
+                      <ChevronRight className={`w-3.5 h-3.5 shrink-0 mt-0.5 transition-transform ${isActive ? 'text-amber-500 scale-125' : 'text-slate-600 group-hover:text-amber-400'}`} />
+                      <span className="leading-snug">{h.text}</span>
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+      </div>
     </nav>
   );
 }
