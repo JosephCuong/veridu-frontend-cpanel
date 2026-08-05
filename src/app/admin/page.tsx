@@ -15,6 +15,7 @@ import {
   getAdminQuizQuestions, createQuizQuestion, deleteQuizQuestion,
   getAdminProfiles, updateProfileRole
 } from '@/lib/adminApi';
+import { normalizeAndSyncHtml, extractTitleFromHtml } from '@/lib/htmlProcessor';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -41,6 +42,7 @@ export default function AdminDashboardPage() {
     featured_image: '',
     status: 'published'
   });
+  const [stripHtmlClasses, setStripHtmlClasses] = useState(true);
 
   // New Course Form State
   const [newCourse, setNewCourse] = useState({
@@ -120,13 +122,16 @@ export default function AdminDashboardPage() {
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const htmlText = event.target?.result as string;
+      const rawHtml = event.target?.result as string;
+      const extractedTitle = extractTitleFromHtml(rawHtml);
+      const normalizedHtml = normalizeAndSyncHtml(rawHtml, stripHtmlClasses);
+      
       setNewPost(prev => ({
         ...prev,
-        content: htmlText,
-        title: prev.title || file.name.replace(/\.[^/.]+$/, '')
+        content: normalizedHtml,
+        title: prev.title || extractedTitle || file.name.replace(/\.[^/.]+$/, '')
       }));
-      showMsg('Đã đọc và nạp mã file HTML 3D thành công!');
+      showMsg('Đã đọc, tự động phân tích và chuẩn hóa mã HTML thành công!');
     };
     reader.readAsText(file);
   };
@@ -359,6 +364,20 @@ export default function AdminDashboardPage() {
                   </button>
                 )}
               </div>
+            </div>
+
+            {/* STRIP CLASSES CHECKBOX */}
+            <div className="flex items-center gap-2 px-1">
+              <input 
+                type="checkbox" 
+                id="adminStripClasses" 
+                checked={stripHtmlClasses}
+                onChange={(e) => setStripHtmlClasses(e.target.checked)}
+                className="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 bg-[var(--bg-main)] border-[var(--border-card)]"
+              />
+              <label htmlFor="adminStripClasses" className="text-xs text-[var(--text-muted)] cursor-pointer select-none">
+                Tự động xóa các class/style rác từ file Word/Docs (Khuyên dùng để đồng bộ giao diện, BỎ CHỌN nếu tải lên Bài 3D Tương Tác)
+              </label>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
