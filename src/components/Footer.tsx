@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Compass, Mail, Send, MapPin, Phone } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
@@ -17,23 +18,21 @@ export default function Footer() {
     setMessage('');
 
     try {
-      const response = await fetch('https://data.thapgia.com/wp-json/veridu/v1/newsletter/subscribe', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
+      const { error } = await supabase
+        .from('newsletter_subscribers')
+        .insert([{ email }]);
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (!error) {
         setStatus('success');
-        setMessage(data.message || 'Đăng ký thành công!');
+        setMessage('Đăng ký thành công!');
         setEmail('');
       } else {
         setStatus('error');
-        setMessage(data.message || 'Có lỗi xảy ra, vui lòng thử lại.');
+        if (error.code === '23505') {
+          setMessage('Email này đã được đăng ký.');
+        } else {
+          setMessage('Có lỗi xảy ra, vui lòng thử lại.');
+        }
       }
     } catch (error) {
       setStatus('error');

@@ -37,11 +37,11 @@ export default function ShareButtons({ url, title }: ShareButtonsProps) {
   const buttonClass = "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110 shadow-lg backdrop-blur-md border";
 
   return (
-    <div className={`fixed z-50 transition-all duration-500 ease-in-out ${isSticky ? 'bottom-6 left-1/2 -translate-x-1/2 scale-100 opacity-100' : '-bottom-24 left-1/2 -translate-x-1/2 scale-50 opacity-0 pointer-events-none'}`}>
-      <div className="flex items-center space-x-3 px-6 py-3 rounded-full bg-[var(--bg-card)]/95 border border-[var(--border-card)] shadow-2xl backdrop-blur-xl">
-        <span className="text-xs font-bold text-[var(--text-muted)] mr-2 flex items-center uppercase tracking-wider hidden sm:flex">
-          <Share2 className="w-3 h-3 mr-1" />
-          Chia sẻ
+    <div className={`fixed z-50 transition-all duration-500 ease-in-out ${isSticky ? 'bottom-6 left-1/2 -translate-x-1/2 lg:bottom-1/2 lg:translate-y-1/2 lg:left-6 lg:translate-x-0 lg:scale-100 lg:opacity-100 scale-100 opacity-100' : '-bottom-24 left-1/2 -translate-x-1/2 lg:bottom-1/2 lg:translate-y-1/2 lg:-left-24 lg:translate-x-0 scale-50 opacity-0 pointer-events-none'}`}>
+      <div className="flex lg:flex-col items-center space-x-3 lg:space-x-0 lg:space-y-3 px-6 py-3 lg:px-3 lg:py-6 rounded-full bg-[var(--bg-card)]/95 border border-[var(--border-card)] shadow-2xl backdrop-blur-xl">
+        <span className="text-xs font-bold text-[var(--text-muted)] mr-2 lg:mr-0 lg:mb-2 flex items-center lg:justify-center uppercase tracking-wider hidden sm:flex">
+          <Share2 className="w-3 h-3 mr-1 lg:mr-0 lg:mb-1" />
+          <span className="lg:hidden">Chia sẻ</span>
         </span>
 
         {/* Facebook */}

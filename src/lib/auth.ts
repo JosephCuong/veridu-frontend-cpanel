@@ -12,6 +12,9 @@ export interface UserProfile {
   diocese: string;
   role: 'Học Viên' | 'Giáo Lý Viên' | 'Quản Trị Viên' | 'Người Đóng Góp' | 'Học Giả VERIDU' | string;
   streak: number;
+  points?: number;
+  badges?: string[];
+  createdAt?: string;
 }
 
 export function getStoredUser(): UserProfile | null {

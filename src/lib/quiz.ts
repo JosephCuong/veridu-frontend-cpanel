@@ -1,3 +1,5 @@
+import { supabase } from './supabaseClient';
+
 export interface QuizQuestion {
   id: string;
   category: 'Cựu Ước' | 'Tân Ước' | 'Giáo Lý' | 'Phụng Vụ' | string;
@@ -64,23 +66,20 @@ export const MOCK_QUIZ_QUESTIONS: QuizQuestion[] = [
 
 export async function fetchQuizQuestions(category?: string, limit: number = 50): Promise<QuizQuestion[]> {
   try {
-    const WP_API_BASE = process.env.NEXT_PUBLIC_WP_API_URL || 'https://data.thapgia.com/wp-json/veridu/v1';
-    let url = `${WP_API_BASE}/quiz/questions?limit=${limit}`;
+    let query = supabase.from('quiz_questions').select('*').limit(limit);
+    
     if (category && category !== 'all' && category !== 'Tất cả') {
-      url += `&category=${encodeURIComponent(category)}`;
+      query = query.eq('category', category);
     }
-    const res = await fetch(url, {
-      cache: 'no-store'
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        return data;
-      }
+    
+    const { data, error } = await query;
+    if (error) throw error;
+    
+    if (data && data.length > 0) {
+      return data as QuizQuestion[];
     }
   } catch (e) {
     console.error('Lỗi khi tải câu hỏi quiz:', e);
-    // Ném lỗi để component có thể xử lý
     throw new Error('Không thể tải dữ liệu câu hỏi từ máy chủ.');
   }
   // Nếu API trả về mảng rỗng, trả về mảng rỗng thay vì dữ liệu giả

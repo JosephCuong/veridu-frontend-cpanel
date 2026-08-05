@@ -203,6 +203,31 @@ function mapElementClasses(el: Element): void {
       if (!el.classList.contains('text-amber-500')) {
         el.classList.add('text-amber-500', 'hover:text-amber-400', 'underline', 'transition-colors');
       }
+    case 'ul':
+      if (!el.classList.contains('list-disc')) {
+        el.classList.add('list-disc', 'list-inside', 'my-4', 'space-y-2', 'text-[var(--text-main)]');
+      }
+      break;
+    case 'ol':
+      if (!el.classList.contains('list-decimal')) {
+        el.classList.add('list-decimal', 'list-inside', 'my-4', 'space-y-2', 'text-[var(--text-main)]');
+      }
+      break;
+    case 'h2':
+      if (!el.classList.contains('font-serif')) {
+        el.classList.add('font-serif', 'font-bold', 'text-2xl', 'text-amber-500', 'mt-8', 'mb-4', 'drop-shadow-sm');
+      }
+      break;
+    case 'h3':
+      if (!el.classList.contains('font-serif')) {
+        el.classList.add('font-serif', 'font-bold', 'text-xl', 'text-[var(--text-main)]', 'mt-6', 'mb-3');
+      }
+      break;
+    case 'p':
+      // Don't add classes if it's already styled or inside a blockquote
+      if (!el.className) {
+        el.classList.add('mb-4', 'leading-relaxed');
+      }
       break;
   }
 }

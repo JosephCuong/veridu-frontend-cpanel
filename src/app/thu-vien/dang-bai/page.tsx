@@ -20,8 +20,7 @@ import {
   CheckCircle2,
   X
 } from 'lucide-react';
-
-const WP_API_BASE = process.env.NEXT_PUBLIC_WP_API_URL || 'https://data.thapgia.com/wp-json/veridu/v1';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function SubmitPostPage() {
   const router = useRouter();
@@ -30,6 +29,7 @@ export default function SubmitPostPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [articleType, setArticleType] = useState('standard');
   const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -139,24 +139,23 @@ export default function SubmitPostPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !content.trim()) return;
+    if (!title.trim() || !content.trim() || !user) return;
 
     // Ensure final content is normalized before submitting
     const finalContent = normalizeAndSyncHtml(content);
 
     setStatus('loading');
     try {
-      const token = getAuthToken();
-      const res = await fetch(`${WP_API_BASE}/ugc/submit-post`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ title: title.trim(), content: finalContent })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Lỗi khi đăng bài');
+      const { error } = await supabase.from('articles').insert([{
+        title: title.trim(),
+        contentHtml: finalContent,
+        author: user.displayName || user.username,
+        status: 'pending',
+        article_type: articleType,
+        slug: title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + '-' + Date.now()
+      }]);
+
+      if (error) throw new Error(error.message || 'Lỗi khi đăng bài');
       
       setStatus('success');
       setTitle('');
@@ -319,6 +318,22 @@ export default function SubmitPostPage() {
                     placeholder="Ví dụ: Suy tư về Mười Điều Răn" 
                     required 
                   />
+                </div>
+
+                {/* Article Template Selection */}
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-[var(--text-muted)]">Giao diện Bài viết (Template)</label>
+                  <select 
+                    value={articleType} 
+                    onChange={e => setArticleType(e.target.value)} 
+                    className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none font-medium text-sm text-[var(--text-main)]"
+                  >
+                    <option value="standard">Tiêu chuẩn (Standard) - Phù hợp bài viết chung</option>
+                    <option value="magazine">Tạp chí (Wide/Magazine) - Giao diện ảnh lớn, toàn màn hình</option>
+                    <option value="meditation">Suy niệm Lời Chúa (Meditation) - Giao diện có trích dẫn Kinh Thánh</option>
+                    <option value="theological">Thần học (Theological) - Phù hợp chuyên đề, tài liệu</option>
+                    <option value="interactive">Tương tác (Interactive) - HTML chiếm toàn màn hình (Dành cho nội dung nhúng)</option>
+                  </select>
                 </div>
 
                 {/* Article HTML Content & Action Bar */}

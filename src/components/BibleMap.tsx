@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { MapPin, BookOpen, Compass, ExternalLink } from 'lucide-react';
+import { MapPin, Navigation2, Compass, AlertCircle, Maximize2, BookOpen, ExternalLink } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
 
 export interface BibleLocation {
   id: string;
@@ -110,14 +111,11 @@ export default function BibleMap() {
   useEffect(() => {
     async function fetchLocations() {
       try {
-        const WP_API_BASE = process.env.NEXT_PUBLIC_WP_API_URL || 'https://data.thapgia.com/wp-json/veridu/v1';
-        const res = await fetch(`${WP_API_BASE}/map/locations`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.length > 0) {
-            setLocations(data);
-            setSelectedLoc(data[0]);
-          }
+        const { data, error } = await supabase.from('map_locations').select('*');
+        if (error) throw error;
+        if (data && data.length > 0) {
+          setLocations(data);
+          setSelectedLoc(data[0]);
         }
       } catch (err) {
         console.error('Lỗi khi tải dữ liệu Bản đồ:', err);

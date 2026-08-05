@@ -2,27 +2,31 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabaseClient';
 
-import { KeyRound, Mail, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { KeyRound, Mail, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email) return;
+    setIsLoading(true);
+    
     try {
-      const API_URL = process.env.NEXT_PUBLIC_WP_API_URL || 'https://data.thapgia.com/wp-json/veridu/v1';
-      await fetch(`${API_URL}/auth/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+      await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/update-password`,
       });
       // We ignore errors to prevent user-enumeration
       setIsSubmitted(true);
     } catch (err) {
       // In case of network error, still show success to not leak info
       setIsSubmitted(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -69,10 +73,14 @@ export default function ForgotPasswordPage() {
 
               <button
                 type="submit"
+                disabled={isLoading}
                 className="w-full py-3.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-sm flex items-center justify-center gap-2 hover:bg-amber-400 transition-all shadow-xl shadow-amber-500/20"
               >
-                <span>Gửi Yêu Cầu Khôi Phục</span>
-                <ArrowRight className="w-4 h-4" />
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <><span>Gửi Yêu Cầu Khôi Phục</span><ArrowRight className="w-4 h-4" /></>
+                )}
               </button>
             </form>
           )}

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { X, User, Lock, Cross, LogIn, UserPlus, Loader2 } from 'lucide-react';
 import { saveAuthSession, UserProfile } from '@/lib/auth';
+import { supabase } from '@/lib/supabaseClient';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -28,36 +29,79 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
     setIsLoading(true);
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_WP_API_URL || 'https://data.thapgia.com/wp-json/veridu/v1';
+      const email = username.includes('@') ? username : `${username}@veridu.com`;
+
       if (mode === 'login') {
-        const res = await fetch(`${API_URL}/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
         });
-        const data = await res.json();
-        if (data.status === 'success') {
-          saveAuthSession(data.token, data.user);
-          onSuccess(data.user);
+        
+        if (error) {
+          setErrorMsg('Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản hoặc mật khẩu.');
+        } else if (data.session) {
+          // Xây dựng UserProfile từ metadata
+          const meta = data.user?.user_metadata || {};
+          const userObj: UserProfile = {
+            id: data.user?.id || '',
+            username: username,
+            email: data.user?.email || '',
+            christianName: meta.christianName || null,
+            displayName: meta.displayName || null,
+            role: meta.role || 'Người Hành Hương',
+            avatar: meta.avatar || null,
+            parish: meta.parish || null,
+            diocese: meta.diocese || null,
+            streak: meta.streak || 0,
+            points: meta.points || 0,
+            badges: meta.badges || [],
+            createdAt: data.user?.created_at || new Date().toISOString()
+          };
+          
+          saveAuthSession(data.session.access_token, userObj);
+          onSuccess(userObj);
           onClose();
-        } else {
-          setErrorMsg(data.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
         }
       } else {
         // Register Mode
-        const res = await fetch(`${API_URL}/auth/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: `${username}@veridu.com`, password, displayName, christianName, parish, diocese: 'Giáo Phận Sài Gòn', role: 'Học Viên' })
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              displayName,
+              christianName,
+              parish,
+              diocese: 'Giáo Phận Sài Gòn',
+              role: 'Học Viên'
+            }
+          }
         });
-        const data = await res.json();
         
-        if (data.status === 'success') {
-          saveAuthSession(data.token, data.user);
-          onSuccess(data.user);
+        if (error) {
+          setErrorMsg(error.message || 'Đăng ký thất bại. Tên đăng nhập này có thể đã tồn tại.');
+        } else if (data.session) {
+          const userObj: UserProfile = {
+            id: data.user?.id || '',
+            username: username,
+            email: data.user?.email || '',
+            christianName: christianName,
+            displayName: displayName,
+            role: 'Học Viên',
+            avatar: '',
+            parish: parish,
+            diocese: 'Giáo Phận Sài Gòn',
+            streak: 0,
+            points: 0,
+            badges: [],
+            createdAt: data.user?.created_at || new Date().toISOString()
+          };
+          saveAuthSession(data.session.access_token, userObj);
+          onSuccess(userObj);
           onClose();
         } else {
-          setErrorMsg(data.message || 'Đăng ký thất bại. Tên đăng nhập này có thể đã tồn tại.');
+          // Confirm email required
+          setErrorMsg('Đăng ký thành công! Vui lòng kiểm tra email để xác nhận.');
         }
       }
     } catch (err) {
