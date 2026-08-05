@@ -31,6 +31,7 @@ export default function SubmitPostPage() {
   const [content, setContent] = useState('');
   const [articleType, setArticleType] = useState('standard');
   const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
+  const [stripHtmlClasses, setStripHtmlClasses] = useState(true);
 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
@@ -73,8 +74,8 @@ export default function SubmitPostPage() {
           setTitle(extractedTitle);
         }
 
-        // Auto-normalize HTML structure & styling
-        const normalizedHtml = normalizeAndSyncHtml(rawHtml);
+        // Auto-normalize HTML structure & styling (pass stripHtmlClasses parameter)
+        const normalizedHtml = normalizeAndSyncHtml(rawHtml, stripHtmlClasses);
         setContent(normalizedHtml);
 
         setUploadedFileName(file.name);
@@ -304,6 +305,19 @@ export default function SubmitPostPage() {
                         <span className="ml-2 px-1.5 py-0.5 rounded bg-emerald-500/20 text-[10px]">Đã tự động chuẩn hóa</span>
                       </div>
                     )}
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-4 px-1">
+                    <input 
+                      type="checkbox" 
+                      id="stripClasses" 
+                      checked={stripHtmlClasses}
+                      onChange={(e) => setStripHtmlClasses(e.target.checked)}
+                      className="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 bg-[var(--bg-main)] border-[var(--border-card)]"
+                    />
+                    <label htmlFor="stripClasses" className="text-xs text-[var(--text-muted)] cursor-pointer select-none leading-relaxed">
+                      Tự động xóa các class/style rác từ file Word/Docs (Khuyên dùng để đồng bộ giao diện)
+                    </label>
                   </div>
                 </div>
 

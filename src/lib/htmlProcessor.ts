@@ -3,7 +3,7 @@
  * 
  * Provides HTML parsing, title extraction, sanitization,
  * inline-style normalization for theme variable compatibility,
- * and element class mapping for the VERIDU Tailwind design system.
+ * optional class stripping, and element class mapping for the VERIDU Tailwind design system.
  */
 
 /**
@@ -235,7 +235,7 @@ function mapElementClasses(el: Element): void {
 /**
  * Regex fallback for normalization when DOMParser is unavailable.
  */
-function normalizeAndSyncHtmlFallback(html: string): string {
+function normalizeAndSyncHtmlFallback(html: string, stripClasses: boolean = false): string {
   let result = html;
 
   // Extract inner HTML of <body> if full document format
@@ -274,6 +274,10 @@ function normalizeAndSyncHtmlFallback(html: string): string {
     return cleaned ? `style="${cleaned}"` : '';
   });
 
+  if (stripClasses) {
+    result = result.replace(/class\s*=\s*["'][^"']*["']/gi, '');
+  }
+
   return result;
 }
 
@@ -282,9 +286,10 @@ function normalizeAndSyncHtmlFallback(html: string): string {
  * - Extracts inner HTML of <body> if full document (<html>...<body>...</body></html>)
  * - Sanitizes content by stripping <script>, <style>, untrusted <iframe>, and inline event attributes
  * - Strips hardcoded inline text/background colors to work natively with VERIDU CSS variables
+ * - Optionally strips all original classes from elements (except allowed embeds)
  * - Maps standard HTML elements to VERIDU Tailwind design system classes
  */
-export function normalizeAndSyncHtml(html: string): string {
+export function normalizeAndSyncHtml(html: string, stripClasses: boolean = false): string {
   if (!html || typeof html !== 'string') return '';
 
   let cleanHtml = html;
@@ -346,6 +351,11 @@ export function normalizeAndSyncHtml(html: string): string {
           }
         }
 
+        // Optionally strip all custom classes (unless it's our iframe embed we just styled)
+        if (stripClasses && el.tagName.toLowerCase() !== 'iframe') {
+          el.removeAttribute('class');
+        }
+
         // Map design system classes
         mapElementClasses(el);
       });
@@ -353,10 +363,10 @@ export function normalizeAndSyncHtml(html: string): string {
       cleanHtml = doc.body.innerHTML;
     } catch (err) {
       console.warn('DOMParser failed in normalizeAndSyncHtml, using fallback:', err);
-      cleanHtml = normalizeAndSyncHtmlFallback(cleanHtml);
+      cleanHtml = normalizeAndSyncHtmlFallback(cleanHtml, stripClasses);
     }
   } else {
-    cleanHtml = normalizeAndSyncHtmlFallback(cleanHtml);
+    cleanHtml = normalizeAndSyncHtmlFallback(cleanHtml, stripClasses);
   }
 
   return cleanHtml.trim();
