@@ -10,6 +10,15 @@ interface VisualArticleRendererProps {
 export default function VisualArticleRenderer({ contentHtml, className = '' }: VisualArticleRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Pre-process HTML to remove <style> tags and full-page layout wrappers that break the UI.
+  // We use a pure regex approach here to ensure Server and Client render the exact same HTML to prevent hydration mismatches.
+  const safeHtml = (contentHtml || '')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<!DOCTYPE[^>]*>/gi, '')
+    .replace(/<html[^>]*>|<\/html>/gi, '')
+    .replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '')
+    .replace(/<body[^>]*>|<\/body>/gi, '');
+
   useEffect(() => {
     // 1. Dynamic Script Loader for Mermaid.js (CDN-based for maximum compatibility & zero bundle bloat)
     const loadMermaid = () => {
@@ -144,13 +153,13 @@ export default function VisualArticleRenderer({ contentHtml, className = '' }: V
       });
     }
 
-  }, [contentHtml]);
+  }, [safeHtml]);
 
   return (
     <div 
       ref={containerRef}
       className={`prose dark:prose-invert prose-amber prose-veridu-sanitized max-w-none font-serif text-[var(--text-main)] leading-relaxed text-base sm:text-lg has-drop-cap ${className}`}
-      dangerouslySetInnerHTML={{ __html: contentHtml }}
+      dangerouslySetInnerHTML={{ __html: safeHtml }}
     />
   );
 }
