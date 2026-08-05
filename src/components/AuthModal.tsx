@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, User, Lock, Mail, Cross, Sparkles, CheckCircle } from 'lucide-react';
+import { X, User, Lock, Cross, LogIn, UserPlus, Loader2 } from 'lucide-react';
 import { saveAuthSession, UserProfile } from '@/lib/auth';
 
 interface AuthModalProps {
@@ -96,15 +96,15 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
         <div className="grid grid-cols-2 p-1 bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl text-xs font-bold">
           <button
             onClick={() => setMode('login')}
-            className={`py-2 rounded-lg transition-all ${mode === 'login' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
+            className={`py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${mode === 'login' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
           >
-            🔑 Đăng Nhập
+            <LogIn className="w-3.5 h-3.5" /> Đăng Nhập
           </button>
           <button
             onClick={() => setMode('register')}
-            className={`py-2 rounded-lg transition-all ${mode === 'register' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
+            className={`py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${mode === 'register' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
           >
-            📝 Đăng Ký
+            <UserPlus className="w-3.5 h-3.5" /> Đăng Ký
           </button>
         </div>
 
@@ -197,7 +197,22 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             disabled={isLoading}
             className="w-full py-3 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 hover:bg-amber-400 transition-all flex items-center justify-center gap-2 mt-2"
           >
-            {isLoading ? '⏳ Đang Xử Lý...' : mode === 'login' ? '🔑 Đăng Nhập Ngay' : '✨ Khởi Tạo Tài Khoản'}
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Đang Xử Lý...</span>
+              </>
+            ) : mode === 'login' ? (
+              <>
+                <LogIn className="w-4 h-4" />
+                <span>Đăng Nhập Ngay</span>
+              </>
+            ) : (
+              <>
+                <UserPlus className="w-4 h-4" />
+                <span>Khởi Tạo Tài Khoản</span>
+              </>
+            )}
           </button>
         </form>
 

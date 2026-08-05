@@ -6,9 +6,9 @@ import {
 } from '@/lib/bible';
 import { fetchBibleChapter } from '@/lib/api';
 import { 
-  ChevronLeft, ChevronRight, ChevronDown, Type, 
+  ChevronLeft, ChevronRight, ChevronDown, 
   Columns, MessageSquareText, Headphones, 
-  X, Heart, Shield, Compass, PlayCircle, Settings2, BookOpen, Search, Menu, List, MoreVertical
+  X, Heart, Shield, Compass, PlayCircle, Settings2, BookOpen, Search, Menu, MoreVertical
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -127,7 +127,7 @@ export default function BibleReader({
       <div className={`sticky top-4 z-40 transition-all duration-500 ease-in-out ${
         showToolbar ? 'translate-y-0 opacity-100' : '-translate-y-[150%] opacity-0 pointer-events-none'
       } ${isScrolled ? 'shadow-xl' : 'shadow-2xl'}`}>
-        <div className="mx-auto max-w-6xl p-2 md:p-3 bg-[var(--header-bg)]/70 border border-white/10 rounded-full backdrop-blur-2xl flex items-center justify-between shadow-2xl shadow-slate-900/10">
+        <div className="mx-auto max-w-6xl p-2 md:p-3 bg-[var(--header-bg)]/70 border border-[var(--border-card)] rounded-full backdrop-blur-2xl flex items-center justify-between shadow-2xl shadow-[var(--bg-card)]/10">
           
           {/* Left: Navigation Breadcrumb & Book Selector */}
           <div className="flex items-center gap-2">
@@ -601,7 +601,7 @@ export default function BibleReader({
       {/* 🌟 6. VIDEO MODAL */}
       {showVideoModal && commentary?.videoUrl && (
         <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-black rounded-3xl w-full max-w-5xl overflow-hidden shadow-2xl relative shadow-rose-500/20 border border-slate-800">
+          <div className="bg-black rounded-3xl w-full max-w-5xl overflow-hidden shadow-2xl relative shadow-rose-500/20 border border-[var(--border-card)]">
             <div className="p-4 flex items-center justify-between absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
               <h3 className="font-serif font-black text-xl flex items-center gap-2 text-white drop-shadow-md">
                 <PlayCircle className="w-6 h-6 text-rose-500" /> Video Bối Cảnh: {selectedBook.nameVi} - Chương {currentChapter}

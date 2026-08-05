@@ -2,14 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { getLiturgicalSeasonInfo, LiturgicalSeason } from '@/lib/liturgical';
 import { getStoredUser, logout, UserProfile } from '@/lib/auth';
 import { 
-  Search, Flame, Award, BookOpen, Gamepad2, Compass, 
-  Moon, Sun, Menu, X, MapPin, Clock, LogIn, User, Settings, LogOut, Cross, Shield 
+  Search, Flame, BookOpen, Gamepad2, Compass, 
+  Moon, Sun, Menu, X, MapPin, Clock, LogIn, User, Settings, LogOut, Cross, Shield, Sparkles 
 } from 'lucide-react';
 
 export default function LiturgicalHeader() {
+  const router = useRouter();
   const [season, setSeason] = useState<LiturgicalSeason | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -18,7 +20,6 @@ export default function LiturgicalHeader() {
   
   // Auth state
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -65,7 +66,7 @@ export default function LiturgicalHeader() {
           borderBottom: `1px solid ${season?.glowHex || 'rgba(245, 197, 24, 0.3)'}`
         }}
       >
-        <span>{season?.icon || '🟢'}</span>
+        <span>{season?.icon || <Sparkles className="w-3.5 h-3.5 inline" />}</span>
         <span>Lịch Phụng Vụ Hôm Nay: <strong>{season?.nameVi || 'Mùa Thường Niên'}</strong></span>
         <span className="opacity-60 hidden sm:inline">| Lời Chúa Là Nguồn Sống (VIA · VITA · VERITAS)</span>
       </div>
@@ -94,7 +95,7 @@ export default function LiturgicalHeader() {
         {/* Center: Search Bar */}
         <div className="hidden md:flex flex-1 max-w-md mx-4">
           <form 
-            onSubmit={(e) => { e.preventDefault(); if (searchQuery) window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`; }}
+            onSubmit={(e) => { e.preventDefault(); if (searchQuery) router.push(`/search?q=${encodeURIComponent(searchQuery)}`); }}
             className="w-full relative flex items-center"
           >
             <Search className="absolute left-3 w-4 h-4 text-[var(--text-muted)]" />
@@ -208,7 +209,7 @@ export default function LiturgicalHeader() {
       {isMobileSearchOpen && (
         <div className="md:hidden border-t border-[var(--border-card)] bg-[var(--bg-card)] p-3 shadow-md animate-in slide-in-from-top-2">
           <form 
-            onSubmit={(e) => { e.preventDefault(); if (searchQuery) window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`; }}
+            onSubmit={(e) => { e.preventDefault(); if (searchQuery) router.push(`/search?q=${encodeURIComponent(searchQuery)}`); }}
             className="w-full relative flex items-center"
           >
             <Search className="absolute left-3 w-4 h-4 text-[var(--text-muted)]" />
@@ -246,7 +247,7 @@ export default function LiturgicalHeader() {
             <Gamepad2 className="w-4 h-4 text-amber-500" /> Quiz Giáo Lý
           </Link>
           <Link href="/doc-kinh-thanh" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
-            📖 Đọc Kinh Thánh
+            <BookOpen className="w-4 h-4 text-amber-500" /> Đọc Kinh Thánh
           </Link>
           <Link href="/nhan-vat" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
             <User className="w-4 h-4 text-indigo-500" /> Nhân Vật
@@ -257,14 +258,14 @@ export default function LiturgicalHeader() {
       {/* Mobile Menu Drawer */}
       {isMobileMenuOpen && (
         <div className="md:hidden border-t border-[var(--border-card)] bg-[var(--bg-card)] p-4 space-y-3 shadow-xl">
-          <Link href="/" className="block py-2 text-amber-500 font-semibold">🏠 Trang Chủ</Link>
-          <Link href="/courses" className="block py-2 text-[var(--text-main)]">📚 Khóa Học LMS</Link>
-          <Link href="/thu-vien" className="block py-2 text-[var(--text-main)]">✝️ Thư Viện Bài Viết</Link>
-          <Link href="/ban-do-kinh-thanh" className="block py-2 text-[var(--text-main)]">🗺️ Bản Đồ Kinh Thánh</Link>
-          <Link href="/dong-thoi-gian" className="block py-2 text-[var(--text-main)]">⏳ Dòng Thời Gian Cứu Độ</Link>
-          <Link href="/quiz" className="block py-2 text-[var(--text-main)]">🎮 Quiz Giáo Lý</Link>
-          <Link href="/doc-kinh-thanh" className="block py-2 text-[var(--text-main)]">📖 Đọc Kinh Thánh</Link>
-          <Link href="/nhan-vat" className="block py-2 text-[var(--text-main)]">👤 Nhân Vật Kinh Thánh</Link>
+          <Link href="/" className="py-2 text-amber-500 font-semibold flex items-center gap-2"><Compass className="w-4 h-4" /> Trang Chủ</Link>
+          <Link href="/courses" className="py-2 text-[var(--text-main)] flex items-center gap-2"><BookOpen className="w-4 h-4 text-amber-500" /> Khóa Học LMS</Link>
+          <Link href="/thu-vien" className="py-2 text-[var(--text-main)] flex items-center gap-2"><Cross className="w-4 h-4 text-amber-500" /> Thư Viện Bài Viết</Link>
+          <Link href="/ban-do-kinh-thanh" className="py-2 text-[var(--text-main)] flex items-center gap-2"><MapPin className="w-4 h-4 text-emerald-500" /> Bản Đồ Kinh Thánh</Link>
+          <Link href="/dong-thoi-gian" className="py-2 text-[var(--text-main)] flex items-center gap-2"><Clock className="w-4 h-4 text-purple-500" /> Dòng Thời Gian Cứu Độ</Link>
+          <Link href="/quiz" className="py-2 text-[var(--text-main)] flex items-center gap-2"><Gamepad2 className="w-4 h-4 text-amber-500" /> Quiz Giáo Lý</Link>
+          <Link href="/doc-kinh-thanh" className="py-2 text-[var(--text-main)] flex items-center gap-2"><BookOpen className="w-4 h-4 text-amber-500" /> Đọc Kinh Thánh</Link>
+          <Link href="/nhan-vat" className="py-2 text-[var(--text-main)] flex items-center gap-2"><User className="w-4 h-4 text-indigo-500" /> Nhân Vật Kinh Thánh</Link>
           {!user && (
             <Link 
               href="/dang-nhap"
@@ -276,7 +277,6 @@ export default function LiturgicalHeader() {
           )}
         </div>
       )}
-
 
     </header>
   );

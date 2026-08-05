@@ -75,11 +75,45 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--accent-gold-text) !important;
 }
 
+.prose-veridu-sanitized [style*="color: black"],
+.prose-veridu-sanitized [style*="color:black"],
+.prose-veridu-sanitized [style*="color: #000"],
+.prose-veridu-sanitized [style*="color:#000"],
+.prose-veridu-sanitized [style*="color: #111"],
+.prose-veridu-sanitized [style*="color:#111"],
+.prose-veridu-sanitized [style*="color: #222"],
+.prose-veridu-sanitized [style*="color:#222"],
 .prose-veridu-sanitized [style*="color: #333"],
 .prose-veridu-sanitized [style*="color:#333"],
-.prose-veridu-sanitized [style*="color: #000"],
-.prose-veridu-sanitized [style*="color:#000"] {
+html.dark .prose-veridu-sanitized [style*="color: black"],
+html.dark .prose-veridu-sanitized [style*="color:black"],
+html.dark .prose-veridu-sanitized [style*="color: #000"],
+html.dark .prose-veridu-sanitized [style*="color:#000"],
+html.dark .prose-veridu-sanitized [style*="color: #111"],
+html.dark .prose-veridu-sanitized [style*="color:#111"],
+html.dark .prose-veridu-sanitized [style*="color: #222"],
+html.dark .prose-veridu-sanitized [style*="color:#222"],
+html.dark .prose-veridu-sanitized [style*="color: #333"],
+html.dark .prose-veridu-sanitized [style*="color:#333"],
+html.dark .dark-mode-color-override {
   color: var(--text-main) !important;
+}
+
+html.dark .prose-veridu-sanitized [style*="background-color: #fff"],
+html.dark .prose-veridu-sanitized [style*="background-color:#fff"],
+html.dark .prose-veridu-sanitized [style*="background-color: #ffffff"],
+html.dark .prose-veridu-sanitized [style*="background-color:#ffffff"],
+html.dark .prose-veridu-sanitized [style*="background-color: white"],
+html.dark .prose-veridu-sanitized [style*="background-color:white"],
+html.dark .prose-veridu-sanitized [style*="background: #fff"],
+html.dark .prose-veridu-sanitized [style*="background:#fff"],
+html.dark .prose-veridu-sanitized [style*="background: #ffffff"],
+html.dark .prose-veridu-sanitized [style*="background:#ffffff"],
+html.dark .prose-veridu-sanitized [style*="background: white"],
+html.dark .prose-veridu-sanitized [style*="background:white"],
+html.dark .dark-mode-bg-override {
+  background-color: transparent !important;
+  background: transparent !important;
 }
 
 .prose-veridu-sanitized [style*="color: #555"],
@@ -135,6 +169,8 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ARTICLE IMAGE STYLING */
 .prose-veridu-sanitized img {
+  max-width: 100% !important;
+  height: auto !important;
   border-radius: 1rem;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   margin-top: 2rem;
@@ -145,6 +181,22 @@ h1, h2, h3, h4, h5, h6 {
 .prose-veridu-sanitized img:hover {
   transform: scale(1.01);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* RESPONSIVE TABLE STYLING */
+.prose-veridu-sanitized table {
+  display: block !important;
+  overflow-x: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive-wrapper {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* UIUX: STAINED-GLASS & GLASSMORPHISM */
@@ -200,3 +252,13 @@ html.dark .glass-panel {
   background-color: var(--border-card);
   border-radius: 20px;
 }
+
+/* Scrollbar hide utility */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

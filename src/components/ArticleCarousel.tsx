@@ -89,13 +89,6 @@ export default function ArticleCarousel({ articles }: ArticleCarouselProps) {
           </div>
         ))}
       </div>
-      
-      {/* CSS to hide scrollbar but keep functionality */}
-      <style dangerouslySetInnerHTML={{__html: `
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-      `}} />
     </div>
   );
 }

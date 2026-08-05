@@ -117,6 +117,31 @@ export default function VisualArticleRenderer({ contentHtml, className = '' }: V
           }
         }
       });
+
+      // 3. Ensure responsive table wrappers & dark mode contrast class overrides
+      const tables = containerRef.current.querySelectorAll('table');
+      tables.forEach((table) => {
+        if (!table.parentElement?.classList.contains('table-responsive-wrapper')) {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'table-responsive-wrapper w-full overflow-x-auto my-6 scrollbar-thin';
+          table.parentNode?.insertBefore(wrapper, table);
+          wrapper.appendChild(table);
+        }
+        table.style.display = 'block';
+        table.style.overflowX = 'auto';
+        table.style.width = '100%';
+      });
+
+      const inlineElements = containerRef.current.querySelectorAll('[style]');
+      inlineElements.forEach((el) => {
+        const styleAttr = el.getAttribute('style') || '';
+        if (/color:\s*(black|#000000|#000|#111111|#111|#222222|#222|#333333|#333)\b/i.test(styleAttr)) {
+          el.classList.add('dark-mode-color-override');
+        }
+        if (/background(-color)?:\s*(white|#ffffff|#fff)\b/i.test(styleAttr)) {
+          el.classList.add('dark-mode-bg-override');
+        }
+      });
     }
 
   }, [contentHtml]);

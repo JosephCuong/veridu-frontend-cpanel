@@ -117,26 +117,28 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
   // 1. TEMPLATE BÀI TƯƠNG TÁC (HTML/JS Sandbox Fullscreen)
   if (articleType === 'interactive') {
     return (
-      <main className="w-full h-screen overflow-hidden bg-black relative z-[999]">
+      <main className="fixed inset-0 w-screen h-[100dvh] z-[9999] bg-slate-950 overflow-hidden">
         <style>{`
           header, footer, button[aria-label="Trở về đầu trang"] { display: none !important; }
-          body { background-color: #000 !important; }
+          body { background-color: #020617 !important; overflow: hidden !important; }
         `}</style>
         
-        {/* Floating Glassmorphic Back Button */}
+        {/* Floating Glassmorphic Back / Exit Full-Screen Button */}
         <div className="absolute top-6 left-6 z-50">
           <Link 
             href="/thu-vien" 
-            className="flex items-center justify-center w-12 h-12 rounded-full glass-panel border border-white/20 shadow-2xl text-white hover:scale-110 hover:bg-white/20 transition-all group"
-            title="Quay Lại Thư Viện"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-full glass-panel border border-white/20 shadow-2xl text-white hover:scale-105 hover:bg-white/20 backdrop-blur-md transition-all group font-medium text-sm cursor-pointer"
+            title="Thoát Toàn Màn Hình & Quay Lại Thư Viện"
+            aria-label="Thoát toàn màn hình"
           >
-            <ArrowLeft className="w-5 h-5 drop-shadow-md group-hover:-translate-x-1 transition-transform" />
+            <ArrowLeft className="w-4 h-4 drop-shadow-md group-hover:-translate-x-1 transition-transform" />
+            <span>Thoát Toàn Màn Hình</span>
           </Link>
         </div>
         
         <iframe 
           src={`/api/raw-html/${resolvedParams.slug}`} 
-          className="w-full h-full border-none bg-white dark:invert dark:hue-rotate-180"
+          className="w-full h-full border-none bg-slate-950"
           title={cleanTitle}
           sandbox="allow-scripts allow-same-origin allow-popups"
         />
@@ -171,7 +173,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
             </header>
 
             <div className="relative z-10">
-              <VisualArticleRenderer contentHtml={htmlContent} className="max-w-4xl mx-auto" />
+              <VisualArticleRenderer contentHtml={htmlContent} className="w-full" />
             </div>
           </article>
         </main>

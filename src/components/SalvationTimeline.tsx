@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
-  Clock, BookOpen, ChevronRight, Sparkles, Filter, Info, 
-  ChevronDown, LayoutGrid, GitCommit, X, ExternalLink, FileText, Layers, PlayCircle 
+  Clock, BookOpen, ChevronRight, Sparkles, Info, 
+  LayoutGrid, GitCommit, X, ExternalLink, FileText 
 } from 'lucide-react';
 import { fetchTimelineEvents, TimelineEventData, getLibraryArticleBySlug, Article } from '@/lib/api';
 
@@ -97,7 +97,7 @@ export default function SalvationTimeline() {
 
         <div className="flex flex-wrap items-center gap-3">
           {/* Category Filter */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/80 p-1 rounded-xl border border-[var(--border-card)]">
+          <div className="flex items-center gap-1 bg-[var(--bg-main)] p-1 rounded-xl border border-[var(--border-card)]">
             {['Tất cả', 'Cựu Ước', 'Tân Ước', 'Lịch Sử Giáo Hội'].map((cat) => (
               <button
                 key={cat}
@@ -114,7 +114,7 @@ export default function SalvationTimeline() {
           </div>
 
           {/* View Mode Toggle */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/80 p-1 rounded-xl border border-[var(--border-card)]">
+          <div className="flex items-center gap-1 bg-[var(--bg-main)] p-1 rounded-xl border border-[var(--border-card)]">
             <button
               onClick={() => setViewMode('grid')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
@@ -222,7 +222,7 @@ export default function SalvationTimeline() {
 
                 {/* Theological Meaning */}
                 {activeEvent.theologicalMeaning && (
-                  <div className="bg-slate-100 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
+                  <div className="bg-[var(--bg-main)] p-4 rounded-2xl border border-[var(--border-card)] space-y-2">
                     <h4 className="text-xs font-bold text-amber-500 uppercase tracking-wider flex items-center gap-2">
                       <Sparkles className="w-4 h-4" /> Ý Nghĩa Thần Học
                     </h4>
@@ -334,7 +334,7 @@ export default function SalvationTimeline() {
               </div>
               <button
                 onClick={() => setIsArticleModalOpen(false)}
-                className="p-2 text-[var(--text-muted)] hover:text-[var(--text-main)] rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                className="p-2 text-[var(--text-muted)] hover:text-[var(--text-main)] rounded-full hover:bg-[var(--border-card)] transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -380,7 +380,7 @@ export default function SalvationTimeline() {
                     </p>
                   </div>
                   {activeEvent.scripture && (
-                    <div className="p-4 rounded-xl bg-slate-100 dark:bg-slate-900 border border-[var(--border-card)]">
+                    <div className="p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)]">
                       <span className="text-xs font-bold text-[var(--text-muted)] block mb-1">Kinh Thánh Tham Chiếu</span>
                       <span className="font-serif font-bold text-amber-500 text-base">{activeEvent.scripture}</span>
                     </div>
@@ -401,7 +401,7 @@ export default function SalvationTimeline() {
               )}
               <button
                 onClick={() => setIsArticleModalOpen(false)}
-                className="px-6 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-[var(--text-main)] font-bold text-xs hover:bg-slate-300 transition-colors ml-auto"
+                className="px-6 py-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-[var(--text-main)] font-bold text-xs hover:bg-[var(--border-card)] transition-colors ml-auto"
               >
                 Đóng
               </button>

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Course, Lesson } from '@/lib/api';
 import { 
   CheckCircle2, Circle, Eye, EyeOff, ChevronRight, ChevronLeft, 
-  Copy, BookOpen, MessageSquare, Edit3, Award, Share2, PlayCircle, Sparkles 
+  Copy, BookOpen, MessageSquare, Edit3, Share2, PlayCircle 
 } from 'lucide-react';
 
 interface LmsLessonPlayerProps {
@@ -48,7 +48,7 @@ export default function LmsLessonPlayer({ course, currentLesson }: LmsLessonPlay
         <div className="flex items-center gap-4">
           <div className="hidden sm:flex items-center gap-3">
             <span className="text-xs text-[var(--text-muted)]">Tiến trình: <strong>33%</strong> (4/12 bài)</span>
-            <div className="w-28 h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+            <div className="w-28 h-2 bg-[var(--bg-main)] rounded-full overflow-hidden border border-[var(--border-card)]">
               <div className="h-full bg-amber-500 rounded-full" style={{ width: '33%' }}></div>
             </div>
           </div>
@@ -58,7 +58,7 @@ export default function LmsLessonPlayer({ course, currentLesson }: LmsLessonPlay
             className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 border transition-all ${
               isFocusMode 
                 ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-lg shadow-amber-500/20' 
-                : 'bg-slate-800 text-[var(--text-muted)] border-slate-700 hover:border-amber-500/50'
+                : 'bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-card)] hover:border-amber-500/50'
             }`}
           >
             {isFocusMode ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -96,13 +96,13 @@ export default function LmsLessonPlayer({ course, currentLesson }: LmsLessonPlay
                         className={`w-full text-left p-3 rounded-xl flex items-start gap-3 transition-all ${
                           isSelected 
                             ? 'bg-amber-500/15 border border-amber-500/40 text-amber-300 shadow-md' 
-                            : 'hover:bg-slate-800/50 text-[var(--text-muted)] border border-transparent'
+                            : 'hover:bg-[var(--bg-main)]/50 text-[var(--text-muted)] border border-transparent'
                         }`}
                       >
                         {les.isCompleted ? (
                           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                         ) : (
-                          <Circle className="w-4 h-4 text-slate-600 shrink-0 mt-0.5" />
+                          <Circle className="w-4 h-4 text-[var(--text-muted)] shrink-0 mt-0.5" />
                         )}
                         
                         <div className="flex-1 min-w-0">
@@ -127,7 +127,7 @@ export default function LmsLessonPlayer({ course, currentLesson }: LmsLessonPlay
               <div className="flex items-center gap-2 text-xs text-amber-400 font-semibold">
                 <span>{currentLesson.chapterTitle}</span>
                 <span>•</span>
-                <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-[var(--text-muted)]">
+                <span className="px-2 py-0.5 rounded bg-[var(--bg-main)] border border-[var(--border-card)] text-[var(--text-muted)]">
                   {currentLesson.scripture}
                 </span>
               </div>

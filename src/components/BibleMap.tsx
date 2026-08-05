@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { MapPin, BookOpen, Compass, Layers, ExternalLink } from 'lucide-react';
+import { MapPin, BookOpen, Compass, ExternalLink } from 'lucide-react';
 
 export interface BibleLocation {
   id: string;

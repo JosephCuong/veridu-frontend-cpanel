@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Search, Filter, Layers, Cross } from 'lucide-react';
+import { ArrowRight, Search, Filter, Layers, Cross, FileText, Heart, Gamepad2 } from 'lucide-react';
 
 interface LibraryClientProps {
   initialArticles: any[];
@@ -24,10 +24,10 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
 
   const articleTypes = [
     { id: 'all', label: 'Tất cả định dạng' },
-    { id: 'standard', label: '📰 Bài viết (Standard)' },
-    { id: 'meditation', label: '🌸 Suy Niệm' },
-    { id: 'theological', label: '✝️ Thần Học' },
-    { id: 'interactive', label: '🎮 Tương Tác 3D' }
+    { id: 'standard', label: 'Bài viết (Standard)' },
+    { id: 'meditation', label: 'Suy Niệm' },
+    { id: 'theological', label: 'Thần Học' },
+    { id: 'interactive', label: 'Tương Tác 3D' }
   ];
 
   // Filter logic
@@ -47,7 +47,7 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
     <div className="space-y-10">
       
       {/* Page Title Header */}
-      <header className="space-y-4 text-center sm:text-left border-b border-slate-200 dark:border-[var(--border-card)] pb-8">
+      <header className="space-y-4 text-center sm:text-left border-b border-[var(--border-card)] pb-8">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-bold uppercase tracking-wider">
           <Cross className="w-3.5 h-3.5" /> Kho Tàng Bài Viết VERIDU
         </div>
@@ -109,9 +109,13 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
               <button 
                 key={type.id}
                 onClick={() => setActiveType(type.id)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${activeType === type.id ? 'bg-amber-500 text-slate-950' : 'bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500/50'}`}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${activeType === type.id ? 'bg-amber-500 text-slate-950' : 'bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500/50'}`}
               >
-                {type.label}
+                {type.id === 'standard' && <FileText className="w-3.5 h-3.5" />}
+                {type.id === 'meditation' && <Heart className="w-3.5 h-3.5" />}
+                {type.id === 'theological' && <Cross className="w-3.5 h-3.5" />}
+                {type.id === 'interactive' && <Gamepad2 className="w-3.5 h-3.5" />}
+                <span>{type.label}</span>
               </button>
             ))}
           </div>
@@ -138,7 +142,7 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
                             alt={titleText.replace(/<[^>]*>?/gm, '')} 
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-main)]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </div>
                 )}
                 
@@ -166,10 +170,10 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
                         )}
                     </div>
 
-                    <div className="pt-4 mt-4 border-t border-slate-200/50 dark:border-[var(--border-card)]">
+                    <div className="pt-4 mt-4 border-t border-[var(--border-card)]">
                         <Link 
                             href={`/thu-vien/${article.slug}`}
-                            className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-[var(--text-main)] text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                            className="w-full py-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:bg-amber-500 hover:text-slate-950 text-[var(--text-main)] text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
                         >
                             <span>Đọc Bài Viết</span>
                             <ArrowRight className="w-3.5 h-3.5" />

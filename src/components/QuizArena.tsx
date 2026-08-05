@@ -5,7 +5,7 @@ import { QuizQuestion, MOCK_QUIZ_QUESTIONS, calculateSpeedBonus, fetchQuizQuesti
 import { supabase } from '@/lib/supabaseClient';
 import { 
   Trophy, Flame, Clock, AlertTriangle, CheckCircle2, XCircle, 
-  Sparkles, RotateCcw, Award, BookOpen, ShieldAlert, ArrowRight 
+  RotateCcw, ArrowRight 
 } from 'lucide-react';
 import { getStoredUser, UserProfile } from '@/lib/auth';
 import AuthModal from '@/components/AuthModal';

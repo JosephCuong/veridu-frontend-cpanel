@@ -6,7 +6,7 @@ import ArticleCarousel from '@/components/ArticleCarousel';
 import { fetchCourses, fetchHomepageData } from '@/lib/api';
 import { 
   BookOpen, Gamepad2, Flame, ChevronRight, 
-  PlayCircle, Sparkles, Cross, Compass, MapPin, Clock, ShieldCheck 
+  PlayCircle, Sparkles, MapPin, Clock, ShieldCheck 
 } from 'lucide-react';
 
 export default async function Home() {
@@ -214,7 +214,7 @@ export default async function Home() {
                 <div className="p-6 pt-0">
                   <Link 
                     href={`/courses/${course.slug}`}
-                    className="w-full py-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-[var(--text-main)] text-xs font-bold flex items-center justify-center gap-2 transition-all"
+                    className="w-full py-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:bg-amber-500 hover:text-slate-950 text-[var(--text-main)] text-xs font-bold flex items-center justify-center gap-2 transition-all"
                   >
                     Vào Học Khóa Này &rarr;
                   </Link>
