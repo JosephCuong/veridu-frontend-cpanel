@@ -146,12 +146,12 @@ export default function SubmitPostPage() {
 
     setStatus('loading');
     try {
-      const { error } = await supabase.from('articles').insert([{
+      const { error } = await supabase.from('posts').insert([{
         title: title.trim(),
-        contentHtml: finalContent,
-        author: user.displayName || user.username,
-        status: 'pending',
-        article_type: articleType,
+        content: finalContent,
+        author_id: user.id,
+        status: 'draft', // User submitted defaults to draft
+        category: articleType,
         slug: title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + '-' + Date.now()
       }]);
 

@@ -76,7 +76,15 @@ export async function fetchQuizQuestions(category?: string, limit: number = 50):
     if (error) throw error;
     
     if (data && data.length > 0) {
-      return data as QuizQuestion[];
+      return data.map((item: any) => ({
+        id: item.id.toString(),
+        category: item.category || 'Giáo Lý',
+        questionText: item.question,
+        options: item.options || [],
+        correctAnswerIndex: item.correct_option || 0,
+        explanation: item.explanation || '',
+        scriptureRef: ''
+      }));
     }
   } catch (e) {
     console.error('Lỗi khi tải câu hỏi quiz:', e);
