@@ -259,17 +259,31 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
     <div className="w-full min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
       <HeroBanner imageUrl={coverImage} />
 
-      <main className={`max-w-3xl mx-auto px-4 space-y-6 relative z-20 ${coverImage ? '-mt-24' : 'pt-12'}`}>
+      <main className={`max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 relative z-20 ${coverImage ? '-mt-24' : 'pt-12'}`}>
         <Link href="/thu-vien" className="inline-flex items-center text-xs font-bold text-amber-500 hover:underline mb-2 bg-[var(--bg-card)]/50 backdrop-blur px-3 py-1.5 rounded-full border border-[var(--border-card)]">
           <ArrowLeft className="w-4 h-4 mr-1" /> Quay Lại Thư Viện
         </Link>
         
         <article className="p-6 sm:p-12 rounded-3xl bg-[var(--bg-card)]/80 border border-[var(--border-card)] backdrop-blur-2xl shadow-2xl space-y-8">
           <header className="border-b border-slate-200 dark:border-[var(--border-card)] pb-8 text-center sm:text-left space-y-4">
-            <h1 className="text-3xl sm:text-4xl font-serif font-black text-[var(--text-main)] leading-[1.25]" dangerouslySetInnerHTML={{ __html: titleText }} />
+            <span className="px-3.5 py-1.5 rounded-full bg-slate-500/10 border border-slate-500/30 text-[var(--text-muted)] text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5">
+              <Tag className="w-3.5 h-3.5" /> {article.category || 'Bài Viết'}
+            </span>
+            <h1 className="text-3xl sm:text-5xl font-serif font-black text-[var(--text-main)] leading-[1.25]" dangerouslySetInnerHTML={{ __html: titleText }} />
             <MetaDataRow article={article} />
           </header>
           <VisualArticleRenderer contentHtml={htmlContent} />
+          
+          {/* Tags */}
+          {(article as any).tags && (article as any).tags.length > 0 && (
+            <div className="pt-8 border-t border-slate-200 dark:border-[var(--border-card)] flex flex-wrap gap-2">
+              {(article as any).tags.map((tag: string, i: number) => (
+                <span key={i} className="px-3 py-1 bg-[var(--bg-main)] border border-[var(--border-card)] rounded-lg text-xs font-semibold text-[var(--text-muted)] shadow-sm">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
         </article>
       </main>
 

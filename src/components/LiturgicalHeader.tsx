@@ -225,30 +225,30 @@ export default function LiturgicalHeader() {
       )}
 
       {/* Main Navigation Bar */}
-      <div className="hidden md:block border-t border-[var(--border-card)] bg-[var(--header-bg)]">
-        <div className="max-w-7xl mx-auto px-8 flex items-center gap-8 h-11 text-sm font-medium">
-          <Link href="/" className="text-amber-500 font-bold flex items-center gap-2 hover:opacity-80 transition-opacity">
+      <div className="hidden md:block border-t border-[var(--border-card)] bg-[var(--header-bg)] w-full overflow-x-auto custom-scrollbar">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between gap-4 lg:gap-8 h-11 text-sm font-medium min-w-max">
+          <Link href="/" className="text-amber-500 font-bold flex items-center gap-2 hover:opacity-80 transition-opacity whitespace-nowrap">
             <Compass className="w-4 h-4" /> Trang Chủ
           </Link>
-          <Link href="/courses" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors">
+          <Link href="/courses" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
             <BookOpen className="w-4 h-4" /> Khóa Học LMS
           </Link>
-          <Link href="/thu-vien" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors">
+          <Link href="/thu-vien" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
             <Cross className="w-4 h-4 text-amber-500" /> Thư Viện Bài Viết
           </Link>
-          <Link href="/ban-do-kinh-thanh" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors">
+          <Link href="/ban-do-kinh-thanh" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
             <MapPin className="w-4 h-4 text-emerald-500" /> Bản Đồ 3D
           </Link>
-          <Link href="/dong-thoi-gian" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors">
+          <Link href="/dong-thoi-gian" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
             <Clock className="w-4 h-4 text-purple-500" /> Dòng Thời Gian
           </Link>
-          <Link href="/quiz" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors">
+          <Link href="/quiz" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
             <Gamepad2 className="w-4 h-4 text-amber-500" /> Quiz Giáo Lý
           </Link>
-          <Link href="/doc-kinh-thanh" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors">
+          <Link href="/doc-kinh-thanh" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
             📖 Đọc Kinh Thánh
           </Link>
-          <Link href="/nhan-vat" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors">
+          <Link href="/nhan-vat" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
             <User className="w-4 h-4 text-indigo-500" /> Nhân Vật
           </Link>
         </div>
