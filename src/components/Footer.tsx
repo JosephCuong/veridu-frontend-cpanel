@@ -46,7 +46,7 @@ export default function Footer() {
       {/* Decorative Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-[var(--accent-gold)] to-transparent opacity-50"></div>
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8 relative z-10">
+      <div className="w-full px-4 sm:px-6 lg:px-12 xl:px-16 pt-16 pb-8 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 mb-12">
           
           {/* 1. Branding Column */}
@@ -198,8 +198,9 @@ export default function Footer() {
           
         </div>
 
-        {/* Bottom Bar */}
-        <div className="pt-8 border-t border-[var(--border-card)] flex flex-col md:flex-row items-center justify-between gap-4">
+        {/* Bottom Footer */}
+      <div className="border-t border-[var(--border-card)] relative z-10">
+        <div className="w-full px-4 sm:px-6 lg:px-12 xl:px-16 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-[var(--text-muted)] text-center md:text-left">
             &copy; {new Date().getFullYear()} VERIDU. Nền Tảng Học Tập Công Giáo.
           </p>

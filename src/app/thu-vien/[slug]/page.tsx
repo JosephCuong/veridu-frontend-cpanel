@@ -154,7 +154,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
       <div className="w-full min-h-screen stained-glass-bg text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
         <HeroBanner imageUrl={coverImage} />
 
-        <main className={`max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-20 ${coverImage ? '-mt-32' : 'pt-12'}`}>
+        <main className={`max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12 space-y-8 relative z-20 ${coverImage ? '-mt-32' : 'pt-12'}`}>
           <Link href="/thu-vien" className="inline-flex items-center text-xs font-bold text-[var(--text-main)] hover:text-amber-500 hover:scale-105 transition-all mb-4 glass-panel px-4 py-2 rounded-full shadow-lg">
             <ArrowLeft className="w-4 h-4 mr-1.5" /> Quay Lại Thư Viện
           </Link>
@@ -187,7 +187,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
       <div className="w-full min-h-screen stained-glass-bg text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
         <HeroBanner imageUrl={coverImage} />
 
-        <main className={`max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-20 ${coverImage ? '-mt-24' : 'pt-12'}`}>
+        <main className={`max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-20 ${coverImage ? '-mt-24' : 'pt-12'}`}>
           <Link href="/thu-vien" className="inline-flex items-center text-xs font-bold text-[var(--text-main)] hover:text-amber-500 hover:scale-105 transition-all mb-2 glass-panel px-4 py-2 rounded-full shadow-lg">
             <ArrowLeft className="w-4 h-4 mr-1.5" /> Quay Lại Thư Viện
           </Link>
@@ -243,7 +243,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
       <div className="w-full min-h-screen stained-glass-bg text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
         <HeroBanner imageUrl={coverImage} />
 
-        <main className={`max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-20 ${coverImage ? '-mt-24' : 'pt-12'}`}>
+        <main className={`max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-20 ${coverImage ? '-mt-24' : 'pt-12'}`}>
           <Link href="/thu-vien" className="inline-flex items-center text-xs font-bold text-[var(--text-main)] hover:text-amber-500 hover:scale-105 transition-all mb-2 glass-panel px-4 py-2 rounded-full shadow-lg">
             <ArrowLeft className="w-4 h-4 mr-1.5" /> Quay Lại Thư Viện
           </Link>
@@ -274,8 +274,8 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
     <div className="w-full min-h-screen stained-glass-bg text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
       <HeroBanner imageUrl={coverImage} />
 
-      <main className={`max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 relative z-20 ${coverImage ? '-mt-24' : 'pt-12'}`}>
-        <Link href="/thu-vien" className="inline-flex items-center text-xs font-bold text-[var(--text-main)] hover:text-amber-500 hover:scale-105 transition-all mb-2 glass-panel px-4 py-2 rounded-full shadow-lg">
+      <main className={`max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 relative z-20 ${coverImage ? '-mt-24' : 'pt-12'}`}>
+        <Link href="/thu-vien" className="inline-flex items-center text-xs font-bold text-amber-500 hover:underline mb-2 bg-[var(--bg-card)]/50 backdrop-blur px-3 py-1.5 rounded-full border border-[var(--border-card)]">
           <ArrowLeft className="w-4 h-4 mr-1.5" /> Quay Lại Thư Viện
         </Link>
         
