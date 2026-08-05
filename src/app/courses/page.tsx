@@ -11,7 +11,7 @@ export default async function CoursesPage({
   const activeCategory = searchParams.category || 'all';
   const searchQuery = searchParams.s?.toLowerCase() || '';
 
-  // Fetch live courses from WordPress — falls back to mock if unreachable
+  // Fetch live courses from Supabase — falls back to mock if unreachable
   let courses = await fetchCourses();
 
   // Filter logic
@@ -55,12 +55,6 @@ export default async function CoursesPage({
           <p className="text-base sm:text-lg text-[var(--text-muted)] max-w-3xl leading-relaxed">
             Hành trình khám phá Lời Chúa qua các lộ trình học tập chuyên sâu từ Nhập môn Cựu Ước, Tân Ước cho đến Thần học Phụng vụ và Giáo luật Công giáo.
           </p>
-          {/* Live/Mock indicator in dev mode */}
-          {courses[0]?.id?.toString().startsWith('mock') && (
-            <div className="inline-block px-4 py-2 rounded-xl text-xs text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/30">
-              ⚠️ Đang hiển thị dữ liệu mẫu — WordPress API chưa kết nối.
-            </div>
-          )}
         </div>
       </div>
 

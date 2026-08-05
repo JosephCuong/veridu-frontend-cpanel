@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 export default async function Home() {
-  // Fetch live courses from WordPress — falls back to mock if unreachable
+  // Fetch live courses from Supabase — falls back to mock if unreachable
   const courses = await fetchCourses();
   const homepageData = await fetchHomepageData();
 

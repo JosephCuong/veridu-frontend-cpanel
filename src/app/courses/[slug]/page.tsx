@@ -9,8 +9,8 @@ import {
 import Link from 'next/link';
 import { fetchCourseBySlug, CourseDetail, Lesson } from '@/lib/api';
 
-export default function CoursePlayerPage({ params }: { params: Promise<{ slug: string }> }) {
-  const resolvedParams = React.use(params);
+export default function CoursePlayerPage({ params }: { params: { slug: string } }) {
+  const resolvedParams = params;
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
