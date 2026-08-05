@@ -31,7 +31,7 @@ export default function RootLayout({
     <html
       lang="vi"
       suppressHydrationWarning
-      className={`${inter.variable} ${lora.variable} h-full antialiased dark`}
+      className={`${inter.variable} ${lora.variable} antialiased dark`}
     >
       
       <head>
