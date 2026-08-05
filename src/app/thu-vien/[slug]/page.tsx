@@ -179,7 +179,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
               </article>
             </main>
 
-            <aside className="hidden lg:block w-72 xl:w-80 shrink-0 relative">
+            <aside className="hidden lg:block w-72 xl:w-80 shrink-0 sticky top-24 self-start">
               <TableOfContents />
             </aside>
           </div>
@@ -283,7 +283,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
               </article>
             </main>
 
-            <aside className="hidden lg:block w-72 xl:w-80 shrink-0 relative">
+            <aside className="hidden lg:block w-72 xl:w-80 shrink-0 sticky top-24 self-start">
               <TableOfContents />
             </aside>
           </div>
