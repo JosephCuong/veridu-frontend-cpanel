@@ -117,13 +117,20 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
   // 1. TEMPLATE BÀI TƯƠNG TÁC (HTML/JS Sandbox Fullscreen)
   if (articleType === 'interactive') {
     return (
-      <main className="w-full h-screen overflow-hidden bg-[var(--bg-main)] relative z-[999]">
+      <main className="w-full h-screen overflow-hidden bg-black relative z-[999]">
         <style>{`
           header, footer, button[aria-label="Trở về đầu trang"] { display: none !important; }
+          body { background-color: #000 !important; }
         `}</style>
-        <div className="absolute top-4 left-4 z-50 flex items-center space-x-2">
-          <Link href="/thu-vien" className="px-4 py-2 bg-[var(--bg-card)] text-amber-500 font-bold text-xs rounded-full backdrop-blur-md transition-all flex items-center border border-[var(--border-card)] shadow-xl hover:bg-[var(--bg-main)]">
-            <ArrowLeft className="w-4 h-4 mr-1.5" /> Thư Viện
+        
+        {/* Floating Glassmorphic Back Button */}
+        <div className="absolute top-6 left-6 z-50">
+          <Link 
+            href="/thu-vien" 
+            className="flex items-center justify-center w-12 h-12 rounded-full glass-panel border border-white/20 shadow-2xl text-white hover:scale-110 hover:bg-white/20 transition-all group"
+            title="Quay Lại Thư Viện"
+          >
+            <ArrowLeft className="w-5 h-5 drop-shadow-md group-hover:-translate-x-1 transition-transform" />
           </Link>
         </div>
         
@@ -134,7 +141,9 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
           sandbox="allow-scripts allow-same-origin allow-popups"
         />
 
-        <ShareButtons url={articleUrl} title={cleanTitle} />
+        <div className="absolute bottom-6 right-6 z-50">
+          <ShareButtons url={articleUrl} title={cleanTitle} />
+        </div>
       </main>
     );
   }
@@ -142,24 +151,28 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
   // 2. TEMPLATE TRANG RỘNG / TẠP CHÍ (Wide / Magazine)
   if (articleType === 'magazine' || articleType === 'wide') {
     return (
-      <div className="w-full min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
+      <div className="w-full min-h-screen stained-glass-bg text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
         <HeroBanner imageUrl={coverImage} />
 
         <main className={`max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-20 ${coverImage ? '-mt-32' : 'pt-12'}`}>
-          <Link href="/thu-vien" className="inline-flex items-center text-xs font-bold text-amber-500 hover:underline mb-4 bg-[var(--bg-card)]/50 backdrop-blur px-3 py-1.5 rounded-full border border-[var(--border-card)]">
-            <ArrowLeft className="w-4 h-4 mr-1" /> Quay Lại Thư Viện
+          <Link href="/thu-vien" className="inline-flex items-center text-xs font-bold text-[var(--text-main)] hover:text-amber-500 hover:scale-105 transition-all mb-4 glass-panel px-4 py-2 rounded-full shadow-lg">
+            <ArrowLeft className="w-4 h-4 mr-1.5" /> Quay Lại Thư Viện
           </Link>
 
-          <article className="p-6 sm:p-14 rounded-3xl bg-[var(--bg-card)]/80 border border-[var(--border-card)] backdrop-blur-2xl shadow-2xl space-y-8">
-            <header className="border-b border-slate-200 dark:border-[var(--border-card)] pb-8">
-              <span className="px-3.5 py-1.5 rounded-full bg-slate-500/10 border border-slate-500/30 text-[var(--text-muted)] text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 mb-6">
+          <article className="p-6 sm:p-14 rounded-3xl glass-panel space-y-8 relative overflow-hidden">
+            <header className="border-b border-slate-200/50 dark:border-white/10 pb-8 relative z-10">
+              <span className="px-3.5 py-1.5 rounded-full bg-slate-500/10 border border-slate-500/30 text-[var(--text-main)] text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 mb-6 shadow-sm">
                 Tạp Chí / Phóng Sự
               </span>
-              <h1 className="font-serif font-black text-4xl sm:text-6xl text-[var(--text-main)] leading-[1.15]" dangerouslySetInnerHTML={{ __html: titleText }} />
-              <MetaDataRow article={article} />
+              <h1 className="font-serif font-black text-4xl sm:text-6xl text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-300 leading-[1.15] drop-shadow-sm" dangerouslySetInnerHTML={{ __html: titleText }} />
+              <div className="mt-4">
+                <MetaDataRow article={article} />
+              </div>
             </header>
 
-            <VisualArticleRenderer contentHtml={htmlContent} className="max-w-4xl mx-auto" />
+            <div className="relative z-10">
+              <VisualArticleRenderer contentHtml={htmlContent} className="max-w-4xl mx-auto" />
+            </div>
           </article>
         </main>
         
@@ -171,30 +184,30 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
   // 3. TEMPLATE BÀI SUY NIỆM LỜI CHÚA (Scripture Meditation Template)
   if (articleType === 'meditation') {
     return (
-      <div className="w-full min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
+      <div className="w-full min-h-screen stained-glass-bg text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
         <HeroBanner imageUrl={coverImage} />
 
         <main className={`max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-20 ${coverImage ? '-mt-24' : 'pt-12'}`}>
-          <Link href="/thu-vien" className="inline-flex items-center text-xs font-bold text-amber-500 hover:underline mb-2 bg-[var(--bg-card)]/50 backdrop-blur px-3 py-1.5 rounded-full border border-[var(--border-card)]">
-            <ArrowLeft className="w-4 h-4 mr-1" /> Quay Lại Thư Viện
+          <Link href="/thu-vien" className="inline-flex items-center text-xs font-bold text-[var(--text-main)] hover:text-amber-500 hover:scale-105 transition-all mb-2 glass-panel px-4 py-2 rounded-full shadow-lg">
+            <ArrowLeft className="w-4 h-4 mr-1.5" /> Quay Lại Thư Viện
           </Link>
 
-          <article className="p-6 sm:p-12 rounded-3xl bg-[var(--bg-card)]/80 border border-[var(--border-card)] backdrop-blur-2xl shadow-2xl space-y-8 relative overflow-hidden">
-            <header className="space-y-4 border-b border-slate-200 dark:border-[var(--border-card)] pb-8 text-center sm:text-left relative z-10">
-              <span className="px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5">
+          <article className="p-6 sm:p-12 rounded-3xl glass-panel space-y-8 relative overflow-hidden">
+            <header className="space-y-4 border-b border-slate-200/50 dark:border-white/10 pb-8 text-center sm:text-left relative z-10">
+              <span className="px-3.5 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-700 dark:text-amber-400 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm">
                 <Sparkles className="w-3.5 h-3.5" /> Suy Niệm Lời Chúa
               </span>
-              <h1 className="font-serif font-black text-3xl sm:text-5xl text-[var(--text-main)] leading-[1.2]" dangerouslySetInnerHTML={{ __html: titleText }} />
+              <h1 className="font-serif font-black text-3xl sm:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-red-600 dark:from-amber-400 dark:to-red-400 leading-[1.2] drop-shadow-sm" dangerouslySetInnerHTML={{ __html: titleText }} />
               <MetaDataRow article={article} />
             </header>
 
             {/* Scripture Quote Box */}
             {article.scriptureQuote && (
-              <div className="p-6 sm:p-8 rounded-2xl bg-amber-500/10 border-l-4 border-amber-500 space-y-3 relative z-10 shadow-inner">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
+              <div className="p-6 sm:p-8 rounded-2xl bg-amber-500/10 border-l-4 border-amber-500 space-y-3 relative z-10 shadow-inner backdrop-blur-md">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
                   <BookOpen className="w-4 h-4" /> Trích Đoạn Kinh Thánh
                 </span>
-                <blockquote className="font-serif italic text-amber-700 dark:text-amber-100 text-lg sm:text-xl leading-relaxed">
+                <blockquote className="font-serif italic text-amber-800 dark:text-amber-100 text-lg sm:text-xl leading-relaxed">
                   "{article.scriptureQuote}"
                 </blockquote>
               </div>
@@ -207,11 +220,11 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
 
             {/* Prayer Section Box */}
             {prayerText && (
-              <div className="p-6 sm:p-8 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 space-y-3 relative z-10 mt-12">
-                <span className="text-xs font-bold uppercase tracking-wider text-indigo-500 flex items-center gap-1.5">
+              <div className="p-6 sm:p-8 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 space-y-3 relative z-10 mt-12 backdrop-blur-md shadow-inner">
+                <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
                   <Heart className="w-4 h-4 text-red-500" /> Cầu Nguyện Kính
                 </span>
-                <p className="font-serif italic text-indigo-900 dark:text-indigo-200 text-base leading-relaxed">
+                <p className="font-serif italic text-indigo-950 dark:text-indigo-100 text-base leading-relaxed">
                   "{prayerText}"
                 </p>
               </div>
@@ -227,25 +240,27 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
   // 4. TEMPLATE BÀI THẦN HỌC TẠP CHÍ / CHUYÊN ĐỀ NGHIÊN CỨU (Academic Essay Template)
   if (articleType === 'theological') {
     return (
-      <div className="w-full min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
+      <div className="w-full min-h-screen stained-glass-bg text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
         <HeroBanner imageUrl={coverImage} />
 
         <main className={`max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-20 ${coverImage ? '-mt-24' : 'pt-12'}`}>
-          <Link href="/thu-vien" className="inline-flex items-center text-xs font-bold text-amber-500 hover:underline mb-2 bg-[var(--bg-card)]/50 backdrop-blur px-3 py-1.5 rounded-full border border-[var(--border-card)]">
-            <ArrowLeft className="w-4 h-4 mr-1" /> Quay Lại Thư Viện
+          <Link href="/thu-vien" className="inline-flex items-center text-xs font-bold text-[var(--text-main)] hover:text-amber-500 hover:scale-105 transition-all mb-2 glass-panel px-4 py-2 rounded-full shadow-lg">
+            <ArrowLeft className="w-4 h-4 mr-1.5" /> Quay Lại Thư Viện
           </Link>
 
-          <article className="p-6 sm:p-12 rounded-3xl bg-[var(--bg-card)]/80 border border-[var(--border-card)] backdrop-blur-2xl shadow-2xl space-y-8">
-            <header className="space-y-4 border-b border-slate-200 dark:border-[var(--border-card)] pb-8 text-center sm:text-left">
-              <span className="px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-500 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5">
-                <Cross className="w-3.5 h-3.5 text-indigo-500" /> Thần Học & Chuyên Đề
+          <article className="p-6 sm:p-12 rounded-3xl glass-panel space-y-8 relative overflow-hidden">
+            <header className="space-y-4 border-b border-slate-200/50 dark:border-white/10 pb-8 text-center sm:text-left relative z-10">
+              <span className="px-3.5 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-700 dark:text-indigo-300 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm">
+                <Cross className="w-3.5 h-3.5" /> Thần Học & Chuyên Đề
               </span>
-              <h1 className="font-serif font-black text-3xl sm:text-5xl text-[var(--text-main)] leading-[1.2]" dangerouslySetInnerHTML={{ __html: titleText }} />
-              <div className="text-xs text-amber-500 font-medium tracking-wide">Trích xuất từ VERIDU CANONIST & Giáo Luật Phụng Vụ</div>
+              <h1 className="font-serif font-black text-3xl sm:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 dark:from-blue-400 dark:to-indigo-300 leading-[1.2] drop-shadow-sm" dangerouslySetInnerHTML={{ __html: titleText }} />
+              <div className="text-xs text-amber-600 dark:text-amber-400 font-bold tracking-wide">Trích xuất từ VERIDU CANONIST & Giáo Luật Phụng Vụ</div>
               <MetaDataRow article={article} />
             </header>
 
-            <VisualArticleRenderer contentHtml={htmlContent} />
+            <div className="relative z-10">
+              <VisualArticleRenderer contentHtml={htmlContent} />
+            </div>
           </article>
         </main>
 
@@ -256,29 +271,32 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
 
   // 5. TEMPLATE TIÊU CHUẨN MẶC ĐỊNH (Standard)
   return (
-    <div className="w-full min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
+    <div className="w-full min-h-screen stained-glass-bg text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 relative pb-24">
       <HeroBanner imageUrl={coverImage} />
 
       <main className={`max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 relative z-20 ${coverImage ? '-mt-24' : 'pt-12'}`}>
-        <Link href="/thu-vien" className="inline-flex items-center text-xs font-bold text-amber-500 hover:underline mb-2 bg-[var(--bg-card)]/50 backdrop-blur px-3 py-1.5 rounded-full border border-[var(--border-card)]">
-          <ArrowLeft className="w-4 h-4 mr-1" /> Quay Lại Thư Viện
+        <Link href="/thu-vien" className="inline-flex items-center text-xs font-bold text-[var(--text-main)] hover:text-amber-500 hover:scale-105 transition-all mb-2 glass-panel px-4 py-2 rounded-full shadow-lg">
+          <ArrowLeft className="w-4 h-4 mr-1.5" /> Quay Lại Thư Viện
         </Link>
         
-        <article className="p-6 sm:p-12 rounded-3xl bg-[var(--bg-card)]/80 border border-[var(--border-card)] backdrop-blur-2xl shadow-2xl space-y-8">
-          <header className="border-b border-slate-200 dark:border-[var(--border-card)] pb-8 text-center sm:text-left space-y-4">
-            <span className="px-3.5 py-1.5 rounded-full bg-slate-500/10 border border-slate-500/30 text-[var(--text-muted)] text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5">
+        <article className="p-6 sm:p-12 rounded-3xl glass-panel space-y-8 relative overflow-hidden">
+          <header className="border-b border-slate-200/50 dark:border-white/10 pb-8 text-center sm:text-left space-y-4 relative z-10">
+            <span className="px-3.5 py-1.5 rounded-full bg-slate-500/20 border border-slate-500/30 text-[var(--text-main)] text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm">
               <Tag className="w-3.5 h-3.5" /> {article.category || 'Bài Viết'}
             </span>
-            <h1 className="text-3xl sm:text-5xl font-serif font-black text-[var(--text-main)] leading-[1.25]" dangerouslySetInnerHTML={{ __html: titleText }} />
+            <h1 className="text-3xl sm:text-5xl font-serif font-black text-transparent bg-clip-text bg-gradient-to-br from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 leading-[1.25] drop-shadow-sm" dangerouslySetInnerHTML={{ __html: titleText }} />
             <MetaDataRow article={article} />
           </header>
-          <VisualArticleRenderer contentHtml={htmlContent} />
+          
+          <div className="relative z-10">
+            <VisualArticleRenderer contentHtml={htmlContent} />
+          </div>
           
           {/* Tags */}
           {(article as any).tags && (article as any).tags.length > 0 && (
-            <div className="pt-8 border-t border-slate-200 dark:border-[var(--border-card)] flex flex-wrap gap-2">
+            <div className="pt-8 border-t border-slate-200/50 dark:border-white/10 flex flex-wrap gap-2 relative z-10">
               {(article as any).tags.map((tag: string, i: number) => (
-                <span key={i} className="px-3 py-1 bg-[var(--bg-main)] border border-[var(--border-card)] rounded-lg text-xs font-semibold text-[var(--text-muted)] shadow-sm">
+                <span key={i} className="px-3 py-1 bg-white/40 dark:bg-slate-800/40 border border-white/20 rounded-lg text-xs font-semibold text-[var(--text-main)] shadow-sm">
                   #{tag}
                 </span>
               ))}
