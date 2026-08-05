@@ -332,7 +332,7 @@ export async function fetchTimelineEvents(): Promise<TimelineEventData[]> {
 export async function fetchCharacters(): Promise<Character[]> {
   try {
     const { data, error } = await supabase
-      .from('profiles')
+      .from('characters')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -340,11 +340,11 @@ export async function fetchCharacters(): Promise<Character[]> {
 
     return data.map((p: any) => ({
       id: p.id,
-      name: p.full_name || p.email,
-      biography: `Tín hữu ${p.full_name || p.email}`,
-      role: p.role || 'Học Viên',
-      era: 'Hiện đại',
-      theology: 'Công Giáo',
+      name: p.name,
+      biography: p.biography || '',
+      role: p.role || '',
+      era: p.era || '',
+      theology: p.theology || '',
       avatar_url: p.avatar_url || ''
     }));
   } catch (error) {
