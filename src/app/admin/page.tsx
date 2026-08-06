@@ -106,7 +106,7 @@ export default function AdminDashboardPage() {
       if (profData.status === 'fulfilled') setProfiles(profData.value);
     } catch (err: any) {
       console.error(err);
-    } fontally {
+    } finally {
       setLoading(false);
     }
   };
