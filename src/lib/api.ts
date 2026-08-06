@@ -13,15 +13,22 @@ export interface Article {
   featured_image?: string;
   thumbnail?: string;
   article_type?: string;
+  scripture_quote?: string;
+  prayer_text?: string;
   created_at?: string;
   updated_at?: string;
   author?: string;
+  author_name?: string;
   readingTime?: string;
   reading_time?: string;
   views?: number;
   likes?: number;
+  tags?: string[];
   seo?: any;
+  seo_title?: string;
+  seo_description?: string;
   scriptureQuote?: string;
+  prayerText?: string;
   status?: string;
 }
 
@@ -166,12 +173,20 @@ export async function getLibraryArticles(): Promise<Article[]> {
       category: item.category || 'Các Thánh',
       featured_image: item.featured_image || '',
       thumbnail: item.featured_image || '',
-      article_type: determineArticleType(item.category, undefined, item.content),
+      article_type: determineArticleType(item.category, item.article_type, item.content),
+      scripture_quote: item.scripture_quote || '',
+      prayer_text: item.prayer_text || '',
+      scriptureQuote: item.scripture_quote || '',
+      prayerText: item.prayer_text || '',
+      tags: item.tags || [],
       created_at: item.created_at,
       status: item.status,
-      author: 'VERIDU Team',
-      readingTime: '5 phút',
-      reading_time: '5 phút'
+      author: item.author_name || 'VERIDU Team',
+      author_name: item.author_name || 'VERIDU Team',
+      readingTime: item.reading_time || '5 phút',
+      reading_time: item.reading_time || '5 phút',
+      views: item.views || 0,
+      likes: item.likes || 0,
     }));
   } catch (e) {
     console.error('getLibraryArticles error:', e);
@@ -200,12 +215,20 @@ export async function getLibraryArticleBySlug(slug: string): Promise<Article | n
       category: data.category || 'Các Thánh',
       featured_image: data.featured_image || '',
       thumbnail: data.featured_image || '',
-      article_type: determineArticleType(data.category, undefined, data.content),
+      article_type: determineArticleType(data.category, data.article_type, data.content),
+      scripture_quote: data.scripture_quote || '',
+      prayer_text: data.prayer_text || '',
+      scriptureQuote: data.scripture_quote || '',
+      prayerText: data.prayer_text || '',
+      tags: data.tags || [],
       created_at: data.created_at,
       status: data.status,
-      author: 'VERIDU Team',
-      readingTime: '5 phút',
-      reading_time: '5 phút'
+      author: data.author_name || 'VERIDU Team',
+      author_name: data.author_name || 'VERIDU Team',
+      readingTime: data.reading_time || '5 phút',
+      reading_time: data.reading_time || '5 phút',
+      views: data.views || 0,
+      likes: data.likes || 0,
     };
   } catch (e) {
     console.error('getLibraryArticleBySlug error:', e);

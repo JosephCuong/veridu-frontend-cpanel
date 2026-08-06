@@ -161,7 +161,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
           </Link>
 
           <div className="flex flex-col lg:flex-row gap-8">
-            <main className="flex-1 w-full max-w-[1000px] mx-auto">
+            <main className="flex-1 w-full min-w-0">
               <article className="p-6 sm:p-14 rounded-3xl glass-panel space-y-8 relative overflow-hidden">
                 <header className="border-b border-slate-200/50 dark:border-white/10 pb-8 relative z-10">
                   <span className="px-3.5 py-1.5 rounded-full bg-slate-500/10 border border-slate-500/30 text-[var(--text-main)] text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 mb-6 shadow-sm">
@@ -270,10 +270,9 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
               <article className="p-6 sm:p-12 rounded-3xl glass-panel space-y-8 relative overflow-hidden">
                 <header className="space-y-4 border-b border-slate-200/50 dark:border-white/10 pb-8 text-center sm:text-left relative z-10">
                   <span className="px-3.5 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-700 dark:text-indigo-300 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm">
-                    <Cross className="w-3.5 h-3.5" /> Thần Học & Chuyên Đề
+                    <Cross className="w-3.5 h-3.5" /> {article.category || 'Thần Học'}
                   </span>
                   <h1 className="font-serif font-black text-3xl sm:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 dark:from-blue-400 dark:to-indigo-300 leading-[1.2] drop-shadow-sm" dangerouslySetInnerHTML={{ __html: titleText }} />
-                  <div className="text-xs text-amber-600 dark:text-amber-400 font-bold tracking-wide">Trích xuất từ VERIDU CANONIST & Giáo Luật Phụng Vụ</div>
                   <MetaDataRow article={article} />
                 </header>
 

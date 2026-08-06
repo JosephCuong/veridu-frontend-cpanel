@@ -37,6 +37,7 @@ export default function AdminDashboardPage() {
     title: '',
     slug: '',
     category: 'Bài Tương Tác HTML 3D',
+    article_type: 'interactive',
     excerpt: '',
     content: '',
     featured_image: '',
@@ -131,6 +132,7 @@ export default function AdminDashboardPage() {
         ...prev,
         content: normalizedHtml,
         title: prev.title || extractedTitle || file.name.replace(/\.[^/.]+$/, ''),
+        article_type: isInteractiveDoc ? 'interactive' : prev.article_type,
         category: isInteractiveDoc ? 'Bài Tương Tác HTML 3D' : prev.category
       }));
       showMsg('Đã đọc, tự động phân tích và nạp mã HTML bài viết thành công!');
@@ -168,11 +170,9 @@ export default function AdminDashboardPage() {
     if (!newPost.title || !newPost.content) return showMsg('Vui lòng nhập Tiêu đề và Nội dung bài viết!', 'error');
     try {
       const slug = newPost.slug || newPost.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      const postPayload: any = { ...newPost, slug };
-      delete postPayload.article_type;
-      await createPost(postPayload);
+      await createPost({ ...newPost, slug });
       showMsg('Đã xuất bản bài viết thành công!');
-      setNewPost({ title: '', slug: '', category: 'Bài Tương Tác HTML 3D', excerpt: '', content: '', featured_image: '', status: 'published' });
+      setNewPost({ title: '', slug: '', category: 'Bài Tương Tác HTML 3D', article_type: 'interactive', excerpt: '', content: '', featured_image: '', status: 'published' });
       loadAllData();
     } catch (err: any) {
       showMsg('Lỗi đăng bài: ' + err.message, 'error');
@@ -399,6 +399,30 @@ export default function AdminDashboardPage() {
                 />
               </div>
               <div>
+                <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">Template Hiển Thị</label>
+                <select
+                  className="w-full bg-[var(--bg-main)] border border-amber-500/40 rounded-xl px-4 py-3 text-sm text-[var(--text-main)] focus:outline-none focus:border-amber-500 font-bold"
+                  value={newPost.article_type}
+                  onChange={e => {
+                    const t = e.target.value;
+                    const catMap: Record<string, string> = {
+                      interactive: 'Bài Tương Tác HTML 3D',
+                      meditation: 'Suy Niệm',
+                      theological: 'Thần Học',
+                      magazine: 'Tạp Chí / Phóng Sự',
+                      standard: newPost.category
+                    };
+                    setNewPost({...newPost, article_type: t, category: catMap[t] || newPost.category});
+                  }}
+                >
+                  <option value="interactive">🎮 Tương Tác 3D (Interactive HTML)</option>
+                  <option value="standard">📝 Bài Viết Chuẩn (Standard)</option>
+                  <option value="meditation">✨ Suy Niệm Lời Chúa (Meditation)</option>
+                  <option value="theological">✝️ Thần Học & Chuyên Đề (Theological)</option>
+                  <option value="magazine">📰 Tạp Chí / Phóng Sự (Magazine)</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">Thể Loại / Chuyên Mục</label>
                 <select
                   className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] focus:outline-none focus:border-amber-500"
@@ -410,6 +434,13 @@ export default function AdminDashboardPage() {
                   <option value="Kinh Thánh">Kinh Thánh</option>
                   <option value="Giáo Lý">Giáo Lý</option>
                   <option value="Suy Niệm">Suy Niệm</option>
+                  <option value="Thần Học">Thần Học</option>
+                  <option value="Lịch Sử Giáo Hội">Lịch Sử Giáo Hội</option>
+                  <option value="Tạp Chí / Phóng Sự">Tạp Chí / Phóng Sự</option>
+                  <option value="Phụng Vụ">Phụng Vụ</option>
+                  <option value="Giáo Luật">Giáo Luật</option>
+                  <option value="Nhân Vật">Nhân Vật</option>
+                  <option value="Bản Đồ">Bản Đồ</option>
                 </select>
               </div>
             </div>

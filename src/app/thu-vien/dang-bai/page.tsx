@@ -187,7 +187,17 @@ export default function SubmitPostPage() {
     if (!title.trim() || !content.trim() || !user) return;
 
     const isInteractiveDoc = articleType === 'interactive' || /<!DOCTYPE\s+html/i.test(content) || /<html[\s>]/i.test(content);
+    const finalArticleType = isInteractiveDoc ? 'interactive' : articleType;
     const finalContent = normalizeAndSyncHtml(content, false, isInteractiveDoc);
+
+    // Map articleType → category nếu cần
+    const categoryMap: Record<string, string> = {
+      interactive: 'Bài Tương Tác HTML 3D',
+      meditation: 'Suy Niệm',
+      theological: 'Thần Học',
+      magazine: 'Tạp Chí / Phóng Sự',
+    };
+    const finalCategory = categoryMap[finalArticleType] || finalArticleType;
 
     setStatus('loading');
     try {
@@ -196,8 +206,9 @@ export default function SubmitPostPage() {
         excerpt: excerpt.trim(),
         content: finalContent,
         author_id: user.id,
-        status: 'draft', // User submitted defaults to draft
-        category: isInteractiveDoc ? 'Bài Tương Tác HTML 3D' : (articleType === 'interactive' ? 'Bài Tương Tác HTML 3D' : articleType),
+        status: 'draft',
+        article_type: finalArticleType,
+        category: finalCategory,
         slug: title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + '-' + Date.now()
       }]);
 
