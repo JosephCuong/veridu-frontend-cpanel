@@ -44,10 +44,20 @@ export default function SubmitPostPage() {
     if (!storedUser) {
       router.push('/dang-nhap');
     } else {
-      const allowedRoles = ['Người Đóng Góp', 'Học Giả VERIDU', 'Giáo Lý Viên', 'Quản Trị Viên'];
-      if (!allowedRoles.includes(storedUser.role)) {
+      const userRole = String(storedUser.role || '').toLowerCase();
+      const isAllowed = 
+        userRole.includes('admin') ||
+        userRole.includes('quản trị') ||
+        userRole.includes('teacher') ||
+        userRole.includes('giáo lý') ||
+        userRole.includes('đóng góp') ||
+        userRole.includes('học giả') ||
+        userRole.includes('contributor') ||
+        userRole.includes('scholar');
+
+      if (!isAllowed) {
         setStatus('error');
-        setErrorMsg('Tài khoản của bạn chưa được cấp quyền đăng bài. Hãy tích cực học tập để mở khóa Danh hiệu Học Giả!');
+        setErrorMsg('Tài khoản của bạn chưa được cấp quyền đăng bài. Quyền đăng bài yêu cầu tài khoản Quản Trị Viên (admin/teacher), Học Giả VERIDU hoặc Người Đóng Góp.');
       }
       setUser(storedUser);
     }
