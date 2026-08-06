@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const getValidUrl = (url: string | undefined): string => {
   if (url && typeof url === 'string' && url.startsWith('http')) {
-    // N?u url k?t th�c b?ng /rest/v1/ th? c?t b? ph?n �u�i
+    // N?u url k?t thc b?ng /rest/v1/ th? c?t b? ph?n ui
     return url.replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
   }
   return 'https://cljglzhuwdniynfkzkxc.supabase.co';

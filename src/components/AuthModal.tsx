@@ -45,7 +45,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
           let userRole = meta.role || 'Người Hành Hương';
           const userEmail = (data.user?.email || '').toLowerCase();
 
-          if (userEmail === 'veridu.net@gmail.com' || userRole === 'admin') {
+          if (userRole === 'admin') {
             userRole = 'Quản Trị Viên';
           } else if (data.user?.id) {
             try {

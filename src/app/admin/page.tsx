@@ -8,7 +8,7 @@ import {
   Trash2, Edit, Save, CheckCircle, AlertCircle, RefreshCw, Upload, Image as ImageIcon, Sparkles, Shield, Eye, Code, X, Bold, Italic, Heading, Quote, Link as LinkIcon
 } from 'lucide-react';
 import { 
-  getAdminPosts, createPost, deletePost,
+  getAdminPosts, createPost, deletePost, uploadMediaFile,
   getAdminCourses, createCourse, createLesson, deleteCourse,
   getAdminMapLocations, createMapLocation, deleteMapLocation,
   getAdminTimelineEvents, createTimelineEvent, deleteTimelineEvent,
@@ -37,7 +37,7 @@ export default function AdminDashboardPage() {
     title: '',
     slug: '',
     category: 'Bài Tương Tác HTML 3D',
-    article_type: 'interactive',
+    article_type: 'standard',
     excerpt: '',
     content: '',
     featured_image: '',
@@ -106,7 +106,7 @@ export default function AdminDashboardPage() {
       if (profData.status === 'fulfilled') setProfiles(profData.value);
     } catch (err: any) {
       console.error(err);
-    } finally {
+    } fontally {
       setLoading(false);
     }
   };
@@ -139,18 +139,20 @@ export default function AdminDashboardPage() {
     reader.readAsText(file);
   };
 
-  // Tải ảnh trực tiếp từ máy tính làm Ảnh Đại Diện
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Tải ảnh trực tiếp từ máy tính làm Ảnh Đại Diện - Upload sang Supabase Storage
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const imgDataUrl = event.target?.result as string;
-      setNewPost(prev => ({ ...prev, featured_image: imgDataUrl }));
-      showMsg('Đã tải ảnh trực tiếp thành công!');
-    };
-    reader.readAsDataURL(file);
+    try {
+      showMsg('Đang tải ảnh lên Supabase Storage...');
+      const publicUrl = await uploadMediaFile(file);
+      setNewPost(prev => ({ ...prev, featured_image: publicUrl }));
+      showMsg('Đã tải ảnh lên Supabase Storage thành công!');
+    } catch (err: any) {
+      console.error('Lỗi upload ảnh:', err);
+      showMsg('Lỗi tải ảnh lên Storage: ' + (err.message || 'Không thể upload'), 'error');
+    }
   };
 
   // Chèn thẻ định dạng trực quan (Rich Text Tools)
@@ -166,9 +168,10 @@ export default function AdminDashboardPage() {
     if (!newPost.title || !newPost.content) return showMsg('Vui lòng nhập Tiêu đề và Nội dung bài viết!', 'error');
     try {
       const slug = newPost.slug || newPost.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      await createPost({ ...newPost, slug });
+      const finalArticleType = (newPost.category === 'Bài Tương Tác HTML 3D' || newPost.article_type === 'interactive') ? 'interactive' : 'standard';
+      await createPost({ ...newPost, slug, article_type: finalArticleType });
       showMsg('Đã xuất bản bài viết thành công!');
-      setNewPost({ title: '', slug: '', category: 'Bài Tương Tác HTML 3D', article_type: 'interactive', excerpt: '', content: '', featured_image: '', status: 'published' });
+      setNewPost({ title: '', slug: '', category: 'Bài Tương Tác HTML 3D', article_type: 'standard', excerpt: '', content: '', featured_image: '', status: 'published' });
       loadAllData();
     } catch (err: any) {
       showMsg('Lỗi đăng bài: ' + err.message, 'error');

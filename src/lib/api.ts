@@ -1,3 +1,4 @@
+// Updated api.ts with status = 'published' filter for public endpoints
 import { supabase } from './supabaseClient';
 
 export interface Article {
@@ -21,6 +22,7 @@ export interface Article {
   likes?: number;
   seo?: any;
   scriptureQuote?: string;
+  status?: string;
 }
 
 export interface Lesson {
@@ -146,6 +148,7 @@ export async function getLibraryArticles(): Promise<Article[]> {
     const { data, error } = await supabase
       .from('posts')
       .select('*')
+      .eq('status', 'published')
       .order('created_at', { ascending: false });
 
     if (error || !data) {
@@ -165,6 +168,7 @@ export async function getLibraryArticles(): Promise<Article[]> {
       thumbnail: item.featured_image || '',
       article_type: determineArticleType(item.category, item.article_type, item.content),
       created_at: item.created_at,
+      status: item.status,
       author: 'VERIDU Team',
       readingTime: '5 phút',
       reading_time: '5 phút'
@@ -181,6 +185,7 @@ export async function getLibraryArticleBySlug(slug: string): Promise<Article | n
       .from('posts')
       .select('*')
       .eq('slug', slug)
+      .eq('status', 'published')
       .single();
 
     if (error || !data) return null;
@@ -197,6 +202,7 @@ export async function getLibraryArticleBySlug(slug: string): Promise<Article | n
       thumbnail: data.featured_image || '',
       article_type: determineArticleType(data.category, data.article_type, data.content),
       created_at: data.created_at,
+      status: data.status,
       author: 'VERIDU Team',
       readingTime: '5 phút',
       reading_time: '5 phút'
@@ -391,7 +397,12 @@ export async function fetchBibleMetadata() {
   }
 }
 
-export async function fetchBibleChapter(translationSlug: string, bookSlug: string, chapter: number) {
+export async function fetchBibleChapter(
+  translationSlug: string,
+  bookSlug: string,
+  chapter: number,
+  secondTranslationSlug?: string
+) {
   try {
     const { data: book } = await supabase
       .from('bible_books')
@@ -401,26 +412,102 @@ export async function fetchBibleChapter(translationSlug: string, bookSlug: strin
 
     if (!book) return null;
 
-    const { data: verses } = await supabase
+    const knownSlugMap: Record<string, string> = {
+      'vi_rvv': 'vi_rvv',
+      'vi_btt': 'vi_btt',
+      'en_kjv': 'en_kjv',
+      'vi_pdv': 'vi_pdv',
+      'ntt': 'ntt',
+    };
+
+    let primaryTranslationId: any = null;
+    if (translationSlug) {
+      const { data: trans } = await supabase
+        .from('bible_translations')
+        .select('id, slug')
+        .eq('slug', translationSlug)
+        .maybeSingle();
+
+      if (trans?.id) {
+        primaryTranslationId = trans.id;
+      } else if (knownSlugMap[translationSlug]) {
+        primaryTranslationId = knownSlugMap[translationSlug];
+      }
+    }
+
+    let primaryQuery = supabase
       .from('bible_verses')
       .select('*')
       .eq('book_id', book.id)
-      .eq('chapter', chapter)
-      .order('verse', { ascending: true });
+      .eq('chapter', chapter);
+
+    if (primaryTranslationId) {
+      primaryQuery = primaryQuery.eq('translation_id', primaryTranslationId);
+    }
+
+    let { data: verses } = await primaryQuery.order('verse', { ascending: true });
+
+    if (primaryTranslationId && (!verses || verses.length === 0)) {
+      const { data: fallbackVerses } = await supabase
+        .from('bible_verses')
+        .select('*')
+        .eq('book_id', book.id)
+        .eq('chapter', chapter)
+        .order('verse', { ascending: true });
+      verses = fallbackVerses;
+    }
+
+    let secondVersesMap: Record<number, string> = {};
+    if (secondTranslationSlug) {
+      let secTranslationId: any = null;
+      const { data: secTrans } = await supabase
+        .from('bible_translations')
+        .select('id, slug')
+        .eq('slug', secondTranslationSlug)
+        .maybeSingle();
+
+      if (secTrans?.id) {
+        secTranslationId = secTrans.id;
+      } else if (knownSlugMap[secondTranslationSlug]) {
+        secTranslationId = knownSlugMap[secondTranslationSlug];
+      }
+
+      let secQuery = supabase
+        .from('bible_verses')
+        .select('*')
+        .eq('book_id', book.id)
+        .eq('chapter', chapter);
+
+      if (secTranslationId) {
+        secQuery = secQuery.eq('translation_id', secTranslationId);
+      }
+
+      const { data: secVerses } = await secQuery.order('verse', { ascending: true });
+
+      if (secVerses && secVerses.length > 0) {
+        secVerses.forEach((v: any) => {
+          const verseNum = typeof v.verse === 'number' ? v.verse : parseInt(v.verse, 10);
+          secondVersesMap[verseNum] = v.text || v.content || '';
+        });
+      }
+    }
 
     return {
       bookName: book.name,
       chapter: chapter,
-      verses: (verses || []).map((v: any) => ({
-        id: v.id,
-        verse: v.verse.toString(),
-        content: v.text,
-        contentSec: null,
-        heading: v.heading || null,
-        footnotes: v.footnote || null,
-        chapter: chapter,
-        bookSlug: bookSlug
-      })),
+      verses: (verses || []).map((v: any) => {
+        const verseNum = typeof v.verse === 'number' ? v.verse : parseInt(v.verse, 10);
+        return {
+          id: v.id,
+          verse: v.verse.toString(),
+          content: v.text || v.content || '',
+          contentSec: secondTranslationSlug ? (secondVersesMap[verseNum] || null) : null,
+          heading: v.heading || null,
+          footnotes: v.footnote || v.footnotes || null,
+          chapter: chapter,
+          bookSlug: bookSlug
+        };
+      }),
       commentary: null
     };
   } catch (err) {

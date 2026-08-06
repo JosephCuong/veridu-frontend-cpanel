@@ -1,5 +1,52 @@
 import { supabase } from './supabaseClient';
 
+// --- SUPABASE STORAGE MEDIA UPLOAD ---
+export async function uploadMediaFile(file: File, folder = 'posts'): Promise<string> {
+  const fileExt = file.name.split('.').pop() || 'png';
+  const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+  const filePath = folder ? `${folder}/${fileName}` : fileName;
+
+  let bucket = 'media';
+  let { data, error } = await supabase.storage.from(bucket).upload(filePath, file, {
+    cacheControl: '3600',
+    upsert: true,
+  });
+
+  if (error) {
+    console.warn(`Upload to bucket '${bucket}' failed, trying 'post-images'...`, error);
+    bucket = 'post-images';
+    const retryResult = await supabase.storage.from(bucket).upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: true,
+    });
+    if (retryResult.error) {
+      throw new Error(`Supabase Storage upload error: ${retryResult.error.message || error.message}`);
+    }
+  }
+
+  const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(filePath);
+  if (!publicUrlData || !publicUrlData.publicUrl) {
+    throw new Error('Không thể lấy public URL từ Supabase Storage.');
+  }
+
+  return publicUrlData.publicUrl;
+}
+
+export async function uploadBase64Image(dataUrl: string, folder = 'posts'): Promise<string> {
+  const arr = dataUrl.split(',');
+  const mimeMatch = arr[0].match(/:(.*?);/);
+  const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  const ext = mime.split('/')[1] || 'png';
+  const file = new File([u8arr], `upload_${Date.now()}.${ext}`, { type: mime });
+  return uploadMediaFile(file, folder);
+}
+
 // --- POSTS / THƯ VIỆN & BÀI HỌC HTML 3D ---
 export async function getAdminPosts() {
   const { data, error } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
@@ -8,13 +55,39 @@ export async function getAdminPosts() {
 }
 
 export async function createPost(postData: any) {
-  const { data, error } = await supabase.from('posts').insert([postData]).select();
+  let featuredImageUrl = postData.featured_image;
+
+  if (featuredImageUrl && typeof featuredImageUrl === 'string' && featuredImageUrl.startsWith('data:')) {
+    featuredImageUrl = await uploadBase64Image(featuredImageUrl, 'posts');
+  } else if (featuredImageUrl && typeof featuredImageUrl === 'object' && featuredImageUrl instanceof File) {
+    featuredImageUrl = await uploadMediaFile(featuredImageUrl, 'posts');
+  }
+
+  const finalPostData = {
+    ...postData,
+    featured_image: featuredImageUrl
+  };
+
+  const { data, error } = await supabase.from('posts').insert([finalPostData]).select();
   if (error) throw error;
   return data[0];
 }
 
 export async function updatePost(id: number | string, postData: any) {
-  const { data, error } = await supabase.from('posts').update(postData).eq('id', id).select();
+  let featuredImageUrl = postData.featured_image;
+
+  if (featuredImageUrl && typeof featuredImageUrl === 'string' && featuredImageUrl.startsWith('data:')) {
+    featuredImageUrl = await uploadBase64Image(featuredImageUrl, 'posts');
+  } else if (featuredImageUrl && typeof featuredImageUrl === 'object' && featuredImageUrl instanceof File) {
+    featuredImageUrl = await uploadMediaFile(featuredImageUrl, 'posts');
+  }
+
+  const finalPostData = {
+    ...postData,
+    ...(featuredImageUrl ? { featured_image: featuredImageUrl } : {})
+  };
+
+  const { data, error } = await supabase.from('posts').update(finalPostData).eq('id', id).select();
   if (error) throw error;
   return data[0];
 }

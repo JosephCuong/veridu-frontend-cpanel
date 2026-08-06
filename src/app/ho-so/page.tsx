@@ -122,7 +122,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="flex items-center gap-3">
-              {(user.role === 'Quản Trị Viên' || user.role === 'admin' || user.email === 'veridu.net@gmail.com') && (
+              {(user.role === 'Quản Trị Viên' || user.role === 'admin') && (
                 <Link href="/admin" className="px-4 py-2.5 bg-amber-500 text-slate-950 font-bold text-xs rounded-xl hover:bg-amber-400 flex items-center gap-1.5 transition-all shadow-lg shadow-amber-500/20">
                   <Shield className="w-4 h-4" /> Trang Admin
                 </Link>

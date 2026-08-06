@@ -34,7 +34,7 @@ export default function LoginPage() {
         // Query real role from Supabase profiles table
         let userRole = 'Học Viên';
         const userEmail = (data.user?.email || username).toLowerCase();
-        if (userEmail === 'veridu.net@gmail.com' || data.user?.user_metadata?.role === 'admin') {
+        if (data.user?.user_metadata?.role === 'admin') {
           userRole = 'Quản Trị Viên';
         } else if (data.user?.id) {
           try {

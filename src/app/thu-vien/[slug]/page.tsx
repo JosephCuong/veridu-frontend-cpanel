@@ -342,4 +342,3 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
     </div>
   );
 }
-

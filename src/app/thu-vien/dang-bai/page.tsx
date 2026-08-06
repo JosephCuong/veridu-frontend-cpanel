@@ -28,6 +28,7 @@ export default function SubmitPostPage() {
 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [title, setTitle] = useState('');
+  const [excerpt, setExcerpt] = useState('');
   const [content, setContent] = useState('');
   const [articleType, setArticleType] = useState('standard');
   const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
@@ -69,7 +70,6 @@ export default function SubmitPostPage() {
       }
 
       const isAllowed = 
-        storedUser.email?.toLowerCase() === 'veridu.net@gmail.com' ||
         role.includes('admin') ||
         role.includes('quản trị') ||
         role.includes('teacher') ||
@@ -193,6 +193,7 @@ export default function SubmitPostPage() {
     try {
       const { error } = await supabase.from('posts').insert([{
         title: title.trim(),
+        excerpt: excerpt.trim(),
         content: finalContent,
         author_id: user.id,
         status: 'draft', // User submitted defaults to draft
@@ -205,6 +206,7 @@ export default function SubmitPostPage() {
       
       setStatus('success');
       setTitle('');
+      setExcerpt('');
       setContent('');
       setUploadedFileName(null);
       setSyncNotice(null);
@@ -376,6 +378,18 @@ export default function SubmitPostPage() {
                     className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none font-bold text-lg" 
                     placeholder="Ví dụ: Suy tư về Mười Điều Răn" 
                     required 
+                  />
+                </div>
+
+                {/* Article Excerpt */}
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-[var(--text-muted)]">Tóm tắt ngắn (Excerpt)</label>
+                  <textarea 
+                    value={excerpt} 
+                    onChange={e => setExcerpt(e.target.value)} 
+                    rows={3} 
+                    className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none leading-relaxed resize-y font-sans text-sm text-[var(--text-main)]" 
+                    placeholder="Tóm tắt 1-2 câu về nội dung bài viết..." 
                   />
                 </div>
 

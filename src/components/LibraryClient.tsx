@@ -64,7 +64,7 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Filter className="w-5 h-5 text-amber-500" />
-            <h2 className="font-bold text-lg font-serif">Bộ Lọc Tức Thì</h2>
+            <h2 className="font-bold text-lg font-serif">Bộ Lọc Tức Thời</h2>
           </div>
           
           <div className="relative w-full md:w-96">
