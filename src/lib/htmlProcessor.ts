@@ -272,8 +272,19 @@ function normalizeAndSyncHtmlFallback(html: string, stripClasses: boolean = fals
  * - Optionally strips all original classes from elements (except allowed embeds)
  * - Maps standard HTML elements to VERIDU Tailwind design system classes
  */
-export function normalizeAndSyncHtml(html: string, stripClasses: boolean = false): string {
+export function normalizeAndSyncHtml(
+  html: string, 
+  stripClasses: boolean = false, 
+  isInteractiveDoc: boolean = false
+): string {
   if (!html || typeof html !== 'string') return '';
+
+  // If it's a full interactive document (starts with <!DOCTYPE html> or <html> or explicitly marked),
+  // preserve the full document intact so 3D scripts, styles, and controls function inside the iframe.
+  const isFullDoc = isInteractiveDoc || /<!DOCTYPE\s+html/i.test(html) || /<html[\s>]/i.test(html);
+  if (isFullDoc) {
+    return html.trim();
+  }
 
   let cleanHtml = html;
 

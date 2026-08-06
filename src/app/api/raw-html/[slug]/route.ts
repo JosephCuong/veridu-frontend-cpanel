@@ -1,8 +1,8 @@
 import { getLibraryArticleBySlug } from '@/lib/api';
 import { NextResponse } from 'next/server';
 
-export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
-  const resolvedParams = await params;
+export async function GET(request: Request, { params }: { params: { slug: string } | Promise<{ slug: string }> }) {
+  const resolvedParams = await Promise.resolve(params);
   const article = await getLibraryArticleBySlug(resolvedParams.slug);
 
   if (!article) {
@@ -27,8 +27,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
         color-scheme: dark;
       }
       
-      body, p, span, div, li, td, th {
-        font-family: 'Lora', serif !important;
+      body, p, h1, h2, h3, h4, h5, h6, li, blockquote {
+        font-family: 'Lora', Georgia, serif;
       }
       
       body {

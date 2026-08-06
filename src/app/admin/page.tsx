@@ -37,6 +37,7 @@ export default function AdminDashboardPage() {
     title: '',
     slug: '',
     category: 'Bài Tương Tác HTML 3D',
+    article_type: 'interactive',
     excerpt: '',
     content: '',
     featured_image: '',
@@ -124,14 +125,16 @@ export default function AdminDashboardPage() {
     reader.onload = (event) => {
       const rawHtml = event.target?.result as string;
       const extractedTitle = extractTitleFromHtml(rawHtml);
-      const normalizedHtml = normalizeAndSyncHtml(rawHtml, stripHtmlClasses);
+      const isInteractiveDoc = newPost.article_type === 'interactive' || /<!DOCTYPE\s+html/i.test(rawHtml) || /<html[\s>]/i.test(rawHtml);
+      const normalizedHtml = normalizeAndSyncHtml(rawHtml, stripHtmlClasses, isInteractiveDoc);
       
       setNewPost(prev => ({
         ...prev,
         content: normalizedHtml,
-        title: prev.title || extractedTitle || file.name.replace(/\.[^/.]+$/, '')
+        title: prev.title || extractedTitle || file.name.replace(/\.[^/.]+$/, ''),
+        article_type: isInteractiveDoc ? 'interactive' : prev.article_type
       }));
-      showMsg('Đã đọc, tự động phân tích và chuẩn hóa mã HTML thành công!');
+      showMsg('Đã đọc, tự động phân tích và nạp mã HTML bài viết thành công!');
     };
     reader.readAsText(file);
   };
@@ -165,7 +168,7 @@ export default function AdminDashboardPage() {
       const slug = newPost.slug || newPost.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       await createPost({ ...newPost, slug });
       showMsg('Đã xuất bản bài viết thành công!');
-      setNewPost({ title: '', slug: '', category: 'Bài Tương Tác HTML 3D', excerpt: '', content: '', featured_image: '', status: 'published' });
+      setNewPost({ title: '', slug: '', category: 'Bài Tương Tác HTML 3D', article_type: 'interactive', excerpt: '', content: '', featured_image: '', status: 'published' });
       loadAllData();
     } catch (err: any) {
       showMsg('Lỗi đăng bài: ' + err.message, 'error');

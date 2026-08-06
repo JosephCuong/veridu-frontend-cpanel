@@ -112,15 +112,20 @@ export default function SubmitPostPage() {
           setTitle(extractedTitle);
         }
 
-        // Auto-normalize HTML structure & styling (pass stripHtmlClasses parameter)
-        const normalizedHtml = normalizeAndSyncHtml(rawHtml, stripHtmlClasses);
+        const isInteractiveDoc = articleType === 'interactive' || /<!DOCTYPE\s+html/i.test(rawHtml) || /<html[\s>]/i.test(rawHtml);
+        if (isInteractiveDoc) {
+          setArticleType('interactive');
+        }
+
+        // Auto-normalize HTML structure & styling (pass stripHtmlClasses & isInteractiveDoc parameters)
+        const normalizedHtml = normalizeAndSyncHtml(rawHtml, stripHtmlClasses, isInteractiveDoc);
         setContent(normalizedHtml);
 
         setUploadedFileName(file.name);
         setSyncNotice(
           extractedTitle
-            ? `Tải tệp "${file.name}" thành công! Đã tự động trích xuất tiêu đề "${extractedTitle}" và chuẩn hóa HTML.`
-            : `Tải tệp "${file.name}" thành công! Đã tự động chuẩn hóa HTML.`
+            ? `Tải tệp "${file.name}" thành công! Đã tự động trích xuất tiêu đề "${extractedTitle}".`
+            : `Tải tệp "${file.name}" thành công! Đã nạp nội dung bài viết.`
         );
       }
     };
@@ -166,7 +171,8 @@ export default function SubmitPostPage() {
       setTitle(extractedTitle);
     }
 
-    const normalizedHtml = normalizeAndSyncHtml(content);
+    const isInteractiveDoc = articleType === 'interactive' || /<!DOCTYPE\s+html/i.test(content) || /<html[\s>]/i.test(content);
+    const normalizedHtml = normalizeAndSyncHtml(content, false, isInteractiveDoc);
     setContent(normalizedHtml);
 
     setSyncNotice(
@@ -180,8 +186,8 @@ export default function SubmitPostPage() {
     e.preventDefault();
     if (!title.trim() || !content.trim() || !user) return;
 
-    // Ensure final content is normalized before submitting
-    const finalContent = normalizeAndSyncHtml(content);
+    const isInteractiveDoc = articleType === 'interactive' || /<!DOCTYPE\s+html/i.test(content) || /<html[\s>]/i.test(content);
+    const finalContent = normalizeAndSyncHtml(content, false, isInteractiveDoc);
 
     setStatus('loading');
     try {
@@ -190,7 +196,8 @@ export default function SubmitPostPage() {
         content: finalContent,
         author_id: user.id,
         status: 'draft', // User submitted defaults to draft
-        category: articleType,
+        category: isInteractiveDoc ? 'Bài Tương Tác HTML 3D' : articleType,
+        article_type: isInteractiveDoc ? 'interactive' : articleType,
         slug: title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + '-' + Date.now()
       }]);
 

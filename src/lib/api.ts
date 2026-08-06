@@ -102,10 +102,23 @@ function normalizeText(text: string): string {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
-export function determineArticleType(category?: string, dbArticleType?: string): string {
+export function determineArticleType(category?: string, dbArticleType?: string, contentHtml?: string): string {
   if (dbArticleType && ['interactive', 'magazine', 'wide', 'meditation', 'theological', 'standard'].includes(dbArticleType)) {
     return dbArticleType;
   }
+
+  // Auto-detect interactive full-page HTML documents by content signature
+  if (contentHtml && typeof contentHtml === 'string') {
+    const lower = contentHtml.toLowerCase();
+    if (
+      lower.includes('<!doctype html') || 
+      lower.includes('<html') || 
+      (lower.includes('<script') && lower.includes('<style'))
+    ) {
+      return 'interactive';
+    }
+  }
+
   if (!category) return 'standard';
   const norm = normalizeText(category);
   if (
@@ -150,7 +163,7 @@ export async function getLibraryArticles(): Promise<Article[]> {
       category: item.category || 'Các Thánh',
       featured_image: item.featured_image || '',
       thumbnail: item.featured_image || '',
-      article_type: determineArticleType(item.category, item.article_type),
+      article_type: determineArticleType(item.category, item.article_type, item.content),
       created_at: item.created_at,
       author: 'VERIDU Team',
       readingTime: '5 phút',
@@ -182,7 +195,7 @@ export async function getLibraryArticleBySlug(slug: string): Promise<Article | n
       category: data.category || 'Các Thánh',
       featured_image: data.featured_image || '',
       thumbnail: data.featured_image || '',
-      article_type: determineArticleType(data.category, data.article_type),
+      article_type: determineArticleType(data.category, data.article_type, data.content),
       created_at: data.created_at,
       author: 'VERIDU Team',
       readingTime: '5 phút',
