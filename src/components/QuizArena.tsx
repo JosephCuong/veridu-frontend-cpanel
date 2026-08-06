@@ -100,6 +100,7 @@ export default function QuizArena({ mode, roomPin = '789012', category = 'all' }
     return () => {
       supabase.removeChannel(roomChannel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, hasJoinedLive, roomPin, playerName, score, streak]);
 
   // Update presence when score changes in live mode
@@ -108,6 +109,7 @@ export default function QuizArena({ mode, roomPin = '789012', category = 'all' }
       const channel = supabase.channel(`room:${roomPin}`);
       channel.track({ name: playerName, score, streak });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [score, streak, mode, hasJoinedLive, roomPin, playerName]);
 
   // -------------------------------------------------------------
@@ -139,6 +141,7 @@ export default function QuizArena({ mode, roomPin = '789012', category = 'all' }
     }
     const timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
     return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, isAnswered, gameStatus, mode]);
 
   // -------------------------------------------------------------

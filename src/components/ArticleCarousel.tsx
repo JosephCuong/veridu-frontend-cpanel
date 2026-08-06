@@ -2,6 +2,7 @@
 
 import React, { useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Calendar, BookOpen } from 'lucide-react';
 import { Article } from '@/lib/api';
 
@@ -55,11 +56,12 @@ export default function ArticleCarousel({ articles }: ArticleCarouselProps) {
             className="snap-start shrink-0 w-[280px] sm:w-[320px] bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl overflow-hidden flex flex-col hover:border-indigo-500/50 transition-all shadow-lg hover:-translate-y-1"
           >
             <div className="relative h-40 overflow-hidden">
-              <img 
-                src={article.thumbnail} 
+              <Image 
+                src={article.thumbnail!} 
                 alt={article.title} 
-                className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-                loading="lazy"
+                fill
+                className="object-cover transition-transform duration-500 hover:scale-110"
+                sizes="(max-width: 640px) 280px, 320px"
               />
               <div className="absolute top-3 left-3 px-2 py-1 bg-indigo-600/90 backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-wider rounded-lg border border-indigo-500/30">
                 {article.category}

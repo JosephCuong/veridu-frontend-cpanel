@@ -1,6 +1,7 @@
 import { getLibraryArticleBySlug } from '@/lib/api';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Metadata } from 'next';
 
 import VisualArticleRenderer from '@/components/VisualArticleRenderer';
@@ -90,7 +91,7 @@ const HeroBanner = ({ imageUrl }: { imageUrl?: string }) => {
     <div className="w-full h-[40vh] sm:h-[50vh] relative z-0 overflow-hidden">
       <div className="absolute inset-0 bg-black/30 z-10"></div>
       <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-main)] via-[var(--bg-main)]/50 to-transparent z-10"></div>
-      <img src={imageUrl} alt="Cover" className="w-full h-full object-cover animate-fadeIn" />
+      <Image src={imageUrl} alt="Cover" fill className="object-cover animate-fadeIn" sizes="100vw" priority />
     </div>
   );
 };

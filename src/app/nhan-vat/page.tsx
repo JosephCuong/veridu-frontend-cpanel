@@ -1,5 +1,5 @@
 import React from 'react';
-
+import Image from 'next/image';
 import { fetchCharacters } from '@/lib/api';
 import { BookOpen, Sparkles, User, BookMarked, Target } from 'lucide-react';
 import Link from 'next/link';
@@ -36,9 +36,9 @@ export default async function CharactersPage() {
             {characters.map((char) => (
               <div key={char.id} className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-6 hover:border-amber-500/50 hover:shadow-xl transition-all flex flex-col h-full space-y-4">
                 <div className="flex items-start gap-4">
-                  <div className="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 overflow-hidden flex-shrink-0 flex items-center justify-center text-amber-500">
+                  <div className="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 overflow-hidden flex-shrink-0 flex items-center justify-center text-amber-500 relative">
                     {char.avatar_url ? (
-                      <img src={char.avatar_url} alt={char.name} className="w-full h-full object-cover" />
+                      <Image src={char.avatar_url} alt={char.name} fill className="object-cover" sizes="(max-width: 64px) 100vw, 64px" />
                     ) : (
                       <User className="w-8 h-8 opacity-50" />
                     )}

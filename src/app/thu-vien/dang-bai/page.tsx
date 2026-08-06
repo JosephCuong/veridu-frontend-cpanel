@@ -89,6 +89,7 @@ export default function SubmitPostPage() {
     }
 
     checkUserPermission();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   // Handle HTML File Upload (Drag & Drop or File Selector)

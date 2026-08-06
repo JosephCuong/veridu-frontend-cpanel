@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { fetchCourses, fetchGlobalSearch, Course, Article } from '@/lib/api';
 import { Search, BookOpen, Book, FileText, PlayCircle, Calendar } from 'lucide-react';
 
@@ -102,11 +103,15 @@ export default async function SearchPage({
                     >
                       <div className="relative overflow-hidden aspect-[16/10]">
                         {course.thumbnail ? (
-                          <img 
-                            src={course.thumbnail} 
-                            alt={course.title} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                          />
+                          <div className="relative w-full h-full">
+                            <Image 
+                              src={course.thumbnail} 
+                              alt={course.title} 
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                              sizes="(max-width: 768px) 100vw, 33vw"
+                            />
+                          </div>
                         ) : (
                           <div className="w-full h-full bg-slate-800 flex items-center justify-center">
                             <BookOpen className="w-12 h-12 text-slate-600" />
@@ -163,11 +168,15 @@ export default async function SearchPage({
                     >
                       <div className="relative overflow-hidden aspect-[16/10]">
                         {article.thumbnail ? (
-                          <img 
-                            src={article.thumbnail} 
-                            alt={article.title} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                          />
+                          <div className="relative w-full h-full">
+                            <Image 
+                              src={article.thumbnail} 
+                              alt={article.title} 
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                              sizes="(max-width: 768px) 100vw, 33vw"
+                            />
+                          </div>
                         ) : (
                           <div className="w-full h-full bg-slate-800 flex items-center justify-center">
                             <FileText className="w-12 h-12 text-slate-600" />

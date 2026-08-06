@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { getLiturgicalSeasonInfo, LiturgicalSeason } from '@/lib/liturgical';
 import { getStoredUser, logout, UserProfile } from '@/lib/auth';
@@ -118,9 +119,9 @@ export default function LiturgicalHeader() {
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-amber-500/40 transition-all text-xs font-bold text-[var(--text-main)] shadow-sm"
               >
-                <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center font-serif text-xs font-black">
+                <div className="relative w-6 h-6 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center font-serif text-xs font-black overflow-hidden">
                   {user.avatar ? (
-                    <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                    <Image src={user.avatar} alt="Avatar" fill className="object-cover" sizes="24px" />
                   ) : (
                     user.christianName ? user.christianName[0] : 'G'
                   )}

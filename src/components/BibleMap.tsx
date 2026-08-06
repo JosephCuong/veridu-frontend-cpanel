@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { MapPin, Navigation2, Compass, AlertCircle, Maximize2, BookOpen, ExternalLink } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -220,8 +221,8 @@ export default function BibleMap() {
             </div>
 
             {selectedLoc.imageUrl && (
-              <div className="w-full h-64 rounded-xl overflow-hidden border border-[var(--border-card)] shadow-inner">
-                <img src={selectedLoc.imageUrl} alt={selectedLoc.nameVi} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+              <div className="relative w-full h-64 rounded-xl overflow-hidden border border-[var(--border-card)] shadow-inner">
+                <Image src={selectedLoc.imageUrl} alt={selectedLoc.nameVi} fill className="object-cover hover:scale-105 transition-transform duration-500" sizes="(max-width: 1024px) 100vw, 50vw" />
               </div>
             )}
 

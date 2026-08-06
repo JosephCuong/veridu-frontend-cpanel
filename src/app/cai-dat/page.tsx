@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { getStoredUser, getAuthToken, saveAuthSession, UserProfile } from '@/lib/auth';
 import { fetchCharacters, Character } from '@/lib/api';
 import { User, Mail, Phone, Church, Compass, Save, Loader2, Image as ImageIcon, Settings } from 'lucide-react';
@@ -90,9 +91,9 @@ export default function SettingsPage() {
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Avatar Section */}
             <div className="flex flex-col sm:flex-row items-center gap-6 pb-8 border-b border-[var(--border-card)]">
-              <div className="w-24 h-24 rounded-full border-4 border-amber-500/30 overflow-hidden flex items-center justify-center bg-[var(--bg-main)] text-amber-500 text-3xl font-black shadow-inner">
+              <div className="w-24 h-24 rounded-full border-4 border-amber-500/30 overflow-hidden flex items-center justify-center bg-[var(--bg-main)] text-amber-500 text-3xl font-black shadow-inner relative">
                 {formData.avatar ? (
-                  <img src={formData.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                  <Image src={formData.avatar} alt="Avatar" fill className="object-cover" sizes="(max-width: 96px) 100vw, 96px" />
                 ) : (
                   formData.christianName.charAt(0) || 'G'
                 )}
@@ -154,7 +155,9 @@ export default function SettingsPage() {
             <div className="p-6 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
               {characters.filter(c => c.avatar_url).map(char => (
                 <div key={char.id} onClick={() => { setFormData({...formData, avatar: char.avatar_url || ''}); setShowAvatarModal(false); }} className={`cursor-pointer rounded-xl border-2 transition-all overflow-hidden ${formData.avatar === char.avatar_url ? 'border-amber-500 shadow-lg shadow-amber-500/30' : 'border-transparent hover:border-amber-500/50'}`}>
-                  <img src={char.avatar_url} alt={char.name} className="w-full aspect-square object-cover bg-[var(--bg-main)]" />
+                  <div className="relative w-full aspect-square bg-[var(--bg-main)]">
+                    <Image src={char.avatar_url!} alt={char.name} fill className="object-cover" sizes="(max-width: 768px) 33vw, 20vw" />
+                  </div>
                   <div className="p-2 text-center text-xs font-bold bg-[var(--bg-main)] truncate">{char.name}</div>
                 </div>
               ))}

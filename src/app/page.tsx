@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 import SocialFeed from '@/components/SocialFeed';
 import ArticleCarousel from '@/components/ArticleCarousel';
@@ -199,7 +200,15 @@ export default async function Home() {
             {courses.map((course) => (
               <div key={course.id} className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl overflow-hidden hover:border-amber-500/50 transition-all flex flex-col justify-between shadow-xl">
                 <div>
-                  <img src={course.thumbnail} alt={course.title} className="w-full aspect-video object-cover" />
+                  <div className="relative w-full aspect-video">
+                    {course.thumbnail ? (
+                      <Image src={course.thumbnail} alt={course.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" />
+                    ) : (
+                      <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                        <BookOpen className="w-12 h-12 text-slate-600" />
+                      </div>
+                    )}
+                  </div>
                   <div className="p-6 space-y-3">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/30">
                       {course.category}

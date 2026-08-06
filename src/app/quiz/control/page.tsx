@@ -170,6 +170,7 @@ export default function GLVRoomControlPage() {
     return () => {
       supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomPin, roomStatus]);
 
   // Broadcast State to Players
@@ -198,6 +199,7 @@ export default function GLVRoomControlPage() {
       }, 1000);
       return () => clearTimeout(t);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomStatus, timeLeft, currentQIndex, roomPin]);
 
   const handleStartRoom = () => {

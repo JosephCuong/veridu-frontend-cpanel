@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { fetchCourses } from '@/lib/api';
 import { BookOpen, PlayCircle, Filter, Search, ChevronRight } from 'lucide-react';
 
@@ -134,11 +135,15 @@ export default async function CoursesPage({
                     <div>
                       <div className="relative overflow-hidden">
                         {course.thumbnail ? (
-                          <img 
-                            src={course.thumbnail} 
-                            alt={course.title} 
-                            className="w-full aspect-[16/10] object-cover group-hover:scale-105 transition-transform duration-500" 
-                          />
+                          <div className="relative w-full aspect-[16/10]">
+                            <Image 
+                              src={course.thumbnail} 
+                              alt={course.title} 
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                              sizes="(max-width: 768px) 100vw, 50vw"
+                            />
+                          </div>
                         ) : (
                           <div className="w-full aspect-[16/10] bg-slate-800 flex items-center justify-center">
                             <BookOpen className="w-12 h-12 text-slate-600" />
