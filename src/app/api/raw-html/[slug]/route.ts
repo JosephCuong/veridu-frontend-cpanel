@@ -25,6 +25,13 @@ export async function GET(request: Request, { params }: { params: { slug: string
       
       :root {
         color-scheme: dark;
+        --bg-color: transparent;
+        --bg-light: rgba(15, 23, 42, 0.6);
+        --text-color: #f8fafc;
+        --primary-color: #fbbf24;
+        --primary-light-color: rgba(251, 191, 36, 0.2);
+        --font-body: 'Lora', Georgia, serif;
+        --font-heading: 'Lora', Georgia, serif;
       }
       
       body, p, h1, h2, h3, h4, h5, h6, li, blockquote {
