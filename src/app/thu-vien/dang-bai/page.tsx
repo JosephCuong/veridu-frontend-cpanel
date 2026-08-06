@@ -197,8 +197,7 @@ export default function SubmitPostPage() {
         content: finalContent,
         author_id: user.id,
         status: 'draft', // User submitted defaults to draft
-        category: isInteractiveDoc ? 'Bài Tương Tác HTML 3D' : articleType,
-        article_type: isInteractiveDoc ? 'interactive' : articleType,
+        category: isInteractiveDoc ? 'Bài Tương Tác HTML 3D' : (articleType === 'interactive' ? 'Bài Tương Tác HTML 3D' : articleType),
         slug: title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + '-' + Date.now()
       }]);
 

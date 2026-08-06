@@ -168,8 +168,9 @@ export default function AdminDashboardPage() {
     if (!newPost.title || !newPost.content) return showMsg('Vui lòng nhập Tiêu đề và Nội dung bài viết!', 'error');
     try {
       const slug = newPost.slug || newPost.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      const finalArticleType = (newPost.category === 'Bài Tương Tác HTML 3D' || newPost.article_type === 'interactive') ? 'interactive' : 'standard';
-      await createPost({ ...newPost, slug, article_type: finalArticleType });
+      const postPayload: any = { ...newPost, slug };
+      delete postPayload.article_type;
+      await createPost(postPayload);
       showMsg('Đã xuất bản bài viết thành công!');
       setNewPost({ title: '', slug: '', category: 'Bài Tương Tác HTML 3D', article_type: 'standard', excerpt: '', content: '', featured_image: '', status: 'published' });
       loadAllData();
