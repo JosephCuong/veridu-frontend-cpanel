@@ -31,7 +31,27 @@ export default function LoginPage() {
       if (error) {
         setErrorMsg(error.message || 'Email hoặc mật khẩu không chính xác.');
       } else {
-        setSuccessMsg('Đăng nhập thành công!');
+        // Query real role from Supabase profiles table
+        let userRole = 'Học Viên';
+        const userEmail = (data.user?.email || username).toLowerCase();
+        if (userEmail === 'veridu.net@gmail.com' || data.user?.user_metadata?.role === 'admin') {
+          userRole = 'Quản Trị Viên';
+        } else if (data.user?.id) {
+          try {
+            const { data: dbProfile } = await supabase
+              .from('profiles')
+              .select('role')
+              .eq('id', data.user.id)
+              .maybeSingle();
+
+            if (dbProfile?.role) {
+              userRole = dbProfile.role;
+            }
+          } catch (e) {
+            console.warn('Profile role fetch warning:', e);
+          }
+        }
+
         const userProfile: any = {
           id: data.user?.id || '1',
           email: data.user?.email || username,
@@ -39,7 +59,7 @@ export default function LoginPage() {
           christianName: data.user?.user_metadata?.christian_name || '',
           parish: data.user?.user_metadata?.parish || '',
           diocese: data.user?.user_metadata?.diocese || '',
-          role: data.user?.user_metadata?.role === 'admin' ? 'Quản Trị Viên' : 'Học Viên',
+          role: userRole,
           streak: 1
         };
         saveAuthSession(data.session?.access_token || 'sb_session_active', userProfile, rememberMe);

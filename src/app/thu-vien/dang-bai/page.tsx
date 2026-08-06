@@ -40,27 +40,55 @@ export default function SubmitPostPage() {
   const [syncNotice, setSyncNotice] = useState<string | null>(null);
 
   useEffect(() => {
-    const storedUser = getStoredUser();
-    if (!storedUser) {
-      router.push('/dang-nhap');
-    } else {
-      const userRole = String(storedUser.role || '').toLowerCase();
+    async function checkUserPermission() {
+      const storedUser = getStoredUser();
+      if (!storedUser) {
+        router.push('/dang-nhap');
+        return;
+      }
+
+      setUser(storedUser);
+
+      let role = String(storedUser.role || '').toLowerCase();
+
+      // Fetch real role from Supabase profiles table
+      try {
+        if (storedUser.id || storedUser.email) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .or(`id.eq.${storedUser.id},email.eq.${storedUser.email}`)
+            .maybeSingle();
+
+          if (profile?.role) {
+            role = String(profile.role).toLowerCase();
+          }
+        }
+      } catch (err) {
+        console.warn('Role fetch warning:', err);
+      }
+
       const isAllowed = 
-        userRole.includes('admin') ||
-        userRole.includes('quản trị') ||
-        userRole.includes('teacher') ||
-        userRole.includes('giáo lý') ||
-        userRole.includes('đóng góp') ||
-        userRole.includes('học giả') ||
-        userRole.includes('contributor') ||
-        userRole.includes('scholar');
+        storedUser.email?.toLowerCase() === 'veridu.net@gmail.com' ||
+        role.includes('admin') ||
+        role.includes('quản trị') ||
+        role.includes('teacher') ||
+        role.includes('giáo lý') ||
+        role.includes('đóng góp') ||
+        role.includes('học giả') ||
+        role.includes('contributor') ||
+        role.includes('scholar');
 
       if (!isAllowed) {
         setStatus('error');
         setErrorMsg('Tài khoản của bạn chưa được cấp quyền đăng bài. Quyền đăng bài yêu cầu tài khoản Quản Trị Viên (admin/teacher), Học Giả VERIDU hoặc Người Đóng Góp.');
+      } else if (status === 'error') {
+        setStatus('idle');
+        setErrorMsg('');
       }
-      setUser(storedUser);
     }
+
+    checkUserPermission();
   }, [router]);
 
   // Handle HTML File Upload (Drag & Drop or File Selector)

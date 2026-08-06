@@ -40,15 +40,36 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
         if (error) {
           setErrorMsg('Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản hoặc mật khẩu.');
         } else if (data.session) {
-          // Xây dựng UserProfile từ metadata
+          // Xây dựng UserProfile từ metadata & Supabase profiles table
           const meta = data.user?.user_metadata || {};
+          let userRole = meta.role || 'Người Hành Hương';
+          const userEmail = (data.user?.email || '').toLowerCase();
+
+          if (userEmail === 'veridu.net@gmail.com' || userRole === 'admin') {
+            userRole = 'Quản Trị Viên';
+          } else if (data.user?.id) {
+            try {
+              const { data: dbProfile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', data.user.id)
+                .maybeSingle();
+
+              if (dbProfile?.role) {
+                userRole = dbProfile.role;
+              }
+            } catch (e) {
+              console.warn('AuthModal role fetch warning:', e);
+            }
+          }
+
           const userObj: UserProfile = {
             id: data.user?.id || '',
             username: username,
             email: data.user?.email || '',
             christianName: meta.christianName || null,
             displayName: meta.displayName || null,
-            role: meta.role || 'Người Hành Hương',
+            role: userRole,
             avatar: meta.avatar || null,
             parish: meta.parish || null,
             diocese: meta.diocese || null,
