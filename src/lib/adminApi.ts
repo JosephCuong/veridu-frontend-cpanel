@@ -63,10 +63,12 @@ export async function createPost(postData: any) {
     featuredImageUrl = await uploadMediaFile(featuredImageUrl, 'posts');
   }
 
-  const finalPostData = {
+  const finalPostData: any = {
     ...postData,
     featured_image: featuredImageUrl
   };
+  // Remove non-existent DB column to prevent PostgREST schema cache errors
+  delete finalPostData.article_type;
 
   const { data, error } = await supabase.from('posts').insert([finalPostData]).select();
   if (error) throw error;
@@ -82,10 +84,12 @@ export async function updatePost(id: number | string, postData: any) {
     featuredImageUrl = await uploadMediaFile(featuredImageUrl, 'posts');
   }
 
-  const finalPostData = {
+  const finalPostData: any = {
     ...postData,
     ...(featuredImageUrl ? { featured_image: featuredImageUrl } : {})
   };
+  // Remove non-existent DB column to prevent PostgREST schema cache errors
+  delete finalPostData.article_type;
 
   const { data, error } = await supabase.from('posts').update(finalPostData).eq('id', id).select();
   if (error) throw error;

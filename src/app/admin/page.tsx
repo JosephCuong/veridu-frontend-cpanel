@@ -37,7 +37,6 @@ export default function AdminDashboardPage() {
     title: '',
     slug: '',
     category: 'Bài Tương Tác HTML 3D',
-    article_type: 'standard',
     excerpt: '',
     content: '',
     featured_image: '',
@@ -125,16 +124,17 @@ export default function AdminDashboardPage() {
     reader.onload = (event) => {
       const rawHtml = event.target?.result as string;
       const extractedTitle = extractTitleFromHtml(rawHtml);
-      const isInteractiveDoc = newPost.article_type === 'interactive' || /<!DOCTYPE\s+html/i.test(rawHtml) || /<html[\s>]/i.test(rawHtml);
+      const isInteractiveDoc = /<!DOCTYPE\s+html/i.test(rawHtml) || /<html[\s>]/i.test(rawHtml);
       const normalizedHtml = normalizeAndSyncHtml(rawHtml, stripHtmlClasses, isInteractiveDoc);
       
       setNewPost(prev => ({
         ...prev,
         content: normalizedHtml,
         title: prev.title || extractedTitle || file.name.replace(/\.[^/.]+$/, ''),
-        article_type: isInteractiveDoc ? 'interactive' : prev.article_type
+        category: isInteractiveDoc ? 'Bài Tương Tác HTML 3D' : prev.category
       }));
       showMsg('Đã đọc, tự động phân tích và nạp mã HTML bài viết thành công!');
+
     };
     reader.readAsText(file);
   };
@@ -172,7 +172,7 @@ export default function AdminDashboardPage() {
       delete postPayload.article_type;
       await createPost(postPayload);
       showMsg('Đã xuất bản bài viết thành công!');
-      setNewPost({ title: '', slug: '', category: 'Bài Tương Tác HTML 3D', article_type: 'standard', excerpt: '', content: '', featured_image: '', status: 'published' });
+      setNewPost({ title: '', slug: '', category: 'Bài Tương Tác HTML 3D', excerpt: '', content: '', featured_image: '', status: 'published' });
       loadAllData();
     } catch (err: any) {
       showMsg('Lỗi đăng bài: ' + err.message, 'error');

@@ -25,7 +25,7 @@ const KNOWN_ROUTES = new Set([
   '/sw.js',
 ]);
 
-const STATIC_FILE_REGEX = /\.(txt|xml|json|ico|png|jpg|jpeg|svg|webp|gif|webmanifest|js|css)$/i;
+const STATIC_FILE_REGEX = /\.(txt|xml|json|ico|png|jpg|jpeg|svg|webp|gif|webmanifest|js|css|woff|woff2|ttf|eot|otf|map)$/i;
 
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get('veridu_token')?.value;

@@ -71,7 +71,17 @@ export async function GET(request: Request, { params }: { params: { slug: string
     status: 200,
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
-      'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=60'
+      'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=60',
+      // Giới hạn nguồn script/style cho bài tương tác trong iframe
+      'Content-Security-Policy': [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://unpkg.com",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com",
+        "font-src 'self' https://fonts.gstatic.com",
+        "img-src 'self' data: blob: https:",
+        "connect-src 'self' https:",
+        "frame-ancestors 'self'"
+      ].join('; ')
     },
   });
 }
