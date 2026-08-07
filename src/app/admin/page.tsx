@@ -9,13 +9,14 @@ import {
 } from 'lucide-react';
 import { 
   getAdminPosts, createPost, deletePost, uploadMediaFile,
-  getAdminCourses, createCourse, createLesson, deleteCourse,
+  getAdminCourses, createCourse, deleteCourse,
   getAdminMapLocations, createMapLocation, deleteMapLocation,
   getAdminTimelineEvents, createTimelineEvent, deleteTimelineEvent,
   getAdminQuizQuestions, createQuizQuestion, deleteQuizQuestion,
   getAdminProfiles, updateProfileRole
 } from '@/lib/adminApi';
 import { normalizeAndSyncHtml, extractTitleFromHtml } from '@/lib/htmlProcessor';
+import CourseBuilderModal from '@/components/admin/CourseBuilderModal';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -23,6 +24,7 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [editingCourse, setEditingCourse] = useState<any | null>(null);
 
   // Data States
   const [posts, setPosts] = useState<any[]>([]);
@@ -528,49 +530,63 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* TAB 2: LMS COURSES */}
+      {/* TAB 2: KHÓA HỌC LMS */}
       {activeTab === 'courses' && (
         <div className="max-w-7xl mx-auto space-y-8">
-          <form onSubmit={handleCreateCourse} className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 space-y-4 shadow-2xl">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
             <h2 className="text-xl font-bold text-indigo-500 flex items-center gap-2 font-serif">
-              <Plus className="w-5 h-5" /> Tạo Khóa Học LMS Mới
+              <BookOpen className="w-5 h-5" /> Hệ Thống Khóa Học LMS
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input
-                type="text" placeholder="Tên khóa học (VD: Nhập Môn Cựu Ước)"
-                className="bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] focus:outline-none focus:border-indigo-500"
-                value={newCourse.title} onChange={e => setNewCourse({...newCourse, title: e.target.value})}
-              />
-              <input
-                type="text" placeholder="URL Thumbnail (VD: https://media.thapgia.com/course-thumb.jpg)"
-                className="bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] focus:outline-none focus:border-indigo-500"
-                value={newCourse.thumbnail} onChange={e => setNewCourse({...newCourse, thumbnail: e.target.value})}
-              />
-            </div>
-            <textarea
-              rows={3} placeholder="Mô tả tóm tắt nội dung khóa học LMS..."
-              className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] focus:outline-none focus:border-indigo-500"
-              value={newCourse.description} onChange={e => setNewCourse({...newCourse, description: e.target.value})}
-            />
-            <button type="submit" className="px-6 py-3 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-500 transition-all flex items-center gap-2">
-              <Save className="w-4 h-4" /> Tạo Khóa Học
+            <button 
+              onClick={() => setEditingCourse({
+                id: `temp-${Date.now()}`,
+                title: 'Khóa Học Mới',
+                description: '',
+                category: 'Kinh Thánh',
+                level: 'Cơ Bản',
+                thumbnail: '',
+                course_modules: []
+              })} 
+              className="px-6 py-3 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-500 transition-all flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" /> Tạo Khóa Học Mới
             </button>
-          </form>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {courses.map(c => (
-              <div key={c.id} className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 space-y-4">
+              <div key={c.id} className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 space-y-4 hover:border-indigo-500/30 transition-colors flex flex-col">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-indigo-500 bg-indigo-500/10 px-3 py-1 rounded-full">{c.category} • {c.level}</span>
-                  <button onClick={() => deleteCourse(c.id).then(loadAllData)} className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-xl">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => setEditingCourse(c)} className="p-2 text-indigo-400 hover:bg-indigo-500/10 rounded-xl">
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => deleteCourse(c.id).then(loadAllData)} className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-xl">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <h3 className="font-serif font-bold text-lg text-[var(--text-main)]">{c.title}</h3>
-                <p className="text-xs text-[var(--text-muted)]">{c.description}</p>
+                <h3 className="font-serif font-bold text-lg text-[var(--text-main)] leading-tight">{c.title}</h3>
+                <p className="text-xs text-[var(--text-muted)] line-clamp-2 flex-1">{c.description}</p>
+                <div className="pt-4 border-t border-[var(--border-card)] flex items-center justify-between text-xs text-[var(--text-muted)] font-medium">
+                  <span>{c.course_modules?.length || 0} Chương</span>
+                  <span>{c.course_modules?.reduce((acc: number, mod: any) => acc + (mod.lessons?.length || 0), 0) || c.lessons?.length || 0} Bài học</span>
+                </div>
               </div>
             ))}
           </div>
+          
+          {editingCourse && (
+            <CourseBuilderModal 
+              course={editingCourse} 
+              onClose={() => setEditingCourse(null)} 
+              onSaveComplete={() => {
+                setEditingCourse(null);
+                loadAllData();
+              }}
+            />
+          )}
         </div>
       )}
 

@@ -99,15 +99,96 @@ export async function deletePost(id: number | string) {
 
 // --- COURSES & LESSONS (LMS) ---
 export async function getAdminCourses() {
-  const { data, error } = await supabase.from('courses').select('*, lessons(*)').order('created_at', { ascending: false });
+  const { data, error } = await supabase
+    .from('courses')
+    .select('*, course_modules(*, lessons(*))')
+    .order('created_at', { ascending: false });
   if (error) throw error;
-  return data || [];
+  
+  // Sort modules and lessons by order_index
+  return data?.map(course => ({
+    ...course,
+    course_modules: (course.course_modules || [])
+      .sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0))
+      .map((module: any) => ({
+        ...module,
+        lessons: (module.lessons || []).sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0))
+      }))
+  })) || [];
 }
 
 export async function createCourse(courseData: any) {
   const { data, error } = await supabase.from('courses').insert([courseData]).select();
   if (error) throw error;
   return data[0];
+}
+
+export async function updateCourse(id: number | string, courseData: any) {
+  const { data, error } = await supabase.from('courses').update(courseData).eq('id', id).select();
+  if (error) throw error;
+  return data[0];
+}
+
+export async function saveCourseStructure(courseId: number | string, modules: any[]) {
+  // First, get existing modules to handle deletions if needed (for simplicity, we can upsert)
+  for (let mIndex = 0; mIndex < modules.length; mIndex++) {
+    const mod = modules[mIndex];
+    let moduleId = mod.id;
+
+    const moduleData = {
+      course_id: courseId,
+      title: mod.title,
+      description: mod.description,
+      order_index: mIndex
+    };
+
+    if (String(moduleId).startsWith('temp-')) {
+      // Create new module
+      const { data: newMod, error: errMod } = await supabase.from('course_modules').insert([moduleData]).select();
+      if (errMod) throw errMod;
+      moduleId = newMod[0].id;
+    } else {
+      // Update existing
+      const { error: errMod } = await supabase.from('course_modules').update(moduleData).eq('id', moduleId);
+      if (errMod) throw errMod;
+    }
+
+    // Now upsert lessons
+    const lessons = mod.lessons || [];
+    for (let lIndex = 0; lIndex < lessons.length; lIndex++) {
+      const les = lessons[lIndex];
+      const lessonData = {
+        course_id: courseId,
+        module_id: moduleId,
+        title: les.title,
+        content: les.content || '',
+        order_index: lIndex,
+        type: les.type || 'text',
+        video_url: les.video_url || null,
+        interactive_html: les.interactive_html || null,
+        document_url: les.document_url || null,
+        is_free_preview: les.is_free_preview || false
+      };
+
+      if (String(les.id).startsWith('temp-')) {
+        const { error: errLes } = await supabase.from('lessons').insert([lessonData]);
+        if (errLes) throw errLes;
+      } else {
+        const { error: errLes } = await supabase.from('lessons').update(lessonData).eq('id', les.id);
+        if (errLes) throw errLes;
+      }
+    }
+  }
+}
+
+export async function deleteCourseModule(id: number | string) {
+  const { error } = await supabase.from('course_modules').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteLesson(id: number | string) {
+  const { error } = await supabase.from('lessons').delete().eq('id', id);
+  if (error) throw error;
 }
 
 export async function createLesson(lessonData: any) {
