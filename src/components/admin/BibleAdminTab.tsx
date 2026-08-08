@@ -161,9 +161,17 @@ export default function BibleAdminTab() {
     const rows: Record<string, string>[] = (window as any)._bibleImportRows || [];
     if (rows.length === 0) return showMsg('Chưa có dữ liệu để nhập. Vui lòng tải file hoặc kết nối Google Sheet trước.', 'error');
 
+    // Kiểm tra sách đã tồn tại chưa
+    if (books.length === 0) {
+      return showMsg('⚠ Chưa có sách nào trong DB! Hãy thêm sách vào Tab "Danh Sách Sách" trước khi nhập câu.', 'error');
+    }
+
     setIsImporting(true);
     let successCount = 0;
-    let errorCount = 0;
+    let skipNoBook = 0;
+    let skipNoData = 0;
+    let dbErrorCount = 0;
+    let lastDbError = '';
 
     // Get translation ID
     let transId: number | null = null;
@@ -172,21 +180,27 @@ export default function BibleAdminTab() {
       if (found) transId = found.id;
     }
 
-    // Build batch — hỗ trợ nhiều tên cột khác nhau (chuẩn hóa và từ file cũ)
+    // Build batch — hỗ trợ nhiều tên cột khác nhau
     const batchInserts: any[] = [];
+    const notFoundBooks = new Set<string>();
+
     for (const row of rows) {
       // book code: hỗ trợ book_code, book_slug, Book_Slug, book, sach
-      const bookCode = row['book_code'] || row['book_slug'] || row['book'] || row['sach'] || '';
-      const book = books.find(b => b.code === bookCode.trim() || b.name === bookCode.trim());
-      if (!book) { errorCount++; continue; }
+      const bookCode = (row['book_code'] || row['book_slug'] || row['book'] || row['sach'] || '').trim();
+      const book = books.find(b => b.code === bookCode || b.name === bookCode);
+      if (!book) {
+        notFoundBooks.add(bookCode || '(trống)');
+        skipNoBook++;
+        continue;
+      }
 
       // chapter & verse: hỗ trợ tiếng Anh lẫn tiếng Việt
       const chapter = parseInt(row['chapter'] || row['chuong'] || '0', 10);
       const verse   = parseInt(row['verse'] || row['cau'] || '0', 10);
 
       // nội dung: hỗ trợ text, content, Content, noi_dung
-      const text = row['text'] || row['content'] || row['noi_dung'] || '';
-      if (!chapter || !verse || !text) { errorCount++; continue; }
+      const text = (row['text'] || row['content'] || row['noi_dung'] || '').trim();
+      if (!chapter || !verse || !text) { skipNoData++; continue; }
 
       // tiêu đề mục: hỗ trợ heading, Heading
       const heading = row['heading'] || null;
@@ -203,21 +217,53 @@ export default function BibleAdminTab() {
         heading,
         footnote
       });
-      successCount++;
     }
 
-    // Insert in chunks of 500
-    const chunkSize = 500;
+    // Nếu không có gì để nhập — báo lỗi chi tiết
+    if (batchInserts.length === 0) {
+      setIsImporting(false);
+      const notFoundList = Array.from(notFoundBooks).slice(0, 5).join(', ');
+      if (skipNoBook > 0) {
+        showMsg(
+          `❌ Không thể nhập: ${skipNoBook} dòng không tìm thấy sách khớp. Mã sách không nhận ra: ${notFoundList}. Hãy kiểm tra lại cột Book_Slug và đảm bảo sách đã được thêm vào DB.`,
+          'error'
+        );
+      } else {
+        showMsg('❌ Không có dữ liệu hợp lệ để nhập. Kiểm tra file và thử lại.', 'error');
+      }
+      return;
+    }
+
+    // Insert theo từng batch 200 dòng (nhỏ hơn để dễ debug)
+    const chunkSize = 200;
     for (let i = 0; i < batchInserts.length; i += chunkSize) {
       const chunk = batchInserts.slice(i, i + chunkSize);
-      const { error } = await supabase.from('bible_verses').upsert(chunk, { onConflict: 'book_id,chapter,verse,translation_id' });
-      if (error) errorCount += chunk.length;
+      const { error } = await supabase.from('bible_verses').insert(chunk);
+      if (error) {
+        console.error('bible_verses insert error:', error);
+        lastDbError = error.message;
+        dbErrorCount += chunk.length;
+      } else {
+        successCount += chunk.length;
+      }
     }
 
     setIsImporting(false);
-    showMsg(`Nhập xong: ${successCount} câu thành công${errorCount > 0 ? `, ${errorCount} dòng bị bỏ qua (thiếu dữ liệu/không khớp sách)` : ''}.`, errorCount > 0 && successCount === 0 ? 'error' : 'success');
-    (window as any)._bibleImportRows = [];
-    setImportPreview([]);
+
+    // Tạo thông báo chi tiết
+    const parts: string[] = [];
+    if (successCount > 0) parts.push(`✅ ${successCount} câu đã nhập`);
+    if (skipNoBook > 0) parts.push(`⚠ ${skipNoBook} dòng bỏ qua (không khớp mã sách)`);
+    if (skipNoData > 0) parts.push(`⚠ ${skipNoData} dòng bỏ qua (thiếu chapter/verse/text)`);
+    if (dbErrorCount > 0) parts.push(`❌ ${dbErrorCount} dòng lỗi DB: ${lastDbError}`);
+
+    const isError = successCount === 0;
+    showMsg(parts.join(' | ') || '⚠ Không có gì được nhập.', isError ? 'error' : 'success');
+
+    if (successCount > 0) {
+      (window as any)._bibleImportRows = [];
+      setImportPreview([]);
+    }
   };
 
   const handleLoadCommentary = async () => {
