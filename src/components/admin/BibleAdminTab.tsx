@@ -172,17 +172,27 @@ export default function BibleAdminTab() {
       if (found) transId = found.id;
     }
 
-    // Build batch
+    // Build batch — hỗ trợ nhiều tên cột khác nhau (chuẩn hóa và từ file cũ)
     const batchInserts: any[] = [];
     for (const row of rows) {
-      const bookCode = row['book_code'] || row['book'] || row['sach'] || '';
-      const book = books.find(b => b.code === bookCode || b.name === bookCode);
+      // book code: hỗ trợ book_code, book_slug, Book_Slug, book, sach
+      const bookCode = row['book_code'] || row['book_slug'] || row['book'] || row['sach'] || '';
+      const book = books.find(b => b.code === bookCode.trim() || b.name === bookCode.trim());
       if (!book) { errorCount++; continue; }
 
+      // chapter & verse: hỗ trợ tiếng Anh lẫn tiếng Việt
       const chapter = parseInt(row['chapter'] || row['chuong'] || '0', 10);
-      const verse = parseInt(row['verse'] || row['cau'] || '0', 10);
+      const verse   = parseInt(row['verse'] || row['cau'] || '0', 10);
+
+      // nội dung: hỗ trợ text, content, Content, noi_dung
       const text = row['text'] || row['content'] || row['noi_dung'] || '';
       if (!chapter || !verse || !text) { errorCount++; continue; }
+
+      // tiêu đề mục: hỗ trợ heading, Heading
+      const heading = row['heading'] || null;
+
+      // chú thích: hỗ trợ footnote, footnotes, Footnotes, chu_thich
+      const footnote = row['footnote'] || row['footnotes'] || row['chu_thich'] || null;
 
       batchInserts.push({
         book_id: book.id,
@@ -190,8 +200,8 @@ export default function BibleAdminTab() {
         chapter,
         verse,
         text,
-        heading: row['heading'] || null,
-        footnote: row['footnote'] || row['chu_thich'] || null
+        heading,
+        footnote
       });
       successCount++;
     }
@@ -281,11 +291,54 @@ export default function BibleAdminTab() {
         <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 space-y-6 shadow-2xl">
           <h3 className="font-bold text-teal-400 font-serif text-lg">📥 Nhập Câu Kinh Thánh (Excel / CSV / Google Sheet)</h3>
 
-          <div className="p-4 bg-teal-500/10 border border-teal-500/30 rounded-2xl text-xs text-teal-200 space-y-1">
-            <p className="font-bold uppercase tracking-wide mb-2">📋 Định dạng cột chuẩn:</p>
-            <code className="block bg-slate-900 p-3 rounded-xl font-mono">book_code | chapter | verse | text | heading (tùy chọn) | footnote (tùy chọn)</code>
-            <p className="mt-2 text-slate-400">Ví dụ dòng dữ liệu: <code>sang-the,1,1,Ban đầu, Thiên Chúa sáng tạo trời đất,Tạo Dựng</code></p>
-            <p className="text-slate-400">⚠ Cột <strong>verse</strong> phải là số nguyên (không dùng text). <strong>book_code</strong> phải khớp với cột <em>code</em> trong bảng bible_books.</p>
+          <div className="p-4 bg-teal-500/10 border border-teal-500/30 rounded-2xl text-xs text-teal-200 space-y-3">
+            <p className="font-bold uppercase tracking-wide">📋 Hệ thống tự nhận dạng các tên cột phổ biến:</p>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-teal-500/30">
+                    <th className="pb-1 pr-4 text-teal-300 font-bold">Dữ liệu</th>
+                    <th className="pb-1 pr-4 text-slate-400">Tên cột chấp nhận</th>
+                    <th className="pb-1 text-slate-500">Bắt buộc?</th>
+                  </tr>
+                </thead>
+                <tbody className="space-y-1">
+                  <tr className="border-b border-slate-700/40">
+                    <td className="py-1 pr-4 text-teal-200 font-medium">Mã sách</td>
+                    <td className="py-1 pr-4"><code className="bg-slate-800 px-1 rounded text-amber-300">book_code</code> <code className="bg-slate-800 px-1 rounded text-amber-300">Book_Slug</code> <code className="bg-slate-800 px-1 rounded text-amber-300">book_slug</code></td>
+                    <td className="py-1 text-rose-400 font-bold">✓ Bắt buộc</td>
+                  </tr>
+                  <tr className="border-b border-slate-700/40">
+                    <td className="py-1 pr-4 text-teal-200 font-medium">Chương</td>
+                    <td className="py-1 pr-4"><code className="bg-slate-800 px-1 rounded text-amber-300">chapter</code> <code className="bg-slate-800 px-1 rounded text-amber-300">Chapter</code></td>
+                    <td className="py-1 text-rose-400 font-bold">✓ Bắt buộc</td>
+                  </tr>
+                  <tr className="border-b border-slate-700/40">
+                    <td className="py-1 pr-4 text-teal-200 font-medium">Số câu</td>
+                    <td className="py-1 pr-4"><code className="bg-slate-800 px-1 rounded text-amber-300">verse</code> <code className="bg-slate-800 px-1 rounded text-amber-300">Verse</code></td>
+                    <td className="py-1 text-rose-400 font-bold">✓ Bắt buộc (số nguyên)</td>
+                  </tr>
+                  <tr className="border-b border-slate-700/40">
+                    <td className="py-1 pr-4 text-teal-200 font-medium">Nội dung câu</td>
+                    <td className="py-1 pr-4"><code className="bg-slate-800 px-1 rounded text-amber-300">text</code> <code className="bg-slate-800 px-1 rounded text-amber-300">content</code> <code className="bg-slate-800 px-1 rounded text-amber-300">Content</code></td>
+                    <td className="py-1 text-rose-400 font-bold">✓ Bắt buộc</td>
+                  </tr>
+                  <tr className="border-b border-slate-700/40">
+                    <td className="py-1 pr-4 text-teal-200 font-medium">Tiêu đề mục</td>
+                    <td className="py-1 pr-4"><code className="bg-slate-800 px-1 rounded text-slate-400">heading</code> <code className="bg-slate-800 px-1 rounded text-slate-400">Heading</code></td>
+                    <td className="py-1 text-slate-500">Tùy chọn</td>
+                  </tr>
+                  <tr>
+                    <td className="py-1 pr-4 text-teal-200 font-medium">Chú thích</td>
+                    <td className="py-1 pr-4"><code className="bg-slate-800 px-1 rounded text-slate-400">footnote</code> <code className="bg-slate-800 px-1 rounded text-slate-400">footnotes</code> <code className="bg-slate-800 px-1 rounded text-slate-400">Footnotes</code></td>
+                    <td className="py-1 text-slate-500">Tùy chọn</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <p className="text-slate-400 text-[11px]">💡 Các cột thêm như <code>Is_Paragraph</code>, <code>Is_Poetry</code> sẽ tự động bị bỏ qua. Tên cột không phân biệt hoa/thường.</p>
           </div>
 
           {/* Bản dịch */}
