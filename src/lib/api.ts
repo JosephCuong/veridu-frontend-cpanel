@@ -395,24 +395,35 @@ export async function fetchCharacters(): Promise<Character[]> {
   }
 }
 
-// ─── Bible Reader Metadata ─────────────────────────────────────
+// ─── Bible Reader Metadata ────────────────────────────────────────────────────
 export async function fetchBibleMetadata() {
   try {
-    const { data, error } = await supabase
-      .from('bible_books')
-      .select('*')
-      .order('order_index', { ascending: true });
+    const [booksRes, transRes] = await Promise.all([
+      supabase
+        .from('bible_books')
+        .select('*')
+        .order('order_index', { ascending: true }),
+      supabase
+        .from('bible_translations')
+        .select('id, slug, name')
+        .order('id', { ascending: true })
+    ]);
 
-    if (error || !data) return { books: [], translations: [] };
+    if (booksRes.error || !booksRes.data) return { books: [], translations: [] };
+
+    // If translations table is empty or errored, fallback to default
+    const translationsData = (!transRes.error && transRes.data && transRes.data.length > 0)
+      ? transRes.data.map((t: any) => ({ slug: t.slug, name: t.name }))
+      : [{ slug: 'vi_pdv', name: 'Bản dịch Phụng Vụ KTCG' }];
 
     return {
-      books: data.map((b: any) => ({
+      books: booksRes.data.map((b: any) => ({
         slug: b.code,
         nameVi: b.name,
         testament: b.testament,
         totalChapters: b.chapters_count
       })),
-      translations: [{ slug: 'vi_pdv', name: 'Bản dịch Phụng Vụ KTCG' }]
+      translations: translationsData
     };
   } catch (err) {
     console.error('fetchBibleMetadata error:', err);
@@ -515,23 +526,41 @@ export async function fetchBibleChapter(
       }
     }
 
+    // Query commentary for this chapter
+    const { data: commentaryData } = await supabase
+      .from('bible_commentary')
+      .select('*')
+      .eq('book_id', book.id)
+      .eq('chapter', chapter)
+      .maybeSingle();
+
+    const commentary = commentaryData ? {
+      videoUrl: commentaryData.video_url || null,
+      audioUrl: commentaryData.audio_url || null,
+      historicalContext: commentaryData.historical_context || null,
+      theologicalMeaning: commentaryData.theological_meaning || null,
+      practicalApplication: commentaryData.practical_application || null,
+    } : null;
+
     return {
       bookName: book.name,
       chapter: chapter,
-      verses: (verses || []).map((v: any) => {
-        const verseNum = typeof v.verse === 'number' ? v.verse : parseInt(v.verse, 10);
-        return {
-          id: v.id,
-          verse: v.verse.toString(),
-          content: v.text || v.content || '',
-          contentSec: secondTranslationSlug ? (secondVersesMap[verseNum] || null) : null,
-          heading: v.heading || null,
-          footnotes: v.footnote || v.footnotes || null,
-          chapter: chapter,
-          bookSlug: bookSlug
-        };
-      }),
-      commentary: null
+      verses: (verses || [])
+        .filter((v: any) => v.verse != null)  // Safe guard: skip rows with NULL verse
+        .map((v: any) => {
+          const verseNum = typeof v.verse === 'number' ? v.verse : parseInt(String(v.verse), 10);
+          return {
+            id: v.id,
+            verse: String(verseNum),
+            content: v.text || v.content || '',
+            contentSec: secondTranslationSlug ? (secondVersesMap[verseNum] || null) : null,
+            heading: v.heading || null,
+            footnotes: v.footnote || v.footnotes || null,
+            chapter: chapter,
+            bookSlug: bookSlug
+          };
+        }),
+      commentary
     };
   } catch (err) {
     console.error('fetchBibleChapter error:', err);

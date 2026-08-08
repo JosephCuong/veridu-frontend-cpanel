@@ -17,10 +17,11 @@ import {
 } from '@/lib/adminApi';
 import { normalizeAndSyncHtml, extractTitleFromHtml } from '@/lib/htmlProcessor';
 import CourseBuilderModal from '@/components/admin/CourseBuilderModal';
+import BibleAdminTab from '@/components/admin/BibleAdminTab';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'posts' | 'courses' | 'map' | 'timeline' | 'quiz' | 'users'>('posts');
+  const [activeTab, setActiveTab] = useState<'posts' | 'courses' | 'map' | 'timeline' | 'quiz' | 'users' | 'bible'>('posts');
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -343,6 +344,12 @@ export default function AdminDashboardPage() {
           className={activeTab === 'users' ? "px-5 py-3 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20" : "px-5 py-3 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-main)]"}
         >
           <Users className="w-4 h-4" /> Quản Lý User & Phân Quyền
+        </button>
+        <button
+          onClick={() => setActiveTab('bible')}
+          className={activeTab === 'bible' ? "px-5 py-3 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-teal-500 text-white shadow-lg shadow-teal-500/20" : "px-5 py-3 rounded-xl text-xs font-bold flex items-center gap-2 transition-all bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-main)]"}
+        >
+          <BookOpen className="w-4 h-4" /> 📖 Kinh Thánh
         </button>
       </div>
 
@@ -780,6 +787,8 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       )}
+      {/* TAB 7: KINH THÁNH */}
+      {activeTab === 'bible' && <BibleAdminTab />}
 
     </div>
   );
