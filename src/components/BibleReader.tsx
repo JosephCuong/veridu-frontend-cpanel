@@ -124,10 +124,10 @@ export default function BibleReader({
     <div className="w-full relative pb-32 bg-[var(--bg-main)] text-[var(--text-main)] min-h-screen font-sans">
       
       {/* 🌟 1. SMART STICKY TOOLBAR (GLASSMORPHISM) */}
-      <div className={`sticky top-4 z-40 transition-all duration-500 ease-in-out ${
+      <div className={`sticky top-4 z-40 transition-all duration-500 ease-in-out px-2 sm:px-0 ${
         showToolbar ? 'translate-y-0 opacity-100' : '-translate-y-[150%] opacity-0 pointer-events-none'
       } ${isScrolled ? 'shadow-xl' : 'shadow-2xl'}`}>
-        <div className="mx-auto max-w-6xl p-2 md:p-3 bg-[var(--header-bg)]/70 border border-[var(--border-card)] rounded-full backdrop-blur-2xl flex items-center justify-between shadow-2xl shadow-[var(--bg-card)]/10">
+        <div className="mx-auto max-w-7xl p-2 md:p-3 bg-[var(--header-bg)]/70 border border-[var(--border-card)] rounded-full backdrop-blur-2xl flex items-center justify-between shadow-2xl shadow-[var(--bg-card)]/10">
           
           {/* Left: Navigation Breadcrumb & Book Selector */}
           <div className="flex items-center gap-2">
@@ -142,7 +142,7 @@ export default function BibleReader({
             <div className="relative">
               <button 
                 onClick={() => setIsChapterMenuOpen(!isChapterMenuOpen)}
-                className="font-serif font-bold bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-[var(--accent-gold)]/50 px-4 py-2 rounded-xl transition-all flex items-center gap-2"
+                className="font-serif font-bold bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-[var(--accent-gold)]/50 px-4 py-2 rounded-xl transition-all flex items-center gap-2 min-h-[40px]"
               >
                 <span>Chương {currentChapter}</span>
                 <ChevronDown className="w-4 h-4 ml-1 opacity-70" />
@@ -150,8 +150,12 @@ export default function BibleReader({
               {isChapterMenuOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setIsChapterMenuOpen(false)}></div>
-                  <div className="absolute left-0 top-full mt-2 p-3 w-64 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 max-h-[50vh] overflow-y-auto scrollbar-thin scrollbar-thumb-[var(--border-card)]">
-                    <div className="grid grid-cols-4 gap-2">
+                  {/* Fixed + inset on mobile so this never depends on how far right the
+                      trigger button sits (it can overflow past the viewport edge on
+                      narrow phones when anchored with absolute+left-0+fixed-width).
+                      From sm: up there's enough room to anchor it to the trigger normally. */}
+                  <div className="fixed left-4 right-4 top-20 sm:absolute sm:left-0 sm:right-auto sm:top-full sm:mt-2 sm:w-72 p-3 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 max-h-[60vh] sm:max-h-[50vh] overflow-y-auto scrollbar-thin scrollbar-thumb-[var(--border-card)]">
+                    <div className="grid grid-cols-6 sm:grid-cols-4 gap-2">
                       {Array.from({ length: selectedBook.totalChapters || 1 }).map((_, i) => (
                         <button
                           key={i}
@@ -159,7 +163,7 @@ export default function BibleReader({
                             setIsChapterMenuOpen(false);
                             handleNav(selectedBook.slug, i + 1, selectedTranslation.slug);
                           }}
-                          className={`p-2 rounded-lg text-sm font-bold transition-all ${
+                          className={`p-2 min-h-[40px] rounded-lg text-sm font-bold transition-all ${
                             currentChapter === i + 1
                               ? 'bg-[var(--accent-gold)] text-white'
                               : 'bg-[var(--bg-main)] hover:bg-[var(--border-card)] text-[var(--text-main)]'
@@ -241,7 +245,7 @@ export default function BibleReader({
             <div className="relative">
               <button 
                 onClick={() => setShowSettings(!showSettings)}
-                className="p-2 rounded-xl bg-[var(--bg-card)] hover:bg-[var(--accent-gold)]/10 border border-[var(--border-card)] transition-all"
+                className="p-2.5 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl bg-[var(--bg-card)] hover:bg-[var(--accent-gold)]/10 border border-[var(--border-card)] transition-all"
               >
                 <Settings2 className="w-4 h-4" />
               </button>
@@ -283,7 +287,7 @@ export default function BibleReader({
             <div className="relative">
               <button 
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)]"
+                className="p-2.5 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)]"
               >
                 <MoreVertical className="w-5 h-5" />
               </button>
@@ -333,7 +337,7 @@ export default function BibleReader({
 
         {/* Audio Player Row */}
         {showAudioPlayer && commentary?.audioUrl && (
-          <div className="mx-auto max-w-6xl mt-2 p-3 bg-[var(--header-bg)] border border-[var(--border-card)] rounded-2xl animate-in fade-in slide-in-from-top-2">
+          <div className="mx-auto max-w-7xl mt-2 p-3 bg-[var(--header-bg)] border border-[var(--border-card)] rounded-2xl animate-in fade-in slide-in-from-top-2">
             <audio controls className="w-full h-10 outline-none" autoPlay={false}>
               <source src={commentary.audioUrl} type="audio/mpeg" />
               Trình duyệt không hỗ trợ.
@@ -465,6 +469,16 @@ export default function BibleReader({
         </div>
 
         {/* 🌟 3. SLIDE-OVER COMMENTARY SIDEBAR */}
+        {/* Mobile/tablet backdrop: dims the reading area and lets a tap outside close
+            the sidebar, matching the pattern already used by the book-selector and
+            video modals below. Not needed at lg: and up, where the sidebar is an
+            in-flow column (lg:relative lg:static), not an overlay. */}
+        {showSidebar && (
+          <div
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden animate-in fade-in"
+            onClick={() => setShowSidebar(false)}
+          />
+        )}
         <div 
           className={`fixed lg:relative inset-y-0 right-0 z-50 w-full md:w-[400px] lg:w-1/3 xl:w-1/4 transition-transform duration-500 ease-in-out transform ${
             showSidebar ? 'translate-x-0' : 'translate-x-full lg:hidden lg:w-0'
@@ -477,7 +491,7 @@ export default function BibleReader({
                 <h3 className="font-serif font-black text-xl flex items-center gap-2">
                   <Compass className="w-5 h-5 text-[var(--accent-gold)]"/> Chú Giải & Bối Cảnh
                 </h3>
-                <button onClick={() => setShowSidebar(false)} className="p-2 bg-[var(--bg-main)] hover:bg-[var(--border-card)] rounded-full transition-colors">
+                <button onClick={() => setShowSidebar(false)} className="p-2.5 min-w-[40px] min-h-[40px] flex items-center justify-center bg-[var(--bg-main)] hover:bg-[var(--border-card)] rounded-full transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -523,7 +537,7 @@ export default function BibleReader({
               <h3 className="font-serif font-black text-2xl flex items-center gap-3">
                 <BookOpen className="w-6 h-6 text-[var(--accent-gold)]" /> Chọn Sách Kinh Thánh
               </h3>
-              <button onClick={() => setIsGridMenuOpen(false)} className="p-2 bg-[var(--bg-main)] hover:bg-[var(--border-card)] rounded-full transition-colors">
+              <button onClick={() => setIsGridMenuOpen(false)} className="p-2.5 min-w-[40px] min-h-[40px] flex items-center justify-center bg-[var(--bg-main)] hover:bg-[var(--border-card)] rounded-full transition-colors">
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -606,7 +620,7 @@ export default function BibleReader({
               <h3 className="font-serif font-black text-xl flex items-center gap-2 text-white drop-shadow-md">
                 <PlayCircle className="w-6 h-6 text-rose-500" /> Video Bối Cảnh: {selectedBook.nameVi} - Chương {currentChapter}
               </h3>
-              <button onClick={() => setShowVideoModal(false)} className="p-2 bg-white/10 hover:bg-white/25 rounded-full transition text-white backdrop-blur-md pointer-events-auto">
+              <button onClick={() => setShowVideoModal(false)} className="p-2.5 min-w-[40px] min-h-[40px] flex items-center justify-center bg-white/10 hover:bg-white/25 rounded-full transition text-white backdrop-blur-md pointer-events-auto">
                 <X className="w-5 h-5"/>
               </button>
             </div>
