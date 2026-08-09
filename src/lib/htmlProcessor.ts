@@ -8,8 +8,11 @@
 
 /**
  * Strips HTML tags and decodes common HTML entities to return clean plain text.
+ * Exported for use anywhere a field (title, excerpt, etc.) must be rendered as
+ * plain text rather than markup — e.g. via {value} instead of dangerouslySetInnerHTML.
+ * This is the primary XSS guard for user-submitted plain-text fields.
  */
-function cleanText(rawText: string): string {
+export function cleanText(rawText: string): string {
   if (!rawText) return '';
   const textWithoutTags = rawText.replace(/<[^>]*>/g, ' ');
   const decoded = textWithoutTags

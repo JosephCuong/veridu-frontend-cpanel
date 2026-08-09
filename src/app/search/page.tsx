@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { fetchCourses, fetchGlobalSearch, Course, Article } from '@/lib/api';
 import { Search, BookOpen, Book, FileText, PlayCircle, Calendar } from 'lucide-react';
+import { cleanText } from '@/lib/htmlProcessor';
 
 export default async function SearchPage({
   searchParams,
@@ -190,7 +191,7 @@ export default async function SearchPage({
                         <h3 className="font-serif font-bold text-lg text-[var(--text-main)] line-clamp-2 group-hover:text-[var(--accent-gold)] transition-colors mb-2">
                           {article.title}
                         </h3>
-                        <p className="text-xs text-[var(--text-muted)] line-clamp-3 leading-relaxed mb-4 flex-1" dangerouslySetInnerHTML={{ __html: article.excerpt || '' }} />
+                        <p className="text-xs text-[var(--text-muted)] line-clamp-3 leading-relaxed mb-4 flex-1">{cleanText(article.excerpt || '')}</p>
                       </div>
                     </Link>
                   ))}

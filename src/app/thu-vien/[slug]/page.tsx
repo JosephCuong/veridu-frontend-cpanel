@@ -7,6 +7,7 @@ import VisualArticleRenderer from '@/components/VisualArticleRenderer';
 import ShareButtons from '@/components/ShareButtons';
 import TableOfContents from '@/components/TableOfContents';
 import { BookOpen, Sparkles, Heart, ArrowLeft, Cross, Calendar, Clock, User, Tag } from 'lucide-react';
+import { cleanText } from '@/lib/htmlProcessor';
 
 // ─── GENERATE METADATA FROM SITESEO ──────────────────────────────────────────
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -113,7 +114,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
 
   // Domain for share buttons
   const articleUrl = `https://thapgia.com/thu-vien/${resolvedParams.slug}`;
-  const cleanTitle = titleText.replace(/<[^>]+>/g, '');
+  const cleanTitle = cleanText(titleText);
 
   // 1. TEMPLATE BÀI TƯƠNG TÁC (HTML/JS Sandbox Fullscreen)
   if (articleType === 'interactive') {
@@ -137,11 +138,16 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
           </Link>
         </div>
         
+        {/* IMPORTANT: no "allow-same-origin". Combined with a same-origin src, that flag
+            would let scripts inside this untrusted, unsanitized HTML read document.cookie /
+            localStorage for the real site and call same-origin APIs with the visitor's
+            session. Dropping it forces a permanently opaque origin for the iframe: scripts
+            (needed for 3D/WebGL content) still run, but are isolated from the parent site. */}
         <iframe 
           src={`/api/raw-html/${resolvedParams.slug}`} 
           className="w-full h-full border-none bg-slate-950"
           title={cleanTitle}
-          sandbox="allow-scripts allow-same-origin allow-popups"
+          sandbox="allow-scripts allow-popups"
         />
 
         <ShareButtons url={articleUrl} title={cleanTitle} />
@@ -167,7 +173,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
                   <span className="px-3.5 py-1.5 rounded-full bg-slate-500/10 border border-slate-500/30 text-[var(--text-main)] text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 mb-6 shadow-sm">
                     Tạp Chí / Phóng Sự
                   </span>
-                  <h1 className="font-serif font-black text-4xl sm:text-6xl text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-300 leading-[1.15] drop-shadow-sm" dangerouslySetInnerHTML={{ __html: titleText }} />
+                  <h1 className="font-serif font-black text-4xl sm:text-6xl text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-300 leading-[1.15] drop-shadow-sm">{cleanText(titleText)}</h1>
                   <div className="mt-4">
                     <MetaDataRow article={article} />
                   </div>
@@ -208,7 +214,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
                   <span className="px-3.5 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-700 dark:text-amber-400 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm">
                     <Sparkles className="w-3.5 h-3.5" /> Suy Niệm Lời Chúa
                   </span>
-                  <h1 className="font-serif font-black text-3xl sm:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-red-600 dark:from-amber-400 dark:to-red-400 leading-[1.2] drop-shadow-sm" dangerouslySetInnerHTML={{ __html: titleText }} />
+                  <h1 className="font-serif font-black text-3xl sm:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-red-600 dark:from-amber-400 dark:to-red-400 leading-[1.2] drop-shadow-sm">{cleanText(titleText)}</h1>
                   <MetaDataRow article={article} />
                 </header>
 
@@ -272,7 +278,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
                   <span className="px-3.5 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-700 dark:text-indigo-300 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm">
                     <Cross className="w-3.5 h-3.5" /> Thần Học & Chuyên Đề
                   </span>
-                  <h1 className="font-serif font-black text-3xl sm:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 dark:from-blue-400 dark:to-indigo-300 leading-[1.2] drop-shadow-sm" dangerouslySetInnerHTML={{ __html: titleText }} />
+                  <h1 className="font-serif font-black text-3xl sm:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-700 dark:from-blue-400 dark:to-indigo-300 leading-[1.2] drop-shadow-sm">{cleanText(titleText)}</h1>
                   <div className="text-xs text-amber-600 dark:text-amber-400 font-bold tracking-wide">Trích xuất từ VERIDU CANONIST & Giáo Luật Phụng Vụ</div>
                   <MetaDataRow article={article} />
                 </header>
@@ -311,7 +317,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
                 <span className="px-3.5 py-1.5 rounded-full bg-slate-500/20 border border-slate-500/30 text-[var(--text-main)] text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm">
                   <Tag className="w-3.5 h-3.5" /> {article.category || 'Bài Viết'}
                 </span>
-                <h1 className="text-3xl sm:text-5xl font-serif font-black text-transparent bg-clip-text bg-gradient-to-br from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 leading-[1.25] drop-shadow-sm" dangerouslySetInnerHTML={{ __html: titleText }} />
+                <h1 className="text-3xl sm:text-5xl font-serif font-black text-transparent bg-clip-text bg-gradient-to-br from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 leading-[1.25] drop-shadow-sm">{cleanText(titleText)}</h1>
                 <MetaDataRow article={article} />
               </header>
               

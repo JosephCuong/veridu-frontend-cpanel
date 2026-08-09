@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Search, Filter, Layers, Cross, FileText, Heart, Gamepad2 } from 'lucide-react';
+import { cleanText } from '@/lib/htmlProcessor';
 
 interface LibraryClientProps {
   initialArticles: any[];
@@ -159,14 +160,16 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
 
                         <h2 
                             className="font-serif font-bold text-xl text-[var(--text-main)] group-hover:text-amber-500 transition-colors line-clamp-3 leading-snug"
-                            dangerouslySetInnerHTML={{ __html: titleText }}
-                        />
+                        >
+                            {cleanText(titleText)}
+                        </h2>
 
                         {article.excerpt && (
                             <div 
                             className="text-sm text-[var(--text-muted)] line-clamp-3 leading-relaxed"
-                            dangerouslySetInnerHTML={{ __html: article.excerpt }}
-                            />
+                            >
+                            {cleanText(article.excerpt)}
+                            </div>
                         )}
                     </div>
 

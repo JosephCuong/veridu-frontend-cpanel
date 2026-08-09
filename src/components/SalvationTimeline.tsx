@@ -7,6 +7,7 @@ import {
   LayoutGrid, GitCommit, X, ExternalLink, FileText 
 } from 'lucide-react';
 import { fetchTimelineEvents, TimelineEventData, getLibraryArticleBySlug, Article } from '@/lib/api';
+import VisualArticleRenderer from '@/components/VisualArticleRenderer';
 
 export default function SalvationTimeline() {
   const [selectedFilter, setSelectedFilter] = useState<'Tất cả' | 'Cựu Ước' | 'Tân Ước' | 'Lịch Sử Giáo Hội'>('Tất cả');
@@ -357,16 +358,23 @@ export default function SalvationTimeline() {
                   />
                 </div>
               ) : articleContent?.interactiveHtml ? (
-                /* Interactive HTML injected directly */
-                <div 
-                  className="prose dark:prose-invert max-w-none font-sans"
-                  dangerouslySetInnerHTML={{ __html: articleContent.interactiveHtml }}
-                />
+                /* Interactive HTML — sandboxed iframe, never injected into the parent DOM.
+                   This content is unsanitized full-document HTML by design (to preserve
+                   3D/WebGL scripts), so it must never share origin with the main site. */
+                <div className="w-full h-[600px] rounded-2xl overflow-hidden border border-[var(--border-card)]">
+                  <iframe
+                    srcDoc={articleContent.interactiveHtml}
+                    className="w-full h-full border-0"
+                    title={activeEvent.title}
+                    sandbox="allow-scripts allow-popups"
+                  />
+                </div>
               ) : articleContent?.contentHtml ? (
-                /* Standard Article Content HTML */
-                <div 
-                  className="prose dark:prose-invert max-w-none font-sans text-[var(--text-main)] leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: articleContent.contentHtml }}
+                /* Standard Article Content HTML — routed through VisualArticleRenderer so it
+                   goes through the same normalizeAndSyncHtml sanitize pipeline as everywhere else. */
+                <VisualArticleRenderer
+                  contentHtml={articleContent.contentHtml}
+                  className="font-sans"
                 />
               ) : (
                 /* Default Fallback Event Content */
