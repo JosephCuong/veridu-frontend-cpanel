@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { QuizQuestion, MOCK_QUIZ_QUESTIONS, calculateSpeedBonus, fetchQuizQuestions } from '@/lib/quiz';
 import { supabase } from '@/lib/supabaseClient';
 import { 
@@ -56,6 +56,19 @@ export default function QuizArena({ mode, roomPin = '789012', category = 'all' }
   const [playerName, setPlayerName] = useState('');
   const [hasJoinedLive, setHasJoinedLive] = useState(false);
 
+  // Live-mode grading refs: the host now withholds correctAnswerIndex from the
+  // broadcast until the round timer hits 0 (see quiz/control/page.tsx), so grading
+  // for live mode can't happen at click time — it happens when the reveal arrives.
+  // Refs (not state) so the long-lived channel subscription below always reads the
+  // latest values without needing to resubscribe on every keystroke/click.
+  const selectedOptionRef = useRef<number | null>(null);
+  const gradedIndexRef = useRef<number | null>(null);
+  const answeredAtTimeRef = useRef<number>(20);
+
+  useEffect(() => {
+    selectedOptionRef.current = selectedOption;
+  }, [selectedOption]);
+
   // -------------------------------------------------------------
   // REAL-TIME (LIVE MODE) LOGIC
   // -------------------------------------------------------------
@@ -83,6 +96,26 @@ export default function QuizArena({ mode, roomPin = '789012', category = 'all' }
           if (time === 20 || time === 10) {
             setSelectedOption(null);
             setIsAnswered(false);
+            gradedIndexRef.current = null;
+          }
+        } else if (
+          questionData &&
+          typeof questionData.correctAnswerIndex === 'number' &&
+          gradedIndexRef.current !== questionIndex
+        ) {
+          // Reveal just arrived with the real correctAnswerIndex. Grade now, once,
+          // against whatever the player had already locked in (selectedOptionRef).
+          gradedIndexRef.current = questionIndex;
+          const locked = selectedOptionRef.current;
+          if (locked !== null) {
+            const isCorrect = locked === questionData.correctAnswerIndex;
+            if (isCorrect) {
+              const points = calculateSpeedBonus(answeredAtTimeRef.current, 20);
+              setScore((prev) => prev + points);
+              setStreak((prev) => prev + 1);
+            } else {
+              setStreak(0);
+            }
           }
         }
       })
@@ -166,28 +199,31 @@ export default function QuizArena({ mode, roomPin = '789012', category = 'all' }
     const activeQuestion = mode === 'live' ? currentLiveQuestion : questions[currentIndex];
     if (!activeQuestion) return;
 
+    if (mode === 'live') {
+      // Live mode: correctAnswerIndex isn't in the broadcast yet at this point (the
+      // host withholds it until reveal — see quiz/control/page.tsx), so we can't grade
+      // here. Just lock in the choice and note when it was made for the speed bonus;
+      // actual scoring happens in the sync_state handler once the reveal arrives.
+      answeredAtTimeRef.current = timeLeft;
+      if (hasJoinedLive) {
+        const channel = supabase.channel(`room:${roomPin}`);
+        channel.send({
+          type: 'broadcast',
+          event: 'player_answered',
+          payload: { playerName, selectedOption: optionIdx }
+        });
+      }
+      return;
+    }
+
     const isCorrect = optionIdx === activeQuestion.correctAnswerIndex;
 
     if (isCorrect) {
-      const points = calculateSpeedBonus(timeLeft, mode === 'live' ? 20 : (difficulty === 'Thử Thách' ? 10 : 20));
+      const points = calculateSpeedBonus(timeLeft, difficulty === 'Thử Thách' ? 10 : 20);
       setScore((prev) => prev + points);
       setStreak((prev) => prev + 1);
     } else {
       setStreak(0);
-    }
-    
-    // Broadcast answer if live
-    if (mode === 'live' && hasJoinedLive) {
-       const channel = supabase.channel(`room:${roomPin}`);
-       channel.send({
-         type: 'broadcast',
-         event: 'player_answered',
-         payload: {
-           playerName,
-           isCorrect,
-           points: isCorrect ? calculateSpeedBonus(timeLeft, 20) : 0
-         }
-       });
     }
   };
 
@@ -421,7 +457,15 @@ export default function QuizArena({ mode, roomPin = '789012', category = 'all' }
             {activeQuestion.options.map((option, idx) => {
               const isSelected = selectedOption === idx;
               const isCorrectOption = idx === activeQuestion.correctAnswerIndex;
-              const showResult = isAnswered || timeLeft === 0 || (mode === 'live' && isAnswered); // for live, we might wait for host to reveal, but let's show right away to user for simplicity, or wait. Let's wait if live? No, Kahoot shows right/wrong immediately when time ends or after answering.
+              // In live mode, activeQuestion.correctAnswerIndex is intentionally absent
+              // from the broadcast until the host's reveal fires (so it can't be read
+              // from the network before anyone answers) — so only show right/wrong once
+              // it's actually present. Solo mode always has it, so answering or the
+              // timer running out is enough.
+              const hasRevealedAnswer = typeof activeQuestion.correctAnswerIndex === 'number';
+              const showResult = mode === 'live'
+                ? hasRevealedAnswer
+                : (isAnswered || timeLeft === 0);
 
               let btnClass = "bg-[var(--bg-main)] border-[var(--border-card)] hover:border-amber-500/50 hover:bg-amber-500/5 text-[var(--text-main)]";
               

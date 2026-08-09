@@ -176,15 +176,25 @@ export default function GLVRoomControlPage() {
   const broadcastState = (status: string, index: number, time: number) => {
     if (!roomPin) return;
     const channel = supabase.channel(`room:${roomPin}`);
+    const rawQuestion = questions[index] || null;
+    const isRevealing = time === 0;
+    // Security: withhold correctAnswerIndex from the broadcast payload while the
+    // round is still live. Supabase Realtime broadcasts are plain messages any
+    // client in the room can inspect (e.g. via DevTools), so sending the answer
+    // up front would let anyone read it before choosing. It's only included once
+    // the timer hits 0 and QuizArena grades the player's already-locked-in choice.
+    const questionData = rawQuestion
+      ? (isRevealing ? rawQuestion : { ...rawQuestion, correctAnswerIndex: undefined })
+      : null;
     channel.send({
       type: 'broadcast',
       event: 'sync_state',
       payload: {
         status,
         questionIndex: index,
-        questionData: questions[index] || null,
+        questionData,
         time,
-        isShowingAnswer: time === 0
+        isShowingAnswer: isRevealing
       }
     });
   };
