@@ -375,21 +375,25 @@ export async function fetchCharacters(): Promise<Character[]> {
 // ─── Bible Reader Metadata ─────────────────────────────────────
 export async function fetchBibleMetadata() {
   try {
-    const { data, error } = await supabase
-      .from('bible_books')
-      .select('*')
-      .order('order_index', { ascending: true });
+    const [{ data: books, error: booksError }, { data: translations, error: transError }] = await Promise.all([
+      supabase.from('bible_books').select('*').order('order_index', { ascending: true }),
+      supabase.from('bible_translations').select('*').order('id', { ascending: true })
+    ]);
 
-    if (error || !data) return { books: [], translations: [] };
+    if (booksError || !books) return { books: [], translations: [] };
 
     return {
-      books: data.map((b: any) => ({
+      books: books.map((b: any) => ({
         slug: b.code,
         nameVi: b.name,
         testament: b.testament,
         totalChapters: b.chapters_count
       })),
-      translations: [{ slug: 'vi_pdv', name: 'Bản dịch Phụng Vụ KTCG' }]
+      // Falls back to the single legacy translation if the bible_translations table
+      // is empty/unreachable, so existing chapter links (?t=vi_pdv) don't break.
+      translations: (!transError && translations && translations.length > 0)
+        ? translations.map((t: any) => ({ slug: t.slug, name: t.name || t.slug }))
+        : [{ slug: 'vi_pdv', name: 'Bản dịch Phụng Vụ KTCG' }]
     };
   } catch (err) {
     console.error('fetchBibleMetadata error:', err);
@@ -495,19 +499,21 @@ export async function fetchBibleChapter(
     return {
       bookName: book.name,
       chapter: chapter,
-      verses: (verses || []).map((v: any) => {
-        const verseNum = typeof v.verse === 'number' ? v.verse : parseInt(v.verse, 10);
-        return {
-          id: v.id,
-          verse: v.verse.toString(),
-          content: v.text || v.content || '',
-          contentSec: secondTranslationSlug ? (secondVersesMap[verseNum] || null) : null,
-          heading: v.heading || null,
-          footnotes: v.footnote || v.footnotes || null,
-          chapter: chapter,
-          bookSlug: bookSlug
-        };
-      }),
+      verses: (verses || [])
+        .filter((v: any) => v && v.verse !== null && v.verse !== undefined)
+        .map((v: any) => {
+          const verseNum = typeof v.verse === 'number' ? v.verse : parseInt(v.verse, 10);
+          return {
+            id: v.id,
+            verse: String(v.verse),
+            content: v.text || v.content || '',
+            contentSec: secondTranslationSlug ? (secondVersesMap[verseNum] || null) : null,
+            heading: v.heading || null,
+            footnotes: v.footnote || v.footnotes || null,
+            chapter: chapter,
+            bookSlug: bookSlug
+          };
+        }),
       commentary: null
     };
   } catch (err) {
