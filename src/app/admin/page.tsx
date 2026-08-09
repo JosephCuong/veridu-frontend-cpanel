@@ -106,7 +106,7 @@ export default function AdminDashboardPage() {
       if (profData.status === 'fulfilled') setProfiles(profData.value);
     } catch (err: any) {
       console.error(err);
-    } fontally {
+    } finally {
       setLoading(false);
     }
   };
@@ -722,11 +722,14 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="flex-1 w-full h-full bg-slate-950">
+              {/* No "allow-same-origin": this previews HTML that may have been submitted
+                  by someone else (e.g. an admin pasting a contributor's file). With that
+                  flag, embedded scripts could read the admin's own session cookie. */}
               <iframe
                 title="HTML Live Preview"
                 srcDoc={newPost.content}
                 className="w-full h-full border-0"
-                sandbox="allow-scripts allow-same-origin"
+                sandbox="allow-scripts"
               />
             </div>
           </div>
