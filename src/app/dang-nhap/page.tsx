@@ -106,7 +106,7 @@ export default function LoginPage() {
               </label>
               <input 
                 type="email" required value={username} onChange={(e) => setUsername(e.target.value)}
-                placeholder="email@thapgia.com"
+                placeholder="email@veridu.net"
                 className="w-full bg-[var(--bg-main)]/50 border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
               />
             </div>

@@ -242,7 +242,7 @@ export default function BibleMap() {
           <div className="pt-4 border-t border-[var(--border-card)] flex items-center justify-between">
             <span className="text-xs text-[var(--text-muted)]">Hệ Thống Trực Quan Hóa Địa Danh Kinh Thánh VERIDU</span>
             <a 
-              href={`https://thapgia.com/doc-kinh-thanh/`}
+              href="/doc-kinh-thanh"
               target="_blank"
               rel="noreferrer"
               className="px-4 py-2 rounded-lg bg-amber-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 hover:bg-amber-400 transition-colors shadow-md"
