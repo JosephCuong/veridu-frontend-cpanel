@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Lora } from "next/font/google";
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import BackToTop from "@/components/BackToTop";
 import LiturgicalHeader from "@/components/LiturgicalHeader";
 import Footer from "@/components/Footer";
@@ -46,6 +47,7 @@ export default function RootLayout({
         
         <Footer />
         <BackToTop />
+        <SpeedInsights />
       </body>
     </html>
   );
