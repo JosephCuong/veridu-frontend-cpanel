@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
 
 const KNOWN_ROUTES = new Set([
   '/',
@@ -15,7 +14,6 @@ const KNOWN_ROUTES = new Set([
   '/dang-ky',
   '/ho-so',
   '/cai-dat',
-  '/admin',
   '/search',
   '/favicon.ico',
   '/robots.txt',
@@ -28,11 +26,14 @@ const KNOWN_ROUTES = new Set([
 const STATIC_FILE_REGEX = /\.(txt|xml|json|ico|png|jpg|jpeg|svg|webp|gif|webmanifest|js|css|woff|woff2|ttf|eot|otf|map)$/i;
 
 export async function middleware(request: NextRequest) {
-  const token = request.cookies.get('veridu_token')?.value;
-  const userCookie = request.cookies.get('veridu_user')?.value;
   const { pathname } = request.nextUrl;
 
-  // 1. Redirect 301 cho các permalink bài viết cũ từ WordPress dạng `/ten-bai-viet/` sang `/thu-vien/ten-bai-viet`
+  // 1. Chuyển hướng các đường dẫn admin cũ về trang chủ
+  if (pathname.startsWith('/admin') || pathname.startsWith('/wp-admin')) {
+    return NextResponse.redirect(new URL('/', request.url), { status: 301 });
+  }
+
+  // 2. Redirect 301 cho các permalink bài viết cũ từ WordPress dạng `/ten-bai-viet/` sang `/thu-vien/ten-bai-viet`
   const cleanPath = pathname.replace(/\/$/, '');
   const segments = cleanPath.split('/').filter(Boolean);
   const isStaticFile = pathname.includes('.') || STATIC_FILE_REGEX.test(cleanPath);
@@ -49,44 +50,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(targetUrl, { status: 301 });
   }
 
-  // 2. Bảo vệ đường dẫn Admin
-  if (pathname.startsWith('/admin')) {
-    if (!token) {
-      return NextResponse.redirect(new URL('/dang-nhap', request.url));
-    }
-
-    try {
-      const { data: { user }, error } = await supabase.auth.getUser(token);
-
-      if (!user || error) {
-        return NextResponse.redirect(new URL('/dang-nhap', request.url));
-      }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      const role = String(profile?.role || user.user_metadata?.role || '').toLowerCase();
-      const isAdminRole =
-        role.includes('admin') ||
-        role.includes('quản trị') ||
-        role.includes('administrator');
-
-      if (!user || !isAdminRole) {
-        return NextResponse.redirect(new URL('/dang-nhap', request.url));
-      }
-
-      return NextResponse.next();
-    } catch (e) {
-      console.error('Middleware admin auth error:', e);
-      return NextResponse.redirect(new URL('/dang-nhap', request.url));
-    }
-  }
-
   return NextResponse.next();
 }
+
 
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
