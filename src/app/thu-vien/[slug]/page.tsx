@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   // Fallback values
   const defaultTitle = typeof article.title === 'string' ? article.title.replace(/<[^>]+>/g, '') : 'Bài Viết VERIDU';
   const defaultDesc = article.excerpt ? article.excerpt.replace(/<[^>]+>/g, '').substring(0, 160) : 'Khám phá thư viện tài liệu Công giáo trên VERIDU.';
-  const defaultImage = article.thumbnail || article.featured_image || 'https://veridu.net/default-og-image.jpg';
+  const defaultImage = article.thumbnail || article.featured_image || 'https://www.thapgia.com/default-og-image.jpg';
 
   // Read SiteSEO data injected via REST API
   const seo = article.seo || {};
@@ -113,7 +113,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
   const coverImage = article.featured_image || article.thumbnail;
 
   // Domain for share buttons
-  const articleUrl = `https://veridu.net/thu-vien/${resolvedParams.slug}`;
+  const articleUrl = `https://www.thapgia.com/thu-vien/${resolvedParams.slug}`;
   const cleanTitle = titleText.replace(/<[^>]+>/g, '');
 
   // 1. TEMPLATE BÀI TƯƠNG TÁC (HTML/JS Sandbox Fullscreen)
