@@ -19,13 +19,13 @@ const lora = Lora({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.thapgia.com"),
-  title: "THÁP GIÁ — Nền Tảng Học Tập Công Giáo & Kinh Thánh 3D",
-  description: "Khám phá Lời Chúa, Đấu trường Quiz Giáo lý, Bản đồ 3D Kinh Thánh và Thư viện Suy niệm Công giáo.",
+  title: "VERIDU — Nền Tảng Học Tập & Nghiên Cứu Công Giáo, Kinh Thánh",
+  description: "VERIDU — Nền tảng học tập và nghiên cứu Công giáo, Kinh Thánh, Đấu trường Quiz Giáo lý, Bản đồ 3D Kinh Thánh và Thư viện Suy niệm.",
   openGraph: {
-    title: "THÁP GIÁ — Nền Tảng Học Tập Công Giáo & Kinh Thánh 3D",
-    description: "Khám phá Lời Chúa, Đấu trường Quiz Giáo lý, Bản đồ 3D Kinh Thánh và Thư viện Suy niệm Công giáo.",
+    title: "VERIDU — Nền Tảng Học Tập & Nghiên Cứu Công Giáo, Kinh Thánh",
+    description: "VERIDU — Nền tảng học tập và nghiên cứu Công giáo, Kinh Thánh, Đấu trường Quiz Giáo lý, Bản đồ 3D Kinh Thánh và Thư viện Suy niệm.",
     url: "https://www.thapgia.com",
-    siteName: "Tháp Giá",
+    siteName: "VERIDU",
     locale: "vi_VN",
     type: "website",
   },
