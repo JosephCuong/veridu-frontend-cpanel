@@ -61,7 +61,7 @@ export default function LiturgicalHeader() {
       >
         <span>{season?.icon || <Sparkles className="w-3.5 h-3.5 inline" />}</span>
         <span>Lịch Phụng Vụ Hôm Nay: <strong>{season?.nameVi || 'Mùa Thường Niên'}</strong></span>
-        <span className="opacity-60 hidden sm:inline">| Lời Chúa Là Nguồn Sống (VIA · VITA · VERITAS)</span>
+        <span className="opacity-90 font-medium hidden sm:inline">| Lời Chúa Là Nguồn Sống (VIA · VITA · VERITAS)</span>
       </div>
 
       {/* Main Header Container */}

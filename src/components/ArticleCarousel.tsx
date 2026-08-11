@@ -108,7 +108,7 @@ export default function ArticleCarousel({ articles }: ArticleCarouselProps) {
                 <div>
                   {formattedDate && (
                     <div className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">
-                      <Calendar className="w-3 h-3 text-amber-500" />
+                      <Calendar className="w-3 h-3 text-amber-600 dark:text-amber-400" />
                       <span>{formattedDate}</span>
                     </div>
                   )}
@@ -127,7 +127,7 @@ export default function ArticleCarousel({ articles }: ArticleCarouselProps) {
                 <div className="pt-3 border-t border-[var(--border-card)]">
                   <Link 
                     href={`/thu-vien/${article.slug}`}
-                    className="inline-flex items-center gap-2 text-amber-500 text-xs font-bold hover:text-amber-400 transition-colors"
+                    className="inline-flex items-center gap-2 text-amber-600 dark:text-amber-400 text-xs font-bold hover:underline transition-colors"
                   >
                     <BookOpen className="w-4 h-4" /> Đọc bài viết &rarr;
                   </Link>

@@ -90,25 +90,25 @@ export default async function Home() {
               
               <Link href="/doc-kinh-thanh" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-amber-500/40 transition-all backdrop-blur-md group shadow-sm">
                 <BookOpen className="w-6 h-6 text-amber-500 mb-2 group-hover:scale-110 transition-transform" />
-                <h4 className="font-serif font-bold text-sm text-[var(--text-main)]">Kinh Thánh 73 Sách</h4>
+                <h3 className="font-serif font-bold text-sm text-[var(--text-main)]">Kinh Thánh 73 Sách</h3>
                 <p className="text-[11px] text-[var(--text-muted)]">Bản dịch LM. Nguyễn Thế Thuấn</p>
               </Link>
 
               <Link href="/ban-do-kinh-thanh" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-emerald-500/40 transition-all backdrop-blur-md group shadow-sm">
                 <MapPin className="w-6 h-6 text-emerald-500 mb-2 group-hover:scale-110 transition-transform" />
-                <h4 className="font-serif font-bold text-sm text-[var(--text-main)]">Bản Đồ 3D</h4>
+                <h3 className="font-serif font-bold text-sm text-[var(--text-main)]">Bản Đồ 3D</h3>
                 <p className="text-[11px] text-[var(--text-muted)]">Khám phá Vùng Đất Thánh</p>
               </Link>
 
               <Link href="/dong-thoi-gian" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-purple-500/40 transition-all backdrop-blur-md group shadow-sm">
                 <Clock className="w-6 h-6 text-purple-500 mb-2 group-hover:scale-110 transition-transform" />
-                <h4 className="font-serif font-bold text-sm text-[var(--text-main)]">Dòng Thời Gian</h4>
+                <h3 className="font-serif font-bold text-sm text-[var(--text-main)]">Dòng Thời Gian</h3>
                 <p className="text-[11px] text-[var(--text-muted)]">Lịch sử Cứu Độ 4000 năm</p>
               </Link>
 
               <Link href="/thu-vien" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-indigo-500/40 transition-all backdrop-blur-md group shadow-sm">
                 <ShieldCheck className="w-6 h-6 text-indigo-500 mb-2 group-hover:scale-110 transition-transform" />
-                <h4 className="font-serif font-bold text-sm text-[var(--text-main)]">Thư Viện Bài Viết</h4>
+                <h3 className="font-serif font-bold text-sm text-[var(--text-main)]">Thư Viện Bài Viết</h3>
                 <p className="text-[11px] text-[var(--text-muted)]">Suy niệm & Bài Tương Tác</p>
               </Link>
 
@@ -158,6 +158,7 @@ export default async function Home() {
               <div className="relative pt-[56.25%] w-full">
                 <iframe
                   src={embedUrl}
+                  title="Video Giới Thiệu Nền Tảng VERIDU"
                   style={{ width: '100%', height: '100%', border: 0 }}
                   className="absolute inset-0 w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -173,10 +174,10 @@ export default async function Home() {
           <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 pt-8">
             <div className="flex justify-between items-end mb-6">
               <div>
-                <span className="text-xs font-bold text-indigo-500 uppercase tracking-wider">Thư Viện Bài Viết</span>
+                <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Thư Viện Bài Viết</span>
                 <h2 className="font-serif font-bold text-2xl sm:text-3xl text-[var(--text-main)]">Mới Cập Nhật</h2>
               </div>
-              <Link href="/thu-vien" className="text-xs font-bold text-indigo-500 hover:underline flex items-center gap-1">
+              <Link href="/thu-vien" className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1">
                 Xem tất cả &rarr;
               </Link>
             </div>
