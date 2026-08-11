@@ -179,8 +179,8 @@ function mapElementClasses(el: Element): void {
       }
       break;
     case 'a':
-      if (!el.classList.contains('text-amber-500')) {
-        el.classList.add('text-amber-500', 'hover:text-amber-400', 'underline', 'transition-colors');
+      if (!el.classList.contains('text-amber-800')) {
+        el.classList.add('text-amber-800', 'dark:text-amber-400', 'font-bold', 'hover:text-amber-600', 'dark:hover:text-amber-300', 'underline', 'transition-colors');
       }
       break;
     case 'ul':

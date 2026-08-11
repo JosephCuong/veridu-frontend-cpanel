@@ -39,8 +39,8 @@ export default function ShareButtons({ url, title }: ShareButtonsProps) {
   return (
     <div className={`fixed z-50 transition-all duration-500 ease-in-out ${isSticky ? 'bottom-6 left-1/2 -translate-x-1/2 lg:bottom-1/2 lg:translate-y-1/2 lg:left-6 lg:translate-x-0 lg:scale-100 lg:opacity-100 scale-100 opacity-100' : '-bottom-24 left-1/2 -translate-x-1/2 lg:bottom-1/2 lg:translate-y-1/2 lg:-left-24 lg:translate-x-0 scale-50 opacity-0 pointer-events-none'}`}>
       <div className="flex lg:flex-col items-center space-x-3 lg:space-x-0 lg:space-y-3 px-6 py-3 lg:px-3 lg:py-6 rounded-full bg-[var(--bg-card)]/95 border border-[var(--border-card)] shadow-2xl backdrop-blur-xl">
-        <span className="text-xs font-bold text-[var(--text-muted)] mr-2 lg:mr-0 lg:mb-2 flex items-center lg:justify-center uppercase tracking-wider hidden sm:flex">
-          <Share2 className="w-3 h-3 mr-1 lg:mr-0 lg:mb-1" />
+        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 mr-2 lg:mr-0 lg:mb-2 flex items-center lg:justify-center uppercase tracking-wider hidden sm:flex">
+          <Share2 className="w-3 h-3 mr-1 lg:mr-0 lg:mb-1 text-slate-600 dark:text-slate-400" />
           <span className="lg:hidden">Chia sẻ</span>
         </span>
 
@@ -49,7 +49,7 @@ export default function ShareButtons({ url, title }: ShareButtonsProps) {
           href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
           target="_blank"
           rel="noopener noreferrer"
-          className={`${buttonClass} bg-blue-600/10 text-blue-500 border-blue-500/20 hover:bg-blue-600 hover:text-white hover:border-blue-600 font-bold text-xs`}
+          className={`${buttonClass} bg-blue-600/10 text-blue-700 dark:text-blue-400 border-blue-600/30 hover:bg-blue-600 hover:text-white hover:border-blue-600 font-bold text-xs`}
           aria-label="Chia sẻ lên Facebook"
         >
           FB
@@ -60,7 +60,7 @@ export default function ShareButtons({ url, title }: ShareButtonsProps) {
           href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`}
           target="_blank"
           rel="noopener noreferrer"
-          className={`${buttonClass} bg-slate-800/10 text-slate-400 border-slate-500/20 hover:bg-slate-800 hover:text-white hover:border-slate-800 font-bold text-xs`}
+          className={`${buttonClass} bg-slate-800/10 text-slate-800 dark:text-slate-200 border-slate-700/30 hover:bg-slate-800 hover:text-white hover:border-slate-800 font-bold text-xs`}
           aria-label="Chia sẻ lên X (Twitter)"
         >
           X
@@ -71,7 +71,7 @@ export default function ShareButtons({ url, title }: ShareButtonsProps) {
           href={`https://sp.zalo.me/plugins/share?url=${encodedUrl}`}
           target="_blank"
           rel="noopener noreferrer"
-          className={`${buttonClass} bg-blue-500/10 text-blue-400 border-blue-400/20 hover:bg-blue-500 hover:text-white hover:border-blue-500 font-bold text-xs`}
+          className={`${buttonClass} bg-sky-600/10 text-sky-700 dark:text-sky-400 border-sky-600/30 hover:bg-sky-600 hover:text-white hover:border-sky-600 font-bold text-xs`}
           aria-label="Chia sẻ lên Zalo"
         >
           Zalo
@@ -80,7 +80,7 @@ export default function ShareButtons({ url, title }: ShareButtonsProps) {
         {/* Copy Link */}
         <button 
           onClick={handleCopyLink}
-          className={`${buttonClass} ${copied ? 'bg-green-500/10 text-green-500 border-green-500/30' : 'bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500 hover:text-white hover:border-amber-500'}`}
+          className={`${buttonClass} ${copied ? 'bg-green-600/10 text-green-700 dark:text-green-400 border-green-600/30' : 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-600/30 hover:bg-amber-500 hover:text-slate-950'}`}
           aria-label="Sao chép liên kết"
         >
           {copied ? <Check className="w-4 h-4" /> : <LinkIcon className="w-4 h-4" />}

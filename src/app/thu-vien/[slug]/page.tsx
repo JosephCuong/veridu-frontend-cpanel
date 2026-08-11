@@ -57,28 +57,28 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 // ─── HELPER COMPONENTS ────────────────────────────────────────────────────────
 const MetaDataRow = ({ article }: { article: any }) => (
-  <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs font-medium text-[var(--text-muted)] mt-6">
+  <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs font-semibold text-slate-700 dark:text-slate-300 mt-6">
     {article.author && (
       <div className="flex items-center gap-1.5 bg-[var(--bg-main)] px-3 py-1.5 rounded-full border border-[var(--border-card)]">
-        <User className="w-3.5 h-3.5 text-amber-500" />
+        <User className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
         <span>{article.author}</span>
       </div>
     )}
     {article.created_at && (
       <div className="flex items-center gap-1.5">
-        <Calendar className="w-3.5 h-3.5 text-slate-400" />
+        <Calendar className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
         <span>{new Date(article.created_at).toLocaleDateString('vi-VN')}</span>
       </div>
     )}
     {(article.readingTime || article.reading_time) && (
       <div className="flex items-center gap-1.5">
-        <Clock className="w-3.5 h-3.5 text-slate-400" />
+        <Clock className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
         <span>{article.readingTime || article.reading_time}</span>
       </div>
     )}
     {article.category && (
       <div className="flex items-center gap-1.5">
-        <Tag className="w-3.5 h-3.5 text-slate-400" />
+        <Tag className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
         <span>{article.category}</span>
       </div>
     )}
