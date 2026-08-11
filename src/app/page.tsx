@@ -49,8 +49,8 @@ export default async function Home() {
           <div className="max-w-5xl mx-auto space-y-8 relative z-10">
             
             {/* Top Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-bold uppercase tracking-wider backdrop-blur-md shadow-lg shadow-amber-500/10 animate-fadeIn">
-              <Sparkles className="w-4 h-4 text-amber-500" />
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-400 text-xs font-bold uppercase tracking-wider backdrop-blur-md shadow-lg shadow-amber-500/10 animate-fadeIn">
+              <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               <span>NỀN TẢNG CÔNG GIÁO & HỌC TẬP KINH THÁNH 3D</span>
             </div>
 
@@ -64,7 +64,7 @@ export default async function Home() {
               Hệ thống học tập LMS hiện đại kết hợp Đấu trường Quiz Giáo lý Real-time, Trình đọc Kinh Thánh 73 Sách, Bản đồ 3D & Dòng thời gian Lịch sử Cứu độ.
             </p>
 
-            <p className="font-serif text-sm tracking-widest text-amber-500/90 font-bold uppercase">
+            <p className="font-serif text-sm tracking-widest text-amber-800 dark:text-amber-400 font-bold uppercase">
               VIA &nbsp;·&nbsp; VITA &nbsp;·&nbsp; VERITAS
             </p>
 
@@ -89,25 +89,25 @@ export default async function Home() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-8 max-w-4xl mx-auto text-left">
               
               <Link href="/doc-kinh-thanh" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-amber-500/40 transition-all backdrop-blur-md group shadow-sm">
-                <BookOpen className="w-6 h-6 text-amber-500 mb-2 group-hover:scale-110 transition-transform" />
+                <BookOpen className="w-6 h-6 text-amber-600 dark:text-amber-400 mb-2 group-hover:scale-110 transition-transform" />
                 <h3 className="font-serif font-bold text-sm text-[var(--text-main)]">Kinh Thánh 73 Sách</h3>
                 <p className="text-[11px] text-[var(--text-muted)]">Bản dịch LM. Nguyễn Thế Thuấn</p>
               </Link>
 
               <Link href="/ban-do-kinh-thanh" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-emerald-500/40 transition-all backdrop-blur-md group shadow-sm">
-                <MapPin className="w-6 h-6 text-emerald-500 mb-2 group-hover:scale-110 transition-transform" />
+                <MapPin className="w-6 h-6 text-emerald-600 dark:text-emerald-400 mb-2 group-hover:scale-110 transition-transform" />
                 <h3 className="font-serif font-bold text-sm text-[var(--text-main)]">Bản Đồ 3D</h3>
                 <p className="text-[11px] text-[var(--text-muted)]">Khám phá Vùng Đất Thánh</p>
               </Link>
 
               <Link href="/dong-thoi-gian" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-purple-500/40 transition-all backdrop-blur-md group shadow-sm">
-                <Clock className="w-6 h-6 text-purple-500 mb-2 group-hover:scale-110 transition-transform" />
+                <Clock className="w-6 h-6 text-purple-600 dark:text-purple-400 mb-2 group-hover:scale-110 transition-transform" />
                 <h3 className="font-serif font-bold text-sm text-[var(--text-main)]">Dòng Thời Gian</h3>
                 <p className="text-[11px] text-[var(--text-muted)]">Lịch sử Cứu Độ 4000 năm</p>
               </Link>
 
               <Link href="/thu-vien" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-indigo-500/40 transition-all backdrop-blur-md group shadow-sm">
-                <ShieldCheck className="w-6 h-6 text-indigo-500 mb-2 group-hover:scale-110 transition-transform" />
+                <ShieldCheck className="w-6 h-6 text-indigo-600 dark:text-indigo-400 mb-2 group-hover:scale-110 transition-transform" />
                 <h3 className="font-serif font-bold text-sm text-[var(--text-main)]">Thư Viện Bài Viết</h3>
                 <p className="text-[11px] text-[var(--text-muted)]">Suy niệm & Bài Tương Tác</p>
               </Link>
@@ -123,8 +123,8 @@ export default async function Home() {
             <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-amber-500 uppercase tracking-wider">
-                <Flame className="w-4 h-4 text-amber-500 fill-amber-500 animate-bounce" />
+              <div className="flex items-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider">
+                <Flame className="w-4 h-4 text-amber-600 dark:text-amber-400 fill-amber-500 animate-bounce" />
                 <span>Khóa Học Đang Tiến Hành</span>
               </div>
               <h2 className="font-serif font-bold text-xl sm:text-2xl text-[var(--text-main)]">
@@ -147,7 +147,7 @@ export default async function Home() {
         {embedUrl && (
           <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 pt-8">
             <div className="text-center mb-8">
-              <span className="text-xs font-bold text-rose-500 uppercase tracking-wider inline-block bg-rose-500/10 px-3 py-1 rounded-full border border-rose-500/20 mb-3">
+              <span className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider inline-block bg-rose-500/10 px-3 py-1 rounded-full border border-rose-500/20 mb-3">
                 Video Nổi Bật
               </span>
               <h2 className="font-serif font-black text-3xl sm:text-4xl text-[var(--text-main)]">
@@ -189,10 +189,10 @@ export default async function Home() {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="flex justify-between items-end">
             <div>
-              <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">Khóa Học Nổi Bật</span>
+              <span className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider">Khóa Học Nổi Bật</span>
               <h2 className="font-serif font-bold text-2xl sm:text-3xl text-[var(--text-main)]">Lộ Trình Học Tập LMS</h2>
             </div>
-            <Link href="/courses" className="text-xs font-bold text-amber-500 hover:underline flex items-center gap-1">
+            <Link href="/courses" className="text-xs font-bold text-amber-800 dark:text-amber-400 hover:underline flex items-center gap-1">
               Xem tất cả &rarr;
             </Link>
           </div>
@@ -211,7 +211,7 @@ export default async function Home() {
                     )}
                   </div>
                   <div className="p-6 space-y-3">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/30">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/30">
                       {course.category}
                     </span>
                     <h3 className="font-serif font-bold text-lg text-[var(--text-main)] leading-snug line-clamp-2">
@@ -238,7 +238,7 @@ export default async function Home() {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-8 flex flex-col justify-center space-y-6">
-              <span className="text-xs font-bold text-blue-500 uppercase tracking-wider inline-block">Cộng Đồng VERIDU</span>
+              <span className="text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider inline-block">Cộng Đồng VERIDU</span>
               <h2 className="font-serif font-black text-3xl sm:text-4xl lg:text-5xl text-[var(--text-main)] leading-tight">
                 Kết Nối & Cập Nhật Từ <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">Facebook</span>
               </h2>
