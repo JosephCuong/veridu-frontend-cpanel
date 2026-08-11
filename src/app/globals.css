@@ -48,6 +48,23 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text-main) !important;
 }
 
+.prose-veridu-sanitized a,
+.article-content a,
+a[href*="#fn"],
+.prose-veridu-sanitized a[href*="#fn"] {
+  color: #b45309 !important;
+  font-weight: 700 !important;
+  text-decoration: underline !important;
+  transition: color 0.2s ease;
+}
+
+html.dark .prose-veridu-sanitized a,
+html.dark .article-content a,
+html.dark a[href*="#fn"],
+html.dark .prose-veridu-sanitized a[href*="#fn"] {
+  color: #fbbf24 !important;
+}
+
 .prose-veridu-sanitized p,
 .prose-veridu-sanitized span,
 .prose-veridu-sanitized li {

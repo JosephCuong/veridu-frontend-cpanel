@@ -54,9 +54,9 @@ export default function LiturgicalHeader() {
       <div 
         className="w-full py-1 px-4 text-center text-xs font-semibold flex items-center justify-center gap-2 transition-all"
         style={{ 
-          backgroundColor: season?.badgeBg || 'rgba(245, 197, 24, 0.15)',
-          color: accentColor,
-          borderBottom: `1px solid ${season?.glowHex || 'rgba(245, 197, 24, 0.3)'}`
+          backgroundColor: season?.badgeBg || 'rgba(16, 185, 129, 0.15)',
+          color: isDarkMode ? (season?.colorHex || '#10B981') : (season?.darkTextColorHex || '#047857'),
+          borderBottom: `1px solid ${season?.glowHex || 'rgba(16, 185, 129, 0.3)'}`
         }}
       >
         <span>{season?.icon || <Sparkles className="w-3.5 h-3.5 inline" />}</span>
@@ -109,7 +109,7 @@ export default function LiturgicalHeader() {
           {user ? (
             <div className="flex items-center gap-3">
               {/* Streaks Widget */}
-              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-500 font-bold text-xs shadow-sm">
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-800 dark:text-amber-400 font-bold text-xs shadow-sm">
                 <Flame className="w-4 h-4 fill-amber-500 text-amber-500 animate-pulse" />
                 <span>{user.streak || 5} Ngày</span>
               </div>

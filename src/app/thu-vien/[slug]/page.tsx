@@ -300,7 +300,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
       <HeroBanner imageUrl={coverImage} />
 
       <div className={`max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative z-20 ${coverImage ? '-mt-24' : 'pt-12'}`}>
-        <Link href="/thu-vien" className="inline-flex items-center text-xs font-bold text-amber-500 hover:underline mb-4 bg-[var(--bg-card)]/50 backdrop-blur px-3 py-1.5 rounded-full border border-[var(--border-card)] shadow-md">
+        <Link href="/thu-vien" className="inline-flex items-center text-xs font-bold text-amber-800 dark:text-amber-400 hover:underline mb-4 bg-[var(--bg-card)]/50 backdrop-blur px-3 py-1.5 rounded-full border border-[var(--border-card)] shadow-md">
           <ArrowLeft className="w-4 h-4 mr-1.5" /> Quay Lại Thư Viện
         </Link>
         
