@@ -85,17 +85,17 @@ export default function Footer() {
             </h3>
             <ul className="space-y-4">
               <li>
-                <Link href="/courses" className="text-sm text-[var(--text-muted)] hover:text-[var(--accent-gold)] transition-colors flex items-center gap-2 before:content-[''] before:w-1 before:h-1 before:bg-[var(--accent-gold)] before:rounded-full">
+                <Link href="/khoa-hoc" className="text-sm text-[var(--text-muted)] hover:text-[var(--accent-gold)] transition-colors flex items-center gap-2 before:content-[''] before:w-1 before:h-1 before:bg-[var(--accent-gold)] before:rounded-full">
                   Khóa Học LMS
                 </Link>
               </li>
               <li>
-                <Link href="/doc-kinh-thanh" className="text-sm text-[var(--text-muted)] hover:text-[var(--accent-gold)] transition-colors flex items-center gap-2 before:content-[''] before:w-1 before:h-1 before:bg-[var(--accent-gold)] before:rounded-full">
+                <Link href="/kinh-thanh" className="text-sm text-[var(--text-muted)] hover:text-[var(--accent-gold)] transition-colors flex items-center gap-2 before:content-[''] before:w-1 before:h-1 before:bg-[var(--accent-gold)] before:rounded-full">
                   Đọc Kinh Thánh
                 </Link>
               </li>
               <li>
-                <Link href="/ban-do-kinh-thanh" className="text-sm text-[var(--text-muted)] hover:text-[var(--accent-gold)] transition-colors flex items-center gap-2 before:content-[''] before:w-1 before:h-1 before:bg-[var(--accent-gold)] before:rounded-full">
+                <Link href="/ban-do" className="text-sm text-[var(--text-muted)] hover:text-[var(--accent-gold)] transition-colors flex items-center gap-2 before:content-[''] before:w-1 before:h-1 before:bg-[var(--accent-gold)] before:rounded-full">
                   Bản Đồ 3D
                 </Link>
               </li>

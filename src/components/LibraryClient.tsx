@@ -183,7 +183,7 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
 
                     <div className="pt-4 mt-4 border-t border-[var(--border-card)]">
                         <Link 
-                            href={`/thu-vien/${article.slug}`}
+                            href={`/${article.slug}`}
                             className="w-full py-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:bg-amber-500 hover:text-slate-950 text-[var(--text-main)] text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
                         >
                             {templateType === 'interactive' ? (

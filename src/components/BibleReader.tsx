@@ -107,7 +107,7 @@ export default function BibleReader({
   }, [readMode, secondTranslationSlug, selectedBook.slug, currentChapter]);
 
   const handleNav = (slug: string, chapter: number, trans: string) => {
-     router.push(`/doc-kinh-thanh/${slug}/${chapter}?t=${trans}`);
+     router.push(`/kinh-thanh/${slug}/${chapter}?t=${trans}`);
   };
 
   const hasNextChapter = currentChapter < (selectedBook?.totalChapters || 1);

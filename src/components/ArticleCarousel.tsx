@@ -126,7 +126,7 @@ export default function ArticleCarousel({ articles }: ArticleCarouselProps) {
 
                 <div className="pt-3 border-t border-[var(--border-card)]">
                   <Link 
-                    href={`/thu-vien/${article.slug}`}
+                    href={`/${article.slug}`}
                     className="inline-flex items-center gap-2 text-amber-800 dark:text-amber-400 text-xs font-bold hover:underline transition-colors"
                   >
                     <BookOpen className="w-4 h-4" /> Đọc bài viết &rarr;

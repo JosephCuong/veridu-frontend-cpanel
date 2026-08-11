@@ -71,7 +71,7 @@ export default async function Home() {
             {/* Quick Action CTA Buttons */}
             <div className="flex flex-wrap justify-center gap-4 pt-2">
               <Link 
-                href="/courses/nhap-mon-kinh-thanh-cuu-uoc-va-lich-su-cuu-do"
+                href="/khoa-hoc/nhap-mon-kinh-thanh-cuu-uoc-va-lich-su-cuu-do"
                 className="px-7 py-4 rounded-2xl bg-amber-500 text-slate-950 font-bold text-sm flex items-center gap-2 hover:bg-amber-400 transition-all shadow-xl shadow-amber-500/25 hover:scale-105"
               >
                 <PlayCircle className="w-5 h-5 fill-current" /> Bắt Đầu Học LMS
@@ -88,19 +88,19 @@ export default async function Home() {
             {/* Feature Highlights Quick Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-8 max-w-4xl mx-auto text-left">
               
-              <Link href="/doc-kinh-thanh" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-amber-500/40 transition-all backdrop-blur-md group shadow-sm">
+              <Link href="/kinh-thanh" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-amber-500/40 transition-all backdrop-blur-md group shadow-sm">
                 <BookOpen className="w-6 h-6 text-amber-600 dark:text-amber-400 mb-2 group-hover:scale-110 transition-transform" />
                 <span className="font-serif font-bold text-sm text-[var(--text-main)] block">Kinh Thánh 73 Sách</span>
                 <p className="text-[11px] text-[var(--text-muted)]">Bản dịch LM. Nguyễn Thế Thuấn</p>
               </Link>
 
-              <Link href="/ban-do-kinh-thanh" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-emerald-500/40 transition-all backdrop-blur-md group shadow-sm">
+              <Link href="/ban-do" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-emerald-500/40 transition-all backdrop-blur-md group shadow-sm">
                 <MapPin className="w-6 h-6 text-emerald-600 dark:text-emerald-400 mb-2 group-hover:scale-110 transition-transform" />
                 <span className="font-serif font-bold text-sm text-[var(--text-main)] block">Bản Đồ 3D</span>
                 <p className="text-[11px] text-[var(--text-muted)]">Khám phá Vùng Đất Thánh</p>
               </Link>
 
-              <Link href="/dong-thoi-gian" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-purple-500/40 transition-all backdrop-blur-md group shadow-sm">
+              <Link href="/lich-su" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-purple-500/40 transition-all backdrop-blur-md group shadow-sm">
                 <Clock className="w-6 h-6 text-purple-600 dark:text-purple-400 mb-2 group-hover:scale-110 transition-transform" />
                 <span className="font-serif font-bold text-sm text-[var(--text-main)] block">Dòng Thời Gian</span>
                 <p className="text-[11px] text-[var(--text-muted)]">Lịch sử Cứu Độ 4000 năm</p>
@@ -134,7 +134,7 @@ export default async function Home() {
             </div>
 
             <Link 
-              href="/courses/nhap-mon-kinh-thanh-cuu-uoc-va-lich-su-cuu-do"
+              href="/khoa-hoc/nhap-mon-kinh-thanh-cuu-uoc-va-lich-su-cuu-do"
               className="px-6 py-3.5 rounded-2xl bg-amber-500 text-slate-950 font-bold text-xs flex items-center gap-2 shrink-0 hover:bg-amber-400 transition-colors shadow-lg"
             >
               <span>Học Tiếp Bài 2</span>
@@ -192,7 +192,7 @@ export default async function Home() {
               <span className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider">Khóa Học Nổi Bật</span>
               <h2 className="font-serif font-bold text-2xl sm:text-3xl text-[var(--text-main)]">Lộ Trình Học Tập LMS</h2>
             </div>
-            <Link href="/courses" className="text-xs font-bold text-amber-800 dark:text-amber-400 hover:underline flex items-center gap-1">
+            <Link href="/khoa-hoc" className="text-xs font-bold text-amber-800 dark:text-amber-400 hover:underline flex items-center gap-1">
               Xem tất cả &rarr;
             </Link>
           </div>
@@ -223,7 +223,7 @@ export default async function Home() {
 
                 <div className="p-6 pt-0">
                   <Link 
-                    href={`/courses/${course.slug}`}
+                    href={`/khoa-hoc/${course.slug}`}
                     className="w-full py-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:bg-amber-500 hover:text-slate-950 text-[var(--text-main)] text-xs font-bold flex items-center justify-center gap-2 transition-all"
                   >
                     Vào Học Khóa Này &rarr;

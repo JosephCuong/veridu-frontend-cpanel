@@ -223,22 +223,22 @@ export default function LiturgicalHeader() {
           <Link href="/" className="text-amber-600 dark:text-amber-400 font-bold flex items-center gap-2 hover:underline transition-all whitespace-nowrap">
             <Compass className="w-4 h-4" /> Trang Chủ
           </Link>
-          <Link href="/courses" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
+          <Link href="/khoa-hoc" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
             <BookOpen className="w-4 h-4" /> Khóa Học LMS
           </Link>
           <Link href="/thu-vien" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
             <Cross className="w-4 h-4 text-amber-500" /> Thư Viện Bài Viết
           </Link>
-          <Link href="/ban-do-kinh-thanh" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
+          <Link href="/ban-do" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
             <MapPin className="w-4 h-4 text-emerald-500" /> Bản Đồ 3D
           </Link>
-          <Link href="/dong-thoi-gian" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
+          <Link href="/lich-su" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
             <Clock className="w-4 h-4 text-purple-500" /> Dòng Thời Gian
           </Link>
           <Link href="/quiz" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
             <Gamepad2 className="w-4 h-4 text-amber-500" /> Quiz Giáo Lý
           </Link>
-          <Link href="/doc-kinh-thanh" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
+          <Link href="/kinh-thanh" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
             <BookOpen className="w-4 h-4 text-amber-500" /> Đọc Kinh Thánh
           </Link>
           <Link href="/nhan-vat" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
@@ -251,12 +251,12 @@ export default function LiturgicalHeader() {
       {isMobileMenuOpen && (
         <div className="md:hidden border-t border-[var(--border-card)] bg-[var(--bg-card)] p-4 space-y-3 shadow-xl">
           <Link href="/" className="py-2 text-amber-500 font-semibold flex items-center gap-2"><Compass className="w-4 h-4" /> Trang Chủ</Link>
-          <Link href="/courses" className="py-2 text-[var(--text-main)] flex items-center gap-2"><BookOpen className="w-4 h-4 text-amber-500" /> Khóa Học LMS</Link>
+          <Link href="/khoa-hoc" className="py-2 text-[var(--text-main)] flex items-center gap-2"><BookOpen className="w-4 h-4 text-amber-500" /> Khóa Học LMS</Link>
           <Link href="/thu-vien" className="py-2 text-[var(--text-main)] flex items-center gap-2"><Cross className="w-4 h-4 text-amber-500" /> Thư Viện Bài Viết</Link>
-          <Link href="/ban-do-kinh-thanh" className="py-2 text-[var(--text-main)] flex items-center gap-2"><MapPin className="w-4 h-4 text-emerald-500" /> Bản Đồ Kinh Thánh</Link>
-          <Link href="/dong-thoi-gian" className="py-2 text-[var(--text-main)] flex items-center gap-2"><Clock className="w-4 h-4 text-purple-500" /> Dòng Thời Gian Cứu Độ</Link>
+          <Link href="/ban-do" className="py-2 text-[var(--text-main)] flex items-center gap-2"><MapPin className="w-4 h-4 text-emerald-500" /> Bản Đồ Kinh Thánh</Link>
+          <Link href="/lich-su" className="py-2 text-[var(--text-main)] flex items-center gap-2"><Clock className="w-4 h-4 text-purple-500" /> Dòng Thời Gian Cứu Độ</Link>
           <Link href="/quiz" className="py-2 text-[var(--text-main)] flex items-center gap-2"><Gamepad2 className="w-4 h-4 text-amber-500" /> Quiz Giáo Lý</Link>
-          <Link href="/doc-kinh-thanh" className="py-2 text-[var(--text-main)] flex items-center gap-2"><BookOpen className="w-4 h-4 text-amber-500" /> Đọc Kinh Thánh</Link>
+          <Link href="/kinh-thanh" className="py-2 text-[var(--text-main)] flex items-center gap-2"><BookOpen className="w-4 h-4 text-amber-500" /> Đọc Kinh Thánh</Link>
           <Link href="/nhan-vat" className="py-2 text-[var(--text-main)] flex items-center gap-2"><User className="w-4 h-4 text-indigo-500" /> Nhân Vật Kinh Thánh</Link>
           {!user && (
             <Link 

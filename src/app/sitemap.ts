@@ -19,25 +19,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/courses`,
+      url: `${baseUrl}/khoa-hoc`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/doc-kinh-thanh`,
+      url: `${baseUrl}/kinh-thanh`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/ban-do-kinh-thanh`,
+      url: `${baseUrl}/ban-do`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/dong-thoi-gian`,
+      url: `${baseUrl}/lich-su`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.7,
@@ -68,7 +68,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Dynamic article routes from Supabase
+  // Dynamic article routes from Supabase (Short SEO URLs)
   try {
     const { data: posts } = await supabase
       .from('posts')
@@ -78,7 +78,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     if (posts && posts.length > 0) {
       const articleRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
-        url: `${baseUrl}/thu-vien/${post.slug}`,
+        url: `${baseUrl}/${post.slug}`,
         lastModified: new Date(post.updated_at || post.created_at || Date.now()),
         changeFrequency: 'weekly',
         priority: 0.8,
