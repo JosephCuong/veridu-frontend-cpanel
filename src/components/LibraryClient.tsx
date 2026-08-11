@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Search, Filter, Layers, Cross, FileText, Heart, Gamepad2, Maximize2 } from 'lucide-react';
+import { ArrowRight, Search, Filter, Layers, Cross, FileText, Heart, Gamepad2, Maximize2, BookOpen } from 'lucide-react';
 
 interface LibraryClientProps {
   initialArticles: any[];
@@ -131,23 +131,31 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
             const templateType = article.article_type || 'standard';
             const typeLabel = articleTypes.find(t => t.id === templateType)?.label || 'Bài viết';
 
+            const imgSrc = article.thumbnail || article.featured_image;
+
             return (
               <div 
                 key={article.id} 
                 className="break-inside-avoid bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl overflow-hidden hover:border-amber-500/50 transition-all shadow-xl group flex flex-col"
               >
-                {article.thumbnail && (
-                    <div className="relative overflow-hidden aspect-[4/3]">
-                        <Image 
-                            src={article.thumbnail} 
-                            alt={titleText.replace(/<[^>]*>?/gm, '')} 
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-500" 
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-main)]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative overflow-hidden aspect-[16/9] bg-slate-900 flex items-center justify-center">
+                  {imgSrc ? (
+                    <Image 
+                      src={imgSrc} 
+                      alt={titleText.replace(/<[^>]*>?/gm, '')} 
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-amber-500/20 via-slate-900 to-indigo-900/40 flex flex-col items-center justify-center gap-2 p-4 text-center">
+                      <BookOpen className="w-10 h-10 text-amber-500/70" />
+                      <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">VERIDU Library</span>
                     </div>
-                )}
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-main)]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+
                 
                 <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
                     <div className="space-y-3">
