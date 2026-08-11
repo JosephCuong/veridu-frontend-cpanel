@@ -90,25 +90,25 @@ export default async function Home() {
               
               <Link href="/doc-kinh-thanh" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-amber-500/40 transition-all backdrop-blur-md group shadow-sm">
                 <BookOpen className="w-6 h-6 text-amber-600 dark:text-amber-400 mb-2 group-hover:scale-110 transition-transform" />
-                <h3 className="font-serif font-bold text-sm text-[var(--text-main)]">Kinh Thánh 73 Sách</h3>
+                <span className="font-serif font-bold text-sm text-[var(--text-main)] block">Kinh Thánh 73 Sách</span>
                 <p className="text-[11px] text-[var(--text-muted)]">Bản dịch LM. Nguyễn Thế Thuấn</p>
               </Link>
 
               <Link href="/ban-do-kinh-thanh" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-emerald-500/40 transition-all backdrop-blur-md group shadow-sm">
                 <MapPin className="w-6 h-6 text-emerald-600 dark:text-emerald-400 mb-2 group-hover:scale-110 transition-transform" />
-                <h3 className="font-serif font-bold text-sm text-[var(--text-main)]">Bản Đồ 3D</h3>
+                <span className="font-serif font-bold text-sm text-[var(--text-main)] block">Bản Đồ 3D</span>
                 <p className="text-[11px] text-[var(--text-muted)]">Khám phá Vùng Đất Thánh</p>
               </Link>
 
               <Link href="/dong-thoi-gian" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-purple-500/40 transition-all backdrop-blur-md group shadow-sm">
                 <Clock className="w-6 h-6 text-purple-600 dark:text-purple-400 mb-2 group-hover:scale-110 transition-transform" />
-                <h3 className="font-serif font-bold text-sm text-[var(--text-main)]">Dòng Thời Gian</h3>
+                <span className="font-serif font-bold text-sm text-[var(--text-main)] block">Dòng Thời Gian</span>
                 <p className="text-[11px] text-[var(--text-muted)]">Lịch sử Cứu Độ 4000 năm</p>
               </Link>
 
               <Link href="/thu-vien" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-indigo-500/40 transition-all backdrop-blur-md group shadow-sm">
                 <ShieldCheck className="w-6 h-6 text-indigo-600 dark:text-indigo-400 mb-2 group-hover:scale-110 transition-transform" />
-                <h3 className="font-serif font-bold text-sm text-[var(--text-main)]">Thư Viện Bài Viết</h3>
+                <span className="font-serif font-bold text-sm text-[var(--text-main)] block">Thư Viện Bài Viết</span>
                 <p className="text-[11px] text-[var(--text-muted)]">Suy niệm & Bài Tương Tác</p>
               </Link>
 

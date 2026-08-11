@@ -170,6 +170,7 @@ export default function LiturgicalHeader() {
           {/* Theme Toggle Button */}
           <button 
             onClick={toggleTheme}
+            aria-label="Chuyển đổi giao diện Sáng / Tối"
             className="p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-amber-500 hover:border-amber-500/40 transition-all shadow-sm"
             title={isDarkMode ? 'Chuyển sang Chế độ Sáng (Light Mode)' : 'Chuyển sang Chế độ Tối (Dark Mode)'}
           >
@@ -179,6 +180,7 @@ export default function LiturgicalHeader() {
           {/* Mobile Search Toggle */}
           <button 
             onClick={() => { setIsMobileSearchOpen(!isMobileSearchOpen); setIsMobileMenuOpen(false); }}
+            aria-label="Mở công cụ tìm kiếm"
             className="md:hidden p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-amber-500 hover:border-amber-500/40 transition-all shadow-sm"
           >
             <Search className="w-5 h-5" />
@@ -187,6 +189,7 @@ export default function LiturgicalHeader() {
           {/* Mobile Menu Toggle */}
           <button 
             onClick={() => { setIsMobileMenuOpen(!isMobileMenuOpen); setIsMobileSearchOpen(false); }}
+            aria-label="Mở menu điều hướng"
             className="md:hidden p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-amber-500 hover:border-amber-500/40 transition-all shadow-sm"
           >
             {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -217,7 +220,7 @@ export default function LiturgicalHeader() {
       {/* Main Navigation Bar */}
       <div className="hidden md:block border-t border-[var(--border-card)] bg-[var(--header-bg)]">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16 flex items-center gap-6 lg:gap-8 h-11 text-sm font-medium overflow-x-auto custom-scrollbar">
-          <Link href="/" className="text-amber-500 font-bold flex items-center gap-2 hover:opacity-80 transition-opacity whitespace-nowrap">
+          <Link href="/" className="text-amber-600 dark:text-amber-400 font-bold flex items-center gap-2 hover:underline transition-all whitespace-nowrap">
             <Compass className="w-4 h-4" /> Trang Chủ
           </Link>
           <Link href="/courses" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
