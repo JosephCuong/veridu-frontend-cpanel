@@ -54,10 +54,11 @@ export default function SettingsPage() {
     setMessage({ text: '', type: '' });
 
     try {
-      if (user && token) {
-         saveAuthSession(token, { ...user, ...formData });
+      if (user) {
+         const activeToken = token || 'sb_session_active';
+         saveAuthSession(activeToken, { ...user, ...formData });
       }
-      setMessage({ text: 'Đã cập nhật thông tin hồ sơ thành công!', type: 'success' });
+      setMessage({ text: 'Đã cập nhật thông tin hồ sơ & lịch phụng vụ thành công!', type: 'success' });
     } catch (err: any) {
       setMessage({ text: err.message, type: 'error' });
     } finally {
