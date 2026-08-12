@@ -70,9 +70,36 @@ export default function BibleReader({
   const [lineHeight, setLineHeight] = useState<number>(1.85);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
+  // Dropdowns & Read Modes
+  const [isChapterMenuOpen, setIsChapterMenuOpen] = useState(false);
+  const [readMode, setReadMode] = useState<'single' | 'parallel'>('single');
+  const [secondTranslationSlug, setSecondTranslationSlug] = useState<string>(
+    translations.length > 1 ? (translations.find(t => t.slug !== selectedTranslation.slug)?.slug || translations[1].slug) : translations[0].slug
+  );
+  const [secondVerses, setSecondVerses] = useState<BibleVerse[]>([]);
+  const [isFetchingSecond, setIsFetchingSecond] = useState(false);
 
   // Search Filter in Left Navigation
   const [bookSearch, setBookSearch] = useState('');
+
+  // Fetch parallel verses when readMode === 'parallel'
+  useEffect(() => {
+    if (readMode === 'parallel') {
+      let isMounted = true;
+      setIsFetchingSecond(true);
+      fetchBibleChapter(secondTranslationSlug, selectedBook.slug, currentChapter)
+        .then(data => {
+          if (isMounted) {
+            setSecondVerses(data?.verses || []);
+            setIsFetchingSecond(false);
+          }
+        })
+        .catch(() => {
+          if (isMounted) setIsFetchingSecond(false);
+        });
+      return () => { isMounted = false; };
+    }
+  }, [readMode, secondTranslationSlug, selectedBook.slug, currentChapter]);
 
   // Smart Detection of Holy Land Locations in Chapter
   const [detectedLocations, setDetectedLocations] = useState<BibleLocation[]>([]);
@@ -364,7 +391,7 @@ export default function BibleReader({
             {/* 🌟 THANH ĐIỀU HƯỚNG TÍCH HỢP GỌN GÀNG Ở ĐẦU BÀI (NO OVERLAPPING TOOLBAR) */}
             <div className="border-b border-[var(--border-card)] bg-[var(--bg-card)]/90 px-4 sm:px-8 py-3.5 flex items-center justify-between gap-3 backdrop-blur-md">
               
-              {/* Left: Mobile Nav Drawer Button & Book Name */}
+              {/* Left: Mobile Nav Drawer Button & Book Name Pill Badges */}
               <div className="flex items-center gap-2">
                 <button 
                   onClick={() => setShowMobileNavDrawer(true)}
@@ -374,16 +401,68 @@ export default function BibleReader({
                   <Menu className="w-4 h-4" />
                 </button>
 
-                <div className="font-serif font-bold text-sm sm:text-base text-[var(--text-main)] flex items-center gap-2">
-                  <span className="text-amber-600 dark:text-amber-400">{selectedBook.nameVi}</span>
-                  <span className="text-[var(--text-muted)]">/</span>
-                  <span className="text-xs sm:text-sm font-sans">Chương {currentChapter}</span>
+                <div className="flex items-center gap-1.5 text-xs font-bold">
+                  <span className="px-3 py-1 rounded-xl bg-amber-500/10 text-amber-800 dark:text-amber-400 border border-amber-500/25 shadow-xs flex items-center gap-1">
+                    <BookOpen className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                    {selectedBook.nameVi}
+                  </span>
+                  
+                  {/* Chapter Selector Dropdown Pill */}
+                  <div className="relative">
+                    <button 
+                      onClick={() => setIsChapterMenuOpen(!isChapterMenuOpen)}
+                      className="px-3 py-1 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500/50 flex items-center gap-1 transition-all"
+                    >
+                      <span>Chương {currentChapter}</span>
+                      <ChevronDown className="w-3 h-3 opacity-70" />
+                    </button>
+
+                    {isChapterMenuOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setIsChapterMenuOpen(false)}></div>
+                        <div className="absolute left-0 top-full mt-2 p-3 w-56 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl shadow-2xl z-50 animate-in fade-in max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-[var(--border-card)]">
+                          <div className="grid grid-cols-4 gap-1.5">
+                            {Array.from({ length: selectedBook.totalChapters || 1 }).map((_, i) => (
+                              <button
+                                key={i}
+                                onClick={() => {
+                                  setIsChapterMenuOpen(false);
+                                  handleNav(selectedBook.slug, i + 1, selectedTranslation.slug);
+                                }}
+                                className={`p-1.5 rounded-lg text-xs font-bold transition-all ${
+                                  currentChapter === i + 1
+                                    ? 'bg-amber-500 text-slate-950 font-black'
+                                    : 'bg-[var(--bg-main)] hover:bg-amber-500/20 text-[var(--text-main)]'
+                                }`}
+                              >
+                                {i + 1}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
 
               {/* Right: Integrated Compact Action Buttons for Column 3 Tabs */}
               <div className="flex items-center gap-1.5 text-xs">
                 
+                {/* 🔀 Song Song 2-3 Bản Dịch Button */}
+                <button
+                  onClick={() => setReadMode(readMode === 'single' ? 'parallel' : 'single')}
+                  title="Bật/Tắt Đọc Song Song 2 bản dịch cuộn đồng bộ"
+                  className={`px-2.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1 border text-[11px] sm:text-xs ${
+                    readMode === 'parallel'
+                      ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md font-black'
+                      : 'bg-[var(--bg-main)] hover:bg-amber-500/10 border-[var(--border-card)] text-[var(--text-main)]'
+                  }`}
+                >
+                  <Columns className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="hidden sm:inline">Song Song</span>
+                </button>
+
                 {/* 💬 Chú Giải Button */}
                 <button
                   onClick={() => openToolTab('commentary')}
@@ -514,8 +593,8 @@ export default function BibleReader({
             )}
 
 
-            {/* READING PANE BODY CONTENT */}
-            <div className="p-6 sm:p-10 md:p-12">
+            {/* READING PANE BODY CONTENT (BOUNDED MAX WIDTH FOR OPTIMAL EYE READING) */}
+            <div className="p-6 sm:p-10 md:p-12 max-w-4xl mx-auto">
               
               {/* Header Title */}
               <div className="text-center mb-10 border-b border-[var(--border-card)] pb-6">
@@ -524,9 +603,29 @@ export default function BibleReader({
                 </h1>
                 <h2 className="text-lg sm:text-xl text-amber-600 dark:text-amber-400 font-serif italic">Chương {currentChapter}</h2>
                 <div className="mt-2 text-xs text-[var(--text-muted)]">
-                  Bản dịch: <span className="font-bold text-[var(--text-main)]">{selectedTranslation.name}</span>
+                  Bản dịch: <span className="font-bold text-[var(--text-main)]">{selectedTranslation.name.replace(/^Bản dịch\s+/i, '')}</span>
                 </div>
               </div>
+
+              {/* PARALLEL MODE TRANSLATION SELECTOR BANNER */}
+              {readMode === 'parallel' && (
+                <div className="mb-6 p-3 bg-[var(--bg-main)] border border-amber-500/30 rounded-2xl flex items-center justify-between gap-3 text-xs font-bold animate-in fade-in">
+                  <span className="text-amber-800 dark:text-amber-400 flex items-center gap-1.5">
+                    <Columns className="w-4 h-4 text-amber-500" />
+                    <span>Đọc Song Song: {selectedTranslation.name} &</span>
+                  </span>
+
+                  <select
+                    value={secondTranslationSlug}
+                    onChange={(e) => setSecondTranslationSlug(e.target.value)}
+                    className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-xl px-3 py-1.5 text-xs font-bold focus:outline-none cursor-pointer"
+                  >
+                    {translations.map((t) => (
+                      <option key={t.slug} value={t.slug}>{t.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {initialVerses.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-[var(--text-muted)]">
@@ -540,6 +639,7 @@ export default function BibleReader({
                 >
                   {initialVerses.map((verse) => {
                     const isSelected = String(selectedVerseNumber) === String(verse.verse);
+                    const sv = secondVerses.find(v => String(v.verse) === String(verse.verse));
 
                     return (
                       <div key={verse.id} className="group/verse relative">
@@ -565,8 +665,34 @@ export default function BibleReader({
                             {verse.verse}
                           </span>
 
-                          <div className="flex-1 w-full relative">
-                            <div dangerouslySetInnerHTML={{ __html: verse.content }} />
+                          <div className={`flex-1 w-full relative ${readMode === 'parallel' ? 'grid grid-cols-1 md:grid-cols-2 gap-6' : ''}`}>
+                            
+                            {/* Primary Translation */}
+                            <div className="relative">
+                              {readMode === 'parallel' && (
+                                <div className="text-[10px] font-bold text-[var(--text-muted)] mb-1 uppercase tracking-wider">
+                                  {selectedTranslation.name}
+                                </div>
+                              )}
+                              <div dangerouslySetInnerHTML={{ __html: verse.content }} />
+                            </div>
+
+                            {/* Secondary Translation Column in Parallel Mode */}
+                            {readMode === 'parallel' && (
+                              <div className="relative pt-2 md:pt-0 border-t md:border-t-0 md:border-l border-[var(--border-card)] md:pl-4">
+                                <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 mb-1 uppercase tracking-wider">
+                                  {translations.find(t => t.slug === secondTranslationSlug)?.name || 'Bản Dịch Song Song'}
+                                </div>
+                                {isFetchingSecond ? (
+                                  <div className="animate-pulse bg-[var(--border-card)] h-4 rounded w-3/4 mt-1"></div>
+                                ) : sv ? (
+                                  <div className="text-[var(--text-muted)]" dangerouslySetInnerHTML={{ __html: sv.content }} />
+                                ) : (
+                                  <span className="text-[var(--text-muted)] italic text-xs">...</span>
+                                )}
+                              </div>
+                            )}
+
                           </div>
                         </div>
                       </div>
