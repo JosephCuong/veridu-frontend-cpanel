@@ -2,6 +2,11 @@
 @plugin "@tailwindcss/typography";
 @custom-variant dark (&:where(.dark, .dark *));
 
+:root, html {
+  scrollbar-gutter: stable;
+  overflow-y: scroll;
+}
+
 :root, html.dark {
   --bg-main: #020617;
   --text-main: #f8fafc;
