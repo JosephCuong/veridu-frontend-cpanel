@@ -583,7 +583,7 @@ export async function fetchUserQuizAttemptsFromSupabase(userId?: string) {
 
     const { data, error } = await query;
     if (error) throw error;
-    if (data && data.length > 0) {
+    if (data) {
       return data.map((item: any) => ({
         id: item.id,
         title: item.title,
@@ -596,7 +596,7 @@ export async function fetchUserQuizAttemptsFromSupabase(userId?: string) {
   } catch (err) {
     console.warn('fetchUserQuizAttemptsFromSupabase warning:', err);
   }
-  return null;
+  return [];
 }
 
 export async function saveQuizAttemptToSupabase(attempt: { title: string; score: number; total: number; percentage: number; user_id?: string }) {
@@ -637,7 +637,7 @@ export async function fetchUserCourseProgressFromSupabase(userId?: string) {
       .order('last_accessed_at', { ascending: false });
 
     if (error) throw error;
-    if (data && data.length > 0) {
+    if (data) {
       return data.map((item: any) => ({
         id: item.id,
         title: item.courses?.title || 'Khóa học Giáo lý',
@@ -651,5 +651,5 @@ export async function fetchUserCourseProgressFromSupabase(userId?: string) {
   } catch (err) {
     console.warn('fetchUserCourseProgressFromSupabase warning:', err);
   }
-  return null;
+  return [];
 }

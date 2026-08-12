@@ -74,19 +74,11 @@ export default function ProfileDashboardPage() {
         } else {
           setQuizHistory(getStoredQuizHistory());
         }
-
-        if (dbCourses && dbCourses.length > 0) {
-          setEnrolledCourses(dbCourses);
-        } else {
-          setEnrolledCourses([
-            { id: 'cuu-uoc-1', title: 'Nhập Môn Kinh Thánh Cựu Ước', progress: 75, totalLessons: 12, completedLessons: 9, slug: 'cuu-uoc-1', icon: '📜' },
-            { id: 'tan-uoc-1', title: 'Tin Mừng Theo Thánh Mát-thêu', progress: 40, totalLessons: 10, completedLessons: 4, slug: 'tan-uoc-1', icon: '✝️' },
-            { id: 'phung-vu-1', title: 'Ý Nghĩa Các Mùa Phụng Vụ', progress: 100, totalLessons: 5, completedLessons: 5, slug: 'phung-vu-1', icon: '🕯️' },
-          ]);
-        }
+        setEnrolledCourses(dbCourses || []);
         setIsLoadingDb(false);
       }).catch(() => {
         setQuizHistory(getStoredQuizHistory());
+        setEnrolledCourses([]);
         setIsLoadingDb(false);
       });
     } else {
@@ -106,6 +98,11 @@ export default function ProfileDashboardPage() {
           .from('profiles')
           .update({
             full_name: formData.displayName,
+            christian_name: formData.christianName,
+            parish: formData.parish,
+            diocese: formData.diocese,
+            phone: formData.phone,
+            feast_day: formData.feastDay,
             role: user.role
           })
           .eq('id', user.id);

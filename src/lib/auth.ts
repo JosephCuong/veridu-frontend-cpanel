@@ -99,11 +99,7 @@ export function getStoredQuizHistory(): QuizAttempt[] {
     const data = localStorage.getItem('veridu_quiz_history');
     if (data) return JSON.parse(data).slice(0, 10);
   } catch (e) {}
-  return [
-    { id: 'q1', title: 'Giáo Lý Dự Tòng - Bài 1: Thiên Chúa Sáng Tạo', score: 10, total: 10, percentage: 100, date: '12/08/2026 10:30' },
-    { id: 'q2', title: 'Kinh Thánh Cựu Ước - Sách Sáng Thế', score: 8, total: 10, percentage: 80, date: '11/08/2026 15:20' },
-    { id: 'q3', title: 'Thần Học Phụng Vụ - Các Mùa Phụng Vụ', score: 9, total: 10, percentage: 90, date: '10/08/2026 20:15' }
-  ];
+  return [];
 }
 
 export function addQuizAttempt(attempt: Omit<QuizAttempt, 'id' | 'date'>) {
