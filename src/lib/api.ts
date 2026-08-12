@@ -567,3 +567,89 @@ export async function fetchBibleChapter(
     return null;
   }
 }
+
+// 🏆 Real Supabase Quiz Attempts API
+export async function fetchUserQuizAttemptsFromSupabase(userId?: string) {
+  try {
+    let query = supabase
+      .from('quiz_attempts')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    if (data && data.length > 0) {
+      return data.map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        score: item.score,
+        total: item.total,
+        percentage: item.percentage,
+        date: new Date(item.created_at).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      }));
+    }
+  } catch (err) {
+    console.warn('fetchUserQuizAttemptsFromSupabase warning:', err);
+  }
+  return null;
+}
+
+export async function saveQuizAttemptToSupabase(attempt: { title: string; score: number; total: number; percentage: number; user_id?: string }) {
+  try {
+    const { data, error } = await supabase
+      .from('quiz_attempts')
+      .insert([attempt])
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.warn('saveQuizAttemptToSupabase warning:', err);
+    return null;
+  }
+}
+
+export async function clearUserQuizAttemptsFromSupabase(userId?: string) {
+  try {
+    let query = supabase.from('quiz_attempts').delete();
+    if (userId) {
+      query = query.eq('user_id', userId);
+    } else {
+      query = query.neq('id', '00000000-0000-0000-0000-000000000000');
+    }
+    await query;
+  } catch (err) {
+    console.warn('clearUserQuizAttemptsFromSupabase warning:', err);
+  }
+}
+
+// 🎓 Real Supabase LMS User Course Progress API
+export async function fetchUserCourseProgressFromSupabase(userId?: string) {
+  try {
+    const { data, error } = await supabase
+      .from('user_course_progress')
+      .select('*, courses(*)')
+      .order('last_accessed_at', { ascending: false });
+
+    if (error) throw error;
+    if (data && data.length > 0) {
+      return data.map((item: any) => ({
+        id: item.id,
+        title: item.courses?.title || 'Khóa học Giáo lý',
+        slug: item.courses?.slug || 'khoa-hoc',
+        progress: item.progress_percent || 0,
+        completedLessons: item.completed_lessons || 0,
+        totalLessons: item.total_lessons || 10,
+        icon: item.courses?.category === 'cuu-uoc' ? '📜' : item.courses?.category === 'tan-uoc' ? '✝️' : '🕯️'
+      }));
+    }
+  } catch (err) {
+    console.warn('fetchUserCourseProgressFromSupabase warning:', err);
+  }
+  return null;
+}

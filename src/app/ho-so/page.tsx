@@ -13,6 +13,11 @@ import {
   Heart, Calendar, Loader2, Trophy, Trash2, ArrowRight, PlayCircle, BarChart3, AlertTriangle, Check
 } from 'lucide-react';
 
+import { 
+  fetchUserQuizAttemptsFromSupabase, clearUserQuizAttemptsFromSupabase, 
+  fetchUserCourseProgressFromSupabase 
+} from '@/lib/api';
+
 export default function ProfileDashboardPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'courses' | 'quiz' | 'settings'>('dashboard');
@@ -22,11 +27,13 @@ export default function ProfileDashboardPage() {
   // Non-blocking transition state for lightning-fast INP (<50ms)
   const [isPending, startTransition] = useTransition();
 
-  // Inline confirmation modal state (replaces blocking window.confirm)
+  // Inline confirmation modal state
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
-  // Quiz history state
+  // Quiz history & LMS courses state from Supabase
   const [quizHistory, setQuizHistory] = useState<QuizAttempt[]>([]);
+  const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
+  const [isLoadingDb, setIsLoadingDb] = useState(true);
 
   // Form State for Profile Settings
   const [formData, setFormData] = useState({
@@ -54,9 +61,37 @@ export default function ProfileDashboardPage() {
         feastDay: '19/03 (Thánh Giuse)',
         bio: 'Nguyện xin Lời Chúa là ngọn đèn soi cho con bước.'
       });
-    }
 
-    setQuizHistory(getStoredQuizHistory());
+      // Query Real Database from Supabase first, fallback to local storage
+      const userIdStr = typeof current.id === 'string' ? current.id : undefined;
+      
+      Promise.all([
+        fetchUserQuizAttemptsFromSupabase(userIdStr),
+        fetchUserCourseProgressFromSupabase(userIdStr)
+      ]).then(([dbQuiz, dbCourses]) => {
+        if (dbQuiz && dbQuiz.length > 0) {
+          setQuizHistory(dbQuiz);
+        } else {
+          setQuizHistory(getStoredQuizHistory());
+        }
+
+        if (dbCourses && dbCourses.length > 0) {
+          setEnrolledCourses(dbCourses);
+        } else {
+          setEnrolledCourses([
+            { id: 'cuu-uoc-1', title: 'Nhập Môn Kinh Thánh Cựu Ước', progress: 75, totalLessons: 12, completedLessons: 9, slug: 'cuu-uoc-1', icon: '📜' },
+            { id: 'tan-uoc-1', title: 'Tin Mừng Theo Thánh Mát-thêu', progress: 40, totalLessons: 10, completedLessons: 4, slug: 'tan-uoc-1', icon: '✝️' },
+            { id: 'phung-vu-1', title: 'Ý Nghĩa Các Mùa Phụng Vụ', progress: 100, totalLessons: 5, completedLessons: 5, slug: 'phung-vu-1', icon: '🕯️' },
+          ]);
+        }
+        setIsLoadingDb(false);
+      }).catch(() => {
+        setQuizHistory(getStoredQuizHistory());
+        setIsLoadingDb(false);
+      });
+    } else {
+      setIsLoadingDb(false);
+    }
   }, []);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -98,6 +133,9 @@ export default function ProfileDashboardPage() {
 
   // Instant non-blocking clear history (Zero INP Latency)
   const executeClearHistory = () => {
+    const userIdStr = typeof user?.id === 'string' ? user.id : undefined;
+    clearUserQuizAttemptsFromSupabase(userIdStr);
+    
     startTransition(() => {
       clearQuizHistory();
       setQuizHistory([]);
@@ -120,13 +158,6 @@ export default function ProfileDashboardPage() {
       </div>
     );
   }
-
-  // Demo LMS Enrolled Courses
-  const enrolledCourses = [
-    { id: 'cuu-uoc-1', title: 'Nhập Môn Kinh Thánh Cựu Ước', progress: 75, totalLessons: 12, completedLessons: 9, slug: 'cuu-uoc-1', icon: '📜' },
-    { id: 'tan-uoc-1', title: 'Tin Mừng Theo Thánh Mát-thêu', progress: 40, totalLessons: 10, completedLessons: 4, slug: 'tan-uoc-1', icon: '✝️' },
-    { id: 'phung-vu-1', title: 'Ý Nghĩa Các Mùa Phụng Vụ', progress: 100, totalLessons: 5, completedLessons: 5, slug: 'phung-vu-1', icon: '🕯️' },
-  ];
 
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] py-8 px-4 sm:px-6 lg:px-8 font-sans">
