@@ -101,32 +101,26 @@ export default function BibleReader({
     }
   }, [readMode, secondTranslationSlug, selectedBook.slug, currentChapter]);
 
-  // Smart Detection of Holy Land Locations in Chapter
-  const [detectedLocations, setDetectedLocations] = useState<BibleLocation[]>([]);
-
-  useEffect(() => {
-    if (initialVerses && initialVerses.length > 0) {
-      const fullText = initialVerses.map(v => v.content).join(' ');
-      const matches = BIBLE_LOCATIONS.filter(loc => {
-        const keywords = [
-          loc.nameVi.toLowerCase(),
-          loc.nameEn.toLowerCase(),
-          loc.nameVi.split('(')[0].trim().toLowerCase(),
-          ...(loc.nameVi.includes('Giê-ru-sa-lem') ? ['giêrusalem', 'jerusalem', 'yerushalaim', 'giê-ru-sa-lem'] : []),
-          ...(loc.nameVi.includes('Bê-lem') ? ['bêlem', 'bethlehem', 'bê-lem'] : []),
-          ...(loc.nameVi.includes('Na-da-rét') ? ['nazarét', 'nazareth', 'na-da-rét', 'naxarét'] : []),
-          ...(loc.nameVi.includes('Ga-li-lê') ? ['galilê', 'galilea', 'ga-li-lê'] : []),
-          ...(loc.nameVi.includes('Si-nai') ? ['sinai', 'si-nai', 'si-na-i'] : []),
-          ...(loc.nameVi.includes('Ai Cập') ? ['ai cập', 'egypt'] : []),
-          ...(loc.nameVi.includes('Ba-by-lon') ? ['babylon', 'ba-by-lon'] : []),
-          ...(loc.nameVi.includes('Rô-ma') ? ['roma', 'rô-ma', 'rome'] : [])
-        ];
-        return keywords.some(kw => kw.length > 2 && fullText.toLowerCase().includes(kw));
-      });
-      setDetectedLocations(matches);
-    } else {
-      setDetectedLocations([]);
-    }
+  // Smart Detection of Holy Land Locations in Chapter (Synchronous useMemo to prevent CLS)
+  const detectedLocations = React.useMemo(() => {
+    if (!initialVerses || initialVerses.length === 0) return [];
+    const fullText = initialVerses.map(v => v.content).join(' ');
+    return BIBLE_LOCATIONS.filter(loc => {
+      const keywords = [
+        loc.nameVi.toLowerCase(),
+        loc.nameEn.toLowerCase(),
+        loc.nameVi.split('(')[0].trim().toLowerCase(),
+        ...(loc.nameVi.includes('Giê-ru-sa-lem') ? ['giêrusalem', 'jerusalem', 'yerushalaim', 'giê-ru-sa-lem'] : []),
+        ...(loc.nameVi.includes('Bê-lem') ? ['bêlem', 'bethlehem', 'bê-lem'] : []),
+        ...(loc.nameVi.includes('Na-da-rét') ? ['nazarét', 'nazareth', 'na-da-rét', 'naxarét'] : []),
+        ...(loc.nameVi.includes('Ga-li-lê') ? ['galilê', 'galilea', 'ga-li-lê'] : []),
+        ...(loc.nameVi.includes('Si-nai') ? ['sinai', 'si-nai', 'si-na-i'] : []),
+        ...(loc.nameVi.includes('Ai Cập') ? ['ai cập', 'egypt'] : []),
+        ...(loc.nameVi.includes('Ba-by-lon') ? ['babylon', 'ba-by-lon'] : []),
+        ...(loc.nameVi.includes('Rô-ma') ? ['roma', 'rô-ma', 'rome'] : [])
+      ];
+      return keywords.some(kw => kw.length > 2 && fullText.toLowerCase().includes(kw));
+    });
   }, [initialVerses]);
 
   // Fetch verse in ALL available translations when a verse is clicked
