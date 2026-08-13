@@ -143,10 +143,6 @@ export default function LiturgicalHeader() {
                   <Link href="/ho-so" className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-[var(--text-main)] hover:bg-amber-500/10 hover:text-amber-500">
                     <User className="w-4 h-4" /> Hồ Sơ Cá Nhân
                   </Link>
-
-                  <Link href="/cai-dat" className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-[var(--text-main)] hover:bg-amber-500/10 hover:text-amber-500">
-                    <Settings className="w-4 h-4" /> Cài Đặt Lịch Phụng Vụ
-                  </Link>
                   <button 
                     onClick={logout}
                     className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-red-500 hover:bg-red-500/10"

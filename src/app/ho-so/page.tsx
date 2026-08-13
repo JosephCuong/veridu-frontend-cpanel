@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useTransition } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   getStoredUser, logout, saveAuthSession, UserProfile, 
   getStoredQuizHistory, clearQuizHistory, QuizAttempt 
@@ -15,7 +16,7 @@ import {
 
 import { 
   fetchUserQuizAttemptsFromSupabase, clearUserQuizAttemptsFromSupabase, 
-  fetchUserCourseProgressFromSupabase 
+  fetchUserCourseProgressFromSupabase, fetchCharacters, Character 
 } from '@/lib/api';
 
 export default function ProfileDashboardPage() {
@@ -29,6 +30,10 @@ export default function ProfileDashboardPage() {
 
   // Inline confirmation modal state
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+
+  // Avatar Modal State
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
 
   // Quiz history & LMS courses state from Supabase
   const [quizHistory, setQuizHistory] = useState<QuizAttempt[]>([]);
@@ -44,8 +49,13 @@ export default function ProfileDashboardPage() {
     parish: '',
     diocese: '',
     feastDay: '19/03 (Thánh Giuse)',
-    bio: ''
+    bio: '',
+    avatar: ''
   });
+
+  useEffect(() => {
+    fetchCharacters().then(data => setCharacters(data)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const current = getStoredUser();
@@ -59,7 +69,8 @@ export default function ProfileDashboardPage() {
         parish: current.parish || 'Tân Định',
         diocese: current.diocese || 'Giáo Phận Sài Gòn',
         feastDay: '19/03 (Thánh Giuse)',
-        bio: 'Nguyện xin Lời Chúa là ngọn đèn soi cho con bước.'
+        bio: 'Nguyện xin Lời Chúa là ngọn đèn soi cho con bước.',
+        avatar: current.avatar || ''
       });
 
       // Query Real Database from Supabase first, fallback to local storage
@@ -103,6 +114,7 @@ export default function ProfileDashboardPage() {
             diocese: formData.diocese,
             phone: formData.phone,
             feast_day: formData.feastDay,
+            avatar_url: formData.avatar,
             role: user.role
           })
           .eq('id', user.id);
@@ -115,7 +127,8 @@ export default function ProfileDashboardPage() {
         displayName: formData.displayName,
         phone: formData.phone,
         parish: formData.parish,
-        diocese: formData.diocese
+        diocese: formData.diocese,
+        avatar: formData.avatar
       };
 
       saveAuthSession('sb_session_active', updatedUser);
@@ -610,6 +623,28 @@ export default function ProfileDashboardPage() {
                 )}
 
                 <form onSubmit={handleSaveProfile} className="space-y-6">
+                  {/* Avatar Change Section */}
+                  <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-[var(--border-card)]">
+                    <div className="w-20 h-20 rounded-full border-2 border-amber-500/40 overflow-hidden flex items-center justify-center bg-[var(--bg-main)] text-amber-500 text-2xl font-black relative shrink-0">
+                      {formData.avatar ? (
+                        <Image src={formData.avatar} alt="Avatar" fill className="object-cover" sizes="80px" />
+                      ) : (
+                        formData.christianName.charAt(0) || 'G'
+                      )}
+                    </div>
+                    <div className="text-center sm:text-left space-y-1.5">
+                      <h3 className="font-bold text-sm text-[var(--text-main)]">Ảnh Đại Diện Tín Hữu</h3>
+                      <p className="text-xs text-[var(--text-muted)] max-w-md">Chọn hình ảnh các nhân vật Kinh Thánh làm avatar đại diện trong không gian học tập Giáo lý.</p>
+                      <button 
+                        type="button" 
+                        onClick={() => setShowAvatarModal(true)} 
+                        className="px-3.5 py-1.5 bg-amber-500/10 text-amber-500 border border-amber-500/30 rounded-xl text-xs font-bold hover:bg-amber-500/20 transition flex items-center gap-1.5 mx-auto sm:mx-0"
+                      >
+                        <ImageIcon className="w-3.5 h-3.5" /> Đổi Avatar Nhân Vật
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-xs font-bold uppercase text-[var(--text-muted)] flex items-center gap-2">
@@ -709,6 +744,38 @@ export default function ProfileDashboardPage() {
         </div>
 
       </div>
+
+      {/* Avatar Selector Modal */}
+      {showAvatarModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[var(--bg-card)] rounded-3xl w-full max-w-4xl max-h-[85vh] flex flex-col border border-[var(--border-card)] shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-[var(--border-card)] flex justify-between items-center">
+              <h2 className="font-serif font-black text-xl text-[var(--text-main)]">Chọn Avatar Thánh Nhân Nhân Vật Kinh Thánh</h2>
+              <button 
+                onClick={() => setShowAvatarModal(false)} 
+                className="w-8 h-8 rounded-full bg-[var(--bg-main)] text-[var(--text-main)] flex items-center justify-center hover:bg-red-500 hover:text-white transition font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 custom-scrollbar">
+              {characters.filter(c => c.avatar_url).map(char => (
+                <div 
+                  key={char.id} 
+                  onClick={() => { setFormData({...formData, avatar: char.avatar_url || ''}); setShowAvatarModal(false); }} 
+                  className={`cursor-pointer rounded-2xl border-2 transition-all overflow-hidden bg-[var(--bg-main)] p-2 text-center group ${formData.avatar === char.avatar_url ? 'border-amber-500 shadow-lg shadow-amber-500/30 ring-2 ring-amber-500/50' : 'border-transparent hover:border-amber-500/50'}`}
+                >
+                  <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-2">
+                    <Image src={char.avatar_url!} alt={char.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 768px) 33vw, 20vw" />
+                  </div>
+                  <div className="text-xs font-bold text-[var(--text-main)] truncate">{char.name}</div>
+                </div>
+              ))}
+              {characters.length === 0 && <p className="col-span-full text-center py-10 text-[var(--text-muted)] font-medium">Chưa có dữ liệu avatar nhân vật Kinh Thánh.</p>}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
