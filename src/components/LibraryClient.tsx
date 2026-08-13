@@ -168,7 +168,7 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
                             )}
                         </div>
 
-                        <h2 
+                        <h3 
                             className="font-serif font-bold text-xl text-[var(--text-main)] group-hover:text-amber-500 transition-colors line-clamp-3 leading-snug"
                             dangerouslySetInnerHTML={{ __html: titleText }}
                         />

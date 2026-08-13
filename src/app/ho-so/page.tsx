@@ -172,6 +172,7 @@ export default function ProfileDashboardPage() {
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] py-8 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-7xl mx-auto">
+        <h1 className="sr-only">Dashboard Hồ Sơ Tín Hữu VERIDU</h1>
         
         {/* 🌟 WEB-APP DASHBOARD 2-COLUMN LAYOUT WITH STICKY LEFT SIDEBAR */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">

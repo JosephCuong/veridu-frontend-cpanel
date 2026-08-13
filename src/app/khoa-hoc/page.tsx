@@ -65,9 +65,9 @@ export default async function CoursesPage({
             
             {/* Search Box */}
             <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-5 shadow-lg backdrop-blur-xl">
-              <h3 className="font-serif font-bold text-lg mb-4 flex items-center gap-2">
+              <h2 className="font-serif font-bold text-lg mb-4 flex items-center gap-2">
                 <Search className="w-5 h-5 text-[var(--accent-gold)]" /> Tìm Kiếm
-              </h3>
+              </h2>
               <form action="/khoa-hoc" method="GET" className="relative">
                 <input 
                   type="text" 
@@ -81,9 +81,9 @@ export default async function CoursesPage({
 
             {/* Categories */}
             <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-5 shadow-lg backdrop-blur-xl sticky top-24">
-              <h3 className="font-serif font-bold text-lg mb-4 flex items-center gap-2">
+              <h2 className="font-serif font-bold text-lg mb-4 flex items-center gap-2">
                 <Filter className="w-5 h-5 text-[var(--accent-gold)]" /> Thể Loại
-              </h3>
+              </h2>
               <div className="space-y-2">
                 {categories.map(cat => {
                   const isActive = activeCategory === cat.id;
