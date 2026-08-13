@@ -491,7 +491,7 @@ export async function fetchBibleChapter(
       verses = fallbackVerses;
     }
 
-    let secondVersesMap: Record<number, string> = {};
+    let secondVersesMap: Record<string, string> = {};
     if (secondTranslationSlug) {
       let secTranslationId: any = null;
       const { data: secTrans } = await supabase
@@ -520,8 +520,8 @@ export async function fetchBibleChapter(
 
       if (secVerses && secVerses.length > 0) {
         secVerses.forEach((v: any) => {
-          const verseNum = typeof v.verse === 'number' ? v.verse : parseInt(v.verse, 10);
-          secondVersesMap[verseNum] = v.text || v.content || '';
+          const vStr = String(v.verse || '');
+          secondVersesMap[vStr] = v.text || v.content || '';
         });
       }
     }
@@ -548,12 +548,12 @@ export async function fetchBibleChapter(
       verses: (verses || [])
         .filter((v: any) => v.verse != null)  // Safe guard: skip rows with NULL verse
         .map((v: any) => {
-          const verseNum = typeof v.verse === 'number' ? v.verse : parseInt(String(v.verse), 10);
+          const verseStr = String(v.verse || '');
           return {
             id: v.id,
-            verse: String(verseNum),
+            verse: verseStr,
             content: v.text || v.content || '',
-            contentSec: secondTranslationSlug ? (secondVersesMap[verseNum] || null) : null,
+            contentSec: secondTranslationSlug ? (secondVersesMap[verseStr] || null) : null,
             heading: v.heading || null,
             footnotes: v.footnote || v.footnotes || null,
             chapter: chapter,
