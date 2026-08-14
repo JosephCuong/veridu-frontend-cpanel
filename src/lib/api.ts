@@ -431,6 +431,22 @@ export async function fetchBibleMetadata() {
   }
 }
 
+export function parseVerseSortKey(verseStr: string | number): { num: number; sub: string } {
+  const s = String(verseStr || '').trim();
+  const match = s.match(/^(\d+)(.*)$/);
+  if (!match) return { num: 99999, sub: s };
+  return { num: parseInt(match[1], 10), sub: match[2] };
+}
+
+export function sortBibleVerses<T extends { verse: string | number }>(verses: T[]): T[] {
+  return [...verses].sort((a, b) => {
+    const keyA = parseVerseSortKey(a.verse);
+    const keyB = parseVerseSortKey(b.verse);
+    if (keyA.num !== keyB.num) return keyA.num - keyB.num;
+    return keyA.sub.localeCompare(keyB.sub);
+  });
+}
+
 export async function fetchBibleChapter(
   translationSlug: string,
   bookSlug: string,
@@ -475,21 +491,22 @@ export async function fetchBibleChapter(
       .eq('book_id', book.id)
       .eq('chapter', chapter);
 
+
     if (primaryTranslationId) {
       primaryQuery = primaryQuery.eq('translation_id', primaryTranslationId);
     }
 
-    let { data: verses } = await primaryQuery.order('verse', { ascending: true });
+    let { data: verses } = await primaryQuery;
 
     if (primaryTranslationId && (!verses || verses.length === 0)) {
       const { data: fallbackVerses } = await supabase
         .from('bible_verses')
         .select('*')
         .eq('book_id', book.id)
-        .eq('chapter', chapter)
-        .order('verse', { ascending: true });
+        .eq('chapter', chapter);
       verses = fallbackVerses;
     }
+
 
     let secondVersesMap: Record<string, string> = {};
     if (secondTranslationSlug) {
@@ -545,23 +562,26 @@ export async function fetchBibleChapter(
     return {
       bookName: book.name,
       chapter: chapter,
-      verses: (verses || [])
-        .filter((v: any) => v.verse != null)  // Safe guard: skip rows with NULL verse
-        .map((v: any) => {
-          const verseStr = String(v.verse || '');
-          return {
-            id: v.id,
-            verse: verseStr,
-            content: v.text || v.content || '',
-            contentSec: secondTranslationSlug ? (secondVersesMap[verseStr] || null) : null,
-            heading: v.heading || null,
-            footnotes: v.footnote || v.footnotes || null,
-            chapter: chapter,
-            bookSlug: bookSlug
-          };
-        }),
+      verses: sortBibleVerses(
+        (verses || [])
+          .filter((v: any) => v.verse != null)  // Safe guard: skip rows with NULL verse
+          .map((v: any) => {
+            const verseStr = String(v.verse || '');
+            return {
+              id: v.id,
+              verse: verseStr,
+              content: v.text || v.content || '',
+              contentSec: secondTranslationSlug ? (secondVersesMap[verseStr] || null) : null,
+              heading: v.heading || null,
+              footnotes: v.footnote || v.footnotes || null,
+              chapter: chapter,
+              bookSlug: bookSlug
+            };
+          })
+      ),
       commentary
     };
+
   } catch (err) {
     console.error('fetchBibleChapter error:', err);
     return null;

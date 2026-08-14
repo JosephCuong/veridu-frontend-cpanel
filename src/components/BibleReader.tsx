@@ -588,7 +588,8 @@ export default function BibleReader({
 
 
             {/* READING PANE BODY CONTENT (BOUNDED MAX WIDTH FOR OPTIMAL EYE READING) */}
-            <div className="p-6 sm:p-10 md:p-12 max-w-4xl mx-auto">
+            <div className="p-6 sm:p-10 md:p-12 max-w-4xl mx-auto min-h-[70vh] flex flex-col justify-start">
+
               
               {/* Header Title */}
               <div className="text-center mb-10 border-b border-[var(--border-card)] pb-6">
