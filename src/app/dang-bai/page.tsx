@@ -22,13 +22,37 @@ import {
   Bold,
   Italic,
   Underline,
+  Strikethrough,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
   Quote,
   List,
+  ListOrdered,
+  Link as LinkIcon,
   Image as ImageIcon,
   Video as VideoIcon,
-  Code
+  Code,
+  Minus,
+  Palette,
+  Eraser,
+  BookOpen
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
+
+function slugifyVietnamese(str: string): string {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
 
 function convertGoogleDriveUrl(url: string): string {
   if (!url) return '';
@@ -74,9 +98,14 @@ export default function SubmitPostPage() {
   const [showImageModal, setShowImageModal] = useState(false);
   const [imgUrlInput, setImgUrlInput] = useState('');
   const [imgCaptionInput, setImgCaptionInput] = useState('');
+  const [imgAlignInput, setImgAlignInput] = useState<'center' | 'left' | 'right'>('center');
 
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [videoUrlInput, setVideoUrlInput] = useState('');
+
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkUrlInput, setLinkUrlInput] = useState('');
+  const [linkTextInput, setLinkTextInput] = useState('');
 
   useEffect(() => {
     async function checkUserPermission() {
@@ -151,8 +180,13 @@ export default function SubmitPostPage() {
   const handleInsertImage = () => {
     if (!imgUrlInput.trim()) return;
     const finalUrl = convertGoogleDriveUrl(imgUrlInput);
-    const captionHtml = imgCaptionInput.trim() ? `<figcaption class="text-center text-xs italic text-[var(--text-muted)] mt-2">${imgCaptionInput.trim()}</figcaption>` : '';
-    const figureHtml = `<figure class="my-6 text-center"><img src="${finalUrl}" alt="${imgCaptionInput.trim() || 'Hình ảnh'}" referrerpolicy="no-referrer" data-lightbox="true" class="max-w-full h-auto rounded-2xl shadow-2xl my-4 mx-auto block cursor-zoom-in">${captionHtml}</figure><p><br></p>`;
+    const captionHtml = imgCaptionInput.trim() ? `<figcaption className="text-center text-xs italic text-[var(--text-muted)] mt-2">${imgCaptionInput.trim()}</figcaption>` : '';
+    
+    let alignClass = 'mx-auto block text-center';
+    if (imgAlignInput === 'left') alignClass = 'float-left mr-6 mb-4 max-w-sm';
+    if (imgAlignInput === 'right') alignClass = 'float-right ml-6 mb-4 max-w-sm';
+
+    const figureHtml = `<figure draggable="true" className="my-6 ${alignClass} content-figure"><img src="${finalUrl}" alt="${imgCaptionInput.trim() || 'Hình ảnh'}" referrerpolicy="no-referrer" data-lightbox="true" className="max-w-full h-auto rounded-2xl shadow-2xl my-2 block cursor-zoom-in hover:scale-[1.01] transition-all">${captionHtml}</figure><p><br></p>`;
     
     if (activeTab === 'visual' && editorRef.current) {
       editorRef.current.focus();
@@ -178,7 +212,7 @@ export default function SubmitPostPage() {
       embedUrl = convertGoogleDriveVideoUrl(embedUrl);
     }
 
-    const videoHtml = `<div class="w-full aspect-video rounded-2xl shadow-2xl overflow-hidden border border-[var(--border-card)] my-6 bg-black relative z-10"><iframe src="${embedUrl}" class="w-full h-full border-none rounded-2xl" allowfullscreen></iframe></div><p><br></p>`;
+    const videoHtml = `<div draggable="true" className="w-full aspect-video rounded-2xl shadow-2xl overflow-hidden border border-[var(--border-card)] my-6 bg-black relative z-10"><iframe src="${embedUrl}" className="w-full h-full border-none rounded-2xl" allowfullscreen></iframe></div><p><br></p>`;
     
     if (activeTab === 'visual' && editorRef.current) {
       editorRef.current.focus();
@@ -190,6 +224,35 @@ export default function SubmitPostPage() {
 
     setVideoUrlInput('');
     setShowVideoModal(false);
+  };
+
+  const handleInsertLink = () => {
+    if (!linkUrlInput.trim()) return;
+    const textToInsert = linkTextInput.trim() || linkUrlInput.trim();
+    const linkHtml = `<a href="${linkUrlInput.trim()}" target="_blank" rel="noopener noreferrer" className="text-amber-500 underline underline-offset-4 hover:text-amber-400 font-medium">${textToInsert}</a>`;
+    
+    if (activeTab === 'visual' && editorRef.current) {
+      editorRef.current.focus();
+      document.execCommand('insertHTML', false, linkHtml);
+      setContent(editorRef.current.innerHTML);
+    } else {
+      setContent(prev => prev + ' ' + linkHtml);
+    }
+
+    setLinkUrlInput('');
+    setLinkTextInput('');
+    setShowLinkModal(false);
+  };
+
+  const handleInsertVeriduPullQuote = () => {
+    const quoteHtml = `<aside className="veridu-pull-quote my-6 p-6 bg-amber-500/10 border-l-4 border-amber-500 rounded-r-2xl italic font-serif text-lg text-[var(--text-main)] shadow-lg">"Nhập câu trích dẫn Kinh Thánh hoặc lời huấn dụ..."</aside><p><br></p>`;
+    if (activeTab === 'visual' && editorRef.current) {
+      editorRef.current.focus();
+      document.execCommand('insertHTML', false, quoteHtml);
+      setContent(editorRef.current.innerHTML);
+    } else {
+      setContent(prev => prev + '\n' + quoteHtml);
+    }
   };
 
   // Handle HTML File Upload (Drag & Drop or File Selector)
@@ -297,6 +360,7 @@ export default function SubmitPostPage() {
     const finalCategory = categoryMap[finalArticleType] || finalArticleType;
 
     const finalFeaturedImage = convertGoogleDriveUrl(featuredImage);
+    const cleanSlug = slugifyVietnamese(title.trim()) + '-' + Date.now().toString().slice(-6);
 
     setStatus('loading');
     try {
@@ -309,7 +373,7 @@ export default function SubmitPostPage() {
         status: 'published',
         article_type: finalArticleType,
         category: finalCategory,
-        slug: title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + '-' + Date.now()
+        slug: cleanSlug
       }]);
 
       if (error) throw new Error(error.message || 'Lỗi khi đăng bài');
@@ -340,7 +404,7 @@ export default function SubmitPostPage() {
             </div>
             <div>
               <h1 className="font-serif font-black text-3xl">Đóng Góp Bài Viết VERIDU</h1>
-              <p className="text-[var(--text-muted)] text-sm">Soạn thảo bài viết trực quan như Word, chèn ảnh/video Google Drive hoặc tải tệp HTML.</p>
+              <p className="text-[var(--text-muted)] text-sm">Trình soạn thảo bài viết phong phú, căn lề, kéo thả ảnh/video Google Drive dễ dàng.</p>
             </div>
           </div>
         </div>
@@ -355,7 +419,7 @@ export default function SubmitPostPage() {
           <div className="p-12 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 text-center space-y-4 animate-fadeIn">
             <div className="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center mx-auto text-2xl font-black mb-4">✓</div>
             <h3 className="font-bold text-2xl text-emerald-500">Đăng Bài Thành Công!</h3>
-            <p className="text-[var(--text-muted)]">Bài viết của bạn đã được lưu vào hệ thống Thư Viện VERIDU.</p>
+            <p className="text-[var(--text-muted)]">Bài viết của bạn đã được xuất bản vào hệ thống Thư Viện VERIDU.</p>
             <button 
               onClick={() => setStatus('idle')} 
               className="mt-6 px-6 py-2.5 bg-amber-500 text-slate-950 rounded-xl text-sm font-bold shadow-lg hover:bg-amber-400 transition cursor-pointer"
@@ -377,7 +441,7 @@ export default function SubmitPostPage() {
                     : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
                 }`}
               >
-                <Edit3 className="w-4 h-4" /> ✍️ Soạn Thảo Trực Quan (WYSIWYG - Như Word)
+                <Edit3 className="w-4 h-4" /> ✍️ Soạn Thảo Trực Quan (WYSIWYG)
               </button>
               <button
                 type="button"
@@ -434,7 +498,14 @@ export default function SubmitPostPage() {
                 
                 {/* Article Title */}
                 <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-bold text-[var(--text-muted)]">Tiêu đề bài viết</label>
+                  <label className="text-sm font-bold text-[var(--text-muted)] flex items-center justify-between">
+                    <span>Tiêu đề bài viết</span>
+                    {title && (
+                      <span className="text-[11px] font-mono text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                        Slug: /{slugifyVietnamese(title)}
+                      </span>
+                    )}
+                  </label>
                   <input 
                     type="text" 
                     value={title} 
@@ -508,40 +579,65 @@ export default function SubmitPostPage() {
               </div>
 
 
-              {/* MODE 1: VISUAL WYSIWYG EDITOR (SOẠN THẢO TRỰC QUAN NHƯ WORD) */}
+              {/* MODE 1: EXPANDED VISUAL WYSIWYG EDITOR */}
               {activeTab === 'visual' && (
                 <div className="space-y-3 pt-4 border-t border-[var(--border-card)] animate-fadeIn">
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <label className="text-sm font-bold text-[var(--text-muted)] flex items-center gap-2">
                       <Sparkles className="w-4 h-4 text-amber-500" />
-                      <span>Nội dung bài viết (Gõ chữ & Chèn ảnh/video như Word - Không cần mã HTML)</span>
+                      <span>Trình soạn thảo trực quan (Kéo thả ảnh/video & Căn lề dễ dàng)</span>
                     </label>
                   </div>
 
-                  {/* VISUAL TOOLBAR */}
+                  {/* EXPANDED VISUAL TOOLBAR */}
                   <div className="flex flex-wrap items-center gap-1.5 p-2 bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl shadow-sm">
-                    <button type="button" onClick={() => execCmd('bold')} title="In đậm" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><Bold className="w-4 h-4" /></button>
-                    <button type="button" onClick={() => execCmd('italic')} title="In nghiêng" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><Italic className="w-4 h-4" /></button>
-                    <button type="button" onClick={() => execCmd('underline')} title="Gạch chân" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><Underline className="w-4 h-4" /></button>
+                    {/* Text Formatting */}
+                    <button type="button" onClick={() => execCmd('bold')} title="In đậm (Ctrl+B)" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><Bold className="w-4 h-4" /></button>
+                    <button type="button" onClick={() => execCmd('italic')} title="In nghiêng (Ctrl+I)" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><Italic className="w-4 h-4" /></button>
+                    <button type="button" onClick={() => execCmd('underline')} title="Gạch chân (Ctrl+U)" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><Underline className="w-4 h-4" /></button>
+                    <button type="button" onClick={() => execCmd('strikeThrough')} title="Gạch ngang" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><Strikethrough className="w-4 h-4" /></button>
                     
                     <div className="h-5 w-px bg-[var(--border-card)] mx-1"></div>
 
+                    {/* Headings */}
                     <button type="button" onClick={() => execCmd('formatBlock', '<h2>')} title="Tiêu đề chính (H2)" className="px-2.5 py-1.5 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] font-bold text-xs transition cursor-pointer">H2</button>
                     <button type="button" onClick={() => execCmd('formatBlock', '<h3>')} title="Tiêu đề phụ (H3)" className="px-2.5 py-1.5 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] font-bold text-xs transition cursor-pointer">H3</button>
+                    <button type="button" onClick={() => execCmd('formatBlock', '<p>')} title="Đoạn văn thường (P)" className="px-2.5 py-1.5 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] font-medium text-xs transition cursor-pointer">Thường</button>
 
                     <div className="h-5 w-px bg-[var(--border-card)] mx-1"></div>
 
-                    <button type="button" onClick={() => execCmd('formatBlock', '<blockquote>')} title="Trích dẫn" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><Quote className="w-4 h-4" /></button>
-                    <button type="button" onClick={() => execCmd('insertUnorderedList')} title="Danh sách" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><List className="w-4 h-4" /></button>
+                    {/* Alignment */}
+                    <button type="button" onClick={() => execCmd('justifyLeft')} title="Căn trái" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><AlignLeft className="w-4 h-4" /></button>
+                    <button type="button" onClick={() => execCmd('justifyCenter')} title="Căn giữa" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><AlignCenter className="w-4 h-4" /></button>
+                    <button type="button" onClick={() => execCmd('justifyRight')} title="Căn phải" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><AlignRight className="w-4 h-4" /></button>
+                    <button type="button" onClick={() => execCmd('justifyFull')} title="Căn đều" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><AlignJustify className="w-4 h-4" /></button>
 
                     <div className="h-5 w-px bg-[var(--border-card)] mx-1"></div>
 
+                    {/* Lists & Quotes */}
+                    <button type="button" onClick={() => execCmd('insertUnorderedList')} title="Danh sách chấm" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><List className="w-4 h-4" /></button>
+                    <button type="button" onClick={() => execCmd('insertOrderedList')} title="Danh sách số" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><ListOrdered className="w-4 h-4" /></button>
+                    <button type="button" onClick={() => execCmd('formatBlock', '<blockquote>')} title="Trích dẫn thường" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><Quote className="w-4 h-4" /></button>
+                    <button type="button" onClick={handleInsertVeriduPullQuote} title="Trích dẫn Kinh Thánh Công Giáo VERIDU" className="px-2.5 py-1.5 rounded-xl bg-amber-500/10 text-amber-400 font-bold text-xs hover:bg-amber-500/20 transition cursor-pointer flex items-center gap-1">
+                      <BookOpen className="w-3.5 h-3.5" /> Trích Kinh Thánh
+                    </button>
+
+                    <div className="h-5 w-px bg-[var(--border-card)] mx-1"></div>
+
+                    {/* Link, Rule & Eraser */}
+                    <button type="button" onClick={() => setShowLinkModal(true)} title="Chèn liên kết" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><LinkIcon className="w-4 h-4" /></button>
+                    <button type="button" onClick={() => execCmd('insertHorizontalRule')} title="Đường kẻ ngang" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><Minus className="w-4 h-4" /></button>
+                    <button type="button" onClick={() => execCmd('removeFormat')} title="Xóa định dạng" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><Eraser className="w-4 h-4" /></button>
+
+                    <div className="h-5 w-px bg-[var(--border-card)] mx-1"></div>
+
+                    {/* Media Dialog Buttons */}
                     <button 
                       type="button" 
                       onClick={() => setShowImageModal(true)} 
                       className="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
                     >
-                      <ImageIcon className="w-4 h-4 text-amber-500" /> 🖼️ Chèn Ảnh (Google Drive)
+                      <ImageIcon className="w-4 h-4 text-amber-500" /> 🖼️ Chèn Ảnh
                     </button>
 
                     <button 
@@ -553,7 +649,7 @@ export default function SubmitPostPage() {
                     </button>
                   </div>
 
-                  {/* CONTENT EDITABLE INTERACTIVE AREA */}
+                  {/* CONTENT EDITABLE WORKSPACE */}
                   <div
                     ref={editorRef}
                     contentEditable
@@ -709,13 +805,13 @@ export default function SubmitPostPage() {
         )}
       </main>
 
-      {/* 🖼️ DIALOG POPUP: CHÈN ẢNH GOOGLE DRIVE */}
+      {/* 🖼️ DIALOG POPUP: CHÈN ẢNH GOOGLE DRIVE WITH ALIGNMENT CONTROL */}
       {showImageModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5">
             <div className="flex items-center justify-between border-b border-[var(--border-card)] pb-3">
               <h3 className="font-bold text-lg text-amber-500 flex items-center gap-2">
-                <ImageIcon className="w-5 h-5" /> Chèn Ảnh Bài Viết
+                <ImageIcon className="w-5 h-5" /> Chèn Ảnh & Vị Trí Hiển Thị
               </h3>
               <button onClick={() => setShowImageModal(false)} className="text-[var(--text-muted)] hover:text-[var(--text-main)]">
                 <X className="w-5 h-5" />
@@ -743,6 +839,33 @@ export default function SubmitPostPage() {
                   placeholder="Ví dụ: Bản thảo cổ Kinh Cầu Loreto..."
                   className="w-full p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none"
                 />
+              </div>
+
+              <div>
+                <label className="font-bold text-[var(--text-muted)] block mb-1">Vị trí đặt ảnh trong dòng bài viết</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setImgAlignInput('center')} 
+                    className={`p-2.5 rounded-xl border font-bold text-center transition cursor-pointer ${imgAlignInput === 'center' ? 'bg-amber-500 text-slate-950 border-amber-500' : 'bg-[var(--bg-main)] border-[var(--border-card)] text-[var(--text-muted)]'}`}
+                  >
+                    Căn Giữa (Lớn)
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setImgAlignInput('left')} 
+                    className={`p-2.5 rounded-xl border font-bold text-center transition cursor-pointer ${imgAlignInput === 'left' ? 'bg-amber-500 text-slate-950 border-amber-500' : 'bg-[var(--bg-main)] border-[var(--border-card)] text-[var(--text-muted)]'}`}
+                  >
+                    Trái (Văn bản bọc)
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setImgAlignInput('right')} 
+                    className={`p-2.5 rounded-xl border font-bold text-center transition cursor-pointer ${imgAlignInput === 'right' ? 'bg-amber-500 text-slate-950 border-amber-500' : 'bg-[var(--bg-main)] border-[var(--border-card)] text-[var(--text-muted)]'}`}
+                  >
+                    Phải (Văn bản bọc)
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -783,6 +906,51 @@ export default function SubmitPostPage() {
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--border-card)]">
               <button onClick={() => setShowVideoModal(false)} className="px-4 py-2 rounded-xl bg-[var(--bg-main)] text-xs font-bold cursor-pointer">Hủy</button>
               <button onClick={handleInsertVideo} className="px-5 py-2 rounded-xl bg-rose-500 text-white text-xs font-bold shadow-md hover:bg-rose-400 transition cursor-pointer">Chèn Video</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🔗 DIALOG POPUP: CHÈN LIÊN KẾT */}
+      {showLinkModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-[var(--border-card)] pb-3">
+              <h3 className="font-bold text-lg text-amber-500 flex items-center gap-2">
+                <LinkIcon className="w-5 h-5" /> Chèn Liên Kết (Hyperlink)
+              </h3>
+              <button onClick={() => setShowLinkModal(false)} className="text-[var(--text-muted)] hover:text-[var(--text-main)]">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div>
+                <label className="font-bold text-[var(--text-muted)] block mb-1">Đường dẫn URL</label>
+                <input 
+                  type="url" 
+                  value={linkUrlInput}
+                  onChange={(e) => setLinkUrlInput(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-[var(--text-muted)] block mb-1">Chữ hiển thị (Anchor Text)</label>
+                <input 
+                  type="text" 
+                  value={linkTextInput}
+                  onChange={(e) => setLinkTextInput(e.target.value)}
+                  placeholder="Ví dụ: Đọc thêm tài liệu..."
+                  className="w-full p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--border-card)]">
+              <button onClick={() => setShowLinkModal(false)} className="px-4 py-2 rounded-xl bg-[var(--bg-main)] text-xs font-bold cursor-pointer">Hủy</button>
+              <button onClick={handleInsertLink} className="px-5 py-2 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold shadow-md hover:bg-amber-400 transition cursor-pointer">Chèn Liên Kết</button>
             </div>
           </div>
         </div>
