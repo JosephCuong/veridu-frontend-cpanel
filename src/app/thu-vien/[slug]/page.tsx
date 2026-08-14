@@ -87,14 +87,24 @@ const MetaDataRow = ({ article }: { article: any }) => (
 
 const HeroBanner = ({ imageUrl }: { imageUrl?: string }) => {
   if (!imageUrl) return null;
+  const isGoogleDrive = imageUrl.includes('googleusercontent.com') || imageUrl.includes('drive.google.com');
   return (
     <div className="w-full h-[40vh] sm:h-[50vh] relative z-0 overflow-hidden">
       <div className="absolute inset-0 bg-black/30 z-10"></div>
       <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-main)] via-[var(--bg-main)]/50 to-transparent z-10"></div>
-      <Image src={imageUrl} alt="Cover" fill className="object-cover animate-fadeIn" sizes="100vw" priority />
+      <Image 
+        src={imageUrl} 
+        alt="Cover" 
+        fill 
+        className="object-cover animate-fadeIn" 
+        sizes="100vw" 
+        priority 
+        unoptimized={isGoogleDrive}
+      />
     </div>
   );
 };
+
 
 
 export default async function LibraryArticle({ params }: { params: Promise<{ slug: string }> }) {
