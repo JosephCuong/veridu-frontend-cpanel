@@ -148,11 +148,25 @@ function mapElementClasses(el: Element): void {
             el.setAttribute('src', `https://lh3.googleusercontent.com/d/${driveMatch[1]}`);
           }
         }
-        if (!el.classList.contains('rounded-xl')) {
-          el.classList.add('max-w-full', 'h-auto', 'rounded-xl', 'shadow-lg', 'my-4');
+        if (!el.classList.contains('rounded-2xl')) {
+          el.classList.add('max-w-full', 'h-auto', 'rounded-2xl', 'shadow-2xl', 'my-6', 'cursor-zoom-in', 'hover:scale-[1.01]', 'transition-all', 'duration-300', 'mx-auto', 'block');
         }
+        el.setAttribute('data-lightbox', 'true');
       }
       break;
+
+    case 'figure':
+      if (!el.classList.contains('my-8')) {
+        el.classList.add('my-8', 'text-center', 'mx-auto', 'group/figure');
+      }
+      break;
+
+    case 'figcaption':
+      if (!el.classList.contains('text-xs')) {
+        el.classList.add('text-xs', 'italic', 'text-[var(--text-muted)]', 'mt-2.5', 'tracking-wide', 'font-sans', 'text-center');
+      }
+      break;
+
 
     case 'hr':
       if (!el.classList.contains('border-[var(--border-card)]')) {
@@ -316,17 +330,35 @@ export function normalizeAndSyncHtml(
       const tocs = doc.querySelectorAll('.toc, #toc, [class*="toc-"], [id*="toc-"]');
       tocs.forEach((t) => t.remove());
 
-      // 3. Filter <iframe> (only allow trusted embeds)
+      // 3. Filter & style <iframe> embeds (YouTube, Vimeo, Google Drive Video, Maps, Spotify)
       const iframes = doc.querySelectorAll('iframe');
-      const trustedIframeRegex = /(youtube\.com|youtube-nocookie\.com|youtu\.be|vimeo\.com|soundcloud\.com|google\.com\/maps|spotify\.com)/i;
+      const trustedIframeRegex = /(youtube\.com|youtube-nocookie\.com|youtu\.be|vimeo\.com|soundcloud\.com|google\.com\/maps|spotify\.com|drive\.google\.com)/i;
       iframes.forEach((iframe) => {
-        const src = iframe.getAttribute('src') || '';
+        let src = iframe.getAttribute('src') || '';
         if (!trustedIframeRegex.test(src)) {
           iframe.remove();
         } else {
-          iframe.classList.add('w-full', 'aspect-video', 'rounded-2xl', 'my-6', 'shadow-xl');
+          // Auto-convert Google Drive Video links to embed preview URL
+          if (/drive\.google\.com/i.test(src)) {
+            const match = src.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || src.match(/id=([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) {
+              src = `https://drive.google.com/file/d/${match[1]}/preview`;
+              iframe.setAttribute('src', src);
+            }
+          }
+          iframe.classList.add('w-full', 'h-full', 'border-none', 'rounded-2xl');
+          
+          // Wrap iframe in responsive 16:9 glassmorphic container if not already wrapped
+          const parent = iframe.parentElement;
+          if (parent && !parent.classList.contains('aspect-video')) {
+            const wrapper = doc.createElement('div');
+            wrapper.className = 'w-full aspect-video rounded-2xl shadow-2xl overflow-hidden border border-[var(--border-card)] my-6 bg-black relative z-10';
+            parent.insertBefore(wrapper, iframe);
+            wrapper.appendChild(iframe);
+          }
         }
       });
+
 
       // 4. Sanitize attributes, inline styles, and map element classes
       const allElements = doc.querySelectorAll('*');

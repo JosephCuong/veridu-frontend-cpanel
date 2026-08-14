@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { normalizeAndSyncHtml } from '@/lib/htmlProcessor';
+import { X } from 'lucide-react';
 
 interface VisualArticleRendererProps {
   contentHtml: string;
@@ -10,9 +11,12 @@ interface VisualArticleRendererProps {
 
 export default function VisualArticleRenderer({ contentHtml, className = '' }: VisualArticleRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [lightboxAlt, setLightboxAlt] = useState<string>('');
 
   // Pre-process HTML to normalize inline styles, remove embedded TOCs, and strip full-page tags.
   const safeHtml = normalizeAndSyncHtml(contentHtml || '');
+
 
   useEffect(() => {
     // 1. Dynamic Script Loader for Mermaid.js (CDN-based for maximum compatibility & zero bundle bloat)
@@ -146,15 +150,79 @@ export default function VisualArticleRenderer({ contentHtml, className = '' }: V
           el.classList.add('dark-mode-bg-override');
         }
       });
+
+      // 4. Image Lightbox Click Listener
+
+      const images = containerRef.current.querySelectorAll('img');
+      const handleImageClick = (e: Event) => {
+        const target = e.currentTarget as HTMLImageElement;
+        if (target && target.src) {
+          setLightboxSrc(target.src);
+          setLightboxAlt(target.alt || 'Ảnh bài viết');
+        }
+      };
+      images.forEach((img) => {
+        img.addEventListener('click', handleImageClick);
+      });
+
+      return () => {
+        images.forEach((img) => {
+          img.removeEventListener('click', handleImageClick);
+        });
+      };
     }
 
   }, [safeHtml]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightboxSrc(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
-    <div 
-      ref={containerRef}
-      className={`prose dark:prose-invert prose-amber prose-veridu-sanitized max-w-none font-serif text-[var(--text-main)] leading-relaxed text-base sm:text-lg has-drop-cap ${className}`}
-      dangerouslySetInnerHTML={{ __html: safeHtml }}
-    />
+    <>
+      <div 
+        ref={containerRef}
+        className={`prose dark:prose-invert prose-amber prose-veridu-sanitized max-w-none font-serif text-[var(--text-main)] leading-relaxed text-base sm:text-lg has-drop-cap ${className}`}
+        dangerouslySetInnerHTML={{ __html: safeHtml }}
+      />
+
+      {/* 🖼️ GLASSMORPHIC IMAGE LIGHTBOX MODAL */}
+      {lightboxSrc && (
+        <div 
+          className="fixed inset-0 z-[9999] bg-slate-950/90 backdrop-blur-2xl flex items-center justify-center p-4 sm:p-8 animate-in fade-in"
+          onClick={() => setLightboxSrc(null)}
+        >
+          <button 
+            onClick={() => setLightboxSrc(null)}
+            className="absolute top-6 right-6 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all border border-white/20 shadow-2xl cursor-pointer"
+            title="Đóng (Esc)"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          <div 
+            className="max-w-5xl max-h-[90vh] relative rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-900/50 p-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={lightboxSrc} 
+              alt={lightboxAlt} 
+              className="max-w-full max-h-[82vh] object-contain rounded-2xl mx-auto shadow-2xl"
+            />
+            {lightboxAlt && (
+              <p className="text-center text-xs font-sans italic text-amber-400 mt-3 mb-1 tracking-wide px-4">
+                {lightboxAlt}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
+
