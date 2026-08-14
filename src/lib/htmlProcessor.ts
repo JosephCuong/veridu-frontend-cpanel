@@ -147,8 +147,10 @@ function mapElementClasses(el: Element): void {
           if (driveMatch && driveMatch[1]) {
             el.setAttribute('src', `https://lh3.googleusercontent.com/d/${driveMatch[1]}`);
           }
+          el.setAttribute('referrerpolicy', 'no-referrer');
         }
         if (!el.classList.contains('rounded-2xl')) {
+
           el.classList.add('max-w-full', 'h-auto', 'rounded-2xl', 'shadow-2xl', 'my-6', 'cursor-zoom-in', 'hover:scale-[1.01]', 'transition-all', 'duration-300', 'mx-auto', 'block');
         }
         el.setAttribute('data-lightbox', 'true');
@@ -259,14 +261,48 @@ function normalizeAndSyncHtmlFallback(html: string, stripClasses: boolean = fals
   // Strip embedded TOC elements from imported HTML files
   result = result.replace(/<(div|nav|aside|section)[^>]*?(class|id)=["'][^"']*\btoc\b[^"']*["'][^>]*>[\s\S]*?<\/\1>/gi, '');
 
-  // Strip <iframe> unless trusted embed
-  const trustedIframeRegex = /(youtube\.com|youtube-nocookie\.com|youtu\.be|vimeo\.com|soundcloud\.com|google\.com\/maps|spotify\.com)/i;
-  result = result.replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, (match) => {
-    if (trustedIframeRegex.test(match)) {
-      return match;
+  // Convert Google Drive images in <img> tags
+  result = result.replace(/<img\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi, (fullMatch, attrStr, srcUrl) => {
+    let newSrc = srcUrl;
+    const driveMatch = srcUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || srcUrl.match(/id=([a-zA-Z0-9_-]+)/);
+    if (driveMatch && driveMatch[1]) {
+      newSrc = `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
     }
-    return '';
+    
+    // Ensure referrerpolicy="no-referrer" and class styles
+    let cleanedAttrs = attrStr.replace(/src=["'][^"']+["']/gi, `src="${newSrc}"`);
+    if (!/referrerpolicy/i.test(cleanedAttrs)) {
+      cleanedAttrs += ' referrerpolicy="no-referrer"';
+    }
+    if (!/data-lightbox/i.test(cleanedAttrs)) {
+      cleanedAttrs += ' data-lightbox="true"';
+    }
+    if (!/class=/i.test(cleanedAttrs)) {
+      cleanedAttrs += ' class="max-w-full h-auto rounded-2xl shadow-2xl my-6 cursor-zoom-in hover:scale-[1.01] transition-all duration-300 mx-auto block"';
+    }
+    return `<img ${cleanedAttrs}>`;
   });
+
+  // Strip <iframe> unless trusted embed (YouTube, Vimeo, Google Drive Video, Maps, Spotify)
+  const trustedIframeRegex = /(youtube\.com|youtube-nocookie\.com|youtu\.be|vimeo\.com|soundcloud\.com|google\.com\/maps|spotify\.com|drive\.google\.com)/i;
+  result = result.replace(/<iframe\s+([^>]*src=["']([^"']+)["'][^>]*)>[\s\S]*?<\/iframe>/gi, (match, attrStr, srcUrl) => {
+    if (!trustedIframeRegex.test(srcUrl)) {
+      return '';
+    }
+    let newSrc = srcUrl;
+    if (/drive\.google\.com/i.test(srcUrl)) {
+      const driveMatch = srcUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || srcUrl.match(/id=([a-zA-Z0-9_-]+)/);
+      if (driveMatch && driveMatch[1]) {
+        newSrc = `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+      }
+    }
+    let cleanedAttrs = attrStr.replace(/src=["'][^"']+["']/gi, `src="${newSrc}"`);
+    if (!/class=/i.test(cleanedAttrs)) {
+      cleanedAttrs += ' class="w-full h-full border-none rounded-2xl"';
+    }
+    return `<div class="w-full aspect-video rounded-2xl shadow-2xl overflow-hidden border border-[var(--border-card)] my-6 bg-black relative z-10"><iframe ${cleanedAttrs}></iframe></div>`;
+  });
+
 
   // Strip inline event attributes (onload, onerror, onclick, etc.)
   result = result.replace(/\s*on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '');
