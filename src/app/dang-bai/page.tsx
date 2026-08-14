@@ -22,6 +22,16 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 
+function convertGoogleDriveUrl(url: string): string {
+  if (!url) return '';
+  const trimmed = url.trim();
+  const match = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || trimmed.match(/id=([a-zA-Z0-9_-]+)/);
+  if (match && match[1]) {
+    return `https://lh3.googleusercontent.com/d/${match[1]}`;
+  }
+  return trimmed;
+}
+
 export default function SubmitPostPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -29,6 +39,7 @@ export default function SubmitPostPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [title, setTitle] = useState('');
   const [excerpt, setExcerpt] = useState('');
+  const [featuredImage, setFeaturedImage] = useState('');
   const [content, setContent] = useState('');
   const [articleType, setArticleType] = useState('standard');
   const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
@@ -39,6 +50,7 @@ export default function SubmitPostPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [syncNotice, setSyncNotice] = useState<string | null>(null);
+
 
   useEffect(() => {
     async function checkUserPermission() {
@@ -52,6 +64,7 @@ export default function SubmitPostPage() {
 
       let role = String(storedUser.role || '').toLowerCase();
 
+      // Fetch real role from Supabase profiles table
       try {
         if (storedUser.id || storedUser.email) {
           const { data: profile } = await supabase
@@ -91,6 +104,7 @@ export default function SubmitPostPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
+  // Handle HTML File Upload (Drag & Drop or File Selector)
   const processHtmlFile = (file: File) => {
     if (!file.name.match(/\.(html|htm)$/i)) {
       setErrorMsg('Vui lòng chọn hoặc kéo thả tệp định dạng HTML (.html hoặc .htm)');
@@ -105,6 +119,7 @@ export default function SubmitPostPage() {
     reader.onload = (e) => {
       const rawHtml = e.target?.result as string;
       if (rawHtml) {
+        // Auto-extract title from H1/Title/H2
         const extractedTitle = extractTitleFromHtml(rawHtml);
         if (extractedTitle) {
           setTitle(extractedTitle);
@@ -115,6 +130,7 @@ export default function SubmitPostPage() {
           setArticleType('interactive');
         }
 
+        // Auto-normalize HTML structure & styling (pass stripHtmlClasses & isInteractiveDoc parameters)
         const normalizedHtml = normalizeAndSyncHtml(rawHtml, stripHtmlClasses, isInteractiveDoc);
         setContent(normalizedHtml);
 
@@ -156,6 +172,7 @@ export default function SubmitPostPage() {
     }
   };
 
+  // Manual Trigger for Title Extraction & HTML Normalization
   const handleExtractAndNormalize = () => {
     if (!content.trim()) {
       setSyncNotice('Vui lòng nhập hoặc dán nội dung HTML trước khi chuẩn hóa.');
@@ -186,6 +203,7 @@ export default function SubmitPostPage() {
     const finalArticleType = isInteractiveDoc ? 'interactive' : articleType;
     const finalContent = normalizeAndSyncHtml(content, false, isInteractiveDoc);
 
+    // Map articleType → category nếu cần
     const categoryMap: Record<string, string> = {
       interactive: 'Bài Tương Tác HTML 3D',
       meditation: 'Suy Niệm',
@@ -194,12 +212,15 @@ export default function SubmitPostPage() {
     };
     const finalCategory = categoryMap[finalArticleType] || finalArticleType;
 
+    const finalFeaturedImage = convertGoogleDriveUrl(featuredImage);
+
     setStatus('loading');
     try {
       const { error } = await supabase.from('posts').insert([{
         title: title.trim(),
         excerpt: excerpt.trim(),
         content: finalContent,
+        featured_image: finalFeaturedImage || null,
         author_id: user.id,
         status: 'draft',
         article_type: finalArticleType,
@@ -212,9 +233,11 @@ export default function SubmitPostPage() {
       setStatus('success');
       setTitle('');
       setExcerpt('');
+      setFeaturedImage('');
       setContent('');
       setUploadedFileName(null);
       setSyncNotice(null);
+
     } catch (err: any) {
       setStatus('error');
       setErrorMsg(err.message);
@@ -226,6 +249,7 @@ export default function SubmitPostPage() {
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] transition-colors">
       <main className="max-w-4xl mx-auto px-4 py-12">
+        {/* Header Banner */}
         <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/10">
@@ -258,6 +282,7 @@ export default function SubmitPostPage() {
           </div>
         ) : (
           <div className="space-y-6">
+            {/* Navigation Tabs */}
             <div className="flex items-center gap-2 p-1.5 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl w-fit">
               <button
                 type="button"
@@ -283,6 +308,7 @@ export default function SubmitPostPage() {
               </button>
             </div>
 
+            {/* Error Message */}
             {status === 'error' && (
               <div className="p-4 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl text-sm font-bold flex items-center justify-between">
                 <span>{errorMsg}</span>
@@ -292,6 +318,7 @@ export default function SubmitPostPage() {
               </div>
             )}
 
+            {/* Sync / Extraction Notification */}
             {syncNotice && (
               <div className="p-4 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-xl text-sm font-medium flex items-center justify-between animate-fadeIn">
                 <div className="flex items-center gap-2">
@@ -304,9 +331,11 @@ export default function SubmitPostPage() {
               </div>
             )}
 
+            {/* Tab 1: Editor & Upload */}
             {activeTab === 'editor' && (
               <form onSubmit={handleSubmit} className="space-y-6 bg-[var(--bg-card)] border border-[var(--border-card)] p-6 sm:p-8 rounded-3xl shadow-xl">
                 
+                {/* HTML File Drag and Drop Zone */}
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-[var(--text-muted)] flex items-center gap-2">
                     <FileCode className="w-4 h-4 text-amber-500" />
@@ -367,6 +396,7 @@ export default function SubmitPostPage() {
                   </div>
                 </div>
 
+                {/* Article Title */}
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-[var(--text-muted)]">Tiêu đề bài viết</label>
                   <input 
@@ -379,6 +409,7 @@ export default function SubmitPostPage() {
                   />
                 </div>
 
+                {/* Article Excerpt */}
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-[var(--text-muted)]">Tóm tắt ngắn (Excerpt)</label>
                   <textarea 
@@ -390,6 +421,43 @@ export default function SubmitPostPage() {
                   />
                 </div>
 
+                {/* Featured Image URL (Supports Google Drive Links) */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-bold text-[var(--text-muted)] flex items-center gap-1.5">
+                      <span>🖼️ Link Ảnh Đại Diện (Featured Image)</span>
+                      <span className="text-[10px] text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 font-medium">Hỗ trợ link Google Drive</span>
+                    </label>
+                  </div>
+                  <input 
+                    type="url" 
+                    value={featuredImage} 
+                    onChange={e => setFeaturedImage(e.target.value)}
+                    onBlur={e => setFeaturedImage(convertGoogleDriveUrl(e.target.value))}
+                    className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none font-mono text-xs text-[var(--text-main)]" 
+                    placeholder="Dán link ảnh (https://... hoặc link Google Drive: https://drive.google.com/file/d/...)" 
+                  />
+                  {featuredImage && (
+                    <div className="mt-2 flex items-center gap-3 p-3 bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl">
+                      <div className="w-16 h-12 relative rounded-xl overflow-hidden bg-slate-900 border border-[var(--border-card)] shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img 
+                          src={convertGoogleDriveUrl(featuredImage)} 
+                          alt="Preview" 
+                          className="w-full h-full object-cover"
+                          onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                        />
+                      </div>
+                      <div className="text-xs text-[var(--text-muted)] truncate flex-1">
+                        <span className="font-bold text-amber-500">Xem trước ảnh đại diện:</span>
+                        <p className="truncate text-[10px] opacity-80">{convertGoogleDriveUrl(featuredImage)}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+
+                {/* Article Template Selection */}
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-[var(--text-muted)]">Giao diện Bài viết (Template)</label>
                   <select 
@@ -405,6 +473,7 @@ export default function SubmitPostPage() {
                   </select>
                 </div>
 
+                {/* Article HTML Content & Action Bar */}
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <label className="text-sm font-bold text-[var(--text-muted)]">
@@ -430,6 +499,7 @@ export default function SubmitPostPage() {
                   />
                 </div>
 
+                {/* Submit Action */}
                 <div className="pt-4 flex items-center justify-between flex-wrap gap-4 border-t border-[var(--border-card)]">
                   <div className="text-xs text-amber-500 font-medium italic">
                     Thưởng: +50 Điểm khi bài viết được Ban Quản Trị duyệt
@@ -445,6 +515,7 @@ export default function SubmitPostPage() {
               </form>
             )}
 
+            {/* Tab 2: Visual Preview */}
             {activeTab === 'preview' && (
               <div className="bg-[var(--bg-card)] border border-[var(--border-card)] p-6 sm:p-10 rounded-3xl space-y-8 animate-fadeIn shadow-2xl">
                 <div className="border-b border-[var(--border-card)] pb-6 flex items-center justify-between flex-wrap gap-4">
