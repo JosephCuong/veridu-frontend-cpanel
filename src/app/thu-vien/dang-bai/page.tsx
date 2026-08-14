@@ -22,6 +22,16 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 
+function convertGoogleDriveUrl(url: string): string {
+  if (!url) return '';
+  const trimmed = url.trim();
+  const match = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || trimmed.match(/id=([a-zA-Z0-9_-]+)/);
+  if (match && match[1]) {
+    return `https://lh3.googleusercontent.com/d/${match[1]}`;
+  }
+  return trimmed;
+}
+
 export default function SubmitPostPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -29,6 +39,7 @@ export default function SubmitPostPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [title, setTitle] = useState('');
   const [excerpt, setExcerpt] = useState('');
+  const [featuredImage, setFeaturedImage] = useState('');
   const [content, setContent] = useState('');
   const [articleType, setArticleType] = useState('standard');
   const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
@@ -39,6 +50,7 @@ export default function SubmitPostPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [syncNotice, setSyncNotice] = useState<string | null>(null);
+
 
   useEffect(() => {
     async function checkUserPermission() {
@@ -200,12 +212,15 @@ export default function SubmitPostPage() {
     };
     const finalCategory = categoryMap[finalArticleType] || finalArticleType;
 
+    const finalFeaturedImage = convertGoogleDriveUrl(featuredImage);
+
     setStatus('loading');
     try {
       const { error } = await supabase.from('posts').insert([{
         title: title.trim(),
         excerpt: excerpt.trim(),
         content: finalContent,
+        featured_image: finalFeaturedImage || null,
         author_id: user.id,
         status: 'draft',
         article_type: finalArticleType,
@@ -218,9 +233,11 @@ export default function SubmitPostPage() {
       setStatus('success');
       setTitle('');
       setExcerpt('');
+      setFeaturedImage('');
       setContent('');
       setUploadedFileName(null);
       setSyncNotice(null);
+
     } catch (err: any) {
       setStatus('error');
       setErrorMsg(err.message);
@@ -403,6 +420,42 @@ export default function SubmitPostPage() {
                     placeholder="Tóm tắt 1-2 câu về nội dung bài viết..." 
                   />
                 </div>
+
+                {/* Featured Image URL (Supports Google Drive Links) */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-bold text-[var(--text-muted)] flex items-center gap-1.5">
+                      <span>🖼️ Link Ảnh Đại Diện (Featured Image)</span>
+                      <span className="text-[10px] text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 font-medium">Hỗ trợ link Google Drive</span>
+                    </label>
+                  </div>
+                  <input 
+                    type="url" 
+                    value={featuredImage} 
+                    onChange={e => setFeaturedImage(e.target.value)}
+                    onBlur={e => setFeaturedImage(convertGoogleDriveUrl(e.target.value))}
+                    className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none font-mono text-xs text-[var(--text-main)]" 
+                    placeholder="Dán link ảnh (https://... hoặc link Google Drive: https://drive.google.com/file/d/...)" 
+                  />
+                  {featuredImage && (
+                    <div className="mt-2 flex items-center gap-3 p-3 bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl">
+                      <div className="w-16 h-12 relative rounded-xl overflow-hidden bg-slate-900 border border-[var(--border-card)] shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img 
+                          src={convertGoogleDriveUrl(featuredImage)} 
+                          alt="Preview" 
+                          className="w-full h-full object-cover"
+                          onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                        />
+                      </div>
+                      <div className="text-xs text-[var(--text-muted)] truncate flex-1">
+                        <span className="font-bold text-amber-500">Xem trước ảnh đại diện:</span>
+                        <p className="truncate text-[10px] opacity-80">{convertGoogleDriveUrl(featuredImage)}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
 
                 {/* Article Template Selection */}
                 <div className="space-y-2">

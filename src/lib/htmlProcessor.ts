@@ -140,10 +140,20 @@ function mapElementClasses(el: Element): void {
       }
       break;
     case 'img':
-      if (!el.classList.contains('rounded-xl')) {
-        el.classList.add('max-w-full', 'h-auto', 'rounded-xl', 'shadow-lg', 'my-4');
+      {
+        const src = el.getAttribute('src');
+        if (src) {
+          const driveMatch = src.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || src.match(/id=([a-zA-Z0-9_-]+)/);
+          if (driveMatch && driveMatch[1]) {
+            el.setAttribute('src', `https://lh3.googleusercontent.com/d/${driveMatch[1]}`);
+          }
+        }
+        if (!el.classList.contains('rounded-xl')) {
+          el.classList.add('max-w-full', 'h-auto', 'rounded-xl', 'shadow-lg', 'my-4');
+        }
       }
       break;
+
     case 'hr':
       if (!el.classList.contains('border-[var(--border-card)]')) {
         el.classList.add('border-[var(--border-card)]', 'my-8');
