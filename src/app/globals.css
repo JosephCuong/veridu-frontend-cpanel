@@ -74,6 +74,9 @@ html.dark .prose-veridu-sanitized a[href*="#fn"] {
 .prose-veridu-sanitized span,
 .prose-veridu-sanitized li {
   color: var(--text-main) !important;
+  font-family: var(--font-lora), Georgia, serif !important;
+  font-size: 1.125rem !important;
+  line-height: 1.8 !important;
 }
 
 .prose-veridu-sanitized h1,
@@ -85,7 +88,10 @@ html.dark .prose-veridu-sanitized a[href*="#fn"] {
   font-family: var(--font-lora), Georgia, serif !important;
   color: var(--accent-gold-text) !important;
   border-bottom-color: rgba(245, 158, 11, 0.3) !important;
+  margin-top: 2rem !important;
+  margin-bottom: 1rem !important;
 }
+
 
 .prose-veridu-sanitized [style*="color: #8B0000"],
 .prose-veridu-sanitized [style*="color:#8B0000"],
