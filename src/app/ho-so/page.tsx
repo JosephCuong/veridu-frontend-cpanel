@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { 
   User, Mail, Church, Compass, Award, Flame, Shield, LogOut, 
   Settings, BookOpen, CheckCircle, Clock, Save, Phone, Image as ImageIcon,
-  Heart, Calendar, Loader2, Trophy, Trash2, ArrowRight, PlayCircle, BarChart3, AlertTriangle, Check
+  Heart, Calendar, Loader2, Trophy, Trash2, ArrowRight, PlayCircle, BarChart3, AlertTriangle, Check, Sparkles, Plus, Eye
 } from 'lucide-react';
 
 import { 
@@ -21,24 +21,29 @@ import {
 
 export default function ProfileDashboardPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'courses' | 'quiz' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'courses' | 'quiz' | 'posts' | 'settings'>('dashboard');
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   
-  // Non-blocking transition state for lightning-fast INP (<50ms)
-  const [isPending, startTransition] = useTransition();
+  // Admin Post Management State
+  const [userPosts, setUserPosts] = useState<any[]>([]);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<any | null>(null);
 
-  // Inline confirmation modal state
-  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
-
-  // Avatar Modal State
+  // Avatar & Confirmation State
   const [characters, setCharacters] = useState<Character[]>([]);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
   // Quiz history & LMS courses state from Supabase
   const [quizHistory, setQuizHistory] = useState<QuizAttempt[]>([]);
   const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
   const [isLoadingDb, setIsLoadingDb] = useState(true);
+
+  // Non-blocking transition state for lightning-fast INP (<50ms)
+  const [isPending, startTransition] = useTransition();
+
+
 
   // Form State for Profile Settings
   const [formData, setFormData] = useState({
@@ -92,10 +97,32 @@ export default function ProfileDashboardPage() {
         setEnrolledCourses([]);
         setIsLoadingDb(false);
       });
+
+      // Fetch posts for Post Dashboard
+      setIsLoadingPosts(true);
+      fetch('/api/posts/list')
+        .then((res) => res.json())
+        .then((data) => setUserPosts(data.posts || []))
+        .catch(() => {})
+        .finally(() => setIsLoadingPosts(false));
     } else {
       setIsLoadingDb(false);
     }
   }, []);
+
+  const handleDeletePost = async (id: number) => {
+    try {
+      const res = await fetch(`/api/posts/delete?id=${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Lỗi khi xóa bài viết');
+      setUserPosts(userPosts.filter((p) => p.id !== id));
+      setPostToDelete(null);
+      setMessage({ text: 'Đã xóa bài viết thành công!', type: 'success' });
+    } catch (err: any) {
+      setMessage({ text: err.message || 'Lỗi xóa bài', type: 'error' });
+    }
+  };
+
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -266,6 +293,23 @@ export default function ProfileDashboardPage() {
                 </div>
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'quiz' ? 'bg-slate-950 text-amber-400' : 'bg-[var(--bg-main)] text-[var(--text-muted)]'}`}>
                   {quizHistory.length}
+                </span>
+              </button>
+
+              <button 
+                onClick={() => startTransition(() => setActiveTab('posts'))}
+                className={`w-full text-left px-4 py-3 rounded-2xl font-bold text-xs flex items-center justify-between transition-all ${
+                  activeTab === 'posts' 
+                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-black' 
+                    : 'text-[var(--text-muted)] hover:bg-[var(--bg-main)] hover:text-[var(--text-main)]'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  <span>Quản Lý Bài Viết</span>
+                </div>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'posts' ? 'bg-slate-950 text-amber-400' : 'bg-[var(--bg-main)] text-[var(--text-muted)]'}`}>
+                  {userPosts.length}
                 </span>
               </button>
 
@@ -602,6 +646,111 @@ export default function ProfileDashboardPage() {
                           }`}>
                             {item.percentage}%
                           </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB: POST MANAGEMENT DASHBOARD */}
+            {activeTab === 'posts' && (
+              <div className="p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] space-y-6 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between flex-wrap gap-4 border-b border-[var(--border-card)] pb-4">
+                  <div>
+                    <h2 className="font-serif font-bold text-xl text-amber-400 flex items-center gap-2">
+                      <Sparkles className="w-6 h-6 text-amber-400" /> Dashboard Quản Lý Bài Viết ({userPosts.length})
+                    </h2>
+                    <p className="text-xs text-[var(--text-muted)] mt-1">
+                      Danh sách bài viết đã xuất bản trên VERIDU. Bạn có thể chỉnh sửa trực tiếp bằng Elementor Block Editor.
+                    </p>
+                  </div>
+                  <Link
+                    href="/dang-bai"
+                    className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-slate-950 font-black text-xs rounded-2xl flex items-center gap-2 shadow-lg hover:scale-105 transition-all"
+                  >
+                    <Plus className="w-4 h-4" /> Soạn Bài Viết Mới
+                  </Link>
+                </div>
+
+                {/* Confirm Delete Post Modal */}
+                {postToDelete && (
+                  <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between gap-4 text-xs font-bold text-rose-400 animate-in fade-in">
+                    <span>Xác nhận xóa bài viết &quot;{postToDelete.title}&quot;? Thao tác này không thể hoàn tác.</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleDeletePost(postToDelete.id)}
+                        className="px-4 py-1.5 bg-rose-500 text-white rounded-xl hover:bg-rose-600 font-bold"
+                      >
+                        Xác Nhận Xóa
+                      </button>
+                      <button
+                        onClick={() => setPostToDelete(null)}
+                        className="px-4 py-1.5 bg-[var(--bg-main)] text-[var(--text-main)] rounded-xl font-bold"
+                      >
+                        Hủy
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {isLoadingPosts ? (
+                  <div className="py-12 text-center text-xs text-[var(--text-muted)] flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-amber-400" /> Đang tải danh sách bài viết...
+                  </div>
+                ) : userPosts.length === 0 ? (
+                  <div className="text-center py-12 text-[var(--text-muted)] space-y-3">
+                    <BookOpen className="w-10 h-10 mx-auto opacity-30" />
+                    <p className="text-xs font-serif">Chưa có bài viết nào được tìm thấy trong CSDL.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {userPosts.map((post) => (
+                      <div
+                        key={post.id}
+                        className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500/40 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 font-bold text-amber-400 text-xs flex items-center justify-center shrink-0">
+                            #{post.id}
+                          </div>
+                          <div className="space-y-1">
+                            <h4 className="font-serif font-bold text-sm text-[var(--text-main)] hover:text-amber-400 transition-colors">
+                              <Link href={`/${post.slug}`}>{post.title}</Link>
+                            </h4>
+                            <div className="flex items-center gap-3 text-[11px] text-[var(--text-muted)]">
+                              <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 font-bold">{post.category || 'Thần Học'}</span>
+                              <span className="font-mono">/{post.slug}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                          <Link
+                            href={`/${post.slug}`}
+                            className="p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-muted)] hover:text-amber-400 transition text-xs font-bold flex items-center gap-1"
+                            title="Xem bài viết thực tế"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> Xem
+                          </Link>
+
+                          <Link
+                            href={`/dang-bai?edit=${post.id}`}
+                            className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition text-xs font-bold flex items-center gap-1"
+                            title="Chỉnh sửa bài bằng Elementor Block Editor"
+                          >
+                            <Settings className="w-3.5 h-3.5" /> Sửa
+                          </Link>
+
+                          <button
+                            type="button"
+                            onClick={() => setPostToDelete(post)}
+                            className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-white transition text-xs font-bold"
+                            title="Xóa bài viết"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
                     ))}

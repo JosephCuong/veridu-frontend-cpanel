@@ -7,6 +7,7 @@ import { Metadata } from 'next';
 import VisualArticleRenderer from '@/components/VisualArticleRenderer';
 import ShareButtons from '@/components/ShareButtons';
 import TableOfContents from '@/components/TableOfContents';
+import AdminEditFloatingButton from '@/components/AdminEditFloatingButton';
 import { BookOpen, Sparkles, Heart, ArrowLeft, Cross, Calendar, Clock, User, Tag } from 'lucide-react';
 
 const RESERVED_SLUGS = new Set([
@@ -207,6 +208,7 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
       </div>
 
       <ShareButtons url={articleUrl} title={cleanTitle} />
+      <AdminEditFloatingButton articleId={article.id} />
     </div>
   );
 }
