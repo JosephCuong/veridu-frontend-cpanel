@@ -2,47 +2,31 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-
-import { getStoredUser, UserProfile } from '@/lib/auth';
-import { extractTitleFromHtml, normalizeAndSyncHtml } from '@/lib/htmlProcessor';
-import VisualArticleRenderer from '@/components/VisualArticleRenderer';
-
 import { 
-  PenTool, 
-  Send, 
-  AlertTriangle, 
-  Loader2, 
+  Sparkles, 
   Upload, 
   FileCode, 
-  Sparkles, 
   Eye, 
-  Edit3, 
-  CheckCircle2,
-  X,
-  Bold,
-  Italic,
-  Underline,
-  Strikethrough,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
-  Quote,
-  List,
-  ListOrdered,
+  Send, 
+  CheckCircle2, 
+  AlertCircle, 
+  BookOpen, 
+  Layers, 
+  HelpCircle,
   Link as LinkIcon,
   Image as ImageIcon,
   Video as VideoIcon,
-  Code,
-  Minus,
-  Palette,
-  Eraser,
-  BookOpen
+  Quote,
+  LayoutGrid,
+  FileText,
+  Plus
 } from 'lucide-react';
-import { supabase } from '@/lib/supabaseClient';
+import { getStoredUser, UserProfile } from '@/lib/auth';
+import { extractTitleFromHtml, normalizeAndSyncHtml } from '@/lib/htmlProcessor';
+import VisualArticleRenderer from '@/components/VisualArticleRenderer';
+import VeriduBlockEditor, { VeriduBlock, compileBlocksToHtml, parseHtmlToBlocks } from '@/components/editor/VeriduBlockEditor';
 
 function slugifyVietnamese(str: string): string {
-  if (!str) return '';
   return str
     .toLowerCase()
     .normalize('NFD')
@@ -54,908 +38,369 @@ function slugifyVietnamese(str: string): string {
     .replace(/-+/g, '-');
 }
 
-function convertGoogleDriveUrl(url: string): string {
-  if (!url) return '';
-  const trimmed = url.trim();
-  const match = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || trimmed.match(/id=([a-zA-Z0-9_-]+)/);
-  if (match && match[1]) {
-    return `https://lh3.googleusercontent.com/d/${match[1]}`;
-  }
-  return trimmed;
-}
-
-function convertGoogleDriveVideoUrl(url: string): string {
-  if (!url) return '';
-  const trimmed = url.trim();
-  const match = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || trimmed.match(/id=([a-zA-Z0-9_-]+)/);
-  if (match && match[1]) {
-    return `https://drive.google.com/file/d/${match[1]}/preview`;
-  }
-  return trimmed;
-}
-
-export default function SubmitPostPage() {
+export default function DangBaiPage() {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const editorRef = useRef<HTMLDivElement>(null);
-
   const [user, setUser] = useState<UserProfile | null>(null);
+
+  // Post State
   const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
   const [excerpt, setExcerpt] = useState('');
+  const [category, setCategory] = useState('Thần Học');
+  const [articleType, setArticleType] = useState('theological');
   const [featuredImage, setFeaturedImage] = useState('');
-  const [content, setContent] = useState('');
-  const [articleType, setArticleType] = useState('standard');
-  const [activeTab, setActiveTab] = useState<'visual' | 'code' | 'preview'>('visual');
-  const [stripHtmlClasses, setStripHtmlClasses] = useState(true);
+  const [contentHtml, setContentHtml] = useState('');
+  const [blocks, setBlocks] = useState<VeriduBlock[]>([]);
 
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [errorMsg, setErrorMsg] = useState('');
-  const [isDragging, setIsDragging] = useState(false);
-  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
-  const [syncNotice, setSyncNotice] = useState<string | null>(null);
+  // UI Tabs
+  const [activeTab, setActiveTab] = useState<'blocks' | 'html' | 'preview'>('blocks');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Dialog Modals for Visual Editor
-  const [showImageModal, setShowImageModal] = useState(false);
-  const [imgUrlInput, setImgUrlInput] = useState('');
-  const [imgCaptionInput, setImgCaptionInput] = useState('');
-  const [imgAlignInput, setImgAlignInput] = useState<'center' | 'left' | 'right'>('center');
-
-  const [showVideoModal, setShowVideoModal] = useState(false);
-  const [videoUrlInput, setVideoUrlInput] = useState('');
-
-  const [showLinkModal, setShowLinkModal] = useState(false);
-  const [linkUrlInput, setLinkUrlInput] = useState('');
-  const [linkTextInput, setLinkTextInput] = useState('');
-
+  // Check auth
   useEffect(() => {
-    async function checkUserPermission() {
-      const storedUser = getStoredUser();
-      if (!storedUser) {
-        router.push('/dang-nhap');
-        return;
-      }
+    const u = getStoredUser();
+    setUser(u);
+  }, []);
 
-      setUser(storedUser);
-
-      let role = String(storedUser.role || '').toLowerCase();
-
-      try {
-        if (storedUser.id || storedUser.email) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .or(`id.eq.${storedUser.id},email.eq.${storedUser.email}`)
-            .maybeSingle();
-
-          if (profile?.role) {
-            role = String(profile.role).toLowerCase();
-          }
-        }
-      } catch (err) {
-        console.warn('Role fetch warning:', err);
-      }
-
-      const isAllowed = 
-        role.includes('admin') ||
-        role.includes('quản trị') ||
-        role.includes('teacher') ||
-        role.includes('giáo lý') ||
-        role.includes('đóng góp') ||
-        role.includes('học giả') ||
-        role.includes('contributor') ||
-        role.includes('scholar');
-
-      if (!isAllowed) {
-        setStatus('error');
-        setErrorMsg('Tài khoản của bạn chưa được cấp quyền đăng bài. Quyền đăng bài yêu cầu tài khoản Quản Trị Viên (admin/teacher), Học Giả VERIDU hoặc Người Đóng Góp.');
-      } else if (status === 'error') {
-        setStatus('idle');
-        setErrorMsg('');
-      }
-    }
-
-    checkUserPermission();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router]);
-
-  // Sync content with contentEditable when switching to visual tab
-  useEffect(() => {
-    if (activeTab === 'visual' && editorRef.current) {
-      if (editorRef.current.innerHTML !== content) {
-        editorRef.current.innerHTML = content;
-      }
-    }
-  }, [activeTab, content]);
-
-  // Visual Editor Command Execution
-  const execCmd = (cmd: string, val: string = '') => {
-    if (typeof document !== 'undefined') {
-      document.execCommand(cmd, false, val);
-      if (editorRef.current) {
-        setContent(editorRef.current.innerHTML);
-      }
+  // Auto slugify when title changes
+  const handleTitleChange = (val: string) => {
+    setTitle(val);
+    if (!slug || slug === slugifyVietnamese(title)) {
+      setSlug(slugifyVietnamese(val));
     }
   };
 
-  const handleInsertImage = () => {
-    if (!imgUrlInput.trim()) return;
-    const finalUrl = convertGoogleDriveUrl(imgUrlInput);
-    const captionHtml = imgCaptionInput.trim() ? `<figcaption className="text-center text-xs italic text-[var(--text-muted)] mt-2">${imgCaptionInput.trim()}</figcaption>` : '';
-    
-    let alignClass = 'mx-auto block text-center';
-    if (imgAlignInput === 'left') alignClass = 'float-left mr-6 mb-4 max-w-sm';
-    if (imgAlignInput === 'right') alignClass = 'float-right ml-6 mb-4 max-w-sm';
-
-    const figureHtml = `<figure draggable="true" className="my-6 ${alignClass} content-figure"><img src="${finalUrl}" alt="${imgCaptionInput.trim() || 'Hình ảnh'}" referrerpolicy="no-referrer" data-lightbox="true" className="max-w-full h-auto rounded-2xl shadow-2xl my-2 block cursor-zoom-in hover:scale-[1.01] transition-all">${captionHtml}</figure><p><br></p>`;
-    
-    if (activeTab === 'visual' && editorRef.current) {
-      editorRef.current.focus();
-      document.execCommand('insertHTML', false, figureHtml);
-      setContent(editorRef.current.innerHTML);
-    } else {
-      setContent(prev => prev + '\n' + figureHtml);
-    }
-
-    setImgUrlInput('');
-    setImgCaptionInput('');
-    setShowImageModal(false);
+  // Sync Blocks -> HTML
+  const handleBlocksChange = (newBlocks: VeriduBlock[]) => {
+    setBlocks(newBlocks);
+    const compiled = compileBlocksToHtml(newBlocks);
+    setContentHtml(compiled);
   };
 
-  const handleInsertVideo = () => {
-    if (!videoUrlInput.trim()) return;
-    let embedUrl = videoUrlInput.trim();
-    if (embedUrl.includes('youtube.com/watch')) {
-      embedUrl = embedUrl.replace('watch?v=', 'embed/');
-    } else if (embedUrl.includes('youtu.be/')) {
-      embedUrl = embedUrl.replace('youtu.be/', 'www.youtube.com/embed/');
-    } else if (embedUrl.includes('drive.google.com')) {
-      embedUrl = convertGoogleDriveVideoUrl(embedUrl);
-    }
-
-    const videoHtml = `<div draggable="true" className="w-full aspect-video rounded-2xl shadow-2xl overflow-hidden border border-[var(--border-card)] my-6 bg-black relative z-10"><iframe src="${embedUrl}" className="w-full h-full border-none rounded-2xl" allowfullscreen></iframe></div><p><br></p>`;
-    
-    if (activeTab === 'visual' && editorRef.current) {
-      editorRef.current.focus();
-      document.execCommand('insertHTML', false, videoHtml);
-      setContent(editorRef.current.innerHTML);
-    } else {
-      setContent(prev => prev + '\n' + videoHtml);
-    }
-
-    setVideoUrlInput('');
-    setShowVideoModal(false);
+  // Sync HTML -> Blocks
+  const handleHtmlChange = (newHtml: string) => {
+    setContentHtml(newHtml);
+    const parsed = parseHtmlToBlocks(newHtml);
+    setBlocks(parsed);
   };
 
-  const handleInsertLink = () => {
-    if (!linkUrlInput.trim()) return;
-    const textToInsert = linkTextInput.trim() || linkUrlInput.trim();
-    const linkHtml = `<a href="${linkUrlInput.trim()}" target="_blank" rel="noopener noreferrer" className="text-amber-500 underline underline-offset-4 hover:text-amber-400 font-medium">${textToInsert}</a>`;
-    
-    if (activeTab === 'visual' && editorRef.current) {
-      editorRef.current.focus();
-      document.execCommand('insertHTML', false, linkHtml);
-      setContent(editorRef.current.innerHTML);
-    } else {
-      setContent(prev => prev + ' ' + linkHtml);
-    }
-
-    setLinkUrlInput('');
-    setLinkTextInput('');
-    setShowLinkModal(false);
-  };
-
-  const handleInsertVeriduPullQuote = () => {
-    const quoteHtml = `<aside className="veridu-pull-quote my-6 p-6 bg-amber-500/10 border-l-4 border-amber-500 rounded-r-2xl italic font-serif text-lg text-[var(--text-main)] shadow-lg">"Nhập câu trích dẫn Kinh Thánh hoặc lời huấn dụ..."</aside><p><br></p>`;
-    if (activeTab === 'visual' && editorRef.current) {
-      editorRef.current.focus();
-      document.execCommand('insertHTML', false, quoteHtml);
-      setContent(editorRef.current.innerHTML);
-    } else {
-      setContent(prev => prev + '\n' + quoteHtml);
-    }
-  };
-
-  // Handle HTML File Upload (Drag & Drop or File Selector)
-  const processHtmlFile = (file: File) => {
-    if (!file.name.match(/\.(html|htm)$/i)) {
-      setErrorMsg('Vui lòng chọn hoặc kéo thả tệp định dạng HTML (.html hoặc .htm)');
-      setStatus('error');
-      return;
-    }
-
-    setErrorMsg('');
-    if (status === 'error') setStatus('idle');
+  // Handle File Upload (.html)
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
-      const rawHtml = e.target?.result as string;
-      if (rawHtml) {
-        const extractedTitle = extractTitleFromHtml(rawHtml);
-        if (extractedTitle) {
+    reader.onload = (event) => {
+      const rawText = event.target?.result as string;
+      if (rawText) {
+        // Auto extract title
+        const extractedTitle = extractTitleFromHtml(rawText);
+        if (extractedTitle && !title) {
           setTitle(extractedTitle);
+          setSlug(slugifyVietnamese(extractedTitle));
         }
 
-        const isInteractiveDoc = articleType === 'interactive' || /<!DOCTYPE\s+html/i.test(rawHtml) || /<html[\s>]/i.test(rawHtml);
-        if (isInteractiveDoc) {
-          setArticleType('interactive');
-        }
-
-        const normalizedHtml = normalizeAndSyncHtml(rawHtml, stripHtmlClasses, isInteractiveDoc);
-        setContent(normalizedHtml);
-
-        setUploadedFileName(file.name);
-        setSyncNotice(
-          extractedTitle
-            ? `Tải tệp "${file.name}" thành công! Đã tự động trích xuất tiêu đề "${extractedTitle}".`
-            : `Tải tệp "${file.name}" thành công! Đã nạp nội dung bài viết.`
-        );
+        // Clean & Sync HTML
+        const clean = normalizeAndSyncHtml(rawText);
+        handleHtmlChange(clean);
+        setMessage({ type: 'success', text: `Đã nạp thành công tệp ${file.name}` });
       }
     };
-    reader.readAsText(file, 'utf-8');
+    reader.readAsText(file);
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  // Submit to Supabase
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      processHtmlFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      processHtmlFile(e.target.files[0]);
-    }
-  };
-
-  const handleExtractAndNormalize = () => {
-    if (!content.trim()) {
-      setSyncNotice('Vui lòng nhập hoặc dán nội dung HTML trước khi chuẩn hóa.');
+    if (!title.trim()) {
+      setMessage({ type: 'error', text: 'Vui lòng nhập tiêu đề bài viết!' });
       return;
     }
 
-    const extractedTitle = extractTitleFromHtml(content);
-    if (extractedTitle) {
-      setTitle(extractedTitle);
+    const finalHtml = activeTab === 'blocks' ? compileBlocksToHtml(blocks) : contentHtml;
+    if (!finalHtml.trim()) {
+      setMessage({ type: 'error', text: 'Nội dung bài viết không được để trống!' });
+      return;
     }
 
-    const isInteractiveDoc = articleType === 'interactive' || /<!DOCTYPE\s+html/i.test(content) || /<html[\s>]/i.test(content);
-    const normalizedHtml = normalizeAndSyncHtml(content, false, isInteractiveDoc);
-    setContent(normalizedHtml);
+    setIsSubmitting(true);
+    setMessage(null);
 
-    setSyncNotice(
-      extractedTitle
-        ? `Đã trích xuất tiêu đề: "${extractedTitle}" và chuẩn hóa HTML.`
-        : 'Đã chuẩn hóa HTML tương thích với giao diện VERIDU.'
-    );
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim() || !content.trim() || !user) return;
-
-    const isInteractiveDoc = articleType === 'interactive' || /<!DOCTYPE\s+html/i.test(content) || /<html[\s>]/i.test(content);
-    const finalArticleType = isInteractiveDoc ? 'interactive' : articleType;
-    const finalContent = normalizeAndSyncHtml(content, false, isInteractiveDoc);
-
-    const categoryMap: Record<string, string> = {
-      interactive: 'Bài Tương Tác HTML 3D',
-      meditation: 'Suy Niệm',
-      theological: 'Thần Học',
-      magazine: 'Tạp Chí / Phóng Sự',
-    };
-    const finalCategory = categoryMap[finalArticleType] || finalArticleType;
-
-    const finalFeaturedImage = convertGoogleDriveUrl(featuredImage);
-    const cleanSlug = slugifyVietnamese(title.trim()) + '-' + Date.now().toString().slice(-6);
-
-    setStatus('loading');
     try {
-      const { error } = await supabase.from('posts').insert([{
-        title: title.trim(),
-        excerpt: excerpt.trim(),
-        content: finalContent,
-        featured_image: finalFeaturedImage || null,
-        author_id: user.id,
-        status: 'published',
-        article_type: finalArticleType,
-        category: finalCategory,
-        slug: cleanSlug
-      }]);
+      const finalSlug = slug.trim() || slugifyVietnamese(title);
+      const res = await fetch('/api/posts/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title.trim(),
+          slug: finalSlug,
+          excerpt: excerpt.trim(),
+          category,
+          article_type: articleType,
+          featured_image: featuredImage.trim(),
+          content: finalHtml,
+          author: user?.displayName || user?.username || 'VERIDU Team',
+          status: 'published'
+        })
+      });
 
-      if (error) throw new Error(error.message || 'Lỗi khi đăng bài');
-      
-      setStatus('success');
-      setTitle('');
-      setExcerpt('');
-      setFeaturedImage('');
-      setContent('');
-      setUploadedFileName(null);
-      setSyncNotice(null);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Lỗi khi lưu bài viết');
+
+      setMessage({ type: 'success', text: 'Đã xuất bản bài viết thành công!' });
+      setTimeout(() => {
+        router.push(`/${finalSlug}`);
+      }, 1500);
     } catch (err: any) {
-      setStatus('error');
-      setErrorMsg(err.message);
+      setMessage({ type: 'error', text: err.message || 'Có lỗi xảy ra khi kết nối CSDL.' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
-  if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] transition-colors">
-      <main className="max-w-5xl mx-auto px-4 py-12">
-        {/* Header Banner */}
-        <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/10">
-              <PenTool className="w-8 h-8" />
-            </div>
-            <div>
-              <h1 className="font-serif font-black text-3xl">Đóng Góp Bài Viết VERIDU</h1>
-              <p className="text-[var(--text-muted)] text-sm">Trình soạn thảo bài viết phong phú, căn lề, kéo thả ảnh/video Google Drive dễ dàng.</p>
-            </div>
-          </div>
+    <div className="w-full min-h-screen stained-glass-bg text-[var(--text-main)] py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto space-y-8">
+        
+        {/* HEADER TITLE */}
+        <div className="text-center space-y-3">
+          <span className="px-4 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-500 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm">
+            <Sparkles className="w-4 h-4" /> Trình Biên Tập Khối VERIDU Block Editor
+          </span>
+          <h1 className="font-serif font-black text-3xl sm:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-200 to-yellow-500">
+            Soạn Thảo & Đăng Bài Trực Quan
+          </h1>
+          <p className="text-sm text-[var(--text-muted)] max-w-2xl mx-auto">
+            Hệ thống kéo-thả khối (Block Editor) chuyên dụng Công giáo. Nhập link ảnh Google Drive, chèn trích dẫn Kinh Thánh và xuất bản tức thì.
+          </p>
         </div>
 
-        {status === 'error' && errorMsg.includes('chưa được cấp quyền') ? (
-          <div className="p-8 rounded-3xl bg-slate-800/50 border border-slate-700 text-center space-y-4">
-            <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto" />
-            <h3 className="font-bold text-xl">Tính năng đang khóa</h3>
-            <p className="text-[var(--text-muted)] max-w-md mx-auto">{errorMsg}</p>
+        {/* MAIN FORM */}
+        <form onSubmit={handleSubmit} className="space-y-8">
+          
+          {/* METADATA FORM BOX */}
+          <div className="p-6 sm:p-8 rounded-3xl glass-panel space-y-6">
+            <h2 className="font-serif font-bold text-xl text-amber-500 flex items-center gap-2 border-b border-[var(--border-card)] pb-4">
+              <BookOpen className="w-5 h-5 text-amber-500" /> Thông Tin Cơ Bản Bài Viết
+            </h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              
+              {/* Title */}
+              <div className="sm:col-span-2 space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  Tiêu Đề Bài Viết <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => handleTitleChange(e.target.value)}
+                  placeholder="Ví dụ: Phân Tích Kinh Cầu Đức Bà"
+                  required
+                  className="w-full p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] text-base font-bold text-[var(--text-main)] outline-none focus:border-amber-500 transition"
+                />
+              </div>
+
+              {/* Slug & Category */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  Đường Dẫn SEO (Slug)
+                </label>
+                <input
+                  type="text"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  placeholder="phan-tich-kinh-cau-duc-ba"
+                  className="w-full p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] font-mono text-xs text-[var(--text-muted)] outline-none focus:border-amber-500 transition"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  Chuyên Mục
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] text-sm font-bold text-[var(--text-main)] outline-none focus:border-amber-500 transition"
+                >
+                  <option value="Thần Học">Thần Học & Tín Lý</option>
+                  <option value="Kinh Thánh">Kinh Thánh & Chú Giải</option>
+                  <option value="Suy Niệm">Suy Niệm Lời Chúa</option>
+                  <option value="Các Thánh">Các Thánh & Phụng Vụ</option>
+                  <option value="Lịch Sử">Lịch Sử Giáo Hội</option>
+                </select>
+              </div>
+
+              {/* Template & Featured Image */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  Giao Diện Bài Viết (Template)
+                </label>
+                <select
+                  value={articleType}
+                  onChange={(e) => setArticleType(e.target.value)}
+                  className="w-full p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] text-sm font-bold text-[var(--text-main)] outline-none focus:border-amber-500 transition"
+                >
+                  <option value="theological">Thần Học / Academic (Nền kính mờ)</option>
+                  <option value="meditation">Suy Niệm / Meditation (Ấm áp)</option>
+                  <option value="wide">Tạp Chí / Wide Magazine (Trang rộng)</option>
+                  <option value="standard">Tiêu Chuẩn (Standard)</option>
+                  <option value="interactive">3D Tương Tác / Complete Takeover</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  Link Ảnh Đại Diện (Featured Image - Google Drive)
+                </label>
+                <input
+                  type="url"
+                  value={featuredImage}
+                  onChange={(e) => setFeaturedImage(e.target.value)}
+                  placeholder="https://drive.google.com/file/d/..."
+                  className="w-full p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] font-mono text-xs outline-none focus:border-amber-500 transition"
+                />
+              </div>
+
+              {/* Excerpt */}
+              <div className="sm:col-span-2 space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  Tóm Tắt Bài Viết (Excerpt)
+                </label>
+                <textarea
+                  value={excerpt}
+                  onChange={(e) => setExcerpt(e.target.value)}
+                  rows={2}
+                  placeholder="1 - 2 câu tóm tắt nội dung để hiển thị ở trang chủ và mạng xã hội..."
+                  className="w-full p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] text-sm outline-none focus:border-amber-500 transition resize-y"
+                />
+              </div>
+
+            </div>
           </div>
-        ) : status === 'success' ? (
-          <div className="p-12 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 text-center space-y-4 animate-fadeIn">
-            <div className="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center mx-auto text-2xl font-black mb-4">✓</div>
-            <h3 className="font-bold text-2xl text-emerald-500">Đăng Bài Thành Công!</h3>
-            <p className="text-[var(--text-muted)]">Bài viết của bạn đã được xuất bản vào hệ thống Thư Viện VERIDU.</p>
-            <button 
-              onClick={() => setStatus('idle')} 
-              className="mt-6 px-6 py-2.5 bg-amber-500 text-slate-950 rounded-xl text-sm font-bold shadow-lg hover:bg-amber-400 transition cursor-pointer"
+
+          {/* EDITOR SECTION WITH 3 TABS */}
+          <div className="p-6 sm:p-8 rounded-3xl glass-panel space-y-6">
+            
+            {/* TABS HEADER */}
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border-card)] pb-4">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('blocks')}
+                  className={`px-5 py-2.5 rounded-2xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                    activeTab === 'blocks'
+                      ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 scale-105'
+                      : 'bg-[var(--bg-main)] border border-[var(--border-card)] hover:bg-amber-500/10 hover:text-amber-400'
+                  }`}
+                >
+                  <LayoutGrid className="w-4 h-4" /> 🧩 Trình Soạn Khối (Block Canvas)
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('html')}
+                  className={`px-5 py-2.5 rounded-2xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                    activeTab === 'html'
+                      ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 scale-105'
+                      : 'bg-[var(--bg-main)] border border-[var(--border-card)] hover:bg-amber-500/10 hover:text-amber-400'
+                  }`}
+                >
+                  <FileCode className="w-4 h-4" /> 📄 Mã HTML
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('preview')}
+                  className={`px-5 py-2.5 rounded-2xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                    activeTab === 'preview'
+                      ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 scale-105'
+                      : 'bg-[var(--bg-main)] border border-[var(--border-card)] hover:bg-amber-500/10 hover:text-amber-400'
+                  }`}
+                >
+                  <Eye className="w-4 h-4" /> 👁️ Xem Trước Thực Tế
+                </button>
+              </div>
+
+              {/* FILE UPLOAD BUTTON (.HTML) */}
+              <div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  accept=".html,.htm"
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-4 py-2 bg-[var(--bg-main)] hover:bg-amber-500/10 border border-[var(--border-card)] rounded-2xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Upload className="w-3.5 h-3.5 text-amber-500" /> Tải Lên Tệp HTML
+                </button>
+              </div>
+            </div>
+
+            {/* TAB 1: BLOCK CANVAS EDITOR */}
+            {activeTab === 'blocks' && (
+              <VeriduBlockEditor blocks={blocks} onChange={handleBlocksChange} />
+            )}
+
+            {/* TAB 2: RAW HTML CODE VIEW */}
+            {activeTab === 'html' && (
+              <div className="space-y-3">
+                <p className="text-xs text-[var(--text-muted)]">
+                  Mã HTML được biên dịch tự động từ các Khối. Bạn có thể chỉnh sửa trực tiếp mã HTML tại đây:
+                </p>
+                <textarea
+                  value={contentHtml}
+                  onChange={(e) => handleHtmlChange(e.target.value)}
+                  rows={16}
+                  className="w-full p-4 rounded-2xl bg-slate-950 border border-[var(--border-card)] font-mono text-xs text-amber-300 outline-none focus:border-amber-500 leading-relaxed"
+                />
+              </div>
+            )}
+
+            {/* TAB 3: LIVE PREVIEW */}
+            {activeTab === 'preview' && (
+              <div className="p-6 sm:p-8 rounded-3xl bg-[var(--bg-main)] border border-[var(--border-card)] space-y-6">
+                <div className="border-b border-[var(--border-card)] pb-4 text-center">
+                  <span className="text-xs font-bold text-amber-500 uppercase">{category}</span>
+                  <h1 className="font-serif font-bold text-3xl sm:text-4xl text-[var(--text-main)] mt-2">{title || 'Tiêu Đề Bài Viết Xem Trước'}</h1>
+                </div>
+                <VisualArticleRenderer contentHtml={contentHtml} />
+              </div>
+            )}
+
+          </div>
+
+          {/* MESSAGE NOTIFICATION */}
+          {message && (
+            <div className={`p-4 rounded-2xl flex items-center gap-3 text-sm font-bold shadow-lg ${
+              message.type === 'success' ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300' : 'bg-red-500/20 border border-red-500/40 text-red-300'
+            }`}>
+              {message.type === 'success' ? <CheckCircle2 className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
+              <span>{message.text}</span>
+            </div>
+          )}
+
+          {/* SUBMIT BUTTON */}
+          <div className="text-center pt-4">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-10 py-4 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-slate-950 font-black rounded-full text-base transition-all shadow-xl shadow-amber-500/20 hover:scale-105 disabled:opacity-50 flex items-center gap-2 mx-auto cursor-pointer"
             >
-              Soạn bài tiếp theo
+              <Send className="w-5 h-5" /> {isSubmitting ? 'Đang Xuất Bản...' : 'Xuất Bản Bài Viết Tới VERIDU'}
             </button>
           </div>
-        ) : (
-          <div className="space-y-6">
-            
-            {/* Mode Switcher Tabs */}
-            <div className="flex items-center gap-2 p-1.5 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl w-fit flex-wrap">
-              <button
-                type="button"
-                onClick={() => setActiveTab('visual')}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ${
-                  activeTab === 'visual'
-                    ? 'bg-amber-500 text-slate-950 shadow-md'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                <Edit3 className="w-4 h-4" /> ✍️ Soạn Thảo Trực Quan (WYSIWYG)
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('code')}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ${
-                  activeTab === 'code'
-                    ? 'bg-amber-500 text-slate-950 shadow-md'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                <Code className="w-4 h-4" /> 📄 Dán Mã HTML / Upload Tệp
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('preview')}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ${
-                  activeTab === 'preview'
-                    ? 'bg-amber-500 text-slate-950 shadow-md'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                <Eye className="w-4 h-4" /> 👁️ Xem Trước (Preview)
-              </button>
-            </div>
 
-            {/* Error Message */}
-            {status === 'error' && (
-              <div className="p-4 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl text-sm font-bold flex items-center justify-between">
-                <span>{errorMsg}</span>
-                <button onClick={() => setStatus('idle')} className="text-red-400 hover:text-red-200">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            )}
+        </form>
 
-            {/* Sync / Extraction Notification */}
-            {syncNotice && (
-              <div className="p-4 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-xl text-sm font-medium flex items-center justify-between animate-fadeIn">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-amber-500 shrink-0" />
-                  <span>{syncNotice}</span>
-                </div>
-                <button onClick={() => setSyncNotice(null)} className="text-amber-400/70 hover:text-amber-300">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-
-            {/* FORM CONTAINER */}
-            <form onSubmit={handleSubmit} className="space-y-6 bg-[var(--bg-card)] border border-[var(--border-card)] p-6 sm:p-8 rounded-3xl shadow-xl">
-              
-              {/* Common Fields: Title, Excerpt, Featured Image, Template */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
-                {/* Article Title */}
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-bold text-[var(--text-muted)] flex items-center justify-between">
-                    <span>Tiêu đề bài viết</span>
-                    {title && (
-                      <span className="text-[11px] font-mono text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
-                        Slug: /{slugifyVietnamese(title)}
-                      </span>
-                    )}
-                  </label>
-                  <input 
-                    type="text" 
-                    value={title} 
-                    onChange={e => setTitle(e.target.value)} 
-                    className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none font-bold text-lg" 
-                    placeholder="Ví dụ: Phân Tích Kinh Cầu Đức Bà" 
-                    required 
-                  />
-                </div>
-
-                {/* Article Excerpt */}
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-bold text-[var(--text-muted)]">Tóm tắt ngắn (Excerpt)</label>
-                  <textarea 
-                    value={excerpt} 
-                    onChange={e => setExcerpt(e.target.value)} 
-                    rows={2} 
-                    className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none leading-relaxed resize-y font-sans text-sm text-[var(--text-main)]" 
-                    placeholder="Tóm tắt 1-2 câu về nội dung bài viết..." 
-                  />
-                </div>
-
-                {/* Featured Image URL (Supports Google Drive Links) */}
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-[var(--text-muted)] flex items-center justify-between">
-                    <span>🖼️ Link Ảnh Đại Diện (Featured Image)</span>
-                    <span className="text-[10px] text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 font-medium">Hỗ trợ Google Drive</span>
-                  </label>
-                  <input 
-                    type="url" 
-                    value={featuredImage} 
-                    onChange={e => setFeaturedImage(e.target.value)}
-                    onBlur={e => setFeaturedImage(convertGoogleDriveUrl(e.target.value))}
-                    className="w-full p-3.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none font-mono text-xs text-[var(--text-main)]" 
-                    placeholder="Dán link ảnh (https://... hoặc link Google Drive: https://drive.google.com/file/d/...)" 
-                  />
-                  {featuredImage && (
-                    <div className="mt-2 flex items-center gap-3 p-2 bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl">
-                      <div className="w-12 h-10 relative rounded-lg overflow-hidden bg-slate-900 border border-[var(--border-card)] shrink-0">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img 
-                          src={convertGoogleDriveUrl(featuredImage)} 
-                          alt="Preview" 
-                          className="w-full h-full object-cover"
-                          onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                        />
-                      </div>
-                      <div className="text-[11px] text-[var(--text-muted)] truncate flex-1">
-                        <span className="font-bold text-amber-500">Xem trước ảnh đại diện</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Article Template Selection */}
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-[var(--text-muted)]">Giao diện Bài viết (Template)</label>
-                  <select 
-                    value={articleType} 
-                    onChange={e => setArticleType(e.target.value)} 
-                    className="w-full p-3.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none font-medium text-sm text-[var(--text-main)]"
-                  >
-                    <option value="standard">Tiêu chuẩn (Standard) - Phù hợp bài viết chung</option>
-                    <option value="magazine">Tạp chí (Wide/Magazine) - Giao diện ảnh lớn, toàn màn hình</option>
-                    <option value="meditation">Suy niệm Lời Chúa (Meditation) - Giao diện có trích dẫn Kinh Thánh</option>
-                    <option value="theological">Thần học (Theological) - Phù hợp chuyên đề, tài liệu</option>
-                    <option value="interactive">Tương tác (Interactive) - HTML chiếm toàn màn hình (Dành cho nội dung nhúng)</option>
-                  </select>
-                </div>
-
-              </div>
-
-
-              {/* MODE 1: EXPANDED VISUAL WYSIWYG EDITOR */}
-              {activeTab === 'visual' && (
-                <div className="space-y-3 pt-4 border-t border-[var(--border-card)] animate-fadeIn">
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <label className="text-sm font-bold text-[var(--text-muted)] flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-amber-500" />
-                      <span>Trình soạn thảo trực quan (Kéo thả ảnh/video & Căn lề dễ dàng)</span>
-                    </label>
-                  </div>
-
-                  {/* EXPANDED VISUAL TOOLBAR */}
-                  <div className="flex flex-wrap items-center gap-1.5 p-2 bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl shadow-sm">
-                    {/* Text Formatting */}
-                    <button type="button" onClick={() => execCmd('bold')} title="In đậm (Ctrl+B)" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><Bold className="w-4 h-4" /></button>
-                    <button type="button" onClick={() => execCmd('italic')} title="In nghiêng (Ctrl+I)" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><Italic className="w-4 h-4" /></button>
-                    <button type="button" onClick={() => execCmd('underline')} title="Gạch chân (Ctrl+U)" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><Underline className="w-4 h-4" /></button>
-                    <button type="button" onClick={() => execCmd('strikeThrough')} title="Gạch ngang" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><Strikethrough className="w-4 h-4" /></button>
-                    
-                    <div className="h-5 w-px bg-[var(--border-card)] mx-1"></div>
-
-                    {/* Headings */}
-                    <button type="button" onClick={() => execCmd('formatBlock', '<h2>')} title="Tiêu đề chính (H2)" className="px-2.5 py-1.5 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] font-bold text-xs transition cursor-pointer">H2</button>
-                    <button type="button" onClick={() => execCmd('formatBlock', '<h3>')} title="Tiêu đề phụ (H3)" className="px-2.5 py-1.5 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] font-bold text-xs transition cursor-pointer">H3</button>
-                    <button type="button" onClick={() => execCmd('formatBlock', '<p>')} title="Đoạn văn thường (P)" className="px-2.5 py-1.5 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] font-medium text-xs transition cursor-pointer">Thường</button>
-
-                    <div className="h-5 w-px bg-[var(--border-card)] mx-1"></div>
-
-                    {/* Alignment */}
-                    <button type="button" onClick={() => execCmd('justifyLeft')} title="Căn trái" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><AlignLeft className="w-4 h-4" /></button>
-                    <button type="button" onClick={() => execCmd('justifyCenter')} title="Căn giữa" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><AlignCenter className="w-4 h-4" /></button>
-                    <button type="button" onClick={() => execCmd('justifyRight')} title="Căn phải" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><AlignRight className="w-4 h-4" /></button>
-                    <button type="button" onClick={() => execCmd('justifyFull')} title="Căn đều" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><AlignJustify className="w-4 h-4" /></button>
-
-                    <div className="h-5 w-px bg-[var(--border-card)] mx-1"></div>
-
-                    {/* Lists & Quotes */}
-                    <button type="button" onClick={() => execCmd('insertUnorderedList')} title="Danh sách chấm" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><List className="w-4 h-4" /></button>
-                    <button type="button" onClick={() => execCmd('insertOrderedList')} title="Danh sách số" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><ListOrdered className="w-4 h-4" /></button>
-                    <button type="button" onClick={() => execCmd('formatBlock', '<blockquote>')} title="Trích dẫn thường" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><Quote className="w-4 h-4" /></button>
-                    <button type="button" onClick={handleInsertVeriduPullQuote} title="Trích dẫn Kinh Thánh Công Giáo VERIDU" className="px-2.5 py-1.5 rounded-xl bg-amber-500/10 text-amber-400 font-bold text-xs hover:bg-amber-500/20 transition cursor-pointer flex items-center gap-1">
-                      <BookOpen className="w-3.5 h-3.5" /> Trích Kinh Thánh
-                    </button>
-
-                    <div className="h-5 w-px bg-[var(--border-card)] mx-1"></div>
-
-                    {/* Link, Rule & Eraser */}
-                    <button type="button" onClick={() => setShowLinkModal(true)} title="Chèn liên kết" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><LinkIcon className="w-4 h-4" /></button>
-                    <button type="button" onClick={() => execCmd('insertHorizontalRule')} title="Đường kẻ ngang" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><Minus className="w-4 h-4" /></button>
-                    <button type="button" onClick={() => execCmd('removeFormat')} title="Xóa định dạng" className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-main)] transition cursor-pointer"><Eraser className="w-4 h-4" /></button>
-
-                    <div className="h-5 w-px bg-[var(--border-card)] mx-1"></div>
-
-                    {/* Media Dialog Buttons */}
-                    <button 
-                      type="button" 
-                      onClick={() => setShowImageModal(true)} 
-                      className="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <ImageIcon className="w-4 h-4 text-amber-500" /> 🖼️ Chèn Ảnh
-                    </button>
-
-                    <button 
-                      type="button" 
-                      onClick={() => setShowVideoModal(true)} 
-                      className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <VideoIcon className="w-4 h-4 text-rose-500" /> 🎬 Chèn Video
-                    </button>
-                  </div>
-
-                  {/* CONTENT EDITABLE WORKSPACE */}
-                  <div
-                    ref={editorRef}
-                    contentEditable
-                    onInput={() => {
-                      if (editorRef.current) {
-                        setContent(editorRef.current.innerHTML);
-                      }
-                    }}
-                    className="prose dark:prose-invert max-w-none font-serif text-[var(--text-main)] bg-[var(--bg-main)] border border-[var(--border-card)] p-6 sm:p-8 rounded-2xl min-h-[450px] outline-none focus:ring-2 focus:ring-amber-500/50 leading-relaxed text-base sm:text-lg overflow-y-auto"
-                  />
-                </div>
-              )}
-
-
-              {/* MODE 2: CODE EDITOR / HTML FILE UPLOAD */}
-              {activeTab === 'code' && (
-                <div className="space-y-6 pt-4 border-t border-[var(--border-card)] animate-fadeIn">
-                  {/* HTML File Drag and Drop Zone */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-[var(--text-muted)] flex items-center gap-2">
-                      <FileCode className="w-4 h-4 text-amber-500" />
-                      <span>Tải lên tệp HTML bài viết</span>
-                    </label>
-                    
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".html,.htm"
-                      onChange={handleFileInputChange}
-                      className="hidden"
-                    />
-
-                    <div
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop}
-                      onClick={() => fileInputRef.current?.click()}
-                      className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all duration-200 flex flex-col items-center justify-center gap-3 ${
-                        isDragging
-                          ? 'border-amber-500 bg-amber-500/10 scale-[1.01]'
-                          : 'border-[var(--border-card)] bg-[var(--bg-main)] hover:border-amber-500/50 hover:bg-amber-500/5'
-                      }`}
-                    >
-                      <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                        <Upload className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-sm text-[var(--text-main)]">
-                          Kéo & thả file bài viết (.html, .htm) vào đây
-                        </p>
-                        <p className="text-xs text-[var(--text-muted)] mt-1">
-                          hoặc click để chọn tệp từ máy tính của bạn
-                        </p>
-                      </div>
-
-                      {uploadedFileName && (
-                        <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-bold">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Đã tải lên: {uploadedFileName}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2 mt-3 px-1">
-                      <input 
-                        type="checkbox" 
-                        id="stripClasses" 
-                        checked={stripHtmlClasses}
-                        onChange={(e) => setStripHtmlClasses(e.target.checked)}
-                        className="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 bg-[var(--bg-main)] border-[var(--border-card)]"
-                      />
-                      <label htmlFor="stripClasses" className="text-xs text-[var(--text-muted)] cursor-pointer select-none">
-                        Tự động xóa các class/style rác từ file Word/Docs (Khuyên dùng)
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* RAW HTML TEXTAREA */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-bold text-[var(--text-muted)]">
-                        Mã nguồn HTML Chi Tiết
-                      </label>
-                      <button
-                        type="button"
-                        onClick={handleExtractAndNormalize}
-                        className="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Trích xuất Tiêu đề & Chuẩn hóa HTML
-                      </button>
-                    </div>
-
-                    <textarea 
-                      value={content} 
-                      onChange={e => setContent(e.target.value)} 
-                      rows={14} 
-                      className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none leading-relaxed resize-y font-mono text-xs" 
-                      placeholder="Dán mã HTML bài viết tại đây..." 
-                      required 
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Submit Action */}
-              <div className="pt-4 flex items-center justify-between flex-wrap gap-4 border-t border-[var(--border-card)]">
-                <div className="text-xs text-amber-500 font-medium italic">
-                  Thưởng: +50 Điểm đóng góp bài viết Công Giáo
-                </div>
-                <button 
-                  type="submit" 
-                  disabled={status === 'loading'} 
-                  className="px-8 py-3 bg-amber-500 text-slate-950 font-bold rounded-xl hover:bg-amber-400 transition flex items-center gap-2 shadow-xl shadow-amber-500/20 disabled:opacity-70 cursor-pointer"
-                >
-                  {status === 'loading' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />} Xuất Bản Bài Viết
-                </button>
-              </div>
-
-            </form>
-
-            {/* MODE 3: VISUAL PREVIEW */}
-            {activeTab === 'preview' && (
-              <div className="bg-[var(--bg-card)] border border-[var(--border-card)] p-6 sm:p-10 rounded-3xl space-y-8 animate-fadeIn shadow-2xl">
-                <div className="border-b border-[var(--border-card)] pb-6 flex items-center justify-between flex-wrap gap-4">
-                  <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-amber-500 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20 inline-block mb-3">
-                      👁️ Giao diện bài viết trên VERIDU
-                    </span>
-                    <h2 className="text-2xl sm:text-3xl font-black font-serif text-[var(--text-main)]">
-                      {title || 'Tiêu đề bài viết chưa có...'}
-                    </h2>
-                  </div>
-                  <button
-                    onClick={() => setActiveTab('visual')}
-                    className="px-4 py-2 bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer"
-                  >
-                    <Edit3 className="w-3.5 h-3.5 text-amber-500" /> Quay lại Soạn thảo
-                  </button>
-                </div>
-
-                {content ? (
-                  <VisualArticleRenderer contentHtml={content} />
-                ) : (
-                  <div className="text-center py-16 text-[var(--text-muted)] italic space-y-3">
-                    <FileCode className="w-12 h-12 mx-auto text-[var(--text-muted)] opacity-50" />
-                    <p>Chưa có nội dung bài viết để xem trước.</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-          </div>
-        )}
-      </main>
-
-      {/* 🖼️ DIALOG POPUP: CHÈN ẢNH GOOGLE DRIVE WITH ALIGNMENT CONTROL */}
-      {showImageModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-[var(--border-card)] pb-3">
-              <h3 className="font-bold text-lg text-amber-500 flex items-center gap-2">
-                <ImageIcon className="w-5 h-5" /> Chèn Ảnh & Vị Trí Hiển Thị
-              </h3>
-              <button onClick={() => setShowImageModal(false)} className="text-[var(--text-muted)] hover:text-[var(--text-main)]">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs">
-              <div>
-                <label className="font-bold text-[var(--text-muted)] block mb-1">Link Ảnh (Hỗ trợ Google Drive)</label>
-                <input 
-                  type="url" 
-                  value={imgUrlInput}
-                  onChange={(e) => setImgUrlInput(e.target.value)}
-                  placeholder="Dán link (https://... hoặc https://drive.google.com/file/d/...)"
-                  className="w-full p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="font-bold text-[var(--text-muted)] block mb-1">Chú thích ảnh (Caption - Không bắt buộc)</label>
-                <input 
-                  type="text" 
-                  value={imgCaptionInput}
-                  onChange={(e) => setImgCaptionInput(e.target.value)}
-                  placeholder="Ví dụ: Bản thảo cổ Kinh Cầu Loreto..."
-                  className="w-full p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="font-bold text-[var(--text-muted)] block mb-1">Vị trí đặt ảnh trong dòng bài viết</label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button 
-                    type="button" 
-                    onClick={() => setImgAlignInput('center')} 
-                    className={`p-2.5 rounded-xl border font-bold text-center transition cursor-pointer ${imgAlignInput === 'center' ? 'bg-amber-500 text-slate-950 border-amber-500' : 'bg-[var(--bg-main)] border-[var(--border-card)] text-[var(--text-muted)]'}`}
-                  >
-                    Căn Giữa (Lớn)
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => setImgAlignInput('left')} 
-                    className={`p-2.5 rounded-xl border font-bold text-center transition cursor-pointer ${imgAlignInput === 'left' ? 'bg-amber-500 text-slate-950 border-amber-500' : 'bg-[var(--bg-main)] border-[var(--border-card)] text-[var(--text-muted)]'}`}
-                  >
-                    Trái (Văn bản bọc)
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => setImgAlignInput('right')} 
-                    className={`p-2.5 rounded-xl border font-bold text-center transition cursor-pointer ${imgAlignInput === 'right' ? 'bg-amber-500 text-slate-950 border-amber-500' : 'bg-[var(--bg-main)] border-[var(--border-card)] text-[var(--text-muted)]'}`}
-                  >
-                    Phải (Văn bản bọc)
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--border-card)]">
-              <button onClick={() => setShowImageModal(false)} className="px-4 py-2 rounded-xl bg-[var(--bg-main)] text-xs font-bold cursor-pointer">Hủy</button>
-              <button onClick={handleInsertImage} className="px-5 py-2 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold shadow-md hover:bg-amber-400 transition cursor-pointer">Chèn Vào Bài Viết</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 🎬 DIALOG POPUP: CHÈN VIDEO */}
-      {showVideoModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-[var(--border-card)] pb-3">
-              <h3 className="font-bold text-lg text-rose-500 flex items-center gap-2">
-                <VideoIcon className="w-5 h-5" /> Chèn Video Bài Viết
-              </h3>
-              <button onClick={() => setShowVideoModal(false)} className="text-[var(--text-muted)] hover:text-[var(--text-main)]">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs">
-              <div>
-                <label className="font-bold text-[var(--text-muted)] block mb-1">Link Video (YouTube hoặc Google Drive Video)</label>
-                <input 
-                  type="url" 
-                  value={videoUrlInput}
-                  onChange={(e) => setVideoUrlInput(e.target.value)}
-                  placeholder="Dán link (https://www.youtube.com/watch?v=... hoặc Google Drive Video)"
-                  className="w-full p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-rose-500 outline-none font-mono"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--border-card)]">
-              <button onClick={() => setShowVideoModal(false)} className="px-4 py-2 rounded-xl bg-[var(--bg-main)] text-xs font-bold cursor-pointer">Hủy</button>
-              <button onClick={handleInsertVideo} className="px-5 py-2 rounded-xl bg-rose-500 text-white text-xs font-bold shadow-md hover:bg-rose-400 transition cursor-pointer">Chèn Video</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 🔗 DIALOG POPUP: CHÈN LIÊN KẾT */}
-      {showLinkModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-[var(--border-card)] pb-3">
-              <h3 className="font-bold text-lg text-amber-500 flex items-center gap-2">
-                <LinkIcon className="w-5 h-5" /> Chèn Liên Kết (Hyperlink)
-              </h3>
-              <button onClick={() => setShowLinkModal(false)} className="text-[var(--text-muted)] hover:text-[var(--text-main)]">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs">
-              <div>
-                <label className="font-bold text-[var(--text-muted)] block mb-1">Đường dẫn URL</label>
-                <input 
-                  type="url" 
-                  value={linkUrlInput}
-                  onChange={(e) => setLinkUrlInput(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="font-bold text-[var(--text-muted)] block mb-1">Chữ hiển thị (Anchor Text)</label>
-                <input 
-                  type="text" 
-                  value={linkTextInput}
-                  onChange={(e) => setLinkTextInput(e.target.value)}
-                  placeholder="Ví dụ: Đọc thêm tài liệu..."
-                  className="w-full p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--border-card)]">
-              <button onClick={() => setShowLinkModal(false)} className="px-4 py-2 rounded-xl bg-[var(--bg-main)] text-xs font-bold cursor-pointer">Hủy</button>
-              <button onClick={handleInsertLink} className="px-5 py-2 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold shadow-md hover:bg-amber-400 transition cursor-pointer">Chèn Liên Kết</button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      </div>
     </div>
   );
 }
