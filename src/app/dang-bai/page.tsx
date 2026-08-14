@@ -168,7 +168,7 @@ function DangBaiContent() {
         article_type: articleType,
         featured_image: featuredImage.trim(),
         content: finalHtml,
-        author: user?.displayName || user?.username || 'VERIDU Team',
+        author_id: user?.id || 'eef94645-01fb-471f-9b10-cdd3fea35143',
         status: 'published'
       };
 
