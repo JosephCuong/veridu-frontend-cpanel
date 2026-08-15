@@ -58,6 +58,8 @@ function DangBaiContent() {
   // UI Sidebar & Viewport Tabs
   const [sidebarTab, setSidebarTab] = useState<'widgets' | 'settings' | 'html'>('widgets');
   const [viewportMode, setViewportMode] = useState<'editor' | 'preview'>('editor');
+  const [renderEngine, setRenderEngine] = useState<'blocks' | 'native'>('blocks');
+  const [analysisNotice, setAnalysisNotice] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingPost, setIsLoadingPost] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -131,8 +133,20 @@ function DangBaiContent() {
           setTitle(extractedTitle);
           setSlug(slugifyVietnamese(extractedTitle));
         }
-        const clean = normalizeAndSyncHtml(rawText);
-        handleHtmlChange(clean);
+
+        // Smart HTML Analyzer: Check if HTML has complex scripts, Mermaid diagrams, Canon tables, or 3D elements
+        const isComplexHtml = /<script|mermaid|canon-grid|canon-table|recharts|canvas|three|<!DOCTYPE|<html>/i.test(rawText);
+
+        if (isComplexHtml || articleType === 'interactive') {
+          setRenderEngine('native');
+          setContentHtml(rawText);
+          setAnalysisNotice('🤖 **Bộ Phân Tích VERIDU AI**: Phát hiện file HTML Phức Tạp / Sơ đồ Mermaid / Bảng Giáo luật / 3D Canvas. Đã tự động chọn chế độ **Bài HTML Nguyên Bản** để bảo toàn 100% giao diện mượt mà.');
+        } else {
+          const clean = normalizeAndSyncHtml(rawText);
+          handleHtmlChange(clean);
+          setAnalysisNotice('🤖 **Bộ Phân Tích VERIDU AI**: Đã nạp và chuẩn hóa văn bản Công giáo thành công.');
+        }
+
         setMessage({ type: 'success', text: `Đã nạp tệp ${file.name}` });
       }
     };
@@ -527,16 +541,74 @@ function DangBaiContent() {
         {/* ➡️ RIGHT VIEWPORT (CANVAS & REALTIME PREVIEW) */}
         <main className="flex-1 bg-[var(--bg-main)] p-4 sm:p-8 h-auto md:h-[calc(100vh-4rem)] overflow-y-auto">
           <div className="max-w-4xl mx-auto space-y-6">
+
+            {/* 🤖 SMART AI ANALYSIS NOTICE BANNER */}
+            {analysisNotice && (
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-4 text-xs text-amber-300 font-medium animate-in fade-in">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>{analysisNotice}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAnalysisNotice(null)}
+                  className="text-amber-400 hover:text-white text-xs font-bold px-2 py-1"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {/* MODE SWITCHER BUTTONS: BLOCKS VS NATIVE HTML */}
+            <div className="flex items-center justify-between p-2 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)]">
+              <span className="text-xs font-bold text-[var(--text-muted)] px-3">Mô Hình Hiển Thị & Soạn Thảo:</span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setRenderEngine('blocks')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    renderEngine === 'blocks'
+                      ? 'bg-amber-500 text-slate-950 font-black shadow-md'
+                      : 'text-[var(--text-muted)] hover:bg-[var(--bg-main)]'
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5" /> 🧩 Bài Khối (Elementor Studio)
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setRenderEngine('native')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    renderEngine === 'native'
+                      ? 'bg-amber-500 text-slate-950 font-black shadow-md'
+                      : 'text-[var(--text-muted)] hover:bg-[var(--bg-main)]'
+                  }`}
+                >
+                  <FileCode className="w-3.5 h-3.5" /> 📄 Bài HTML Nguyên Bản (Full Native Engine)
+                </button>
+              </div>
+            </div>
             
             {viewportMode === 'editor' ? (
               <div className="p-6 sm:p-10 rounded-3xl glass-panel space-y-6">
                 <div className="border-b border-[var(--border-card)] pb-4 flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
-                    <Edit3 className="w-4 h-4" /> Canvas Soạn Thảo Khối Kéo-Thả
+                    <Edit3 className="w-4 h-4" /> {renderEngine === 'blocks' ? 'Canvas Soạn Thảo Khối Kéo-Thả' : 'Khung Xem Trực Quan Bài HTML Nguyên Bản'}
                   </span>
-                  <span className="text-[11px] text-[var(--text-muted)]">Tổng số khối: {blocks.length}</span>
+                  <span className="text-[11px] text-[var(--text-muted)]">
+                    {renderEngine === 'blocks' ? `Tổng số khối: ${blocks.length}` : 'Chế độ Bảo Toàn 100% Mã HTML'}
+                  </span>
                 </div>
-                <VeriduBlockEditor blocks={blocks} onChange={handleBlocksChange} />
+                {renderEngine === 'blocks' ? (
+                  <VeriduBlockEditor blocks={blocks} onChange={handleBlocksChange} />
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-xs text-[var(--text-muted)] italic">
+                      💡 Chế độ <strong>Bài HTML Nguyên Bản</strong> giữ nguyên 100% kịch bản Mermaid, Bảng Giáo luật và CSS nhúng của bài viết. Bạn có thể dán/chỉnh sửa mã nguồn trong Tab <strong>Mã HTML</strong> ở cột bên trái.
+                    </p>
+                    <VisualArticleRenderer contentHtml={contentHtml} />
+                  </div>
+                )}
               </div>
             ) : (
               <div className="p-6 sm:p-12 rounded-3xl glass-panel space-y-6">

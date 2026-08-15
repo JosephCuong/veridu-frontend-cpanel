@@ -37,10 +37,10 @@ export default function VisualArticleRenderer({ contentHtml, className = '' }: V
               }
             });
 
-            const mermaidNodes = containerRef.current.querySelectorAll('.mermaid, pre:has(code)');
+            const mermaidNodes = containerRef.current.querySelectorAll('.mermaid, pre.mermaid, div.mermaid, pre:has(code)');
             mermaidNodes.forEach((node, idx) => {
               const text = node.textContent || '';
-              if (text.includes('graph TD') || text.includes('graph LR') || text.includes('sequenceDiagram')) {
+              if (text.includes('graph TD') || text.includes('graph LR') || text.includes('sequenceDiagram') || text.includes('gantt') || text.includes('classDiagram')) {
                 const id = `mermaid-svg-${idx}-${Date.now()}`;
                 (window as any).mermaid.render(id, text.trim()).then(({ svg }: any) => {
                   node.innerHTML = svg;

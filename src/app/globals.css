@@ -98,7 +98,9 @@ html.dark .prose-veridu-sanitized a[href*="#fn"] {
 .prose-veridu-sanitized [style*="color: #722F37"],
 .prose-veridu-sanitized [style*="color:#722F37"],
 .prose-veridu-sanitized [style*="color: #C5A059"],
-.prose-veridu-sanitized [style*="color:#C5A059"] {
+.prose-veridu-sanitized [style*="color:#C5A059"],
+.article-content h1, .article-content h2, .article-content h3, .article-content h4,
+.format-veridu h1, .format-veridu h2, .format-veridu h3, .format-veridu h4 {
   color: var(--accent-gold-text) !important;
 }
 
@@ -110,8 +112,14 @@ html.dark .prose-veridu-sanitized a[href*="#fn"] {
 .prose-veridu-sanitized [style*="color:#111"],
 .prose-veridu-sanitized [style*="color: #222"],
 .prose-veridu-sanitized [style*="color:#222"],
+.prose-veridu-sanitized [style*="color: #2A2424"],
+.prose-veridu-sanitized [style*="color:#2A2424"],
+.prose-veridu-sanitized [style*="color: #2b2b2b"],
+.prose-veridu-sanitized [style*="color:#2b2b2b"],
 .prose-veridu-sanitized [style*="color: #333"],
 .prose-veridu-sanitized [style*="color:#333"],
+.article-content [style*="color: #2A2424"],
+.article-content [style*="color: #2b2b2b"],
 html.dark .prose-veridu-sanitized [style*="color: black"],
 html.dark .prose-veridu-sanitized [style*="color:black"],
 html.dark .prose-veridu-sanitized [style*="color: #000"],
@@ -138,9 +146,15 @@ html.dark .prose-veridu-sanitized [style*="background: #ffffff"],
 html.dark .prose-veridu-sanitized [style*="background:#ffffff"],
 html.dark .prose-veridu-sanitized [style*="background: white"],
 html.dark .prose-veridu-sanitized [style*="background:white"],
+html.dark .canon-card-latin,
+html.dark .canon-card-vietnamese,
+html.dark .canon-table,
+html.dark .canon-analysis-box,
 html.dark .dark-mode-bg-override {
-  background-color: transparent !important;
-  background: transparent !important;
+  background-color: var(--bg-card) !important;
+  background: var(--bg-card) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border-card) !important;
 }
 
 .prose-veridu-sanitized [style*="color: #555"],
@@ -152,6 +166,48 @@ html.dark .dark-mode-bg-override {
 .prose-veridu-sanitized [style*="color: #888"],
 .prose-veridu-sanitized [style*="color:#888"] {
   color: var(--text-muted) !important;
+}
+
+/* CANON LAW & ACADEMIC TABLES / CARDS SYSTEM THEME ENGINE */
+.canon-table, .canon-grid, .canon-card-latin, .canon-card-vietnamese, .canon-analysis-box {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-card) !important;
+  color: var(--text-main) !important;
+  border-radius: 1rem !important;
+}
+
+.canon-table th {
+  background-color: rgba(251, 191, 36, 0.15) !important;
+  color: var(--accent-gold-text) !important;
+  border: 1px solid var(--border-card) !important;
+}
+
+.canon-table td {
+  border: 1px solid var(--border-card) !important;
+  color: var(--text-main) !important;
+}
+
+.canon-card-title, .canon-title-sm {
+  color: var(--accent-gold-text) !important;
+  font-family: var(--font-lora), Georgia, serif !important;
+}
+
+.canon-latin-text, .canon-viet-text, .canon-text {
+  color: var(--text-main) !important;
+  font-family: var(--font-lora), Georgia, serif !important;
+}
+
+/* MERMAID DIAGRAM THEME ENGINE */
+.mermaid, pre.mermaid {
+  display: block;
+  text-align: center;
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-card) !important;
+  padding: 1.5rem !important;
+  border-radius: 1.5rem !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+  overflow-x: auto;
 }
 
 .prose-veridu-sanitized .canon-ref-box {

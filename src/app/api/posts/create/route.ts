@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -14,26 +16,27 @@ export async function POST(request: Request) {
       .from('posts')
       .insert([
         {
-          title,
-          slug,
-          excerpt: excerpt || '',
+          title: title.trim(),
+          slug: slug.trim(),
+          excerpt: excerpt ? excerpt.trim() : '',
           category: category || 'Thần Học',
           article_type: article_type || 'theological',
-          featured_image: featured_image || '',
+          featured_image: featured_image ? featured_image.trim() : '',
           content,
           status: status || 'published',
           author_id: author_id || 'eef94645-01fb-471f-9b10-cdd3fea35143'
         }
       ])
-      .select()
-      .single();
+      .select();
 
     if (error) {
       console.error('Supabase create post error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, post: data });
+    const createdPost = (data && data.length > 0) ? data[0] : null;
+
+    return NextResponse.json({ success: true, post: createdPost });
   } catch (err: any) {
     console.error('API /api/posts/create error:', err);
     return NextResponse.json({ error: err.message || 'Lỗi hệ thống' }, { status: 500 });
