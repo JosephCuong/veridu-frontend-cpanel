@@ -111,7 +111,7 @@ export default function LiturgicalHeader() {
               {/* Streaks Widget */}
               <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-800 dark:text-amber-400 font-bold text-xs shadow-sm">
                 <Flame className="w-4 h-4 fill-amber-500 text-amber-500 animate-pulse" />
-                <span>{user.streak || 5} Ngày</span>
+                <span>{user.streak || 1} Ngày</span>
               </div>
               
               <div className="relative">
@@ -136,7 +136,7 @@ export default function LiturgicalHeader() {
                     <div className="font-bold text-[var(--text-main)]">{user.christianName} {user.displayName}</div>
                     <div className="text-amber-500">{user.parish}</div>
                     <div className="text-amber-500 sm:hidden flex items-center gap-1 mt-1 font-bold">
-                      <Flame className="w-3 h-3 fill-amber-500 text-amber-500" /> {user.streak || 5} Ngày
+                      <Flame className="w-3 h-3 fill-amber-500 text-amber-500" /> {user.streak || 1} Ngày
                     </div>
                   </div>
 

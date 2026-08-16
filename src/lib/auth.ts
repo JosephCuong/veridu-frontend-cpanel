@@ -27,6 +27,53 @@ export interface UserProfile {
   quizHistory?: QuizAttempt[];
 }
 
+export function syncDailyStreak(user: UserProfile): UserProfile {
+  if (typeof window === 'undefined' || !user) return user;
+
+  const today = new Date().toISOString().split('T')[0];
+  const lastActiveKey = `veridu_last_active_${user.id}`;
+  const lastActiveDate = localStorage.getItem(lastActiveKey);
+
+  let currentStreak = user.streak || 1;
+
+  if (!lastActiveDate) {
+    // First time tracking or reset
+    currentStreak = Math.max(currentStreak, 1);
+    localStorage.setItem(lastActiveKey, today);
+  } else if (lastActiveDate !== today) {
+    const lastDate = new Date(lastActiveDate);
+    const currDate = new Date(today);
+    const diffTime = Math.abs(currDate.getTime() - lastDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) {
+      // Consecutive active day: increment streak
+      currentStreak += 1;
+    } else if (diffDays > 1) {
+      // Inactive for more than 1 day: reset streak to 1
+      currentStreak = 1;
+    }
+    localStorage.setItem(lastActiveKey, today);
+  }
+
+  const updatedUser = { ...user, streak: currentStreak };
+
+  // Sync to Supabase in background if user.id is valid
+  if (user.id && typeof user.id === 'string' && user.id.includes('-')) {
+    import('./supabaseClient').then(async ({ supabase }) => {
+      try {
+        await supabase.from('profiles').update({
+          streak: currentStreak,
+          last_active_date: today,
+          updated_at: new Date().toISOString()
+        }).eq('id', user.id);
+      } catch (err) {}
+    });
+  }
+
+  return updatedUser;
+}
+
 export function getStoredUser(): UserProfile | null {
   if (typeof window === 'undefined') return null;
   const data = Cookies.get('veridu_user');
@@ -35,18 +82,15 @@ export function getStoredUser(): UserProfile | null {
       const decoded = data.includes('%') ? decodeURIComponent(data) : data;
       const parsed: UserProfile = JSON.parse(decoded);
       
-      // Auto-sanitize corrupted legacy UTF-8 text
-      if (parsed.diocese && parsed.diocese.includes('?')) {
-        parsed.diocese = 'Giáo Phận Sài Gòn';
-      }
-      if (parsed.parish && parsed.parish.includes('?')) {
-        parsed.parish = 'Tân Định';
-      }
-      return parsed;
+      // Auto-sanitize legacy UTF-8 text
+      if (parsed.diocese && parsed.diocese.includes('?')) parsed.diocese = 'Giáo Phận Sài Gòn';
+      if (parsed.parish && parsed.parish.includes('?')) parsed.parish = 'Tân Định';
+
+      return syncDailyStreak(parsed);
     } catch (e) {
       const local = localStorage.getItem('veridu_user_profile');
       if (local) {
-        try { return JSON.parse(local); } catch (err) {}
+        try { return syncDailyStreak(JSON.parse(local)); } catch (err) {}
       }
       return null;
     }
@@ -54,7 +98,7 @@ export function getStoredUser(): UserProfile | null {
   
   const local = localStorage.getItem('veridu_user_profile');
   if (local) {
-    try { return JSON.parse(local); } catch (err) {}
+    try { return syncDailyStreak(JSON.parse(local)); } catch (err) {}
   }
   return null;
 }
