@@ -252,37 +252,34 @@ export default function Hero3DSection() {
               return (
                 <div
                   key={theme.id}
-                  onClick={() => setActiveTheme(theme.id)}
-                  className={`p-3.5 rounded-2xl border text-left transition-all flex items-center justify-between gap-3 cursor-pointer ${
+                  onClick={() => {
+                    if (isActive) {
+                      window.location.href = theme.ctaLink;
+                    } else {
+                      setActiveTheme(theme.id);
+                    }
+                  }}
+                  className={`p-4 rounded-2xl border text-left transition-all flex items-center justify-between gap-3 cursor-pointer group ${
                     isActive 
                       ? 'bg-white/20 border-amber-400 text-white shadow-2xl scale-105 font-bold backdrop-blur-xl ring-2 ring-amber-400/50' 
                       : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/30 backdrop-blur-md'
                   }`}
                 >
-                  <div className="flex items-center gap-3 overflow-hidden">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 transition-transform ${isActive ? 'scale-110 bg-amber-500 text-slate-950 shadow-lg' : 'bg-white/10'}`}>
+                  <div className="flex items-center gap-3.5 overflow-hidden">
+                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-2xl shrink-0 transition-transform ${isActive ? 'scale-110 bg-amber-500 text-slate-950 shadow-lg' : 'bg-white/10 group-hover:scale-105'}`}>
                       {theme.cardImage}
                     </div>
                     <div className="space-y-0.5 overflow-hidden">
                       <span className="text-xs font-bold block truncate text-white">{theme.name}</span>
-                      <span className="text-[10px] text-amber-300 block truncate">
-                        {isActive ? 'Đang chọn góc 3D ✨' : 'Nhấp để xoay 3D'}
+                      <span className="text-[10px] text-slate-300 block truncate">
+                        {isActive ? 'Bấm để mở trang →' : 'Xem góc 3D'}
                       </span>
                     </div>
                   </div>
 
-                  <Link
-                    href={theme.ctaLink}
-                    onClick={(e) => e.stopPropagation()}
-                    className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all shrink-0 flex items-center gap-1 ${
-                      isActive 
-                        ? 'bg-amber-500 text-slate-950 hover:bg-amber-400 shadow-md' 
-                        : 'bg-white/10 text-white hover:bg-white/20'
-                    }`}
-                  >
-                    <span>Vào trang</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </Link>
+                  {isActive && (
+                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_10px_#f59e0b] animate-ping shrink-0" />
+                  )}
                 </div>
               );
             })}

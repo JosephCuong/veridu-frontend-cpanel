@@ -18,6 +18,7 @@ export default function LiturgicalHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   
   // Auth state
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -30,6 +31,17 @@ export default function LiturgicalHeader() {
     // Sync React theme state from HTML element (initialized by layout.tsx inline script)
     const isDark = document.documentElement.classList.contains('dark');
     setIsDarkMode(isDark);
+
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const toggleTheme = () => {
@@ -49,14 +61,18 @@ export default function LiturgicalHeader() {
   const accentColor = season?.colorHex || '#F5C518';
 
   return (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-[var(--header-bg)] border-b border-[var(--border-card)] transition-[background-color,border-color] duration-300">
+    <header className={`sticky top-0 z-40 w-full transition-all duration-300 ${
+      isScrolled 
+        ? 'backdrop-blur-xl bg-[var(--header-bg)]/85 border-b border-[var(--border-card)] shadow-lg' 
+        : 'bg-transparent border-b border-white/10 text-white'
+    }`}>
       {/* Top Banner Liturgical Season */}
       <div 
         className="w-full h-7 shrink-0 px-4 text-center text-xs font-semibold flex items-center justify-center gap-2 overflow-hidden"
         style={{ 
-          backgroundColor: season?.badgeBg || 'rgba(16, 185, 129, 0.15)',
-          color: isDarkMode ? (season?.colorHex || '#10B981') : (season?.darkTextColorHex || '#047857'),
-          borderBottom: `1px solid ${season?.glowHex || 'rgba(16, 185, 129, 0.3)'}`
+          backgroundColor: isScrolled ? (season?.badgeBg || 'rgba(16, 185, 129, 0.15)') : 'rgba(0, 0, 0, 0.3)',
+          color: isScrolled ? (isDarkMode ? (season?.colorHex || '#10B981') : (season?.darkTextColorHex || '#047857')) : '#F59E0B',
+          borderBottom: `1px solid ${season?.glowHex || 'rgba(16, 185, 129, 0.2)'}`
         }}
       >
         <span>{season?.icon || <Sparkles className="w-3.5 h-3.5 inline" />}</span>
