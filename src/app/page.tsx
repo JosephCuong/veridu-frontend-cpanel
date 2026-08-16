@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
+import Hero3DSection from '@/components/Hero3DSection';
 import SocialFeed from '@/components/SocialFeed';
 import ArticleCarousel from '@/components/ArticleCarousel';
 import { fetchCourses, fetchHomepageData } from '@/lib/api';
@@ -15,10 +16,6 @@ export default async function Home() {
   const courses = await fetchCourses();
   const homepageData = await fetchHomepageData();
 
-  const heroBg = homepageData?.settings?.hero_image 
-    ? { backgroundImage: `url(${homepageData.settings.hero_image})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }
-    : {};
-
   const youtubeUrl = homepageData?.settings?.youtube_url;
   let embedUrl = null;
   if (youtubeUrl) {
@@ -29,93 +26,14 @@ export default async function Home() {
       embedUrl = youtubeUrl; // Fallback
     }
   }
+
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 flex flex-col font-sans transition-colors duration-300">
       
-
       <main className="flex-1 space-y-16 pb-20">
         
-        {/* RADIANT ANIMATED HERO BANNER SECTION (Inspired by Howkteam) */}
-        <section className="relative pt-16 pb-24 px-4 sm:px-6 lg:px-8 text-center overflow-hidden" style={heroBg}>
-          
-          {/* Overlay to ensure text readability if background is set */}
-          {homepageData?.settings?.hero_image && (
-            <div className="absolute inset-0 bg-[var(--bg-main)]/50 z-0"></div>
-          )}
-
-          {/* Glowing Animated Background Radial Lights */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-amber-500/20 via-yellow-500/10 to-indigo-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse z-0"></div>
-
-          <div className="max-w-5xl mx-auto space-y-8 relative z-10">
-            
-            {/* Top Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-400 text-xs font-bold uppercase tracking-wider backdrop-blur-md shadow-lg shadow-amber-500/10 animate-fadeIn">
-              <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <span>NỀN TẢNG CÔNG GIÁO & HỌC TẬP KINH THÁNH 3D</span>
-            </div>
-
-            {/* Main Sacred Heading with Lora Font */}
-            <h1 className="font-serif font-black text-4xl sm:text-6xl lg:text-7xl tracking-tight text-[var(--text-main)] leading-tight">
-              Học Kinh Thánh <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-600">Trực Quan</span> & Sống Chân Lý
-            </h1>
-
-            {/* Subtitle */}
-            <p className="text-[var(--text-muted)] text-base sm:text-xl max-w-3xl mx-auto font-normal leading-relaxed">
-              Hệ thống học tập LMS hiện đại kết hợp Đấu trường Quiz Giáo lý Real-time, Trình đọc Kinh Thánh 73 Sách, Bản đồ 3D & Dòng thời gian Lịch sử Cứu độ.
-            </p>
-
-            <p className="font-serif text-sm tracking-widest text-amber-800 dark:text-amber-400 font-bold uppercase">
-              VIA &nbsp;·&nbsp; VITA &nbsp;·&nbsp; VERITAS
-            </p>
-
-            {/* Quick Action CTA Buttons */}
-            <div className="flex flex-wrap justify-center gap-4 pt-2">
-              <Link 
-                href="/khoa-hoc/nhap-mon-kinh-thanh-cuu-uoc-va-lich-su-cuu-do"
-                className="px-7 py-4 rounded-2xl bg-amber-500 text-slate-950 font-bold text-sm flex items-center gap-2 hover:bg-amber-400 transition-all shadow-xl shadow-amber-500/25 hover:scale-105"
-              >
-                <PlayCircle className="w-5 h-5 fill-current" /> Bắt Đầu Học LMS
-              </Link>
-              
-              <Link 
-                href="/quiz"
-                className="px-7 py-4 rounded-2xl bg-indigo-600 text-white font-bold text-sm flex items-center gap-2 hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/25 hover:scale-105"
-              >
-                <Gamepad2 className="w-5 h-5 text-amber-300" /> Đấu Trường Quiz 6 Số
-              </Link>
-            </div>
-
-            {/* Feature Highlights Quick Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-8 max-w-4xl mx-auto text-left">
-              
-              <Link href="/kinh-thanh" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-amber-500/40 transition-all backdrop-blur-md group shadow-sm">
-                <BookOpen className="w-6 h-6 text-amber-600 dark:text-amber-400 mb-2 group-hover:scale-110 transition-transform" />
-                <span className="font-serif font-bold text-sm text-[var(--text-main)] block">Kinh Thánh 73 Sách</span>
-                <p className="text-[11px] text-[var(--text-muted)]">Bản dịch LM. Nguyễn Thế Thuấn</p>
-              </Link>
-
-              <Link href="/ban-do" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-emerald-500/40 transition-all backdrop-blur-md group shadow-sm">
-                <MapPin className="w-6 h-6 text-emerald-600 dark:text-emerald-400 mb-2 group-hover:scale-110 transition-transform" />
-                <span className="font-serif font-bold text-sm text-[var(--text-main)] block">Bản Đồ 3D</span>
-                <p className="text-[11px] text-[var(--text-muted)]">Khám phá Vùng Đất Thánh</p>
-              </Link>
-
-              <Link href="/lich-su" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-purple-500/40 transition-all backdrop-blur-md group shadow-sm">
-                <Clock className="w-6 h-6 text-purple-600 dark:text-purple-400 mb-2 group-hover:scale-110 transition-transform" />
-                <span className="font-serif font-bold text-sm text-[var(--text-main)] block">Dòng Thời Gian</span>
-                <p className="text-[11px] text-[var(--text-muted)]">Lịch sử Cứu Độ 4000 năm</p>
-              </Link>
-
-              <Link href="/thu-vien" className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-indigo-500/40 transition-all backdrop-blur-md group shadow-sm">
-                <ShieldCheck className="w-6 h-6 text-indigo-600 dark:text-indigo-400 mb-2 group-hover:scale-110 transition-transform" />
-                <span className="font-serif font-bold text-sm text-[var(--text-main)] block">Thư Viện Bài Viết</span>
-                <p className="text-[11px] text-[var(--text-muted)]">Suy niệm & Bài Tương Tác</p>
-              </Link>
-
-            </div>
-
-          </div>
-        </section>
+        {/* ⛪ SACRED 3D CATHOLIC HERO SHOWCASE SECTION */}
+        <Hero3DSection />
 
         {/* SECTION: CONTINUE LEARNING BANNER */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
