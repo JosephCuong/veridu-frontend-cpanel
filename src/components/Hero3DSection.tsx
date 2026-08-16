@@ -160,17 +160,17 @@ export default function Hero3DSection() {
           </div>
 
           <h1 className="font-serif font-black text-4xl sm:text-6xl lg:text-7xl tracking-tight text-white leading-tight">
-            Học Kinh Thánh <br className="hidden sm:inline" />
+            <span className="text-slate-100">Học Kinh Thánh</span> <br className="hidden sm:inline" />
             <span className={`text-transparent bg-clip-text bg-gradient-to-r ${currentConfig.accentText}`}>
               Trực Quan 3D
             </span>
           </h1>
 
-          <p className="text-slate-200 text-sm sm:text-lg font-normal leading-relaxed max-w-xl mx-auto lg:mx-0">
+          <p className="text-slate-100 text-sm sm:text-lg font-normal leading-relaxed max-w-xl mx-auto lg:mx-0 drop-shadow-md">
             {currentConfig.description}
           </p>
 
-          <p className="font-serif text-xs tracking-widest text-amber-400 font-bold uppercase">
+          <p className="font-serif text-xs tracking-widest text-amber-300 font-bold uppercase drop-shadow">
             VIA &nbsp;·&nbsp; VITA &nbsp;·&nbsp; VERITAS
           </p>
 
@@ -184,7 +184,7 @@ export default function Hero3DSection() {
 
             <Link
               href="/khoa-hoc"
-              className="px-7 py-4 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-sm border border-white/20 backdrop-blur-md transition-all hover:scale-105 flex items-center gap-2"
+              className="px-7 py-4 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-bold text-sm border border-white/30 backdrop-blur-md transition-all hover:scale-105 flex items-center gap-2"
             >
               <span>Xem Tất Cả Khóa Học</span>
               <ArrowRight className="w-4 h-4" />
@@ -207,21 +207,21 @@ export default function Hero3DSection() {
             /* @ts-ignore - Google <model-viewer> Custom Element */
             <model-viewer
               ref={modelRef}
-              src="https://api.getlayers.ai/storage/v1/object/public/public/assets/soda-14ff8a788d/deit_soda2.glb"
+              src="/models/bible_3d_model.glb"
               alt="Mô hình Kinh Thánh 3D VERIDU"
               camera-controls
               auto-rotate
-              rotation-per-second="15deg"
+              rotation-per-second="12deg"
               disable-zoom
-              shadow-intensity="1"
+              shadow-intensity="1.5"
               environment-image="neutral"
-              exposure="1.3"
+              exposure="1.4"
               interaction-prompt="none"
               camera-orbit={currentConfig.modelOrbit}
               field-of-view="30deg"
               style={{
                 width: '100%',
-                height: '420px',
+                height: '450px',
                 outline: 'none',
                 filter: `drop-shadow(0 25px 50px ${currentConfig.glowColor})`
               }}
@@ -246,28 +246,44 @@ export default function Hero3DSection() {
             Chọn Chủ Đề Học Tập 3D:
           </span>
 
-          <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
             {Object.values(THEMES).map((theme) => {
               const isActive = activeTheme === theme.id;
               return (
-                <button
+                <div
                   key={theme.id}
-                  type="button"
                   onClick={() => setActiveTheme(theme.id)}
-                  className={`p-3.5 rounded-2xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
+                  className={`p-3.5 rounded-2xl border text-left transition-all flex items-center justify-between gap-3 cursor-pointer ${
                     isActive 
-                      ? 'bg-white/20 border-amber-400 text-white shadow-2xl scale-105 font-bold backdrop-blur-xl' 
+                      ? 'bg-white/20 border-amber-400 text-white shadow-2xl scale-105 font-bold backdrop-blur-xl ring-2 ring-amber-400/50' 
                       : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/30 backdrop-blur-md'
                   }`}
                 >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 transition-transform ${isActive ? 'scale-110 bg-amber-500 text-slate-950 shadow-lg' : 'bg-white/10'}`}>
-                    {theme.cardImage}
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 transition-transform ${isActive ? 'scale-110 bg-amber-500 text-slate-950 shadow-lg' : 'bg-white/10'}`}>
+                      {theme.cardImage}
+                    </div>
+                    <div className="space-y-0.5 overflow-hidden">
+                      <span className="text-xs font-bold block truncate text-white">{theme.name}</span>
+                      <span className="text-[10px] text-amber-300 block truncate">
+                        {isActive ? 'Đang chọn góc 3D ✨' : 'Nhấp để xoay 3D'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="space-y-0.5 overflow-hidden">
-                    <span className="text-xs font-bold block truncate text-white">{theme.name}</span>
-                    <span className="text-[10px] text-slate-300 block truncate">Xem tương tác 3D</span>
-                  </div>
-                </button>
+
+                  <Link
+                    href={theme.ctaLink}
+                    onClick={(e) => e.stopPropagation()}
+                    className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all shrink-0 flex items-center gap-1 ${
+                      isActive 
+                        ? 'bg-amber-500 text-slate-950 hover:bg-amber-400 shadow-md' 
+                        : 'bg-white/10 text-white hover:bg-white/20'
+                    }`}
+                  >
+                    <span>Vào trang</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>
               );
             })}
           </div>

@@ -85,8 +85,20 @@ export default function LiturgicalHeader() {
           </div>
         </Link>
 
-        {/* Center: Search Bar */}
-        <div className="hidden md:flex flex-1 max-w-md mx-4">
+        {/* Center: Search Bar & Primary Quick Links */}
+        <div className="hidden lg:flex items-center gap-6 flex-1 max-w-2xl mx-4">
+          <div className="flex items-center gap-4 text-xs font-semibold shrink-0">
+            <Link href="/khoa-hoc" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-1.5 transition-colors">
+              <BookOpen className="w-3.5 h-3.5 text-amber-500" /> LMS
+            </Link>
+            <Link href="/thu-vien" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-1.5 transition-colors">
+              <Shield className="w-3.5 h-3.5 text-indigo-500" /> Thư Viện
+            </Link>
+            <Link href="/kinh-thanh" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-1.5 transition-colors">
+              <BookOpen className="w-3.5 h-3.5 text-emerald-500" /> Kinh Thánh
+            </Link>
+          </div>
+
           <form 
             onSubmit={(e) => { e.preventDefault(); if (searchQuery) router.push(`/search?q=${encodeURIComponent(searchQuery)}`); }}
             className="w-full relative flex items-center"
@@ -96,8 +108,8 @@ export default function LiturgicalHeader() {
               type="text" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tra cứu bài học, Kinh Thánh, chủ đề (VD: Ga 3,16)..."
-              className="w-full bg-[var(--bg-card)] border border-[var(--border-card)] rounded-full pl-9 pr-4 py-1.5 text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-amber-500/70 focus:ring-1 focus:ring-amber-500/50 transition-all shadow-sm"
+              placeholder="Tra cứu bài học, Kinh Thánh..."
+              className="w-full bg-[var(--bg-card)] border border-[var(--border-card)] rounded-full pl-9 pr-4 py-1.5 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-amber-500/70 focus:ring-1 focus:ring-amber-500/50 transition-all shadow-sm"
             />
           </form>
         </div>
@@ -213,35 +225,7 @@ export default function LiturgicalHeader() {
         </div>
       )}
 
-      {/* Main Navigation Bar */}
-      <div className="hidden md:block border-t border-[var(--border-card)] bg-[var(--header-bg)]">
-        <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16 flex items-center gap-6 lg:gap-8 h-11 text-sm font-medium overflow-x-auto custom-scrollbar">
-          <Link href="/" className="text-amber-600 dark:text-amber-400 font-bold flex items-center gap-2 hover:underline transition-all whitespace-nowrap">
-            <Compass className="w-4 h-4" /> Trang Chủ
-          </Link>
-          <Link href="/khoa-hoc" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
-            <BookOpen className="w-4 h-4" /> Khóa Học LMS
-          </Link>
-          <Link href="/thu-vien" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
-            <Cross className="w-4 h-4 text-amber-500" /> Thư Viện Bài Viết
-          </Link>
-          <Link href="/ban-do" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
-            <MapPin className="w-4 h-4 text-emerald-500" /> Bản Đồ 3D
-          </Link>
-          <Link href="/lich-su" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
-            <Clock className="w-4 h-4 text-purple-500" /> Dòng Thời Gian
-          </Link>
-          <Link href="/quiz" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
-            <Gamepad2 className="w-4 h-4 text-amber-500" /> Quiz Giáo Lý
-          </Link>
-          <Link href="/kinh-thanh" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
-            <BookOpen className="w-4 h-4 text-amber-500" /> Đọc Kinh Thánh
-          </Link>
-          <Link href="/nhan-vat" className="text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2 transition-colors whitespace-nowrap">
-            <User className="w-4 h-4 text-indigo-500" /> Nhân Vật
-          </Link>
-        </div>
-      </div>
+
 
       {/* Mobile Menu Drawer */}
       {isMobileMenuOpen && (
