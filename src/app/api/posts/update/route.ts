@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { supabase } from '@/lib/supabaseClient';
 
 export const dynamic = 'force-dynamic';
@@ -40,6 +41,13 @@ export async function POST(request: Request) {
     }
 
     const updatedPost = (data && data.length > 0) ? data[0] : null;
+
+    // Flush ISR Cache immediately on post update
+    try {
+      revalidatePath('/thu-vien');
+      revalidatePath('/');
+      if (slug) revalidatePath(`/${slug}`);
+    } catch (e) {}
 
     return NextResponse.json({ success: true, post: updatedPost });
   } catch (err: any) {

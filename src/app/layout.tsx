@@ -3,6 +3,7 @@ import { Inter, Lora } from "next/font/google";
 import BackToTop from "@/components/BackToTop";
 import LiturgicalHeader from "@/components/LiturgicalHeader";
 import Footer from "@/components/Footer";
+import { ToastProvider } from "@/components/Toast";
 import "./globals.css";
 
 const inter = Inter({
@@ -47,14 +48,16 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: `!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localStorage.getItem('veridu-theme');if(e==='dark'){c.add('dark')}else{c.add('light')}}catch(e){}}();` }} />
       </head>
       <body className="w-full min-h-screen flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300">
-        <LiturgicalHeader />
-        
-        <div className="flex-1 flex flex-col w-full">
-          {children}
-        </div>
-        
-        <Footer />
-        <BackToTop />
+        <ToastProvider>
+          <LiturgicalHeader />
+          
+          <div className="flex-1 flex flex-col w-full">
+            {children}
+          </div>
+          
+          <Footer />
+          <BackToTop />
+        </ToastProvider>
       </body>
     </html>
   );
