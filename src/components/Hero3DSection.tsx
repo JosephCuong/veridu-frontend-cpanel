@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { 
-  BookOpen, PlayCircle, ArrowRight, Cross, Shield, Compass, Sparkles
+  BookOpen, Compass, Clock, Award, PlayCircle, ArrowRight, Sparkles, MapPin
 } from 'lucide-react';
 
 interface ThemeConfig {
@@ -20,7 +20,7 @@ interface ThemeConfig {
   description: string;
   ctaText: string;
   ctaLink: string;
-  cardImage: string;
+  iconType: 'book' | 'compass' | 'clock' | 'award';
 }
 
 const THEMES: Record<string, ThemeConfig> = {
@@ -38,7 +38,7 @@ const THEMES: Record<string, ThemeConfig> = {
     description: 'Nghiên cứu và suy niệm trọn bộ 73 Sách Cựu Ước & Tân Ước với bản dịch chuẩn xác, hệ thống chú giải thần học và đối chiếu câu chữ.',
     ctaText: 'Đọc Kinh Thánh 73 Sách',
     ctaLink: '/kinh-thanh',
-    cardImage: '📖'
+    iconType: 'book'
   },
   emerald: {
     id: 'emerald',
@@ -48,13 +48,13 @@ const THEMES: Record<string, ThemeConfig> = {
     innerColor: '#064e3b',
     midColor: '#022c22',
     outerColor: '#020617',
-    glowColor: 'rgba(168, 85, 247, 0.25)',
+    glowColor: 'rgba(16, 185, 129, 0.25)',
     accentText: 'from-emerald-400 via-teal-300 to-emerald-500',
     modelOrbit: '45deg 65deg 380%',
     description: 'Khám phá các địa danh và di tích khảo cổ Thánh Kinh qua không gian 3D tương tác tại Giêrusalem, Đồi Sọ Golgotha và Biển Hồ Galilê.',
     ctaText: 'Khám Phá Bản Đồ Thánh Địa',
     ctaLink: '/ban-do',
-    cardImage: '🗺️'
+    iconType: 'compass'
   },
   purple: {
     id: 'purple',
@@ -70,7 +70,7 @@ const THEMES: Record<string, ThemeConfig> = {
     description: 'Hành trình 4000 năm Lịch sử Cứu độ: từ Giao ước thời các Tổ phụ, thời Ngôn sứ đến mầu nhiệm Nhập Thể và Phục Sinh cứu độ muôn dân.',
     ctaText: 'Xem Dòng Thời Gian',
     ctaLink: '/lich-su',
-    cardImage: '⏳'
+    iconType: 'clock'
   },
   crimson: {
     id: 'crimson',
@@ -86,7 +86,7 @@ const THEMES: Record<string, ThemeConfig> = {
     description: 'Không gian thi đua kiến thức Giáo lý Hội Thánh và Kinh Thánh với phòng thi trực tiếp cùng cộng đoàn, tích lũy điểm thưởng và vinh danh.',
     ctaText: 'Vào Đấu Trường Giáo Lý',
     ctaLink: '/quiz',
-    cardImage: '🏆'
+    iconType: 'award'
   }
 };
 
@@ -116,7 +116,7 @@ export default function Hero3DSection() {
     document.head.appendChild(script);
   }, []);
 
-  // 2. High-Performance Mouse Parallax (0 React re-renders via requestAnimationFrame & Direct DOM update)
+  // 2. High-Performance Mouse Parallax (0 React re-renders via RAF & Direct DOM ref)
   useEffect(() => {
     let mouseX = 0;
     let mouseY = 0;
@@ -129,12 +129,10 @@ export default function Hero3DSection() {
       if (!isMoving) {
         isMoving = true;
         rafRef.current = requestAnimationFrame(() => {
-          // Direct DOM transform on Aura ring (Zero React VDOM re-render)
           if (auraRef.current) {
             auraRef.current.style.transform = `translate3d(${mouseX * -0.5}px, ${mouseY * -0.5}px, 0) rotate(${mouseX}deg)`;
           }
 
-          // Direct property update on model-viewer camera orbit
           if (modelRef.current) {
             try {
               const orbitDegX = (mouseX * 1.1).toFixed(1);
@@ -154,6 +152,16 @@ export default function Hero3DSection() {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, []);
+
+  const renderIcon = (type: string, className: string) => {
+    switch (type) {
+      case 'book': return <BookOpen className={className} />;
+      case 'compass': return <Compass className={className} />;
+      case 'clock': return <Clock className={className} />;
+      case 'award': return <Award className={className} />;
+      default: return <BookOpen className={className} />;
+    }
+  };
 
   return (
     <section 
@@ -253,10 +261,10 @@ export default function Hero3DSection() {
               {/* @ts-ignore */}
             </model-viewer>
           ) : (
-            /* Fallback 3D Sacred Scriptures Glass Card */
+            /* Fallback 3D Sacred Scriptures Glass Card with SVG */
             <div className="w-72 h-96 rounded-3xl bg-white/10 border border-white/30 backdrop-blur-2xl p-6 flex flex-col items-center justify-center text-center space-y-4 shadow-2xl animate-pulse">
-              <div className="w-24 h-24 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-5xl flex items-center justify-center">
-                📖
+              <div className="w-20 h-20 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center">
+                <BookOpen className="w-10 h-10" />
               </div>
               <h3 className="font-serif font-black text-xl text-white">Kinh Thánh 73 Sách</h3>
               <p className="text-xs text-slate-300">Đang nạp không gian Thánh Kinh...</p>
@@ -264,7 +272,7 @@ export default function Hero3DSection() {
           )}
         </div>
 
-        {/* RIGHT COLUMN: 4-THEME SACRED CATHOLIC CARDS */}
+        {/* RIGHT COLUMN: 4-THEME SACRED CATHOLIC CARDS (100% SVG Icons) */}
         <div className="lg:col-span-3 space-y-3 flex flex-col justify-center">
           <span className="text-xs font-semibold tracking-wider text-amber-200/90 text-center lg:text-left block">
             Hành Trình Khám Phá:
@@ -290,8 +298,12 @@ export default function Hero3DSection() {
                   }`}
                 >
                   <div className="flex items-center gap-3.5 overflow-hidden">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 transition-transform ${isActive ? 'scale-105 bg-amber-500 text-slate-950 shadow-lg' : 'bg-white/10 group-hover:scale-105'}`}>
-                      {theme.cardImage}
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform ${
+                      isActive 
+                        ? 'scale-105 bg-amber-500 text-slate-950 shadow-lg' 
+                        : 'bg-white/10 text-amber-300 group-hover:scale-105'
+                    }`}>
+                      {renderIcon(theme.iconType, 'w-5 h-5')}
                     </div>
                     <div className="space-y-0.5 overflow-hidden">
                       <span className="text-xs font-bold block truncate text-white">{theme.name}</span>
@@ -312,16 +324,28 @@ export default function Hero3DSection() {
 
       </div>
 
-      {/* BOTTOM FEATURE QUICK LINKS */}
+      {/* BOTTOM FEATURE QUICK LINKS WITH SVG ICONS */}
       <div className="absolute bottom-4 left-0 w-full px-4 text-center z-10 hidden md:block">
-        <div className="inline-flex items-center gap-6 px-6 py-2 rounded-full bg-black/40 border border-white/10 text-xs font-medium text-slate-300 backdrop-blur-md">
-          <Link href="/kinh-thanh" className="hover:text-amber-400 transition">📖 73 Sách Kinh Thánh</Link>
-          <span>•</span>
-          <Link href="/ban-do" className="hover:text-emerald-400 transition">🗺️ Thánh Địa Khảo Cổ</Link>
-          <span>•</span>
-          <Link href="/lich-su" className="hover:text-purple-400 transition">⏳ Lịch Sử Cứu Độ</Link>
-          <span>•</span>
-          <Link href="/quiz" className="hover:text-rose-400 transition">🏆 Đấu Trường Giáo Lý</Link>
+        <div className="inline-flex items-center gap-6 px-6 py-2 rounded-full bg-black/40 border border-white/10 text-xs font-medium text-slate-300 backdrop-blur-md shadow-lg">
+          <Link href="/kinh-thanh" className="hover:text-amber-400 transition flex items-center gap-1.5">
+            <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+            <span>73 Sách Kinh Thánh</span>
+          </Link>
+          <span className="text-white/20">•</span>
+          <Link href="/ban-do" className="hover:text-emerald-400 transition flex items-center gap-1.5">
+            <Compass className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Thánh Địa Khảo Cổ</span>
+          </Link>
+          <span className="text-white/20">•</span>
+          <Link href="/lich-su" className="hover:text-purple-400 transition flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-purple-400" />
+            <span>Lịch Sử Cứu Độ</span>
+          </Link>
+          <span className="text-white/20">•</span>
+          <Link href="/quiz" className="hover:text-rose-400 transition flex items-center gap-1.5">
+            <Award className="w-3.5 h-3.5 text-rose-400" />
+            <span>Đấu Trường Giáo Lý</span>
+          </Link>
         </div>
       </div>
     </section>

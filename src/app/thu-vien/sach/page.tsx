@@ -205,9 +205,9 @@ export default function TuSachPage() {
 
                 {/* Metadata tags */}
                 <div className="flex items-center gap-3 text-[11px] text-[var(--text-muted)] font-medium pt-2 border-t border-[var(--border-card)]">
-                  <span>📄 {book.pages} trang</span>
+                  <span className="flex items-center gap-1"><FileText className="w-3.5 h-3.5 text-amber-500" /> {book.pages} trang</span>
                   <span>•</span>
-                  <span>📦 {book.size}</span>
+                  <span>{book.size}</span>
                   <span>•</span>
                   <span className="font-bold text-amber-500">{book.format}</span>
                 </div>

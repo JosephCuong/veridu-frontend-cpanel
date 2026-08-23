@@ -446,10 +446,18 @@ export default function LiturgicalHeader() {
 
             {mobileExpandedGroup === 'kinh-thanh' && (
               <div className="pl-6 space-y-2 py-2 border-l-2 border-amber-500/30 ml-2">
-                <Link href="/kinh-thanh" className="block py-1.5 text-xs text-[var(--text-muted)] hover:text-amber-500">📖 Sách (73 Sách Thánh)</Link>
-                <Link href="/ban-do" className="block py-1.5 text-xs text-[var(--text-muted)] hover:text-emerald-500">🗺️ Bản Đồ 3D Thánh Địa</Link>
-                <Link href="/lich-su" className="block py-1.5 text-xs text-[var(--text-muted)] hover:text-purple-500">⏳ Dòng Thời Gian Cứu Độ</Link>
-                <Link href="/nhan-vat" className="block py-1.5 text-xs text-[var(--text-muted)] hover:text-indigo-500">👤 Nhân Vật Kinh Thánh</Link>
+                <Link href="/kinh-thanh" className="flex items-center gap-2 py-1.5 text-xs text-[var(--text-muted)] hover:text-amber-500">
+                  <BookOpen className="w-3.5 h-3.5 text-amber-500" /> Sách (73 Sách Thánh)
+                </Link>
+                <Link href="/ban-do" className="flex items-center gap-2 py-1.5 text-xs text-[var(--text-muted)] hover:text-emerald-500">
+                  <MapPin className="w-3.5 h-3.5 text-emerald-500" /> Bản Đồ 3D Thánh Địa
+                </Link>
+                <Link href="/lich-su" className="flex items-center gap-2 py-1.5 text-xs text-[var(--text-muted)] hover:text-purple-500">
+                  <Clock className="w-3.5 h-3.5 text-purple-500" /> Dòng Thời Gian Cứu Độ
+                </Link>
+                <Link href="/nhan-vat" className="flex items-center gap-2 py-1.5 text-xs text-[var(--text-muted)] hover:text-indigo-500">
+                  <Users className="w-3.5 h-3.5 text-indigo-500" /> Nhân Vật Kinh Thánh
+                </Link>
               </div>
             )}
           </div>
@@ -473,9 +481,15 @@ export default function LiturgicalHeader() {
 
             {mobileExpandedGroup === 'thu-vien' && (
               <div className="pl-6 space-y-2 py-2 border-l-2 border-indigo-500/30 ml-2">
-                <Link href="/thu-vien" className="block py-1.5 text-xs text-[var(--text-muted)] hover:text-amber-500">📜 Bài Viết & Suy Niệm</Link>
-                <Link href="/thu-vien/sach" className="block py-1.5 text-xs text-[var(--text-muted)] hover:text-indigo-500">📚 Tủ Sách Điện Tử (PDF/EPUB)</Link>
-                <Link href="/thu-vien/tai-lieu" className="block py-1.5 text-xs text-[var(--text-muted)] hover:text-rose-500">📁 Tài Liệu & Giáo Án</Link>
+                <Link href="/thu-vien" className="flex items-center gap-2 py-1.5 text-xs text-[var(--text-muted)] hover:text-amber-500">
+                  <FileText className="w-3.5 h-3.5 text-amber-500" /> Bài Viết &amp; Suy Niệm
+                </Link>
+                <Link href="/thu-vien/sach" className="flex items-center gap-2 py-1.5 text-xs text-[var(--text-muted)] hover:text-indigo-500">
+                  <Library className="w-3.5 h-3.5 text-indigo-500" /> Tủ Sách Điện Tử (PDF/EPUB)
+                </Link>
+                <Link href="/thu-vien/tai-lieu" className="flex items-center gap-2 py-1.5 text-xs text-[var(--text-muted)] hover:text-rose-500">
+                  <BookOpen className="w-3.5 h-3.5 text-rose-500" /> Tài Liệu &amp; Giáo Án
+                </Link>
               </div>
             )}
           </div>
