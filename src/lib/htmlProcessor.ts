@@ -89,6 +89,56 @@ export function extractTitleFromHtml(html: string): string | null {
 }
 
 /**
+ * Extracts a concise excerpt / summary string from HTML (meta description, lead paragraph, or first <p>).
+ */
+export function extractExcerptFromHtml(html: string): string {
+  if (!html || typeof html !== 'string') return '';
+
+  // 1. Check <meta name="description" content="...">
+  const metaDescMatch = html.match(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i) 
+    || html.match(/<meta\s+content=["']([^"']+)["']\s+name=["']description["']/i);
+  if (metaDescMatch && metaDescMatch[1]) {
+    return cleanText(metaDescMatch[1]).slice(0, 200);
+  }
+
+  // 2. Check first paragraph <p> with meaningful text
+  const pMatches = html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi);
+  for (const match of pMatches) {
+    const text = cleanText(match[1]);
+    if (text && text.length > 20) {
+      return text.slice(0, 200) + (text.length > 200 ? '...' : '');
+    }
+  }
+
+  return '';
+}
+
+/**
+ * Extracts the first prominent image URL from HTML (og:image or first <img> tag).
+ */
+export function extractFeaturedImageFromHtml(html: string): string {
+  if (!html || typeof html !== 'string') return '';
+
+  // 1. Check <meta property="og:image" content="...">
+  const ogImgMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i)
+    || html.match(/<meta\s+content=["']([^"']+)["']\s+property=["']og:image["']/i);
+  if (ogImgMatch && ogImgMatch[1]) {
+    return ogImgMatch[1].trim();
+  }
+
+  // 2. Check first <img> tag
+  const imgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  if (imgMatch && imgMatch[1]) {
+    const src = imgMatch[1].trim();
+    if (!src.startsWith('data:image')) {
+      return src;
+    }
+  }
+
+  return '';
+}
+
+/**
  * Strips hardcoded inline text color and background color rules from style declarations
  * so native VERIDU theme variables (var(--bg-card), var(--text-main), etc.) work properly.
  */

@@ -4,35 +4,67 @@ import { supabase } from '@/lib/supabaseClient';
 
 export const dynamic = 'force-dynamic';
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const DEFAULT_AUTHOR_ID = 'eef94645-01fb-471f-9b10-cdd3fea35143';
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { title, slug, excerpt, category, article_type, featured_image, content, status, author_id } = body;
 
     if (!title || !content) {
-      return NextResponse.json({ error: 'Tiêu đề và nội dung không được để trống' }, { status: 400 });
+      return NextResponse.json({ error: 'Tiêu đề và nội dung bài viết không được để trống.' }, { status: 400 });
     }
+
+    let finalSlug = (slug || title)
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[đĐ]/g, 'd')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+
+    if (!finalSlug) {
+      finalSlug = `bai-viet-${Date.now()}`;
+    }
+
+    // Check if slug already exists
+    const { data: existingPost } = await supabase
+      .from('posts')
+      .select('id')
+      .eq('slug', finalSlug)
+      .maybeSingle();
+
+    if (existingPost) {
+      finalSlug = `${finalSlug}-${Date.now().toString().slice(-4)}`;
+    }
+
+    const validAuthorId = (author_id && typeof author_id === 'string' && UUID_REGEX.test(author_id))
+      ? author_id
+      : DEFAULT_AUTHOR_ID;
 
     const { data, error } = await supabase
       .from('posts')
       .insert([
         {
           title: title.trim(),
-          slug: slug.trim(),
+          slug: finalSlug,
           excerpt: excerpt ? excerpt.trim() : '',
           category: category || 'Thần Học',
           article_type: article_type || 'theological',
           featured_image: featured_image ? featured_image.trim() : '',
           content,
           status: status || 'published',
-          author_id: author_id || 'eef94645-01fb-471f-9b10-cdd3fea35143'
+          author_id: validAuthorId
         }
       ])
       .select();
 
     if (error) {
       console.error('Supabase create post error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: error.message || 'Lỗi khi lưu bài viết vào CSDL Supabase' }, { status: 500 });
     }
 
     const createdPost = (data && data.length > 0) ? data[0] : null;
@@ -41,12 +73,12 @@ export async function POST(request: Request) {
     try {
       revalidatePath('/thu-vien');
       revalidatePath('/');
-      if (slug) revalidatePath(`/${slug}`);
+      if (finalSlug) revalidatePath(`/${finalSlug}`);
     } catch (e) {}
 
-    return NextResponse.json({ success: true, post: createdPost });
+    return NextResponse.json({ success: true, post: createdPost, slug: finalSlug });
   } catch (err: any) {
     console.error('API /api/posts/create error:', err);
-    return NextResponse.json({ error: err.message || 'Lỗi hệ thống' }, { status: 500 });
+    return NextResponse.json({ error: err.message || 'Lỗi hệ thống khi tạo bài viết' }, { status: 500 });
   }
 }

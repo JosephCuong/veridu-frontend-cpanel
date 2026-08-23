@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { 
   Sparkles, 
   Upload, 
@@ -26,10 +27,21 @@ import {
   AlertTriangle,
   Grid,
   Video,
-  Table
+  Table,
+  ExternalLink,
+  RefreshCw,
+  Trash2,
+  FileUp,
+  Check,
+  Zap
 } from 'lucide-react';
 import { getStoredUser, UserProfile } from '@/lib/auth';
-import { extractTitleFromHtml, normalizeAndSyncHtml } from '@/lib/htmlProcessor';
+import { 
+  extractTitleFromHtml, 
+  extractExcerptFromHtml, 
+  extractFeaturedImageFromHtml, 
+  normalizeAndSyncHtml 
+} from '@/lib/htmlProcessor';
 import VisualArticleRenderer from '@/components/VisualArticleRenderer';
 import VeriduBlockEditor, { VeriduBlock, compileBlocksToHtml, parseHtmlToBlocks } from '@/components/editor/VeriduBlockEditor';
 
@@ -63,6 +75,11 @@ function DangBaiContent() {
   const [contentHtml, setContentHtml] = useState('');
   const [blocks, setBlocks] = useState<VeriduBlock[]>([]);
 
+  // File Upload State
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [uploadedFileSize, setUploadedFileSize] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
   // UI Sidebar & Viewport Tabs
   const [sidebarTab, setSidebarTab] = useState<'widgets' | 'settings' | 'html'>('widgets');
   const [viewportMode, setViewportMode] = useState<'editor' | 'preview'>('editor');
@@ -71,6 +88,11 @@ function DangBaiContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingPost, setIsLoadingPost] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  
+  // Post Published Success Modal State
+  const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Check auth
@@ -97,8 +119,14 @@ function DangBaiContent() {
           setFeaturedImage(p.featured_image || '');
           const html = p.content || '';
           setContentHtml(html);
-          const parsedBlocks = parseHtmlToBlocks(html);
-          setBlocks(parsedBlocks);
+          
+          if (p.article_type === 'interactive') {
+            setRenderEngine('native');
+          } else {
+            const parsedBlocks = parseHtmlToBlocks(html);
+            setBlocks(parsedBlocks);
+          }
+
           setMessage({ type: 'success', text: `Đã nạp thành công bài viết ID #${p.id} để chỉnh sửa!` });
         }
       })
@@ -128,39 +156,85 @@ function DangBaiContent() {
     setBlocks(parsed);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  // Core File Parser Function
+  const processHtmlFile = (file: File) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       const rawText = event.target?.result as string;
-      if (rawText) {
-        const extractedTitle = extractTitleFromHtml(rawText);
-        if (extractedTitle && !title) {
-          setTitle(extractedTitle);
-          setSlug(slugifyVietnamese(extractedTitle));
-        }
-
-        // Smart HTML Analyzer: Check if HTML has complex scripts, Mermaid diagrams, Canon tables, or 3D elements
-        const isComplexHtml = /<script|mermaid|canon-grid|canon-table|recharts|canvas|three|<!DOCTYPE|<html>/i.test(rawText);
-
-        if (isComplexHtml || articleType === 'interactive') {
-          setRenderEngine('native');
-          setContentHtml(rawText);
-          setAnalysisNotice(`Đã nạp file "${file.name}": Tự động kích hoạt Chế độ Bài HTML Nguyên Bản để bảo toàn 100% kịch bản & kiểu dáng bài viết.`);
-        } else {
-          const clean = normalizeAndSyncHtml(rawText);
-          handleHtmlChange(clean);
-          setAnalysisNotice(`Đã nạp file "${file.name}": Tự động trích xuất tiêu đề và chuẩn hóa định dạng bài viết.`);
-        }
-
-        setMessage({ type: 'success', text: `Nạp thành công tệp: ${file.name}` });
+      if (!rawText || !rawText.trim()) {
+        setMessage({ type: 'error', text: 'Tệp tải lên rỗng hoặc không hợp lệ.' });
+        return;
       }
+
+      setUploadedFileName(file.name);
+      setUploadedFileSize(`${(file.size / 1024).toFixed(1)} KB`);
+
+      // 1. Auto-extract Title
+      const extractedTitle = extractTitleFromHtml(rawText);
+      if (extractedTitle) {
+        setTitle(extractedTitle);
+        setSlug(slugifyVietnamese(extractedTitle));
+      }
+
+      // 2. Auto-extract Excerpt
+      const extractedDesc = extractExcerptFromHtml(rawText);
+      if (extractedDesc && !excerpt) {
+        setExcerpt(extractedDesc);
+      }
+
+      // 3. Auto-extract Image
+      const extractedImg = extractFeaturedImageFromHtml(rawText);
+      if (extractedImg && !featuredImage) {
+        setFeaturedImage(extractedImg);
+      }
+
+      // 4. Smart HTML Analyzer: Check if HTML is a full document, contains complex scripts, Mermaid, Canon tables, or 3D
+      const isComplexHtml = /<script|mermaid|canon-grid|canon-table|recharts|canvas|three|<!DOCTYPE|<html>|<svg/i.test(rawText);
+
+      if (isComplexHtml || articleType === 'interactive') {
+        setRenderEngine('native');
+        setArticleType('interactive');
+        setContentHtml(rawText);
+        setAnalysisNotice(`Đã nạp file "${file.name}" (${(file.size / 1024).toFixed(1)} KB): Phát hiện kịch bản tương tác / Mermaid / 3D Canvas. Tự động kích hoạt Chế độ Bài HTML Nguyên Bản.`);
+      } else {
+        const clean = normalizeAndSyncHtml(rawText);
+        handleHtmlChange(clean);
+        setAnalysisNotice(`Đã nạp file "${file.name}": Tự động trích xuất tiêu đề, tóm tắt và đồng bộ giao diện Kính Phụng Vụ.`);
+      }
+
+      setMessage({ type: 'success', text: `Nạp thành công tệp: ${file.name}` });
     };
+
     reader.readAsText(file);
-    // Reset file input value to allow re-uploading same file if desired
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    processHtmlFile(file);
     e.target.value = '';
+  };
+
+  // Drag and Drop Handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && (file.name.endsWith('.html') || file.name.endsWith('.htm') || file.name.endsWith('.txt'))) {
+      processHtmlFile(file);
+    } else {
+      setMessage({ type: 'error', text: 'Vui lòng kéo thả file có định dạng .html hoặc .htm' });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -205,21 +279,28 @@ function DangBaiContent() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Lỗi khi lưu bài viết');
+      if (!res.ok) throw new Error(data.error || 'Lỗi khi lưu bài viết vào CSDL Supabase');
 
+      const savedSlug = data.slug || finalSlug;
+      setPublishedSlug(savedSlug);
+      setShowSuccessModal(true);
       setMessage({ type: 'success', text: isEdit ? 'Đã cập nhật bài viết thành công!' : 'Đã xuất bản bài viết thành công!' });
-      setTimeout(() => {
-        router.push(`/${finalSlug}`);
-      }, 1500);
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Có lỗi xảy ra khi lưu CSDL.' });
+      setMessage({ type: 'error', text: err.message || 'Có lỗi xảy ra khi kết nối Supabase.' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="w-full min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col pt-24 sm:pt-28 md:pt-32 transition-colors duration-300">
+    <div 
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className={`w-full min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col pt-24 sm:pt-28 md:pt-32 transition-colors duration-300 relative ${
+        isDragging ? 'ring-4 ring-indigo-500 ring-inset bg-indigo-500/5' : ''
+      }`}
+    >
       
       {/* Hidden Global File Input for .HTML Files */}
       <input 
@@ -229,6 +310,19 @@ function DangBaiContent() {
         accept=".html,.htm,.txt" 
         className="hidden" 
       />
+
+      {/* Drag & Drop Visual Overlay */}
+      {isDragging && (
+        <div className="fixed inset-0 z-50 bg-indigo-950/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-in fade-in">
+          <div className="p-8 rounded-3xl bg-indigo-900/90 border-2 border-dashed border-indigo-400 max-w-md w-full space-y-4 shadow-2xl">
+            <Upload className="w-16 h-16 text-indigo-300 mx-auto animate-bounce" />
+            <h3 className="font-serif font-bold text-2xl text-white">Thả Tệp .HTML Vào Đây</h3>
+            <p className="text-sm text-indigo-200">
+              Hệ thống sẽ tự động phân tích tiêu đề, bố cục và nạp trực tiếp vào khung soạn thảo.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* 🌟 ELEMENTOR WORKBENCH NAVBAR */}
       <div className="bg-[var(--bg-card)] border-b border-[var(--border-card)] px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4 shadow-xl z-30">
@@ -299,7 +393,8 @@ function DangBaiContent() {
             disabled={isSubmitting}
             className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-2xl text-xs transition-all shadow-lg shadow-amber-500/20 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95"
           >
-            <Save className="w-4 h-4" /> {isSubmitting ? 'Đang Lưu...' : postId ? 'Cập Nhật' : 'Xuất Bản'}
+            {isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            <span>{isSubmitting ? 'Đang Lưu...' : postId ? 'Cập Nhật' : 'Xuất Bản'}</span>
           </button>
 
         </div>
@@ -331,16 +426,37 @@ function DangBaiContent() {
                 Tự động hóa
               </span>
             </div>
-            <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
-              Tải lên tệp <code className="px-1 py-0.5 rounded bg-[var(--bg-main)] font-mono text-[10px]">.html</code> để tự động phân tích tiêu đề, bố cục và kịch bản tương tác.
-            </p>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full py-2.5 bg-indigo-600/15 hover:bg-indigo-600 text-indigo-600 dark:text-indigo-300 hover:text-white rounded-xl text-xs font-bold border border-indigo-500/30 flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-98"
-            >
-              <Upload className="w-3.5 h-3.5" /> Chọn File .HTML Từ Máy Tính
-            </button>
+            
+            {uploadedFileName ? (
+              <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30 space-y-1.5">
+                <div className="flex items-center justify-between text-xs font-bold text-indigo-600 dark:text-indigo-300 truncate">
+                  <span className="truncate flex items-center gap-1">
+                    <FileCode className="w-3.5 h-3.5 shrink-0" /> {uploadedFileName}
+                  </span>
+                  <span className="text-[10px] opacity-75">{uploadedFileSize}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline font-bold flex items-center gap-1"
+                >
+                  <RefreshCw className="w-3 h-3" /> Nạp file HTML khác
+                </button>
+              </div>
+            ) : (
+              <>
+                <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+                  Tải lên tệp <code className="px-1 py-0.5 rounded bg-[var(--bg-main)] font-mono text-[10px]">.html</code> để tự động phân tích tiêu đề, bố cục và kịch bản tương tác.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full py-2.5 bg-indigo-600/15 hover:bg-indigo-600 text-indigo-600 dark:text-indigo-300 hover:text-white rounded-xl text-xs font-bold border border-indigo-500/30 flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-98"
+                >
+                  <Upload className="w-3.5 h-3.5" /> Chọn File .HTML Từ Máy Tính
+                </button>
+              </>
+            )}
           </div>
 
           {/* SIDEBAR TABS HEADER */}
@@ -542,6 +658,7 @@ function DangBaiContent() {
                     <option value="Suy Niệm">Suy Niệm Lời Chúa</option>
                     <option value="Các Thánh">Các Thánh &amp; Phụng Vụ</option>
                     <option value="Lịch Sử">Lịch Sử Giáo Hội</option>
+                    <option value="Giáo Lý">Giáo Lý Công Giáo</option>
                   </select>
                 </div>
 
@@ -634,7 +751,10 @@ function DangBaiContent() {
 
             {/* MODE SWITCHER BUTTONS: BLOCKS VS NATIVE HTML */}
             <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-md">
-              <span className="text-xs font-bold text-[var(--text-muted)]">Mô Hình Hiển Thị &amp; Soạn Thảo:</span>
+              <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-muted)]">
+                <Zap className="w-4 h-4 text-amber-500" />
+                <span>Mô Hình Hiển Thị &amp; Soạn Thảo:</span>
+              </div>
               
               <div className="flex items-center gap-1.5 flex-wrap">
                 <button
@@ -665,7 +785,7 @@ function DangBaiContent() {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 flex items-center gap-1 cursor-pointer transition-all"
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 flex items-center gap-1 cursor-pointer transition-all active:scale-95"
                   title="Nạp tệp HTML từ máy tính"
                 >
                   <Upload className="w-3.5 h-3.5" /> Nạp .HTML
@@ -683,6 +803,7 @@ function DangBaiContent() {
                     {renderEngine === 'blocks' ? `Tổng số khối: ${blocks.length}` : 'Chế độ Bảo Toàn 100% Mã HTML'}
                   </span>
                 </div>
+
                 {renderEngine === 'blocks' ? (
                   <VeriduBlockEditor blocks={blocks} onChange={handleBlocksChange} />
                 ) : (
@@ -711,6 +832,54 @@ function DangBaiContent() {
         </main>
 
       </div>
+
+      {/* 🌟 SUCCESS PUBLISH MODAL */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[var(--bg-card)] rounded-3xl max-w-lg w-full p-8 border border-[var(--border-card)] shadow-2xl space-y-6 text-center animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto shadow-xl">
+              <Check className="w-8 h-8 stroke-[3]" />
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="font-serif font-black text-2xl text-[var(--text-main)]">
+                {postId ? 'Đã Cập Nhật Bài Viết Thành Công!' : 'Đã Xuất Bản Bài Viết Thành Công!'}
+              </h2>
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                Bài viết &quot;<strong className="text-[var(--text-main)]">{title}</strong>&quot; đã được lưu trữ an toàn vào CSDL Supabase và sẵn sàng phục vụ cộng đồng.
+              </p>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs font-mono text-amber-600 dark:text-amber-400 truncate">
+              https://www.thapgia.com/{publishedSlug}
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <Link
+                href={`/${publishedSlug}`}
+                className="w-full sm:w-auto px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-amber-500/20"
+              >
+                <ExternalLink className="w-4 h-4" /> Xem Bài Viết Trực Tuyến
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full sm:w-auto px-5 py-3 bg-[var(--bg-main)] hover:bg-[var(--border-card)] text-[var(--text-main)] font-bold text-xs rounded-xl border border-[var(--border-card)] transition-all"
+              >
+                Tiếp Tục Chỉnh Sửa
+              </button>
+
+              <Link
+                href="/thu-vien"
+                className="w-full sm:w-auto px-5 py-3 bg-[var(--bg-main)] hover:bg-[var(--border-card)] text-[var(--text-main)] font-bold text-xs rounded-xl border border-[var(--border-card)] transition-all"
+              >
+                Về Thư Viện
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
