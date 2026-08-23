@@ -129,14 +129,14 @@ export default function LiturgicalHeader() {
         <div className="max-w-7xl mx-auto px-6 lg:px-12 h-16 flex items-center justify-between relative border-b border-[var(--border-card)]/40">
           
           {/* Left: Balanced spacer / slogan */}
-          <div className="w-1/3 flex items-center">
-            <span className="font-serif text-[10px] tracking-[0.25em] uppercase font-bold text-amber-500/80">
+          <div className="flex-1 flex items-center">
+            <span className="font-serif text-[10px] tracking-[0.25em] uppercase font-bold text-amber-500/80 hidden lg:inline">
               VIA · VITA · VERITAS
             </span>
           </div>
 
           {/* Center: Hero Logo Image */}
-          <div className="w-1/3 flex justify-center items-center">
+          <div className="shrink-0 flex justify-center items-center px-4">
             <Link href="/" className="group flex items-center justify-center transition-transform hover:scale-105">
               <div className="relative h-10 w-40 sm:w-44 flex items-center justify-center">
                 <Image 
@@ -152,7 +152,7 @@ export default function LiturgicalHeader() {
           </div>
 
           {/* Right: Streak & Auth Controls */}
-          <div className="w-1/3 flex items-center justify-end gap-3.5">
+          <div className="flex-1 flex items-center justify-end gap-3 shrink-0">
             {user ? (
               <div className="flex items-center gap-3">
                 {/* Streaks Widget */}

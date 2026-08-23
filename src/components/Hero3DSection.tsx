@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { 
   BookOpen, PlayCircle, ArrowRight, Cross, Shield, Compass, Sparkles
@@ -93,13 +93,14 @@ const THEMES: Record<string, ThemeConfig> = {
 export default function Hero3DSection() {
   const [activeTheme, setActiveTheme] = useState<string>('gold');
   const [isScriptLoaded, setIsScriptLoaded] = useState<boolean>(false);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const modelRef = useRef<any>(null);
+  const auraRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
 
   const currentConfig = THEMES[activeTheme] || THEMES.gold;
 
-  // Dynamic script loader for Google <model-viewer>
+  // 1. Dynamic script loader for Google <model-viewer>
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -115,42 +116,61 @@ export default function Hero3DSection() {
     document.head.appendChild(script);
   }, []);
 
-  // Mouse Parallax Tracker with smooth interpolation
+  // 2. High-Performance Mouse Parallax (0 React re-renders via requestAnimationFrame & Direct DOM update)
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth - 0.5) * 24;
-      const y = (e.clientY / window.innerHeight - 0.5) * 12;
-      setMousePos({ x, y });
+    let mouseX = 0;
+    let mouseY = 0;
+    let isMoving = false;
 
-      if (modelRef.current) {
-        try {
-          const orbitDegX = (x * 1.1).toFixed(1);
-          const orbitDegY = (90 + y).toFixed(1);
-          modelRef.current.cameraOrbit = `${orbitDegX}deg ${orbitDegY}deg 380%`;
-        } catch (err) {}
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseX = (e.clientX / window.innerWidth - 0.5) * 24;
+      mouseY = (e.clientY / window.innerHeight - 0.5) * 12;
+
+      if (!isMoving) {
+        isMoving = true;
+        rafRef.current = requestAnimationFrame(() => {
+          // Direct DOM transform on Aura ring (Zero React VDOM re-render)
+          if (auraRef.current) {
+            auraRef.current.style.transform = `translate3d(${mouseX * -0.5}px, ${mouseY * -0.5}px, 0) rotate(${mouseX}deg)`;
+          }
+
+          // Direct property update on model-viewer camera orbit
+          if (modelRef.current) {
+            try {
+              const orbitDegX = (mouseX * 1.1).toFixed(1);
+              const orbitDegY = (90 + mouseY).toFixed(1);
+              modelRef.current.cameraOrbit = `${orbitDegX}deg ${orbitDegY}deg 380%`;
+            } catch (err) {}
+          }
+
+          isMoving = false;
+        });
       }
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
   return (
     <section 
       ref={containerRef}
-      className="relative min-h-[85vh] sm:min-h-screen w-full flex items-center justify-center px-4 sm:px-6 lg:px-12 py-16 overflow-hidden transition-all duration-1000"
+      className="relative min-h-[85vh] sm:min-h-screen w-full flex items-center justify-center px-4 sm:px-6 lg:px-12 py-16 overflow-hidden transition-colors duration-700 will-change-[background]"
       style={{
         background: `radial-gradient(circle at center, ${currentConfig.innerColor} 0%, ${currentConfig.midColor} 55%, ${currentConfig.outerColor} 100%)`
       }}
     >
       {/* 🌟 Radiant Holy Candlelight Background Ambient Glow */}
       <div 
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full blur-[140px] pointer-events-none transition-all duration-1000 z-0"
-        style={{ backgroundColor: currentConfig.glowColor }}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[120px] pointer-events-none transition-colors duration-700 z-0 will-change-transform"
+        style={{ backgroundColor: currentConfig.glowColor, transform: 'translate3d(-50%, -50%, 0)' }}
       />
 
       {/* Floating Sacred Texture Overlay */}
-      <div className="absolute inset-0 pointer-events-none z-0 opacity-30 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:32px_32px]" />
+      <div className="absolute inset-0 pointer-events-none z-0 opacity-25 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:32px_32px]" />
 
       {/* Main Layout Container */}
       <div className="max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10 pt-4">
@@ -200,12 +220,11 @@ export default function Hero3DSection() {
         {/* CENTER COLUMN: 3D MODEL CANVAS VIEWPORT */}
         <div className="lg:col-span-4 flex items-center justify-center relative min-h-[350px] sm:min-h-[480px]">
           
-          {/* Glassmorphic Aura Ring Behind 3D Model */}
+          {/* Glassmorphic Aura Ring Behind 3D Model with GPU Transform Ref */}
           <div 
-            className="absolute w-72 h-72 sm:w-96 sm:h-96 rounded-full border border-white/20 bg-white/5 backdrop-blur-xl shadow-2xl transition-transform duration-300 pointer-events-none"
-            style={{
-              transform: `translate(${mousePos.x * -0.5}px, ${mousePos.y * -0.5}px) rotate(${mousePos.x}deg)`
-            }}
+            ref={auraRef}
+            className="absolute w-72 h-72 sm:w-96 sm:h-96 rounded-full border border-white/20 bg-white/5 backdrop-blur-xl shadow-2xl pointer-events-none will-change-transform"
+            style={{ transform: 'translate3d(0, 0, 0)' }}
           />
 
           {isScriptLoaded ? (
@@ -234,7 +253,7 @@ export default function Hero3DSection() {
               {/* @ts-ignore */}
             </model-viewer>
           ) : (
-            /* Fallback 3D Sacred Scriptures Glass Card for Legacy Browsers */
+            /* Fallback 3D Sacred Scriptures Glass Card */
             <div className="w-72 h-96 rounded-3xl bg-white/10 border border-white/30 backdrop-blur-2xl p-6 flex flex-col items-center justify-center text-center space-y-4 shadow-2xl animate-pulse">
               <div className="w-24 h-24 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-5xl flex items-center justify-center">
                 📖
