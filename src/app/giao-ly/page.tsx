@@ -14,8 +14,7 @@ export const metadata = {
 export default async function GiaoLyLandingPage() {
   // Fetch courses and articles
   const allCourses = await fetchCourses();
-  const articlesResult = await getLibraryArticles(1, 20);
-  const allArticles = articlesResult?.articles || [];
+  const allArticles = await getLibraryArticles();
 
   // Filter items relevant to "Giáo Lý"
   const giaoLyCourses = allCourses.filter(c => 
