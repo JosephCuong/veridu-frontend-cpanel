@@ -43,7 +43,7 @@ export default async function CoursesPage({
     <div className="bg-[var(--bg-main)] text-[var(--text-main)] w-full font-sans transition-colors duration-300">
       
       {/* Page Title Header */}
-      <div className="bg-[var(--header-bg)] border-b border-[var(--border-card)] pb-12 pt-16 px-4">
+      <div className="bg-[var(--header-bg)] border-b border-[var(--border-card)] pb-12 pt-24 md:pt-32 px-4">
         <div className="max-w-7xl mx-auto space-y-6 text-center sm:text-left">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--accent-gold)]/10 border border-[var(--accent-gold)]/30 text-[var(--accent-gold)] text-xs font-bold uppercase tracking-wider backdrop-blur-md">
             <BookOpen className="w-4 h-4" /> Nền Tảng Học Tập LMS Công Giáo

@@ -27,7 +27,7 @@ export default async function KinhThanhPage({ params, searchParams }: PageProps)
   ]);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 flex flex-col font-sans transition-colors duration-300">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 flex flex-col font-sans transition-colors duration-300 pt-20 md:pt-28">
       <main className="max-w-[1600px] mx-auto px-2 sm:px-4 lg:px-6 py-6 space-y-6 flex-1 w-full">
         {metadata.books && metadata.books.length > 0 ? (
           <BibleReader
