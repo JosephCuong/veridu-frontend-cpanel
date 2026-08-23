@@ -31,10 +31,8 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950">
-      
-
-      <main className="max-w-md mx-auto px-4 py-16">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 pt-24 sm:pt-28 md:pt-36 pb-16">
+      <main className="max-w-md mx-auto px-4">
         <div className="p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] backdrop-blur-xl shadow-2xl space-y-6 text-center">
           <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center mx-auto text-amber-400">
             <KeyRound className="w-6 h-6" />

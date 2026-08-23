@@ -5,10 +5,8 @@ import { Clock, Sparkles } from 'lucide-react';
 
 export default function SalvationTimelinePage() {
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 flex flex-col font-sans transition-colors duration-300">
-      
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8 flex-1 w-full">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 flex flex-col font-sans transition-colors duration-300 pt-24 sm:pt-28 md:pt-36 pb-16">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-8 flex-1 w-full">
         
         {/* Page Header */}
         <div className="space-y-4 text-center max-w-3xl mx-auto">

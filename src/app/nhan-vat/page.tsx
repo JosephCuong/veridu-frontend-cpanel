@@ -10,10 +10,8 @@ export default async function CharactersPage() {
   const characters = await fetchCharacters();
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] transition-colors duration-300 flex flex-col font-sans">
-      
-      
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full space-y-12">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] transition-colors duration-300 flex flex-col font-sans pt-24 sm:pt-28 md:pt-36 pb-16">
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 w-full space-y-12">
         <div className="text-center space-y-4 max-w-3xl mx-auto">
           <span className="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Hệ Thống Nhân Vật

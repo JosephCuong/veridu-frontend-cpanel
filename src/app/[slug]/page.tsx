@@ -168,7 +168,7 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] transition-colors duration-300 pb-20">
       <HeroBanner imageUrl={coverImage} />
 
-      <div className={`max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative z-20 ${coverImage ? '-mt-24' : 'pt-12'}`}>
+      <div className={`max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative z-20 ${coverImage ? '-mt-24' : 'pt-24 sm:pt-28 md:pt-36'}`}>
         <Link href="/thu-vien" className="inline-flex items-center text-xs font-bold text-amber-800 dark:text-amber-400 hover:underline mb-4 bg-[var(--bg-card)]/50 backdrop-blur px-3 py-1.5 rounded-full border border-[var(--border-card)] shadow-md">
           <ArrowLeft className="w-4 h-4 mr-1.5" /> Quay Lại Thư Viện
         </Link>
@@ -201,7 +201,7 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
             </article>
           </main>
 
-          <aside className="hidden lg:block w-72 xl:w-80 shrink-0 sticky top-32 self-start">
+          <aside className="hidden lg:block w-72 xl:w-80 shrink-0 sticky top-36 self-start">
             <TableOfContents />
           </aside>
         </div>

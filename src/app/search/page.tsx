@@ -33,7 +33,7 @@ export default async function SearchPage({
     <div className="bg-[var(--bg-main)] text-[var(--text-main)] min-h-screen w-full font-sans transition-colors duration-300">
       
       {/* Header */}
-      <div className="bg-[var(--header-bg)] border-b border-[var(--border-card)] pb-12 pt-16 px-4">
+      <div className="bg-[var(--header-bg)] border-b border-[var(--border-card)] pb-12 pt-28 md:pt-36 px-4">
         <div className="max-w-7xl mx-auto space-y-6 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--accent-gold)]/10 border border-[var(--accent-gold)]/30 text-[var(--accent-gold)] text-xs font-bold uppercase tracking-wider">
             <Search className="w-4 h-4" /> Kết quả tìm kiếm toàn cục

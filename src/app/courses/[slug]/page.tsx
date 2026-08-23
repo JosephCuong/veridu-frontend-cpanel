@@ -97,10 +97,8 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 pb-20">
-      
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300 pt-24 sm:pt-28 md:pt-36 pb-20">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-6">
         
         {/* Navigation Breadcrumb */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border-card)] pb-4 gap-4">

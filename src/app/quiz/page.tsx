@@ -61,10 +61,8 @@ export default function QuizPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 flex flex-col font-sans transition-colors duration-300">
-      
-
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12 flex-1 w-full">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 flex flex-col font-sans transition-colors duration-300 pt-24 sm:pt-28 md:pt-36 pb-16">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-12 flex-1 w-full">
         
         {/* Header */}
         <header className="space-y-4 max-w-3xl mx-auto text-center">
