@@ -2,24 +2,45 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { normalizeAndSyncHtml } from '@/lib/htmlProcessor';
-import { X } from 'lucide-react';
+import { X, Maximize2, RefreshCw } from 'lucide-react';
 
 interface VisualArticleRendererProps {
   contentHtml: string;
   className?: string;
+  forceSandbox?: boolean;
 }
 
-export default function VisualArticleRenderer({ contentHtml, className = '' }: VisualArticleRendererProps) {
+export default function VisualArticleRenderer({ 
+  contentHtml, 
+  className = '',
+  forceSandbox = false 
+}: VisualArticleRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [lightboxAlt, setLightboxAlt] = useState<string>('');
+  const [iframeKey, setIframeKey] = useState<number>(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Pre-process HTML to normalize inline styles, remove embedded TOCs, and strip full-page tags.
+  // Check if content is a full standalone HTML document with doctype/html/head/style tags
+  const isFullDocument = forceSandbox || (
+    typeof contentHtml === 'string' && (
+      /<!DOCTYPE\s+html/i.test(contentHtml) ||
+      /<html[\s>]/i.test(contentHtml) ||
+      /<head[\s>]/i.test(contentHtml) ||
+      /<style[\s>]/i.test(contentHtml) ||
+      /<script[\s>]/i.test(contentHtml) ||
+      /canvas|three\.js|recharts-wrapper|mermaid/i.test(contentHtml)
+    )
+  );
+
+  // Pre-process HTML to normalize inline styles, remove embedded TOCs, and strip full-page tags for inline rendering.
   const safeHtml = normalizeAndSyncHtml(contentHtml || '');
 
-
   useEffect(() => {
-    // 1. Dynamic Script Loader for Mermaid.js (CDN-based for maximum compatibility & zero bundle bloat)
+    if (isFullDocument) return;
+
+    // 1. Dynamic Script Loader for Mermaid.js for inline fragments
     const loadMermaid = () => {
       const renderMermaidDiagrams = () => {
         if ((window as any).mermaid && containerRef.current) {
@@ -82,7 +103,6 @@ export default function VisualArticleRenderer({ contentHtml, className = '' }: V
           try {
             const chartData = JSON.parse(rawJson);
             if (chartData && chartData.data && Array.isArray(chartData.data)) {
-              // Custom SVG Bar Chart Renderer
               const items = chartData.data;
               const series = chartData.series || [
                 { key: 'LM_PT', name: 'Linh mục / Phó tế', color: '#fbbf24' },
@@ -140,19 +160,7 @@ export default function VisualArticleRenderer({ contentHtml, className = '' }: V
         table.style.width = '100%';
       });
 
-      const inlineElements = containerRef.current.querySelectorAll('[style]');
-      inlineElements.forEach((el) => {
-        const styleAttr = el.getAttribute('style') || '';
-        if (/color:\s*(black|#000000|#000|#111111|#111|#222222|#222|#333333|#333)\b/i.test(styleAttr)) {
-          el.classList.add('dark-mode-color-override');
-        }
-        if (/background(-color)?:\s*(white|#ffffff|#fff)\b/i.test(styleAttr)) {
-          el.classList.add('dark-mode-bg-override');
-        }
-      });
-
       // 4. Image Lightbox Click Listener
-
       const images = containerRef.current.querySelectorAll('img');
       const handleImageClick = (e: Event) => {
         const target = e.currentTarget as HTMLImageElement;
@@ -171,17 +179,77 @@ export default function VisualArticleRenderer({ contentHtml, className = '' }: V
         });
       };
     }
-
-  }, [safeHtml]);
+  }, [safeHtml, isFullDocument]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setLightboxSrc(null);
+      if (e.key === 'Escape') {
+        setLightboxSrc(null);
+        setIsFullscreen(false);
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // 🌟 CASE 1: FULL STANDALONE HTML OR INTERACTIVE DOCUMENT (ISOLATED SANDBOX IFRAME)
+  if (isFullDocument) {
+    return (
+      <div className={`relative w-full rounded-2xl overflow-hidden border border-[var(--border-card)] shadow-2xl bg-slate-950 ${className}`}>
+        {/* Sandbox Top Control Bar */}
+        <div className="flex items-center justify-between px-4 py-2 bg-slate-900 border-b border-slate-800 text-xs text-slate-400">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="font-mono text-[11px] text-slate-300">Khung Xem Cách Ly Tuyệt Đối (Sandbox)</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIframeKey((k) => k + 1)}
+              className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition flex items-center gap-1 cursor-pointer"
+              title="Làm mới khung xem"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition flex items-center gap-1 cursor-pointer"
+              title="Mở toàn màn hình"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Sandboxed Iframe (100% style and script isolated) */}
+        <iframe
+          key={iframeKey}
+          ref={iframeRef}
+          srcDoc={contentHtml}
+          title="Nội dung bài viết HTML"
+          className={`w-full border-none transition-all duration-300 bg-white dark:bg-slate-950 ${
+            isFullscreen ? 'fixed inset-0 z-[99999] h-screen w-screen rounded-none' : 'min-h-[600px] h-[75vh]'
+          }`}
+          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+        />
+
+        {/* Fullscreen Close Overlay */}
+        {isFullscreen && (
+          <button
+            type="button"
+            onClick={() => setIsFullscreen(false)}
+            className="fixed top-6 right-6 z-[100000] px-4 py-2 rounded-full bg-slate-900/90 hover:bg-slate-800 text-white font-bold text-xs border border-white/20 shadow-2xl backdrop-blur flex items-center gap-1.5 cursor-pointer"
+          >
+            <X className="w-4 h-4" /> Đóng Toàn Màn Hình (Esc)
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // 🌟 CASE 2: NORMAL PROSE HTML FRAGMENT (RENDERED SAFELY INSIDE VERIDU DOM)
   return (
     <>
       <div 
@@ -225,4 +293,3 @@ export default function VisualArticleRenderer({ contentHtml, className = '' }: V
     </>
   );
 }
-
