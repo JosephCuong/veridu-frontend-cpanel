@@ -82,7 +82,7 @@ function DangBaiContent() {
   const [contentHtml, setContentHtml] = useState('');
   const [blocks, setBlocks] = useState<VeriduBlock[]>([]);
 
-  // File Upload & Analysis Metadata State
+  // File Upload & Diagnostics Metadata State
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [uploadedFileSize, setUploadedFileSize] = useState<string | null>(null);
   const [detectedFeatures, setDetectedFeatures] = useState<string[]>([]);
@@ -93,7 +93,7 @@ function DangBaiContent() {
   const [sidebarTab, setSidebarTab] = useState<'settings' | 'widgets' | 'html'>('settings');
   const [viewportMode, setViewportMode] = useState<'editor' | 'preview'>('editor');
   const [canvasDevice, setCanvasDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-  const [renderEngine, setRenderEngine] = useState<'blocks' | 'native'>('blocks');
+  const [renderEngine, setRenderEngine] = useState<'blocks' | 'code'>('blocks');
   const [analysisNotice, setAnalysisNotice] = useState<string | null>(null);
   
   // Submission & Loading State
@@ -132,12 +132,8 @@ function DangBaiContent() {
           const html = p.content || '';
           setContentHtml(html);
           
-          if (p.article_type === 'interactive' || /<!DOCTYPE|<html>|<script/i.test(html)) {
-            setRenderEngine('native');
-          } else {
-            const parsedBlocks = parseHtmlToBlocks(html);
-            setBlocks(parsedBlocks);
-          }
+          const parsedBlocks = parseHtmlToBlocks(html);
+          setBlocks(parsedBlocks);
 
           setMessage({ type: 'success', text: `Đã nạp thành công bài viết ID #${p.id} để chỉnh sửa!` });
         }
@@ -164,22 +160,11 @@ function DangBaiContent() {
 
   const handleHtmlChange = (newHtml: string) => {
     setContentHtml(newHtml);
-    if (renderEngine === 'blocks') {
-      const parsed = parseHtmlToBlocks(newHtml);
-      setBlocks(parsed);
-    }
-  };
-
-  // Convert Native HTML to Blocks
-  const convertHtmlToBlocks = () => {
-    const clean = normalizeAndSyncHtml(contentHtml);
-    const parsed = parseHtmlToBlocks(clean);
+    const parsed = parseHtmlToBlocks(newHtml);
     setBlocks(parsed);
-    setRenderEngine('blocks');
-    setMessage({ type: 'success', text: `Đã chuyển đổi thành công ${parsed.length} khối trực quan VERIDU!` });
   };
 
-  // Process Uploaded HTML File with Advanced Diagnostics
+  // Process Uploaded HTML File with Full Clean Ingestion
   const processHtmlFile = (file: File) => {
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -194,12 +179,11 @@ function DangBaiContent() {
 
       // Detect Features
       const features: string[] = [];
-      if (/<!DOCTYPE\s+html/i.test(rawText) || /<html[\s>]/i.test(rawText)) features.push('Tài liệu HTML Đầy Đủ');
-      if (/<script/i.test(rawText)) features.push('JavaScript Tương Tác');
+      if (/<!DOCTYPE\s+html/i.test(rawText) || /<html[\s>]/i.test(rawText)) features.push('Tài liệu HTML');
       if (/mermaid/i.test(rawText)) features.push('Sơ Đồ Mermaid');
-      if (/canvas|three\.js|webgl/i.test(rawText)) features.push('3D Canvas / WebGL');
       if (/<table/i.test(rawText)) features.push('Bảng Dữ Liệu');
-      if (/<audio|<video|iframe/i.test(rawText)) features.push('Media Nhúng');
+      if (/<blockquote/i.test(rawText) || /Tv\s+\d+|Ga\s+\d+|Mt\s+\d+/i.test(rawText)) features.push('Trích Dẫn Lời Chúa');
+      if (/<img/i.test(rawText)) features.push('Ảnh Media');
       setDetectedFeatures(features);
 
       // 1. Auto-extract Title
@@ -221,22 +205,14 @@ function DangBaiContent() {
         setFeaturedImage(extractedImg);
       }
 
-      // 4. Determine Strategy
-      const isComplexHtml = /<script|mermaid|canon-grid|canon-table|recharts|canvas|three|<!DOCTYPE|<html>|<style/i.test(rawText);
-
-      if (isComplexHtml || articleType === 'interactive') {
-        setRenderEngine('native');
-        setArticleType('interactive');
-        setContentHtml(rawText);
-        setAnalysisNotice(`Đã nạp file "${file.name}" (${(file.size / 1024).toFixed(1)} KB). Hệ thống tự động kích hoạt Khung Sandbox Cách Ly Tuyệt Đối để bảo toàn 100% kịch bản & kiểu dáng.`);
-      } else {
-        const clean = normalizeAndSyncHtml(rawText);
-        const parsed = parseHtmlToBlocks(clean);
-        setBlocks(parsed);
-        setContentHtml(clean);
-        setRenderEngine('blocks');
-        setAnalysisNotice(`Đã nạp file "${file.name}": Tự động trích xuất tiêu đề, tóm tắt và chuyển đổi thành ${parsed.length} khối trực quan.`);
-      }
+      // 4. Clean HTML & Parse into Veridu Blocks
+      const cleanHtml = normalizeAndSyncHtml(rawText);
+      const parsedBlocks = parseHtmlToBlocks(cleanHtml);
+      
+      setBlocks(parsedBlocks);
+      setContentHtml(cleanHtml);
+      setRenderEngine('blocks');
+      setAnalysisNotice(`Đã nạp file "${file.name}" (${(file.size / 1024).toFixed(1)} KB): Tự động trích xuất tiêu đề, loại bỏ mã CSS thừa và chuyển hóa thành ${parsedBlocks.length} khối trực quan Công giáo.`);
 
       setMessage({ type: 'success', text: `Nạp thành công tệp: ${file.name}` });
     };
@@ -332,7 +308,7 @@ function DangBaiContent() {
   const getDeviceWidthClass = () => {
     if (canvasDevice === 'mobile') return 'max-w-[375px]';
     if (canvasDevice === 'tablet') return 'max-w-[768px]';
-    return 'w-full max-w-5xl';
+    return 'w-full max-w-4xl';
   };
 
   return (
@@ -361,7 +337,7 @@ function DangBaiContent() {
             <Upload className="w-16 h-16 text-indigo-300 mx-auto animate-bounce" />
             <h3 className="font-serif font-bold text-2xl text-white">Thả Tệp .HTML Vào Đây</h3>
             <p className="text-sm text-indigo-200">
-              Hệ thống sẽ tự động phân tích tiêu đề, bố cục và nạp vào Khung Sandbox Cách Ly Tuyệt Đối.
+              Hệ thống sẽ tự động phân tích tiêu đề, bố cục và chuyển hóa thành các khối trực quan Công giáo.
             </p>
           </div>
         </div>
@@ -400,13 +376,13 @@ function DangBaiContent() {
                 {postId && <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">ID #{postId}</span>}
               </h1>
               <p className="text-[11px] text-[var(--text-muted)]">
-                {renderEngine === 'native' ? 'Chế độ Bài HTML Cách Ly (Sandbox 100%)' : 'Chế độ Bài Khối Trực Quan'}
+                {blocks.length > 0 ? `${blocks.length} khối nội dung trực quan` : 'Trình soạn thảo khối & Nạp file .HTML'}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Center: Device Switcher for Preview & Sandbox Canvas */}
+        {/* Center: Device Switcher for Preview */}
         <div className="hidden md:flex items-center gap-1 bg-[var(--bg-main)] p-1 rounded-2xl border border-[var(--border-card)]">
           <button
             type="button"
@@ -465,7 +441,7 @@ function DangBaiContent() {
             </button>
           </div>
 
-          {/* Nạp File .HTML Prominent Button */}
+          {/* Nạp File .HTML Button */}
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
@@ -499,18 +475,18 @@ function DangBaiContent() {
         </div>
       )}
 
-      {/* 🌟 2-COLUMN FULL-WIDTH RESPONSIVE WORKBENCH */}
+      {/* 🌟 2-COLUMN FULL-WIDTH WORKBENCH */}
       <div className="flex-1 flex flex-col lg:flex-row w-full overflow-hidden">
         
         {/* ⬅️ LEFT SIDEBAR (WORKBENCH PANELS) */}
         {!sidebarCollapsed && (
           <aside className="w-full lg:w-96 shrink-0 bg-[var(--bg-card)] border-r border-[var(--border-card)] flex flex-col h-auto lg:h-[calc(100vh-8.5rem)] overflow-y-auto z-20">
             
-            {/* 🌟 DEDICATED QUICK IMPORT .HTML & ANALYSIS BANNER */}
+            {/* 🌟 QUICK IMPORT & FILE STATUS BANNER */}
             <div className="p-4 bg-gradient-to-br from-indigo-500/10 via-amber-500/5 to-transparent border-b border-[var(--border-card)] space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
-                  <Upload className="w-3.5 h-3.5" /> Phân Tích &amp; Nạp File .HTML
+                  <Upload className="w-3.5 h-3.5" /> Nạp &amp; Chuyển Hóa Tệp .HTML
                 </span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-500/20">
                   Tự động hóa
@@ -536,30 +512,20 @@ function DangBaiContent() {
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between pt-1 text-[11px]">
+                  <div className="pt-1 text-[11px]">
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       className="text-amber-600 dark:text-amber-400 hover:underline font-bold flex items-center gap-1 cursor-pointer"
                     >
-                      <RefreshCw className="w-3 h-3" /> Đổi tệp khác
+                      <RefreshCw className="w-3 h-3" /> Nạp tệp khác
                     </button>
-
-                    {renderEngine === 'native' && (
-                      <button
-                        type="button"
-                        onClick={convertHtmlToBlocks}
-                        className="text-indigo-600 dark:text-indigo-300 hover:underline font-bold flex items-center gap-1 cursor-pointer"
-                      >
-                        <Zap className="w-3 h-3 text-amber-500" /> Đổi sang Khối
-                      </button>
-                    )}
                   </div>
                 </div>
               ) : (
                 <>
                   <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
-                    Kéo thả hoặc tải lên tệp <code className="px-1 py-0.5 rounded bg-[var(--bg-main)] font-mono text-[10px]">.html</code> để tự động phân tích tiêu đề, bố cục và kịch bản tương tác.
+                    Kéo thả hoặc tải lên tệp <code className="px-1 py-0.5 rounded bg-[var(--bg-main)] font-mono text-[10px]">.html</code> để tự động chuyển hóa thành các khối trực quan.
                   </p>
                   <button
                     type="button"
@@ -658,10 +624,10 @@ function DangBaiContent() {
                       className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] font-bold text-[var(--text-main)] outline-none focus:border-amber-500"
                     >
                       <option value="theological">Thần Học / Nghiên Cứu (Nền Kính Phụng Vụ)</option>
-                      <option value="interactive">3D Tương Tác / Complete Takeover (Toàn Màn Hình)</option>
                       <option value="meditation">Suy Niệm / Chiêm Niệm (Ấm áp, Trầm lắng)</option>
                       <option value="wide">Tạp Chí / Wide Magazine (Trang rộng)</option>
                       <option value="standard">Tiêu Chuẩn (Standard)</option>
+                      <option value="interactive">3D Tương Tác / Complete Takeover (Toàn Màn Hình)</option>
                     </select>
                   </div>
 
@@ -697,7 +663,7 @@ function DangBaiContent() {
                   <Sparkles className="w-3.5 h-3.5" /> Thêm Khối Vào Canvas
                 </div>
                 <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
-                  Nhấp vào khối bên dưới để chèn vào vị trí mong muốn:
+                  Nhấp vào khối bên dưới để chèn vào bài viết:
                 </p>
 
                 <div className="grid grid-cols-2 gap-2.5">
@@ -843,7 +809,7 @@ function DangBaiContent() {
           </aside>
         )}
 
-        {/* ➡️ RIGHT VIEWPORT (CANVAS & REALTIME SANDBOX PREVIEW) */}
+        {/* ➡️ RIGHT VIEWPORT (CANVAS & REALTIME SEAMLESS PREVIEW) */}
         <main className="flex-1 bg-[var(--bg-main)] p-4 sm:p-6 lg:p-8 h-auto lg:h-[calc(100vh-8.5rem)] overflow-y-auto flex flex-col items-center">
           <div className={`w-full ${getDeviceWidthClass()} transition-all duration-300 space-y-6`}>
 
@@ -864,11 +830,11 @@ function DangBaiContent() {
               </div>
             )}
 
-            {/* MODE SWITCHER & ARCHITECTURAL CONTROLS */}
+            {/* MODE SWITCHER: SOẠN KHỐI VS XEM TRƯỚC */}
             <div className="w-full flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-md">
               <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-muted)]">
                 <Zap className="w-4 h-4 text-amber-500" />
-                <span>Mô Hình Hiển Thị &amp; Soạn Thảo:</span>
+                <span>Mô Hình Làm Việc:</span>
               </div>
               
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -881,29 +847,17 @@ function DangBaiContent() {
                       : 'text-[var(--text-muted)] hover:bg-[var(--bg-main)]'
                   }`}
                 >
-                  <Layers className="w-3.5 h-3.5" /> Bài Khối Trực Quan
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setRenderEngine('native')}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    renderEngine === 'native'
-                      ? 'bg-indigo-600 text-white font-black shadow-md'
-                      : 'text-[var(--text-muted)] hover:bg-[var(--bg-main)]'
-                  }`}
-                >
-                  <FileCode className="w-3.5 h-3.5" /> Bài HTML Cách Ly (Sandbox)
+                  <Layers className="w-3.5 h-3.5" /> Soạn Khối Trực Quan ({blocks.length} khối)
                 </button>
 
                 {/* Direct quick upload button inside canvas */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 flex items-center gap-1 cursor-pointer transition-all active:scale-95"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
                   title="Nạp tệp HTML từ máy tính"
                 >
-                  <Upload className="w-3.5 h-3.5" /> Nạp .HTML
+                  <Upload className="w-3.5 h-3.5" /> Nạp File .HTML
                 </button>
               </div>
             </div>
@@ -913,35 +867,14 @@ function DangBaiContent() {
               <div className="w-full p-4 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-6">
                 <div className="border-b border-[var(--border-card)] pb-4 flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                    <Edit3 className="w-4 h-4" /> {renderEngine === 'blocks' ? 'Canvas Soạn Thảo Khối Kéo-Thả' : 'Khung Sandbox Cách Ly Tuyệt Đối (100% Nguyên Bản)'}
+                    <Edit3 className="w-4 h-4" /> Canvas Soạn Thảo Khối Kéo-Thả VERIDU
                   </span>
                   <span className="text-[11px] text-[var(--text-muted)]">
-                    {renderEngine === 'blocks' ? `Tổng số khối: ${blocks.length}` : 'Bảo toàn CSS/JS không làm vỡ website'}
+                    {blocks.length > 0 ? `Đang có ${blocks.length} khối` : 'Nhấp thêm khối từ thanh bên hoặc nạp file .HTML'}
                   </span>
                 </div>
 
-                {renderEngine === 'blocks' ? (
-                  <VeriduBlockEditor blocks={blocks} onChange={handleBlocksChange} />
-                ) : (
-                  <div className="space-y-4">
-                    <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-600 dark:text-indigo-300 leading-relaxed flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-2.5">
-                        <Sparkles className="w-4 h-4 shrink-0 mt-0.5 text-indigo-500" />
-                        <div>
-                          <strong>Chế độ Sandbox Cách Ly:</strong> Giữ nguyên 100% kịch bản Mermaid, Bảng Giáo luật, âm thanh và CSS nhúng của file HTML bên trong khung Iframe cô lập, <strong>không làm tràn CSS ra giao diện chung</strong>.
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={convertHtmlToBlocks}
-                        className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-[11px] shrink-0 transition shadow-sm cursor-pointer"
-                      >
-                        ⚡ Đổi Sang Khối
-                      </button>
-                    </div>
-                    <VisualArticleRenderer contentHtml={contentHtml} forceSandbox={true} />
-                  </div>
-                )}
+                <VeriduBlockEditor blocks={blocks} onChange={handleBlocksChange} />
               </div>
             ) : (
               <div className="w-full p-6 sm:p-12 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-6">

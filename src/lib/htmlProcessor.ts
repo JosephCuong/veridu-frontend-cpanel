@@ -1,15 +1,15 @@
 /**
  * VERIDU HTML Post Processor Utility
  * 
- * Provides HTML parsing, title extraction, sanitization,
- * inline-style normalization for theme variable compatibility,
- * optional class stripping, and element class mapping for the VERIDU Tailwind design system.
+ * Provides robust HTML parsing, body extraction, title/excerpt/image extraction,
+ * sanitization, inline-style normalization, duplicate heading stripping,
+ * and element class mapping for the VERIDU Catholic design system.
  */
 
 /**
  * Strips HTML tags and decodes common HTML entities to return clean plain text.
  */
-function cleanText(rawText: string): string {
+export function cleanText(rawText: string): string {
   if (!rawText) return '';
   const textWithoutTags = rawText.replace(/<[^>]*>/g, ' ');
   const decoded = textWithoutTags
@@ -24,8 +24,6 @@ function cleanText(rawText: string): string {
 
 /**
  * Extracts title string from HTML with priority order: <h1> -> <title> -> <h2>.
- * Uses DOMParser in browser environments and regex fallback in SSR environments.
- * Cleanly strips nested tags and returns trimmed text string or null.
  */
 export function extractTitleFromHtml(html: string): string | null {
   if (!html || typeof html !== 'string' || !html.trim()) {
@@ -63,22 +61,19 @@ export function extractTitleFromHtml(html: string): string | null {
     }
   }
 
-  // 2. Regex Fallback (SSR / Node / DOMParser failure)
-  // Priority 1: <h1>
+  // 2. Regex Fallback
   const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
   if (h1Match && h1Match[1]) {
     const cleaned = cleanText(h1Match[1]);
     if (cleaned) return cleaned;
   }
 
-  // Priority 2: <title>
   const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
   if (titleMatch && titleMatch[1]) {
     const cleaned = cleanText(titleMatch[1]);
     if (cleaned) return cleaned;
   }
 
-  // Priority 3: <h2>
   const h2Match = html.match(/<h2[^>]*>([\s\S]*?)<\/h2>/i);
   if (h2Match && h2Match[1]) {
     const cleaned = cleanText(h2Match[1]);
@@ -98,15 +93,15 @@ export function extractExcerptFromHtml(html: string): string {
   const metaDescMatch = html.match(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i) 
     || html.match(/<meta\s+content=["']([^"']+)["']\s+name=["']description["']/i);
   if (metaDescMatch && metaDescMatch[1]) {
-    return cleanText(metaDescMatch[1]).slice(0, 200);
+    return cleanText(metaDescMatch[1]).slice(0, 220);
   }
 
   // 2. Check first paragraph <p> with meaningful text
   const pMatches = html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi);
   for (const match of pMatches) {
     const text = cleanText(match[1]);
-    if (text && text.length > 20) {
-      return text.slice(0, 200) + (text.length > 200 ? '...' : '');
+    if (text && text.length > 25) {
+      return text.slice(0, 220) + (text.length > 220 ? '...' : '');
     }
   }
 
@@ -131,6 +126,10 @@ export function extractFeaturedImageFromHtml(html: string): string {
   if (imgMatch && imgMatch[1]) {
     const src = imgMatch[1].trim();
     if (!src.startsWith('data:image')) {
+      const driveMatch = src.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || src.match(/id=([a-zA-Z0-9_-]+)/);
+      if (driveMatch && driveMatch[1]) {
+        return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
+      }
       return src;
     }
   }
@@ -139,8 +138,7 @@ export function extractFeaturedImageFromHtml(html: string): string {
 }
 
 /**
- * Strips hardcoded inline text color and background color rules from style declarations
- * so native VERIDU theme variables (var(--bg-card), var(--text-main), etc.) work properly.
+ * Strips layout-breaking inline styles (width, max-width, margins, absolute colors)
  */
 function cleanInlineStyle(styleAttr: string): string {
   if (!styleAttr || !styleAttr.trim()) return '';
@@ -153,13 +151,20 @@ function cleanInlineStyle(styleAttr: string): string {
 
     const prop = trimmed.slice(0, colonIdx).trim().toLowerCase();
 
-    // Strip text color rules that override dark/light theme variables
-    if (prop === 'color' || prop === '-webkit-text-fill-color') {
-      return false;
-    }
-
-    // Strip background and background-color rules that override dark/light theme variables
-    if (prop === 'background' || prop === 'background-color') {
+    // Strip layout constrainers that squash the page
+    if (
+      prop === 'max-width' || 
+      prop === 'min-width' || 
+      prop === 'width' || 
+      prop === 'margin' || 
+      prop === 'margin-left' || 
+      prop === 'margin-right' ||
+      prop === 'color' || 
+      prop === '-webkit-text-fill-color' ||
+      prop === 'background' || 
+      prop === 'background-color' ||
+      prop === 'font-family'
+    ) {
       return false;
     }
 
@@ -176,16 +181,38 @@ function mapElementClasses(el: Element): void {
   const tag = el.tagName.toLowerCase();
 
   switch (tag) {
+    case 'h1':
+    case 'h2':
+      if (!el.classList.contains('font-serif')) {
+        el.classList.add('font-serif', 'font-black', 'text-2xl', 'sm:text-3xl', 'text-[var(--text-main)]', 'mt-10', 'mb-4', 'leading-tight', 'border-b', 'border-[var(--border-card)]', 'pb-2');
+      }
+      break;
+    case 'h3':
+      if (!el.classList.contains('font-serif')) {
+        el.classList.add('font-serif', 'font-bold', 'text-xl', 'sm:text-2xl', 'text-[var(--text-main)]', 'mt-8', 'mb-3', 'leading-snug');
+      }
+      break;
+    case 'h4':
+      if (!el.classList.contains('font-serif')) {
+        el.classList.add('font-serif', 'font-bold', 'text-lg', 'text-amber-600', 'dark:text-amber-400', 'mt-6', 'mb-2');
+      }
+      break;
+    case 'p':
+      if (!el.classList.contains('leading-relaxed')) {
+        el.classList.add('leading-relaxed', 'my-4', 'text-[var(--text-main)]', 'text-base', 'sm:text-lg');
+      }
+      break;
     case 'blockquote':
       if (!el.classList.contains('border-l-4')) {
         el.classList.add(
           'border-l-4',
-          'border-amber-500/60',
-          'pl-4',
-          'py-1',
+          'border-amber-500/80',
+          'bg-amber-500/5',
+          'p-4',
+          'rounded-r-2xl',
           'italic',
-          'text-[var(--text-muted)]',
-          'my-4'
+          'text-[var(--text-main)]',
+          'my-6'
         );
       }
       break;
@@ -200,29 +227,9 @@ function mapElementClasses(el: Element): void {
           el.setAttribute('referrerpolicy', 'no-referrer');
         }
         if (!el.classList.contains('rounded-2xl')) {
-
           el.classList.add('max-w-full', 'h-auto', 'rounded-2xl', 'shadow-2xl', 'my-6', 'cursor-zoom-in', 'hover:scale-[1.01]', 'transition-all', 'duration-300', 'mx-auto', 'block');
         }
         el.setAttribute('data-lightbox', 'true');
-      }
-      break;
-
-    case 'figure':
-      if (!el.classList.contains('my-8')) {
-        el.classList.add('my-8', 'text-center', 'mx-auto', 'group/figure');
-      }
-      break;
-
-    case 'figcaption':
-      if (!el.classList.contains('text-xs')) {
-        el.classList.add('text-xs', 'italic', 'text-[var(--text-muted)]', 'mt-2.5', 'tracking-wide', 'font-sans', 'text-center');
-      }
-      break;
-
-
-    case 'hr':
-      if (!el.classList.contains('border-[var(--border-card)]')) {
-        el.classList.add('border-[var(--border-card)]', 'my-8');
       }
       break;
     case 'table':
@@ -243,7 +250,7 @@ function mapElementClasses(el: Element): void {
           'p-3',
           'font-bold',
           'bg-amber-500/10',
-          'text-amber-400',
+          'text-amber-500',
           'border',
           'border-[var(--border-card)]'
         );
@@ -255,8 +262,8 @@ function mapElementClasses(el: Element): void {
       }
       break;
     case 'a':
-      if (!el.classList.contains('text-amber-800')) {
-        el.classList.add('text-amber-800', 'dark:text-amber-400', 'font-bold', 'hover:text-amber-600', 'dark:hover:text-amber-300', 'underline', 'transition-colors');
+      if (!el.classList.contains('text-amber-600')) {
+        el.classList.add('text-amber-600', 'dark:text-amber-400', 'font-bold', 'hover:underline', 'transition-colors');
       }
       break;
     case 'ul':
@@ -269,118 +276,13 @@ function mapElementClasses(el: Element): void {
         el.classList.add('list-decimal', 'list-inside', 'my-4', 'space-y-2', 'text-[var(--text-main)]');
       }
       break;
-    case 'h2':
-      if (!el.classList.contains('font-serif')) {
-        el.classList.add('font-serif', 'font-bold', 'text-2xl', 'text-amber-500', 'mt-8', 'mb-4', 'drop-shadow-sm');
-      }
-      break;
-    case 'h3':
-      if (!el.classList.contains('font-serif')) {
-        el.classList.add('font-serif', 'font-bold', 'text-xl', 'text-[var(--text-main)]', 'mt-6', 'mb-3');
-      }
-      break;
-    case 'p':
-      // Don't add classes if it's already styled or inside a blockquote
-      if (!el.className) {
-        el.classList.add('mb-4', 'leading-relaxed');
-      }
-      break;
   }
 }
 
 /**
- * Regex fallback for normalization when DOMParser is unavailable.
- */
-function normalizeAndSyncHtmlFallback(html: string, stripClasses: boolean = false): string {
-  let result = html;
-
-  // Extract inner HTML of <body> if full document format
-  const bodyMatch = result.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-  if (bodyMatch) {
-    result = bodyMatch[1];
-  } else {
-    result = result.replace(/<!DOCTYPE[^>]*>/gi, '');
-    result = result.replace(/<html[^>]*>|<\/html>/gi, '');
-    result = result.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
-  }
-
-  // Strip <script> and <style> tags
-  result = result.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-  result = result.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
-
-  // Strip embedded TOC elements from imported HTML files
-  result = result.replace(/<(div|nav|aside|section)[^>]*?(class|id)=["'][^"']*\btoc\b[^"']*["'][^>]*>[\s\S]*?<\/\1>/gi, '');
-
-  // Convert Google Drive images in <img> tags
-  result = result.replace(/<img\s+([^>]*src=["']([^"']+)["'][^>]*)>/gi, (fullMatch, attrStr, srcUrl) => {
-    let newSrc = srcUrl;
-    const driveMatch = srcUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || srcUrl.match(/id=([a-zA-Z0-9_-]+)/);
-    if (driveMatch && driveMatch[1]) {
-      newSrc = `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
-    }
-    
-    // Ensure referrerpolicy="no-referrer" and class styles
-    let cleanedAttrs = attrStr.replace(/src=["'][^"']+["']/gi, `src="${newSrc}"`);
-    if (!/referrerpolicy/i.test(cleanedAttrs)) {
-      cleanedAttrs += ' referrerpolicy="no-referrer"';
-    }
-    if (!/data-lightbox/i.test(cleanedAttrs)) {
-      cleanedAttrs += ' data-lightbox="true"';
-    }
-    if (!/class=/i.test(cleanedAttrs)) {
-      cleanedAttrs += ' class="max-w-full h-auto rounded-2xl shadow-2xl my-6 cursor-zoom-in hover:scale-[1.01] transition-all duration-300 mx-auto block"';
-    }
-    return `<img ${cleanedAttrs}>`;
-  });
-
-  // Strip <iframe> unless trusted embed (YouTube, Vimeo, Google Drive Video, Maps, Spotify)
-  const trustedIframeRegex = /(youtube\.com|youtube-nocookie\.com|youtu\.be|vimeo\.com|soundcloud\.com|google\.com\/maps|spotify\.com|drive\.google\.com)/i;
-  result = result.replace(/<iframe\s+([^>]*src=["']([^"']+)["'][^>]*)>[\s\S]*?<\/iframe>/gi, (match, attrStr, srcUrl) => {
-    if (!trustedIframeRegex.test(srcUrl)) {
-      return '';
-    }
-    let newSrc = srcUrl;
-    if (/drive\.google\.com/i.test(srcUrl)) {
-      const driveMatch = srcUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || srcUrl.match(/id=([a-zA-Z0-9_-]+)/);
-      if (driveMatch && driveMatch[1]) {
-        newSrc = `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
-      }
-    }
-    let cleanedAttrs = attrStr.replace(/src=["'][^"']+["']/gi, `src="${newSrc}"`);
-    if (!/class=/i.test(cleanedAttrs)) {
-      cleanedAttrs += ' class="w-full h-full border-none rounded-2xl"';
-    }
-    return `<div class="w-full aspect-video rounded-2xl shadow-2xl overflow-hidden border border-[var(--border-card)] my-6 bg-black relative z-10"><iframe ${cleanedAttrs}></iframe></div>`;
-  });
-
-
-  // Strip inline event attributes (onload, onerror, onclick, etc.)
-  result = result.replace(/\s*on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '');
-
-  // Neutralize javascript: URIs
-  result = result.replace(/href\s*=\s*["']javascript:[^"']*["']/gi, 'href="#"');
-  result = result.replace(/src\s*=\s*["']javascript:[^"']*["']/gi, '');
-
-  // Clean inline styles
-  result = result.replace(/style\s*=\s*["']([^"']*)["']/gi, (_match, styleContent) => {
-    const cleaned = cleanInlineStyle(styleContent);
-    return cleaned ? `style="${cleaned}"` : '';
-  });
-
-  if (stripClasses) {
-    result = result.replace(/class\s*=\s*["'][^"']*["']/gi, '');
-  }
-
-  return result;
-}
-
-/**
- * Normalizes and sanitizes raw HTML:
- * - Extracts inner HTML of <body> if full document (<html>...<body>...</body></html>)
- * - Sanitizes content by stripping <script>, <style>, untrusted <iframe>, and inline event attributes
- * - Strips hardcoded inline text/background colors to work natively with VERIDU CSS variables
- * - Optionally strips all original classes from elements (except allowed embeds)
- * - Maps standard HTML elements to VERIDU Tailwind design system classes
+ * Robust Normalizer & Sanitizer:
+ * Extracts inner <body> HTML, strips document wrappers, strips intrusive <style>/<script>,
+ * removes duplicate <h1> matching the main title, cleans inline styles, and maps design classes.
  */
 export function normalizeAndSyncHtml(
   html: string, 
@@ -389,10 +291,7 @@ export function normalizeAndSyncHtml(
 ): string {
   if (!html || typeof html !== 'string') return '';
 
-  // If it's a full interactive document (starts with <!DOCTYPE html> or <html> or explicitly marked),
-  // preserve the full document intact so 3D scripts, styles, and controls function inside the iframe.
-  const isFullDoc = isInteractiveDoc || /<!DOCTYPE\s+html/i.test(html) || /<html[\s>]/i.test(html);
-  if (isFullDoc) {
+  if (isInteractiveDoc) {
     return html.trim();
   }
 
@@ -404,19 +303,32 @@ export function normalizeAndSyncHtml(
       const parser = new DOMParser();
       const doc = parser.parseFromString(cleanHtml, 'text/html');
 
-      // 1. Remove <script> tags
-      const scripts = doc.querySelectorAll('script');
-      scripts.forEach((s) => s.remove());
+      // 1. Extract only the inner body if full document
+      const body = doc.body;
 
-      // 2. Remove <style> tags
-      const styles = doc.querySelectorAll('style');
+      // 2. Remove <script> tags (except mermaid scripts)
+      const scripts = doc.querySelectorAll('script');
+      scripts.forEach((s) => {
+        if (!s.textContent?.includes('mermaid')) {
+          s.remove();
+        }
+      });
+
+      // 3. Remove all intrusive <style> and <link> tags
+      const styles = doc.querySelectorAll('style, link[rel="stylesheet"]');
       styles.forEach((s) => s.remove());
 
-      // 2b. Remove embedded TOC containers
-      const tocs = doc.querySelectorAll('.toc, #toc, [class*="toc-"], [id*="toc-"]');
+      // 4. Remove embedded TOC containers
+      const tocs = doc.querySelectorAll('.toc, #toc, [class*="toc-"], [id*="toc-"], nav#table-of-contents');
       tocs.forEach((t) => t.remove());
 
-      // 3. Filter & style <iframe> embeds (YouTube, Vimeo, Google Drive Video, Maps, Spotify)
+      // 5. Remove duplicate main <h1> tag inside body (since page header already renders it)
+      const firstH1 = body.querySelector('h1');
+      if (firstH1) {
+        firstH1.remove();
+      }
+
+      // 6. Style <iframe> embeds
       const iframes = doc.querySelectorAll('iframe');
       const trustedIframeRegex = /(youtube\.com|youtube-nocookie\.com|youtu\.be|vimeo\.com|soundcloud\.com|google\.com\/maps|spotify\.com|drive\.google\.com)/i;
       iframes.forEach((iframe) => {
@@ -424,7 +336,6 @@ export function normalizeAndSyncHtml(
         if (!trustedIframeRegex.test(src)) {
           iframe.remove();
         } else {
-          // Auto-convert Google Drive Video links to embed preview URL
           if (/drive\.google\.com/i.test(src)) {
             const match = src.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || src.match(/id=([a-zA-Z0-9_-]+)/);
             if (match && match[1]) {
@@ -434,7 +345,6 @@ export function normalizeAndSyncHtml(
           }
           iframe.classList.add('w-full', 'h-full', 'border-none', 'rounded-2xl');
           
-          // Wrap iframe in responsive 16:9 glassmorphic container if not already wrapped
           const parent = iframe.parentElement;
           if (parent && !parent.classList.contains('aspect-video')) {
             const wrapper = doc.createElement('div');
@@ -445,11 +355,10 @@ export function normalizeAndSyncHtml(
         }
       });
 
-
-      // 4. Sanitize attributes, inline styles, and map element classes
-      const allElements = doc.querySelectorAll('*');
+      // 7. Sanitize attributes, inline styles, and map element classes
+      const allElements = body.querySelectorAll('*');
       allElements.forEach((el) => {
-        // Remove event handlers (onload, onerror, onclick, etc.)
+        // Remove event handlers
         Array.from(el.attributes).forEach((attr) => {
           if (attr.name.toLowerCase().startsWith('on')) {
             el.removeAttribute(attr.name);
@@ -477,23 +386,30 @@ export function normalizeAndSyncHtml(
           }
         }
 
-        // Optionally strip all custom classes (unless it's our iframe embed we just styled)
         if (stripClasses && el.tagName.toLowerCase() !== 'iframe') {
           el.removeAttribute('class');
         }
 
-        // Map design system classes
         mapElementClasses(el);
       });
 
-      cleanHtml = doc.body.innerHTML;
+      cleanHtml = body.innerHTML;
     } catch (err) {
       console.warn('DOMParser failed in normalizeAndSyncHtml, using fallback:', err);
-      cleanHtml = normalizeAndSyncHtmlFallback(cleanHtml, stripClasses);
     }
-  } else {
-    cleanHtml = normalizeAndSyncHtmlFallback(cleanHtml, stripClasses);
   }
+
+  // Fallback Regex Cleaners (if DOMParser not available or SSR)
+  cleanHtml = cleanHtml
+    .replace(/<!DOCTYPE[\s\S]*?>/gi, '')
+    .replace(/<html[\s\S]*?>/gi, '')
+    .replace(/<\/html>/gi, '')
+    .replace(/<head[\s\S]*?<\/head>/gi, '')
+    .replace(/<body[^>]*>/gi, '')
+    .replace(/<\/body>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[\s\S]*?<\/script>/gi, (m) => m.includes('mermaid') ? m : '')
+    .replace(/<div\s+class=["'][^"']*toc[^"']*["'][\s\S]*?<\/div>/gi, '');
 
   return cleanHtml.trim();
 }

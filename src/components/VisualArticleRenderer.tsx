@@ -2,45 +2,28 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { normalizeAndSyncHtml } from '@/lib/htmlProcessor';
-import { X, Maximize2, RefreshCw } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface VisualArticleRendererProps {
   contentHtml: string;
   className?: string;
-  forceSandbox?: boolean;
 }
 
 export default function VisualArticleRenderer({ 
   contentHtml, 
-  className = '',
-  forceSandbox = false 
+  className = ''
 }: VisualArticleRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [lightboxAlt, setLightboxAlt] = useState<string>('');
-  const [iframeKey, setIframeKey] = useState<number>(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Check if content is a full standalone HTML document with doctype/html/head/style tags
-  const isFullDocument = forceSandbox || (
-    typeof contentHtml === 'string' && (
-      /<!DOCTYPE\s+html/i.test(contentHtml) ||
-      /<html[\s>]/i.test(contentHtml) ||
-      /<head[\s>]/i.test(contentHtml) ||
-      /<style[\s>]/i.test(contentHtml) ||
-      /<script[\s>]/i.test(contentHtml) ||
-      /canvas|three\.js|recharts-wrapper|mermaid/i.test(contentHtml)
-    )
-  );
-
-  // Pre-process HTML to normalize inline styles, remove embedded TOCs, and strip full-page tags for inline rendering.
+  // Sanitize and clean HTML to seamlessly blend into the VERIDU design system
   const safeHtml = normalizeAndSyncHtml(contentHtml || '');
 
   useEffect(() => {
-    if (isFullDocument) return;
+    if (!containerRef.current) return;
 
-    // 1. Dynamic Script Loader for Mermaid.js for inline fragments
+    // 1. Dynamic Script Loader for Mermaid.js diagrams
     const loadMermaid = () => {
       const renderMermaidDiagrams = () => {
         if ((window as any).mermaid && containerRef.current) {
@@ -94,162 +77,98 @@ export default function VisualArticleRenderer({
 
     loadMermaid();
 
-    // 2. Parse & Render Interactive Charts (Recharts data-chart wrapper)
-    if (containerRef.current) {
-      const chartContainers = containerRef.current.querySelectorAll('.recharts-wrapper[data-chart]');
-      chartContainers.forEach((container) => {
-        const rawJson = container.getAttribute('data-chart');
-        if (rawJson) {
-          try {
-            const chartData = JSON.parse(rawJson);
-            if (chartData && chartData.data && Array.isArray(chartData.data)) {
-              const items = chartData.data;
-              const series = chartData.series || [
-                { key: 'LM_PT', name: 'Linh mục / Phó tế', color: '#fbbf24' },
-                { key: 'CS_GD', name: 'Chủng sinh / Giáo dân', color: '#6366f1' }
-              ];
+    // 2. Parse & Render Interactive Charts
+    const chartContainers = containerRef.current.querySelectorAll('.recharts-wrapper[data-chart]');
+    chartContainers.forEach((container) => {
+      const rawJson = container.getAttribute('data-chart');
+      if (rawJson) {
+        try {
+          const chartData = JSON.parse(rawJson);
+          if (chartData && chartData.data && Array.isArray(chartData.data)) {
+            const items = chartData.data;
+            const series = chartData.series || [
+              { key: 'LM_PT', name: 'Linh mục / Phó tế', color: '#fbbf24' },
+              { key: 'CS_GD', name: 'Chủng sinh / Giáo dân', color: '#6366f1' }
+            ];
 
-              let chartHtml = `
-                <div class="p-6 rounded-2xl bg-[var(--bg-card)] border border-amber-500/30 space-y-4 my-6 shadow-2xl">
-                  <div class="flex items-center justify-between border-b border-[var(--border-card)] pb-3">
-                    <span class="text-xs font-bold uppercase tracking-wider text-amber-400">📊 Biểu Đồ Thống Kê Phụng Vụ</span>
-                    <div class="flex gap-4 text-xs font-medium">
-                      ${series.map((s: any) => `
-                        <span class="flex items-center gap-1.5 text-[var(--text-muted)]">
-                          <span class="w-3 h-3 rounded-full inline-block" style="background-color: ${s.color === '#8B0000' ? '#f43f5e' : s.color === '#C5A059' ? '#fbbf24' : s.color}"></span>
-                          ${s.name}
-                        </span>
-                      `).join('')}
-                    </div>
-                  </div>
-                  <div class="space-y-3 pt-2">
-                    ${items.map((item: any) => `
-                      <div class="space-y-1">
-                        <div class="flex justify-between text-xs text-[var(--text-main)] font-semibold">
-                          <span>${item.name}</span>
-                          <span class="text-amber-400 font-mono">${item.LM_PT}% / ${item.CS_GD}%</span>
-                        </div>
-                        <div class="w-full h-3 bg-[var(--bg-main)] rounded-full overflow-hidden flex">
-                          <div style="width: ${item.LM_PT}%; background-color: #fbbf24;" title="Linh mục/Phó tế: ${item.LM_PT}%"></div>
-                          <div style="width: ${item.CS_GD}%; background-color: #f43f5e;" title="Chủng sinh/Giáo dân: ${item.CS_GD}%"></div>
-                        </div>
-                      </div>
+            let chartHtml = `
+              <div class="p-6 rounded-2xl bg-[var(--bg-card)] border border-amber-500/30 space-y-4 my-6 shadow-2xl">
+                <div class="flex items-center justify-between border-b border-[var(--border-card)] pb-3">
+                  <span class="text-xs font-bold uppercase tracking-wider text-amber-500">📊 Biểu Đồ Thống Kê Phụng Vụ</span>
+                  <div class="flex gap-4 text-xs font-medium">
+                    ${series.map((s: any) => `
+                      <span class="flex items-center gap-1.5 text-[var(--text-muted)]">
+                        <span class="w-3 h-3 rounded-full inline-block" style="background-color: ${s.color === '#8B0000' ? '#f43f5e' : s.color === '#C5A059' ? '#fbbf24' : s.color}"></span>
+                        ${s.name}
+                      </span>
                     `).join('')}
                   </div>
                 </div>
-              `;
-              container.innerHTML = chartHtml;
-            }
-          } catch (err) {
-            console.warn('Chart JSON parse error:', err);
+                <div class="space-y-3 pt-2">
+                  ${items.map((item: any) => `
+                    <div class="space-y-1">
+                      <div class="flex justify-between text-xs text-[var(--text-main)] font-semibold">
+                        <span>${item.name}</span>
+                        <span class="text-amber-500 font-mono">${item.LM_PT}% / ${item.CS_GD}%</span>
+                      </div>
+                      <div class="w-full h-3 bg-[var(--bg-main)] rounded-full overflow-hidden flex">
+                        <div style="width: ${item.LM_PT}%; background-color: #fbbf24;" title="Linh mục/Phó tế: ${item.LM_PT}%"></div>
+                        <div style="width: ${item.CS_GD}%; background-color: #f43f5e;" title="Chủng sinh/Giáo dân: ${item.CS_GD}%"></div>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+            container.innerHTML = chartHtml;
           }
+        } catch (err) {
+          console.warn('Chart JSON parse error:', err);
         }
-      });
+      }
+    });
 
-      // 3. Ensure responsive table wrappers & dark mode contrast class overrides
-      const tables = containerRef.current.querySelectorAll('table');
-      tables.forEach((table) => {
-        if (!table.parentElement?.classList.contains('table-responsive-wrapper')) {
-          const wrapper = document.createElement('div');
-          wrapper.className = 'table-responsive-wrapper w-full overflow-x-auto my-6 scrollbar-thin';
-          table.parentNode?.insertBefore(wrapper, table);
-          wrapper.appendChild(table);
-        }
-        table.style.display = 'block';
-        table.style.overflowX = 'auto';
-        table.style.width = '100%';
-      });
+    // 3. Wrap Tables for Responsive Mobile Scrolling
+    const tables = containerRef.current.querySelectorAll('table');
+    tables.forEach((table) => {
+      if (!table.parentElement?.classList.contains('table-responsive-wrapper')) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'table-responsive-wrapper w-full overflow-x-auto my-6 scrollbar-thin';
+        table.parentNode?.insertBefore(wrapper, table);
+        wrapper.appendChild(table);
+      }
+      table.style.display = 'table';
+      table.style.width = '100%';
+    });
 
-      // 4. Image Lightbox Click Listener
-      const images = containerRef.current.querySelectorAll('img');
-      const handleImageClick = (e: Event) => {
-        const target = e.currentTarget as HTMLImageElement;
-        if (target && target.src) {
-          setLightboxSrc(target.src);
-          setLightboxAlt(target.alt || 'Ảnh bài viết');
-        }
-      };
+    // 4. Image Lightbox Click Listener
+    const images = containerRef.current.querySelectorAll('img');
+    const handleImageClick = (e: Event) => {
+      const target = e.currentTarget as HTMLImageElement;
+      if (target && target.src) {
+        setLightboxSrc(target.src);
+        setLightboxAlt(target.alt || 'Ảnh bài viết');
+      }
+    };
+    images.forEach((img) => {
+      img.addEventListener('click', handleImageClick);
+    });
+
+    return () => {
       images.forEach((img) => {
-        img.addEventListener('click', handleImageClick);
+        img.removeEventListener('click', handleImageClick);
       });
-
-      return () => {
-        images.forEach((img) => {
-          img.removeEventListener('click', handleImageClick);
-        });
-      };
-    }
-  }, [safeHtml, isFullDocument]);
+    };
+  }, [safeHtml]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setLightboxSrc(null);
-        setIsFullscreen(false);
-      }
+      if (e.key === 'Escape') setLightboxSrc(null);
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // 🌟 CASE 1: FULL STANDALONE HTML OR INTERACTIVE DOCUMENT (ISOLATED SANDBOX IFRAME)
-  if (isFullDocument) {
-    return (
-      <div className={`relative w-full rounded-2xl overflow-hidden border border-[var(--border-card)] shadow-2xl bg-slate-950 ${className}`}>
-        {/* Sandbox Top Control Bar */}
-        <div className="flex items-center justify-between px-4 py-2 bg-slate-900 border-b border-slate-800 text-xs text-slate-400">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="font-mono text-[11px] text-slate-300">Khung Xem Cách Ly Tuyệt Đối (Sandbox)</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setIframeKey((k) => k + 1)}
-              className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition flex items-center gap-1 cursor-pointer"
-              title="Làm mới khung xem"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition flex items-center gap-1 cursor-pointer"
-              title="Mở toàn màn hình"
-            >
-              <Maximize2 className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Sandboxed Iframe (100% style and script isolated) */}
-        <iframe
-          key={iframeKey}
-          ref={iframeRef}
-          srcDoc={contentHtml}
-          title="Nội dung bài viết HTML"
-          className={`w-full border-none transition-all duration-300 bg-white dark:bg-slate-950 ${
-            isFullscreen ? 'fixed inset-0 z-[99999] h-screen w-screen rounded-none' : 'min-h-[600px] h-[75vh]'
-          }`}
-          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-        />
-
-        {/* Fullscreen Close Overlay */}
-        {isFullscreen && (
-          <button
-            type="button"
-            onClick={() => setIsFullscreen(false)}
-            className="fixed top-6 right-6 z-[100000] px-4 py-2 rounded-full bg-slate-900/90 hover:bg-slate-800 text-white font-bold text-xs border border-white/20 shadow-2xl backdrop-blur flex items-center gap-1.5 cursor-pointer"
-          >
-            <X className="w-4 h-4" /> Đóng Toàn Màn Hình (Esc)
-          </button>
-        )}
-      </div>
-    );
-  }
-
-  // 🌟 CASE 2: NORMAL PROSE HTML FRAGMENT (RENDERED SAFELY INSIDE VERIDU DOM)
   return (
     <>
       <div 
