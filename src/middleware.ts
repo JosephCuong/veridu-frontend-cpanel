@@ -4,6 +4,9 @@ import type { NextRequest } from 'next/server';
 const KNOWN_ROUTES = new Set([
   '/',
   '/thu-vien',
+  '/thu-vien/sach',
+  '/thu-vien/tai-lieu',
+  '/giao-ly',
   '/khoa-hoc',
   '/courses',
   '/kinh-thanh',
@@ -15,11 +18,16 @@ const KNOWN_ROUTES = new Set([
   '/dang-bai',
   '/nhan-vat',
   '/quiz',
+  '/quiz/control',
+  '/quiz/room',
   '/dang-nhap',
   '/dang-ky',
+  '/quen-mat-khau',
   '/ho-so',
   '/cai-dat',
   '/search',
+  '/dieu-khoan-su-dung',
+  '/chinh-sach-bao-mat',
   '/favicon.ico',
   '/robots.txt',
   '/sitemap.xml',
@@ -28,18 +36,16 @@ const KNOWN_ROUTES = new Set([
   '/sw.js',
 ]);
 
-const STATIC_FILE_REGEX = /\.(txt|xml|json|ico|png|jpg|jpeg|svg|webp|gif|webmanifest|js|css|woff|woff2|ttf|eot|otf|map)$/i;
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const cleanPath = pathname.replace(/\/$/, '');
+  const cleanPath = pathname.replace(/\/$/, '') || '/';
 
   // 1. Redirect admin paths to home page
   if (pathname.startsWith('/admin') || pathname.startsWith('/wp-admin')) {
     return NextResponse.redirect(new URL('/', request.url), { status: 301 });
   }
 
-  // 2. 301 Permanent Redirects for Old URLs -> Short SEO URLs
+  // 2. 301 Permanent Redirects for Old URLs -> Modern Short SEO URLs
   if (cleanPath === '/ban-do-kinh-thanh') {
     return NextResponse.redirect(new URL('/ban-do', request.url), { status: 301 });
   }
@@ -63,12 +69,21 @@ export async function middleware(request: NextRequest) {
     const subPath = cleanPath.replace('/doc-kinh-thanh/', '');
     return NextResponse.redirect(new URL(`/kinh-thanh/${subPath}`, request.url), { status: 301 });
   }
-  if (cleanPath.startsWith('/thu-vien/') && cleanPath !== '/thu-vien') {
+
+  // Preserve dedicated library subpages like /thu-vien/sach and /thu-vien/tai-lieu
+  if (cleanPath.startsWith('/thu-vien/') && cleanPath !== '/thu-vien' && cleanPath !== '/thu-vien/sach' && cleanPath !== '/thu-vien/tai-lieu') {
     const slug = cleanPath.replace('/thu-vien/', '');
     return NextResponse.redirect(new URL(`/${slug}`, request.url), { status: 301 });
   }
 
-  return NextResponse.next();
+  // 3. Attach standard security headers
+  const response = NextResponse.next();
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
+
+  return response;
 }
 
 export const config = {

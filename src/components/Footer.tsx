@@ -302,16 +302,22 @@ export default function Footer() {
           <span className="text-[10px] font-bold text-[var(--text-muted)] tracking-wider uppercase">— Thánh Vịnh 119, 105 —</span>
         </div>
 
-        {/* 🌟 BOTTOM BAR: COPYRIGHT & SYSTEM STATUS */}
-        <div className="pt-6 border-t border-[var(--border-card)] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[var(--text-muted)]">
-          <p className="text-center sm:text-left">
+        {/* 🌟 BOTTOM BAR: COPYRIGHT, LEGAL POLICIES & SYSTEM STATUS */}
+        <div className="pt-6 border-t border-[var(--border-card)] flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[var(--text-muted)]">
+          <p className="text-center md:text-left">
             &copy; {new Date().getFullYear()} <strong className="text-[var(--text-main)] font-bold">VERIDU</strong> · Hiệp Thông &amp; Phụng Sự Giáo Hội.
           </p>
 
-          <div className="flex items-center gap-6 font-bold text-[11px]">
-            <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+          <div className="flex flex-wrap items-center justify-center gap-6 font-semibold text-[11px]">
+            <Link href="/dieu-khoan-su-dung" className="hover:text-amber-500 transition-colors">
+              Điều Khoản Sử Dụng
+            </Link>
+            <Link href="/chinh-sach-bao-mat" className="hover:text-amber-500 transition-colors">
+              Chính Sách Bảo Mật
+            </Link>
+            <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Hệ thống hoạt động ổn định
+              Hệ thống an toàn &amp; ổn định
             </span>
           </div>
         </div>

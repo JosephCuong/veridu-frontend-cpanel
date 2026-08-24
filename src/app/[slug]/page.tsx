@@ -13,8 +13,8 @@ import { BookOpen, Sparkles, Heart, ArrowLeft, Cross, Calendar, Clock, User, Tag
 const RESERVED_SLUGS = new Set([
   'admin', 'wp-admin', 'thu-vien', 'courses', 'khoa-hoc', 'doc-kinh-thanh', 
   'kinh-thanh', 'ban-do-kinh-thanh', 'ban-do', 'dong-thoi-gian', 'lich-su', 
-  'nhan-vat', 'quiz', 'dang-nhap', 'dang-ky', 'ho-so', 'cai-dat', 'search', 
-  'dang-bai', 'api', '_next'
+  'nhan-vat', 'quiz', 'dang-nhap', 'dang-ky', 'quen-mat-khau', 'ho-so', 'cai-dat', 'search', 
+  'dang-bai', 'api', '_next', 'dieu-khoan-su-dung', 'chinh-sach-bao-mat', 'giao-ly'
 ]);
 
 // ─── GENERATE METADATA FROM SITESEO ──────────────────────────────────────────
