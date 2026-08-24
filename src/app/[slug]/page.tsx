@@ -154,9 +154,9 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
         
         <iframe 
           src={`/api/raw-html/${resolvedParams.slug}`} 
-          className="w-full h-full border-none bg-slate-950"
+          className="w-full h-full border-none"
           title={cleanTitle}
-          sandbox="allow-scripts allow-same-origin allow-popups"
+          sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals"
         />
 
         <ShareButtons url={articleUrl} title={cleanTitle} />
