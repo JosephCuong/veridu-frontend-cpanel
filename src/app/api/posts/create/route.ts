@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { supabase } from '@/lib/supabaseClient';
+import { formatImageUrl } from '@/lib/htmlProcessor';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
           excerpt: excerpt ? excerpt.trim() : '',
           category: category || 'Thần Học',
           article_type: article_type || 'theological',
-          featured_image: featured_image ? featured_image.trim() : '',
+          featured_image: formatImageUrl(featured_image),
           content,
           status: status || 'published',
           author_id: validAuthorId

@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Search, Filter, Layers, Cross, FileText, Heart, Gamepad2, Maximize2, BookOpen } from 'lucide-react';
+import { formatImageUrl } from '@/lib/htmlProcessor';
 
 interface LibraryClientProps {
   initialArticles: any[];
@@ -131,7 +132,7 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
             const templateType = article.article_type || 'standard';
             const typeLabel = articleTypes.find(t => t.id === templateType)?.label || 'Bài viết';
 
-            const imgSrc = article.thumbnail || article.featured_image;
+            const imgSrc = formatImageUrl(article.thumbnail || article.featured_image);
 
             return (
               <div 

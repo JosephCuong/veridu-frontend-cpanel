@@ -65,7 +65,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-// ─── HELPER COMPONENTS ────────────────────────────────────────────────────────
+import { formatImageUrl } from '@/lib/htmlProcessor';
+
 const MetaDataRow = ({ article }: { article: any }) => (
   <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs font-semibold text-slate-700 dark:text-slate-300 mt-6">
     {article.author && (
@@ -123,7 +124,7 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
   const htmlContent = article.interactiveHtml || article.contentHtml || '';
   const prayerText = (article as any).prayerText as string | undefined;
   
-  const coverImage = article.featured_image || article.thumbnail;
+  const coverImage = formatImageUrl(article.featured_image || article.thumbnail);
 
   // Domain for share buttons (Short SEO URL)
   const articleUrl = `https://www.thapgia.com/${resolvedParams.slug}`;

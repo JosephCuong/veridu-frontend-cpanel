@@ -109,6 +109,26 @@ export function extractExcerptFromHtml(html: string): string {
 }
 
 /**
+ * Formats any image URL, converting Google Drive preview links into high-speed direct CDN links.
+ */
+export function formatImageUrl(url?: string | null): string {
+  if (!url || typeof url !== 'string' || !url.trim()) return '';
+  const trimmed = url.trim();
+
+  // Convert Google Drive view/open links to direct lh3 CDN URLs
+  if (trimmed.includes('drive.google.com') || trimmed.includes('docs.google.com')) {
+    const fileIdMatch = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) 
+      || trimmed.match(/id=([a-zA-Z0-9_-]+)/)
+      || trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (fileIdMatch && fileIdMatch[1]) {
+      return `https://lh3.googleusercontent.com/d/${fileIdMatch[1]}`;
+    }
+  }
+
+  return trimmed;
+}
+
+/**
  * Extracts the first prominent image URL from HTML (og:image or first <img> tag).
  */
 export function extractFeaturedImageFromHtml(html: string): string {
@@ -118,7 +138,7 @@ export function extractFeaturedImageFromHtml(html: string): string {
   const ogImgMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i)
     || html.match(/<meta\s+content=["']([^"']+)["']\s+property=["']og:image["']/i);
   if (ogImgMatch && ogImgMatch[1]) {
-    return ogImgMatch[1].trim();
+    return formatImageUrl(ogImgMatch[1]);
   }
 
   // 2. Check first <img> tag
@@ -126,11 +146,7 @@ export function extractFeaturedImageFromHtml(html: string): string {
   if (imgMatch && imgMatch[1]) {
     const src = imgMatch[1].trim();
     if (!src.startsWith('data:image')) {
-      const driveMatch = src.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || src.match(/id=([a-zA-Z0-9_-]+)/);
-      if (driveMatch && driveMatch[1]) {
-        return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
-      }
-      return src;
+      return formatImageUrl(src);
     }
   }
 
