@@ -4,8 +4,7 @@ export const dynamic = 'force-dynamic';
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useParams, useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
+import { useParams } from 'next/navigation';
 import { getStoredUser, UserProfile } from '@/lib/auth';
 import AuthModal from '@/components/AuthModal';
 import { 
@@ -22,24 +21,28 @@ import {
   Minimize2, 
   ListOrdered, 
   X, 
-  FileText, 
   Eye, 
-  Share2, 
-  ShieldCheck, 
   Sparkles, 
-  Clock, 
   ChevronRight, 
-  Lock, 
-  Info,
   CheckCircle2,
   AlertCircle,
   Loader2,
-  Bookmark
+  ZoomIn,
+  ZoomOut,
+  RotateCw,
+  Sun,
+  Moon,
+  Scroll,
+  Layers,
+  ChevronLeft,
+  Settings2,
+  Share2,
+  Laptop,
+  Check
 } from 'lucide-react';
 
 export default function DocumentSandboxReaderPage() {
   const params = useParams();
-  const router = useRouter();
   const slug = params?.slug as string;
 
   const [item, setItem] = useState<LibraryItem | null>(null);
@@ -48,9 +51,19 @@ export default function DocumentSandboxReaderPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
+  // ── Engine & UI Customization State ──
+  const [engineMode, setEngineMode] = useState<'sandbox' | 'enhanced' | 'native'>('sandbox');
+  const [colorTheme, setColorTheme] = useState<'dark' | 'sepia' | 'light'>('dark');
+  const [zoomLevel, setZoomLevel] = useState<number>(100);
+  const [isFitWidth, setIsFitWidth] = useState(true);
+  const [readingMode, setReadingMode] = useState<'scroll' | 'page'>('scroll');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [inputPage, setInputPage] = useState<string>('1');
+
   // Reader Controls
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showTocDrawer, setShowTocDrawer] = useState(false);
+  const [showSettingsPopover, setShowSettingsPopover] = useState(false);
   const [tocSearch, setTocSearch] = useState('');
   const [quotaInfo, setQuotaInfo] = useState<{
     canDownload: boolean;
@@ -66,7 +79,7 @@ export default function DocumentSandboxReaderPage() {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // ── Load Item & User Quota ──
+  // ── Load Data & Quota ──
   useEffect(() => {
     const stored = getStoredUser();
     setUser(stored);
@@ -79,7 +92,7 @@ export default function DocumentSandboxReaderPage() {
       if (data) {
         setItem(data);
 
-        // Load related items
+        // Load related
         const allItems = await fetchLibraryItems(data.item_type, data.category);
         setRelatedItems(allItems.filter((it) => it.slug !== slug).slice(0, 4));
 
@@ -104,6 +117,33 @@ export default function DocumentSandboxReaderPage() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
+  // Keyboard Navigation Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+        e.preventDefault();
+        handlePageChange(Math.min((item?.pages_count || 999), currentPage + 1));
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        handlePageChange(Math.max(1, currentPage - 1));
+      } else if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        handleZoom(Math.min(200, zoomLevel + 15));
+      } else if (e.key === '-' || e.key === '_') {
+        e.preventDefault();
+        handleZoom(Math.max(50, zoomLevel - 15));
+      } else if (e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentPage, zoomLevel, item?.pages_count]);
+
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
     if (!document.fullscreenElement) {
@@ -115,7 +155,27 @@ export default function DocumentSandboxReaderPage() {
     }
   };
 
-  // ── Handle Download with Tiered Quota ──
+  const handleZoom = (newZoom: number) => {
+    setIsFitWidth(false);
+    setZoomLevel(newZoom);
+  };
+
+  const handlePageChange = (pageNum: number) => {
+    setCurrentPage(pageNum);
+    setInputPage(String(pageNum));
+  };
+
+  const handlePageInputSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const p = parseInt(inputPage);
+    if (!isNaN(p) && p >= 1 && p <= (item?.pages_count || 9999)) {
+      handlePageChange(p);
+    } else {
+      setInputPage(String(currentPage));
+    }
+  };
+
+  // ── Download Handler ──
   const handleDownload = async () => {
     setDownloadError('');
     setDownloadSuccess(false);
@@ -141,11 +201,9 @@ export default function DocumentSandboxReaderPage() {
 
       setDownloadSuccess(true);
 
-      // Refresh quota
       const newQuota = await checkUserDownloadQuota(user.id, user.role);
       setQuotaInfo(newQuota);
 
-      // Trigger browser download
       if (result.downloadUrl) {
         const link = document.createElement('a');
         link.href = result.downloadUrl;
@@ -162,24 +220,65 @@ export default function DocumentSandboxReaderPage() {
     }
   };
 
-  // Construct Sandbox Viewer URL
-  const getSandboxViewerUrl = () => {
+  // ── Stream / Sandbox Source Resolution ──
+  const getStreamUrl = () => {
     if (!item) return '';
 
-    // If Google Drive file ID exists, use Google Docs Preview sandbox
+    // If Google Drive file ID is present, use our optimized Byte-Stream Proxy
     if (item.drive_file_id && item.drive_file_id.length > 5 && !item.drive_file_id.startsWith('http')) {
-      return `https://drive.google.com/file/d/${item.drive_file_id}/preview`;
+      return `/api/library/proxy-drive/${item.drive_file_id}`;
     }
 
-    // Direct PDF Viewer fallback
-    if (item.file_url) {
-      return `https://docs.google.com/viewer?url=${encodeURIComponent(item.file_url)}&embedded=true`;
-    }
-
-    return 'https://docs.google.com/viewer?url=https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/examples/learning/helloworld.pdf&embedded=true';
+    return item.file_url || '';
   };
 
-  // Filter TOC
+  const getViewerUrl = () => {
+    if (!item) return '';
+
+    if (engineMode === 'sandbox') {
+      // Google Cloud Viewer Sandbox
+      if (item.drive_file_id && item.drive_file_id.length > 5 && !item.drive_file_id.startsWith('http')) {
+        return `https://drive.google.com/file/d/${item.drive_file_id}/preview`;
+      }
+      return `https://docs.google.com/viewer?url=${encodeURIComponent(item.file_url || '')}&embedded=true`;
+    }
+
+    if (engineMode === 'native' || engineMode === 'enhanced') {
+      // Direct Stream from Proxy
+      return getStreamUrl();
+    }
+
+    return '';
+  };
+
+  // Theme Styles for Reader Container
+  const getThemeStyles = () => {
+    if (colorTheme === 'sepia') {
+      return {
+        bg: 'bg-[#f4ebd9] text-[#433422]',
+        border: 'border-[#dfcfb0]',
+        panel: 'bg-[#ebe0c7]',
+        text: 'text-[#433422]'
+      };
+    }
+    if (colorTheme === 'light') {
+      return {
+        bg: 'bg-white text-slate-900',
+        border: 'border-slate-200',
+        panel: 'bg-slate-50',
+        text: 'text-slate-900'
+      };
+    }
+    return {
+      bg: 'bg-[#090d16] text-[#e2e8f0]',
+      border: 'border-amber-500/30',
+      panel: 'bg-[#131b2e]',
+      text: 'text-[#e2e8f0]'
+    };
+  };
+
+  const currentTheme = getThemeStyles();
+
   const filteredToc = item?.table_of_contents?.filter((t) =>
     t.title.toLowerCase().includes(tocSearch.toLowerCase())
   ) || [];
@@ -189,7 +288,7 @@ export default function DocumentSandboxReaderPage() {
       <div className="min-h-screen bg-[var(--bg-main)] flex flex-col items-center justify-center space-y-4 pt-24">
         <Loader2 className="w-10 h-10 text-amber-500 animate-spin" />
         <p className="font-serif text-sm text-[var(--text-muted)] italic">
-          Đang nạp dữ liệu và mở khung sandbox tác phẩm...
+          Đang nạp luồng dữ liệu và thiết lập trình đọc nâng cao...
         </p>
       </div>
     );
@@ -228,9 +327,9 @@ export default function DocumentSandboxReaderPage() {
       }`}
     >
       
-      {/* ── TOP STAINED-GLASS TOOLBAR ── */}
+      {/* ── TOP STAINED-GLASS CONTROL BAR ── */}
       <header className="sticky top-0 z-30 w-full bg-[var(--bg-card)]/90 backdrop-blur-xl border-b border-[var(--border-card)] shadow-md transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
           
           {/* Left: Back & Title info */}
           <div className="flex items-center gap-3 min-w-0">
@@ -257,9 +356,172 @@ export default function DocumentSandboxReaderPage() {
             </div>
           </div>
 
-          {/* Right: Actions Bar */}
+          {/* Center: Page Navigation & Zoom Tools (For Enhanced Mode) */}
+          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)]">
+            
+            {/* Page Jumper */}
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                className="p-1 rounded hover:bg-amber-500/20 text-[var(--text-muted)] hover:text-amber-500 transition"
+                title="Trang trước (Phím mũi tên trái)"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              <form onSubmit={handlePageInputSubmit} className="flex items-center gap-1 text-xs">
+                <input
+                  type="text"
+                  value={inputPage}
+                  onChange={(e) => setInputPage(e.target.value.replace(/\D/g, ''))}
+                  className="w-10 text-center py-0.5 px-1 rounded bg-[var(--bg-card)] border border-[var(--border-card)] font-mono font-bold text-[var(--text-main)] focus:outline-none focus:border-amber-500"
+                />
+                <span className="text-[var(--text-muted)] font-mono text-[11px]">
+                  / {item.pages_count || '?'}
+                </span>
+              </form>
+
+              <button
+                type="button"
+                onClick={() => handlePageChange(Math.min((item.pages_count || 999), currentPage + 1))}
+                className="p-1 rounded hover:bg-amber-500/20 text-[var(--text-muted)] hover:text-amber-500 transition"
+                title="Trang sau (Phím mũi tên phải)"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="w-[1px] h-4 bg-[var(--border-card)]"></div>
+
+            {/* Zoom Controls */}
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => handleZoom(Math.max(50, zoomLevel - 15))}
+                className="p-1 rounded hover:bg-amber-500/20 text-[var(--text-muted)] hover:text-amber-500 transition"
+                title="Thu nhỏ (-)"
+              >
+                <ZoomOut className="w-3.5 h-3.5" />
+              </button>
+
+              <span className="text-xs font-mono font-bold text-amber-500 w-12 text-center">
+                {isFitWidth ? 'Vừa' : `${zoomLevel}%`}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => handleZoom(Math.min(200, zoomLevel + 15))}
+                className="p-1 rounded hover:bg-amber-500/20 text-[var(--text-muted)] hover:text-amber-500 transition"
+                title="Phóng to (+)"
+              >
+                <ZoomIn className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+          </div>
+
+          {/* Right: Mode Switcher, Settings, TOC & Download */}
           <div className="flex items-center gap-2 shrink-0">
             
+            {/* Engine Switcher */}
+            <select
+              value={engineMode}
+              onChange={(e) => setEngineMode(e.target.value as any)}
+              className="hidden sm:block text-xs font-bold px-3 py-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-[var(--text-main)] focus:outline-none focus:border-amber-500"
+              title="Chọn trình đọc tệp"
+            >
+              <option value="sandbox">🌐 Google Cloud Preview</option>
+              <option value="enhanced">⚡ VERIDU Stream Engine</option>
+              <option value="native">📄 Native Browser Stream</option>
+            </select>
+
+            {/* UI Settings Popover (Color theme & view mode) */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowSettingsPopover(!showSettingsPopover)}
+                className={`p-2 rounded-xl border transition ${
+                  showSettingsPopover
+                    ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md'
+                    : 'bg-[var(--bg-main)] border-[var(--border-card)] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-amber-500/40'
+                }`}
+                title="Tùy chỉnh giao diện đọc"
+              >
+                <Settings2 className="w-4 h-4" />
+              </button>
+
+              {/* Popover Dropdown */}
+              {showSettingsPopover && (
+                <div className="absolute right-0 mt-2 w-64 p-4 rounded-2xl bg-[var(--bg-card)] border border-amber-500/30 shadow-2xl space-y-4 z-50 backdrop-blur-xl animate-fadeIn">
+                  
+                  {/* Theme Select */}
+                  <div className="space-y-2">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] block">
+                      Tông Màu Đọc Sách:
+                    </span>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setColorTheme('dark')}
+                        className={`p-2 rounded-xl text-xs font-bold flex flex-col items-center gap-1 border transition ${
+                          colorTheme === 'dark'
+                            ? 'bg-[#090d16] text-amber-400 border-amber-500 shadow-sm'
+                            : 'bg-[var(--bg-main)] border-[var(--border-card)] text-[var(--text-muted)]'
+                        }`}
+                      >
+                        <Moon className="w-3.5 h-3.5" />
+                        <span>Hắc Thạch</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setColorTheme('sepia')}
+                        className={`p-2 rounded-xl text-xs font-bold flex flex-col items-center gap-1 border transition ${
+                          colorTheme === 'sepia'
+                            ? 'bg-[#f4ebd9] text-[#433422] border-[#bda682] shadow-sm font-black'
+                            : 'bg-[var(--bg-main)] border-[var(--border-card)] text-[var(--text-muted)]'
+                        }`}
+                      >
+                        <Scroll className="w-3.5 h-3.5" />
+                        <span>Giấy Da</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setColorTheme('light')}
+                        className={`p-2 rounded-xl text-xs font-bold flex flex-col items-center gap-1 border transition ${
+                          colorTheme === 'light'
+                            ? 'bg-white text-slate-900 border-slate-400 shadow-sm'
+                            : 'bg-[var(--bg-main)] border-[var(--border-card)] text-[var(--text-muted)]'
+                        }`}
+                      >
+                        <Sun className="w-3.5 h-3.5" />
+                        <span>Sáng</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Engine Select for Mobile */}
+                  <div className="space-y-1.5 sm:hidden border-t border-[var(--border-card)] pt-3">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] block">
+                      Trình Xem:
+                    </span>
+                    <select
+                      value={engineMode}
+                      onChange={(e) => setEngineMode(e.target.value as any)}
+                      className="w-full text-xs font-bold p-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-[var(--text-main)]"
+                    >
+                      <option value="sandbox">🌐 Google Cloud Preview</option>
+                      <option value="enhanced">⚡ VERIDU Stream Engine</option>
+                      <option value="native">📄 Native Browser Stream</option>
+                    </select>
+                  </div>
+
+                </div>
+              )}
+            </div>
+
             {/* Table of Contents Button */}
             {item.table_of_contents && item.table_of_contents.length > 0 && (
               <button
@@ -277,17 +539,17 @@ export default function DocumentSandboxReaderPage() {
               </button>
             )}
 
-            {/* Fullscreen Toggle Button */}
+            {/* Fullscreen Toggle */}
             <button
               type="button"
               onClick={toggleFullscreen}
               className="p-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-[var(--text-muted)] hover:text-amber-500 hover:border-amber-500/40 transition"
-              title={isFullscreen ? 'Thu nhỏ cửa sổ' : 'Toàn màn hình'}
+              title={isFullscreen ? 'Thu nhỏ cửa sổ (F)' : 'Toàn màn hình (F)'}
             >
               {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </button>
 
-            {/* Smart Download Button with Quota Badge */}
+            {/* Smart Download Button with Quota */}
             <button
               type="button"
               onClick={handleDownload}
@@ -311,11 +573,11 @@ export default function DocumentSandboxReaderPage() {
 
         </div>
 
-        {/* Download Notifications */}
+        {/* Download Feedback Alerts */}
         {downloadSuccess && (
           <div className="bg-emerald-500/20 border-b border-emerald-500/40 px-4 py-2 text-center text-xs font-bold text-emerald-400 flex items-center justify-center gap-2 animate-fadeIn">
             <CheckCircle2 className="w-4 h-4" />
-            <span>Tệp đang được tải về máy của bạn thành công!</span>
+            <span>Tệp đang được truyền tải về máy thành công!</span>
           </div>
         )}
 
@@ -327,14 +589,22 @@ export default function DocumentSandboxReaderPage() {
         )}
       </header>
 
-      {/* ── MAIN SANDBOX VIEWER CONTAINER ── */}
+      {/* ── MAIN ADVANCED VIEWER CONTAINER ── */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-4 flex flex-col items-stretch relative">
         
-        {/* Sandbox Iframe Wrapper */}
-        <div className="flex-1 w-full bg-slate-950 rounded-3xl border-2 border-amber-500/30 overflow-hidden shadow-2xl relative min-h-[75vh] sm:min-h-[82vh] flex flex-col">
+        {/* Custom Themed Wrapper */}
+        <div 
+          className={`flex-1 w-full rounded-3xl border-2 ${currentTheme.border} ${currentTheme.bg} overflow-hidden shadow-2xl relative min-h-[75vh] sm:min-h-[84vh] flex flex-col transition-all duration-300`}
+          style={{
+            transform: !isFitWidth ? `scale(${zoomLevel / 100})` : undefined,
+            transformOrigin: 'top center',
+            transition: 'transform 0.2s ease-in-out'
+          }}
+        >
           
+          {/* Iframe Stream Viewer */}
           <iframe
-            src={getSandboxViewerUrl()}
+            src={getViewerUrl()}
             title={item.title}
             className="w-full flex-1 border-0 rounded-3xl"
             sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
@@ -375,9 +645,16 @@ export default function DocumentSandboxReaderPage() {
               {/* TOC Items List */}
               <div className="space-y-2 pt-2">
                 {filteredToc.map((t, idx) => (
-                  <div
+                  <button
                     key={idx}
-                    className="p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500/50 flex items-center justify-between gap-3 text-xs transition group cursor-default"
+                    type="button"
+                    onClick={() => {
+                      if (t.page) {
+                        handlePageChange(t.page);
+                        setShowTocDrawer(false);
+                      }
+                    }}
+                    className="w-full p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500/50 flex items-center justify-between gap-3 text-xs transition group text-left"
                   >
                     <span className="font-serif font-bold text-[var(--text-main)] group-hover:text-amber-500 transition flex-1">
                       {t.title}
@@ -387,7 +664,7 @@ export default function DocumentSandboxReaderPage() {
                         Trang {t.page}
                       </span>
                     )}
-                  </div>
+                  </button>
                 ))}
               </div>
 
