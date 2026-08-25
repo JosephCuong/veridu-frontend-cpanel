@@ -127,6 +127,36 @@ export interface TimelineEventData {
   contentHtml?: string;
 }
 
+export interface MapLocationScripture {
+  reference: string;
+  book_slug: string;
+  chapter: number;
+  note?: string;
+  text: string;
+}
+
+export interface MapLocation {
+  id: string | number;
+  slug: string;
+  name: string;
+  name_en?: string;
+  name_original?: string;
+  meaning?: string;
+  region: string;
+  testament: 'cuu-uoc' | 'tan-uoc' | 'ca-hai' | string;
+  era: string;
+  latitude: number;
+  longitude: number;
+  importance_level?: number;
+  image_url?: string;
+  summary?: string;
+  description?: string;
+  events?: string[];
+  scriptures?: MapLocationScripture[];
+  theology?: string;
+  created_at?: string;
+}
+
 // Helper to normalize category names and determine layout type
 function normalizeText(text: string): string {
   return text
@@ -464,6 +494,81 @@ export async function fetchCharacterBySlug(slug: string): Promise<Character | nu
     };
   } catch (error) {
     console.error(`Lỗi khi tải nhân vật [${slug}] từ Supabase:`, error);
+    return null;
+  }
+}
+
+// ─── Map Locations Fetcher (Supabase Integration) ───────────────
+export async function fetchMapLocations(): Promise<MapLocation[]> {
+  try {
+    const { data, error } = await supabase
+      .from('map_locations')
+      .select('*')
+      .order('importance_level', { ascending: true })
+      .order('name', { ascending: true });
+
+    if (error || !data) return [];
+
+    return data.map((item: any) => ({
+      id: item.id,
+      slug: item.slug || '',
+      name: item.name,
+      name_en: item.name_en || '',
+      name_original: item.name_original || '',
+      meaning: item.meaning || '',
+      region: item.region || 'Giu-đê (Judea)',
+      testament: item.testament || 'tan-uoc',
+      era: item.era || 'Tân Ước',
+      latitude: Number(item.latitude),
+      longitude: Number(item.longitude),
+      importance_level: item.importance_level || 1,
+      image_url: item.image_url || '',
+      summary: item.summary || '',
+      description: item.description || '',
+      events: item.events || [],
+      scriptures: item.scriptures || [],
+      theology: item.theology || '',
+      created_at: item.created_at
+    }));
+  } catch (error) {
+    console.error('Lỗi khi tải danh sách địa danh bản đồ từ Supabase:', error);
+    return [];
+  }
+}
+
+export async function fetchMapLocationBySlug(slug: string): Promise<MapLocation | null> {
+  try {
+    const { data, error } = await supabase
+      .from('map_locations')
+      .select('*')
+      .eq('slug', slug)
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    return {
+      id: data.id,
+      slug: data.slug || '',
+      name: data.name,
+      name_en: data.name_en || '',
+      name_original: data.name_original || '',
+      meaning: data.meaning || '',
+      region: data.region || 'Giu-đê (Judea)',
+      testament: data.testament || 'tan-uoc',
+      era: data.era || 'Tân Ước',
+      latitude: Number(data.latitude),
+      longitude: Number(data.longitude),
+      importance_level: data.importance_level || 1,
+      image_url: data.image_url || '',
+      summary: data.summary || '',
+      description: data.description || '',
+      events: data.events || [],
+      scriptures: data.scriptures || [],
+      theology: data.theology || '',
+      created_at: data.created_at
+    };
+  } catch (error) {
+    console.error(`Lỗi khi tải địa danh [${slug}] từ Supabase:`, error);
     return null;
   }
 }
