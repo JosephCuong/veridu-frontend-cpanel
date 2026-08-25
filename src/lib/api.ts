@@ -926,3 +926,203 @@ export async function fetchUserCourseProgressFromSupabase(userId?: string) {
   }
   return [];
 }
+
+// 📚 ==========================================
+// 📚 THƯ VIỆN SÁCH & TÀI LIỆU (LIBRARY ITEMS & SANDBOX READER)
+// 📚 ==========================================
+
+export interface LibraryItemToc {
+  title: string;
+  page?: number;
+}
+
+export interface LibraryItem {
+  id: number;
+  slug: string;
+  title: string;
+  author: string;
+  category: string;
+  item_type: 'book' | 'document';
+  format: string;
+  pages_count: number;
+  file_size_label: string;
+  file_url?: string;
+  drive_file_id?: string;
+  cover_image_url?: string;
+  cover_bg_gradient?: string;
+  description?: string;
+  table_of_contents: LibraryItemToc[];
+  allow_read_online: boolean;
+  download_permission_level: 'public' | 'member' | 'privileged' | 'admin';
+  view_count: number;
+  download_count: number;
+  created_at?: string;
+}
+
+export async function fetchLibraryItems(itemType?: 'book' | 'document', category?: string): Promise<LibraryItem[]> {
+  try {
+    let query = supabase
+      .from('library_items')
+      .select('*')
+      .order('download_count', { ascending: false });
+
+    if (itemType) {
+      query = query.eq('item_type', itemType);
+    }
+
+    if (category && category !== 'all') {
+      query = query.eq('category', category);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    if (data && data.length > 0) {
+      return data.map((item: any) => ({
+        id: item.id,
+        slug: item.slug,
+        title: item.title,
+        author: item.author,
+        category: item.category,
+        item_type: item.item_type || 'book',
+        format: item.format || 'PDF',
+        pages_count: item.pages_count || 0,
+        file_size_label: item.file_size_label || '',
+        file_url: item.file_url || '',
+        drive_file_id: item.drive_file_id || '',
+        cover_image_url: item.cover_image_url || '',
+        cover_bg_gradient: item.cover_bg_gradient || 'from-amber-600 to-amber-950',
+        description: item.description || '',
+        table_of_contents: item.table_of_contents || [],
+        allow_read_online: item.allow_read_online !== false,
+        download_permission_level: item.download_permission_level || 'member',
+        view_count: item.view_count || 0,
+        download_count: item.download_count || 0,
+        created_at: item.created_at
+      }));
+    }
+  } catch (err) {
+    console.error('Lỗi khi tải danh sách sách/tài liệu từ Supabase:', err);
+  }
+  return [];
+}
+
+export async function fetchLibraryItemBySlug(slug: string): Promise<LibraryItem | null> {
+  try {
+    const { data, error } = await supabase
+      .from('library_items')
+      .select('*')
+      .eq('slug', slug)
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    // Tăng lượt xem (view_count) không đồng bộ
+    try {
+      await supabase
+        .from('library_items')
+        .update({ view_count: (data.view_count || 0) + 1 })
+        .eq('id', data.id);
+    } catch (_) {}
+
+    return {
+      id: data.id,
+      slug: data.slug,
+      title: data.title,
+      author: data.author,
+      category: data.category,
+      item_type: data.item_type || 'book',
+      format: data.format || 'PDF',
+      pages_count: data.pages_count || 0,
+      file_size_label: data.file_size_label || '',
+      file_url: data.file_url || '',
+      drive_file_id: data.drive_file_id || '',
+      cover_image_url: data.cover_image_url || '',
+      cover_bg_gradient: data.cover_bg_gradient || 'from-amber-600 to-amber-950',
+      description: data.description || '',
+      table_of_contents: data.table_of_contents || [],
+      allow_read_online: data.allow_read_online !== false,
+      download_permission_level: data.download_permission_level || 'member',
+      view_count: (data.view_count || 0) + 1,
+      download_count: data.download_count || 0,
+      created_at: data.created_at
+    };
+  } catch (err) {
+    console.error('Lỗi khi tải chi tiết sách/tài liệu:', err);
+    return null;
+  }
+}
+
+export async function checkUserDownloadQuota(userId?: string | number, userRole?: string): Promise<{
+  canDownload: boolean;
+  remainingQuota: number;
+  maxQuota: number;
+  isUnlimited: boolean;
+}> {
+  if (!userId) {
+    return { canDownload: false, remainingQuota: 0, maxQuota: 0, isUnlimited: false };
+  }
+
+  // GLV, Học Giả, Admin được tải không giới hạn
+  const isPrivileged = userRole === 'Giáo Lý Viên' || 
+                       userRole === 'Quản Trị Viên' || 
+                       userRole === 'Học Giả VERIDU' || 
+                       userRole === 'admin';
+
+  if (isPrivileged) {
+    return { canDownload: true, remainingQuota: 999, maxQuota: 999, isUnlimited: true };
+  }
+
+  const maxQuota = 5; // Học viên tiêu chuẩn: 5 lượt/ngày
+  try {
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    
+    // Đếm số lượt tải trong 24h qua từ bảng download_logs hoặc localStorage fallback
+    const { count, error } = await supabase
+      .from('download_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', String(userId))
+      .gte('downloaded_at', oneDayAgo);
+
+    const downloadsToday = (!error && typeof count === 'number') ? count : 0;
+    const remaining = Math.max(0, maxQuota - downloadsToday);
+
+    return {
+      canDownload: remaining > 0,
+      remainingQuota: remaining,
+      maxQuota: maxQuota,
+      isUnlimited: false
+    };
+  } catch (e) {
+    return { canDownload: true, remainingQuota: maxQuota, maxQuota: maxQuota, isUnlimited: false };
+  }
+}
+
+export async function recordDownloadItem(itemId: number, itemSlug: string, userId?: string | number) {
+  try {
+    // 1. Ghi log tải về
+    if (userId) {
+      await supabase.from('download_logs').insert({
+        user_id: String(userId),
+        item_id: itemId,
+        item_slug: itemSlug
+      });
+    }
+
+    // 2. Tăng số lượt tải của item
+    const { data } = await supabase
+      .from('library_items')
+      .select('download_count')
+      .eq('id', itemId)
+      .single();
+
+    if (data) {
+      await supabase
+        .from('library_items')
+        .update({ download_count: (data.download_count || 0) + 1 })
+        .eq('id', itemId);
+    }
+  } catch (err) {
+    console.error('Lỗi khi ghi nhận lượt tải:', err);
+  }
+}
