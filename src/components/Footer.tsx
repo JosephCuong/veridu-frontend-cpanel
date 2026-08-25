@@ -31,6 +31,13 @@ export default function Footer() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [pathname, setPathname] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setPathname(window.location.pathname);
+    }
+  }, []);
 
   useEffect(() => {
     // Detect theme state from documentElement
@@ -49,7 +56,11 @@ export default function Footer() {
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !email.trim()) return;
+    if (!email || !email.includes('@')) {
+      setStatus('error');
+      setMessage('Vui lòng nhập địa chỉ email hợp lệ.');
+      return;
+    }
 
     setStatus('loading');
     setMessage('');
@@ -57,19 +68,20 @@ export default function Footer() {
     try {
       const { error } = await supabase
         .from('newsletter_subscribers')
-        .insert([{ email: email.trim() }]);
+        .insert([{ email: email.trim().toLowerCase() }]);
 
-      if (!error) {
-        setStatus('success');
-        setMessage('Đăng ký nhận Lời Chúa thành công!');
-        setEmail('');
-      } else {
-        setStatus('error');
+      if (error) {
         if (error.code === '23505') {
-          setMessage('Email này đã được đăng ký.');
+          setStatus('error');
+          setMessage('Email này đã được đăng ký nhận bản tin trước đó.');
         } else {
-          setMessage('Có lỗi xảy ra, vui lòng thử lại sau.');
+          setStatus('error');
+          setMessage('Có lỗi xảy ra. Vui lòng thử lại sau.');
         }
+      } else {
+        setStatus('success');
+        setMessage('Đăng ký nhận bản tin Lời Chúa thành công!');
+        setEmail('');
       }
     } catch (error) {
       setStatus('error');
@@ -80,6 +92,10 @@ export default function Footer() {
   const logoSrc = isDarkMode 
     ? '/images/veridu_logo_light.png' 
     : '/images/veridu_logo_dark.png';
+
+  if (pathname?.startsWith('/thu-vien/doc/')) {
+    return null;
+  }
 
   return (
     <footer className="mt-auto relative w-full overflow-hidden bg-[var(--header-bg)] border-t border-[var(--border-card)] backdrop-blur-2xl transition-colors duration-300">

@@ -110,6 +110,11 @@ export default function LiturgicalHeader() {
     ? '/images/veridu_logo_light.png' 
     : '/images/veridu_logo_dark.png';
 
+  // Hide global header in dedicated document reader
+  if (pathname?.startsWith('/thu-vien/doc/')) {
+    return null;
+  }
+
   return (
     <header 
       className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 transform ${
