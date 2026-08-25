@@ -214,13 +214,17 @@ export default function TaiLieuPage() {
                       </span>
                     </div>
 
-                    <h3 className="font-serif font-black text-base sm:text-lg text-[var(--text-main)] group-hover:text-indigo-400 transition leading-snug">
-                      {doc.title}
-                    </h3>
+                    <Link href={`/thu-vien/tai-lieu/${doc.slug}`} className="block group/title">
+                      <h3 className="font-serif font-black text-base sm:text-lg text-[var(--text-main)] group-hover/title:text-indigo-400 transition leading-snug">
+                        {doc.title}
+                      </h3>
+                    </Link>
 
-                    <p className="font-serif text-xs text-[var(--text-muted)] line-clamp-2 italic leading-relaxed">
-                      &ldquo;{doc.description}&rdquo;
-                    </p>
+                    <Link href={`/thu-vien/tai-lieu/${doc.slug}`} className="block group/desc">
+                      <p className="font-serif text-xs text-[var(--text-muted)] line-clamp-2 italic leading-relaxed group-hover/desc:text-[var(--text-main)] transition-colors">
+                        &ldquo;{doc.description}&rdquo;
+                      </p>
+                    </Link>
 
                     <div className="flex items-center gap-4 text-[11px] text-[var(--text-muted)] pt-1">
                       <span>Biên soạn: <strong className="text-[var(--text-main)]">{doc.author}</strong></span>
@@ -235,13 +239,13 @@ export default function TaiLieuPage() {
                 {/* Right: Actions */}
                 <div className="flex items-center gap-3 w-full md:w-auto shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[var(--border-card)]">
                   
-                  {/* Read / Preview Online */}
+                  {/* View Detail & Presentation */}
                   <Link
-                    href={`/thu-vien/doc/${doc.slug}`}
+                    href={`/thu-vien/tai-lieu/${doc.slug}`}
                     className="flex-1 md:flex-initial py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-serif font-black text-xs flex items-center justify-center gap-1.5 transition shadow-md shadow-indigo-600/20"
                   >
                     <BookOpen className="w-3.5 h-3.5" />
-                    <span>Xem Trực Tuyến</span>
+                    <span>Xem &amp; Chiếu Slide</span>
                   </Link>
 
                   {/* Download */}

@@ -199,7 +199,10 @@ export default function TuSachPage() {
                 className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-amber-500/50 shadow-xl flex flex-col justify-between overflow-hidden group transition-all duration-300"
               >
                 {/* Book Cover Header Banner */}
-                <div className={`h-36 bg-gradient-to-br ${book.cover_bg_gradient || 'from-amber-700 to-slate-950'} p-5 flex flex-col justify-between relative overflow-hidden`}>
+                <Link
+                  href={`/thu-vien/sach/${book.slug}`}
+                  className={`h-36 bg-gradient-to-br ${book.cover_bg_gradient || 'from-amber-700 to-slate-950'} p-5 flex flex-col justify-between relative overflow-hidden block group-hover:opacity-95 transition-opacity`}
+                >
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none"></div>
                   
                   <div className="flex items-center justify-between relative z-10">
@@ -219,13 +222,15 @@ export default function TuSachPage() {
                       {book.title}
                     </h3>
                   </div>
-                </div>
+                </Link>
 
                 {/* Book Content & Summary */}
                 <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
-                  <p className="font-serif text-xs text-[var(--text-muted)] line-clamp-3 leading-relaxed italic">
-                    &ldquo;{book.description}&rdquo;
-                  </p>
+                  <Link href={`/thu-vien/sach/${book.slug}`} className="block group/desc">
+                    <p className="font-serif text-xs text-[var(--text-muted)] line-clamp-3 leading-relaxed italic group-hover/desc:text-[var(--text-main)] transition-colors">
+                      &ldquo;{book.description}&rdquo;
+                    </p>
+                  </Link>
 
                   <div className="space-y-3 pt-3 border-t border-[var(--border-card)]">
                     
@@ -237,13 +242,13 @@ export default function TuSachPage() {
                     {/* Dual Action Buttons */}
                     <div className="grid grid-cols-2 gap-2 pt-1">
                       
-                      {/* Read Online in Sandbox */}
+                      {/* View Detail & Read Online */}
                       <Link
-                        href={`/thu-vien/doc/${book.slug}`}
+                        href={`/thu-vien/sach/${book.slug}`}
                         className="py-2.5 px-3 rounded-xl bg-amber-500 text-slate-950 font-serif font-black text-xs flex items-center justify-center gap-1.5 hover:bg-amber-400 transition shadow-md shadow-amber-500/20"
                       >
                         <BookOpen className="w-3.5 h-3.5" />
-                        <span>Đọc Trực Tuyến</span>
+                        <span>Xem &amp; Đọc Sách</span>
                       </Link>
 
                       {/* Download File */}
@@ -251,7 +256,7 @@ export default function TuSachPage() {
                         type="button"
                         onClick={() => handleDownload(book)}
                         disabled={downloadingSlug === book.slug}
-                        className="py-2.5 px-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500/60 text-xs font-bold text-[var(--text-main)] flex items-center justify-center gap-1.5 transition disabled:opacity-50"
+                        className="py-2.5 px-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500 text-[var(--text-main)] font-serif font-bold text-xs flex items-center justify-center gap-1.5 hover:text-amber-500 transition shadow-sm disabled:opacity-50"
                       >
                         {downloadingSlug === book.slug ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { LibraryItem, fetchLibraryItemBySlug } from '@/lib/api';
 import BookFlipReader from '@/components/BookFlipReader';
+import SlidePresentationPlayer from '@/components/SlidePresentationPlayer';
 import { Loader2, AlertCircle } from 'lucide-react';
 
 export default function DocumentDedicatedReaderPage() {
@@ -33,7 +34,7 @@ export default function DocumentDedicatedReaderPage() {
       <div className="min-h-screen w-full bg-[#090d16] flex flex-col items-center justify-center space-y-4">
         <Loader2 className="w-10 h-10 text-amber-500 animate-spin" />
         <p className="font-serif text-sm text-amber-400/80 italic animate-pulse">
-          Đang khởi tạo không gian đọc sách A4 Stained-Glass &amp; nạp tác phẩm...
+          Đang khởi tạo không gian đọc sách &amp; nạp tác phẩm...
         </p>
       </div>
     );
@@ -68,6 +69,16 @@ export default function DocumentDedicatedReaderPage() {
     }
     return item.file_url || '';
   };
+
+  // Smart Engine Routing: Presentation 16:9 vs Book Flip A4
+  const isPresentation = 
+    item.format?.toLowerCase().includes('pptx') || 
+    item.format?.toLowerCase().includes('slide') || 
+    !!(item.google_slide_id && item.google_slide_id.length > 3);
+
+  if (isPresentation) {
+    return <SlidePresentationPlayer item={item} streamUrl={getStreamUrl()} />;
+  }
 
   return <BookFlipReader item={item} streamUrl={getStreamUrl()} />;
 }

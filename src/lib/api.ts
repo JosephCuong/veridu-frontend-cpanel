@@ -936,6 +936,14 @@ export interface LibraryItemToc {
   page?: number;
 }
 
+export interface LibraryAttachment {
+  name: string;
+  url: string;
+  file_type: string;
+  size_label?: string;
+  description?: string;
+}
+
 export interface LibraryItem {
   id: number;
   slug: string;
@@ -948,9 +956,12 @@ export interface LibraryItem {
   file_size_label: string;
   file_url?: string;
   drive_file_id?: string;
+  google_slide_id?: string;
   cover_image_url?: string;
   cover_bg_gradient?: string;
   description?: string;
+  full_summary_html?: string;
+  attachments?: LibraryAttachment[];
   table_of_contents: LibraryItemToc[];
   allow_read_online: boolean;
   download_permission_level: 'public' | 'member' | 'privileged' | 'admin';
@@ -990,9 +1001,12 @@ export async function fetchLibraryItems(itemType?: 'book' | 'document', category
         file_size_label: item.file_size_label || '',
         file_url: item.file_url || '',
         drive_file_id: item.drive_file_id || '',
+        google_slide_id: item.google_slide_id || '',
         cover_image_url: item.cover_image_url || '',
         cover_bg_gradient: item.cover_bg_gradient || 'from-amber-600 to-amber-950',
         description: item.description || '',
+        full_summary_html: item.full_summary_html || '',
+        attachments: item.attachments || [],
         table_of_contents: item.table_of_contents || [],
         allow_read_online: item.allow_read_online !== false,
         download_permission_level: item.download_permission_level || 'member',
@@ -1037,9 +1051,12 @@ export async function fetchLibraryItemBySlug(slug: string): Promise<LibraryItem 
       file_size_label: data.file_size_label || '',
       file_url: data.file_url || '',
       drive_file_id: data.drive_file_id || '',
+      google_slide_id: data.google_slide_id || '',
       cover_image_url: data.cover_image_url || '',
       cover_bg_gradient: data.cover_bg_gradient || 'from-amber-600 to-amber-950',
       description: data.description || '',
+      full_summary_html: data.full_summary_html || '',
+      attachments: data.attachments || [],
       table_of_contents: data.table_of_contents || [],
       allow_read_online: data.allow_read_online !== false,
       download_permission_level: data.download_permission_level || 'member',
