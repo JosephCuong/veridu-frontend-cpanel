@@ -107,24 +107,44 @@ export interface Character {
   created_at?: string;
 }
 
+export interface TimelineEventScripture {
+  reference: string;
+  book_slug: string;
+  chapter: number;
+  note?: string;
+  text: string;
+}
+
+export interface TimelineEventEntity {
+  name: string;
+  slug?: string;
+}
+
 export interface TimelineEventData {
   id: string | number;
+  slug: string;
+  title: string;
+  subtitle?: string;
+  year_label: string;
+  order_year: number;
+  era_id: string;
+  era_name: string;
+  category: 'cuu-uoc' | 'tan-uoc' | 'giao-hoi' | string;
+  image_url?: string;
+  summary?: string;
+  content?: string;
+  theology?: string;
+  key_figures?: TimelineEventEntity[];
+  locations?: TimelineEventEntity[];
+  scriptures?: TimelineEventScripture[];
+  article_slug?: string;
+  created_at?: string;
+  // Compatibility aliases
+  timePeriod?: string;
   eraId?: string;
   eraName?: string;
-  title: string;
-  timePeriod?: string;
-  icon?: string;
-  category?: string;
-  articleSlug?: string;
-  interactiveHtmlUrl?: string;
   thumbnail?: string;
   description?: string;
-  year_label?: string;
-  order_year?: number;
-  summary?: string;
-  theologicalMeaning?: string;
-  scripture?: string;
-  contentHtml?: string;
 }
 
 export interface MapLocationScripture {
@@ -408,19 +428,74 @@ export async function fetchTimelineEvents(): Promise<TimelineEventData[]> {
 
     return data.map((t: any) => ({
       id: t.id,
+      slug: t.slug || `event-${t.id}`,
       title: t.title,
-      timePeriod: t.year_label,
+      subtitle: t.subtitle || '',
       year_label: t.year_label,
-      order_year: t.order_year,
-      description: t.description,
-      category: t.category || 'Lịch Sử Cứu Độ',
+      order_year: Number(t.order_year),
+      era_id: t.era_id || 'era-1',
+      era_name: t.era_name || 'Khởi Nguyên & Thời Các Tổ Phụ',
+      category: t.category || 'cuu-uoc',
+      image_url: t.image_url || '',
+      summary: t.summary || '',
+      content: t.content || '',
+      theology: t.theology || '',
+      key_figures: t.key_figures || [],
+      locations: t.locations || [],
+      scriptures: t.scriptures || [],
+      article_slug: t.article_slug || '',
+      created_at: t.created_at,
+      // Compatibility aliases
+      timePeriod: t.year_label,
+      eraId: t.era_id,
+      eraName: t.era_name,
       thumbnail: t.image_url,
-      eraId: 'salvation_history',
-      eraName: 'Lịch Sử Cứu Độ'
+      description: t.description || t.summary
     }));
   } catch (error) {
     console.error('Error fetching timeline events:', error);
     return [];
+  }
+}
+
+export async function fetchTimelineEventBySlug(slug: string): Promise<TimelineEventData | null> {
+  try {
+    const { data, error } = await supabase
+      .from('timeline_events')
+      .select('*')
+      .eq('slug', slug)
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    return {
+      id: data.id,
+      slug: data.slug || `event-${data.id}`,
+      title: data.title,
+      subtitle: data.subtitle || '',
+      year_label: data.year_label,
+      order_year: Number(data.order_year),
+      era_id: data.era_id || 'era-1',
+      era_name: data.era_name || 'Khởi Nguyên & Thời Các Tổ Phụ',
+      category: data.category || 'cuu-uoc',
+      image_url: data.image_url || '',
+      summary: data.summary || '',
+      content: data.content || '',
+      theology: data.theology || '',
+      key_figures: data.key_figures || [],
+      locations: data.locations || [],
+      scriptures: data.scriptures || [],
+      article_slug: data.article_slug || '',
+      created_at: data.created_at,
+      timePeriod: data.year_label,
+      eraId: data.era_id,
+      eraName: data.era_name,
+      thumbnail: data.image_url,
+      description: data.description || data.summary
+    };
+  } catch (error) {
+    console.error(`Lỗi khi tải biến cố [${slug}] từ Supabase:`, error);
+    return null;
   }
 }
 
