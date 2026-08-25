@@ -1,76 +1,103 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { 
   BookOpen, 
-  Download, 
   Search, 
-  Filter, 
-  Eye, 
-  ChevronRight, 
+  Download, 
   Sparkles, 
-  BookmarkCheck,
+  Layers, 
+  CheckCircle2, 
+  AlertCircle, 
+  Loader2, 
+  LayoutGrid, 
+  ListFilter,
+  Eye,
   ShieldCheck,
-  FileText,
-  Loader2,
-  CheckCircle2,
-  AlertCircle
+  Bookmark
 } from 'lucide-react';
-import { LibraryItem, fetchLibraryItems, checkUserDownloadQuota } from '@/lib/api';
+import { fetchLibraryItems, LibraryItem, checkUserDownloadQuota } from '@/lib/api';
 import { getStoredUser, UserProfile } from '@/lib/auth';
 import AuthModal from '@/components/AuthModal';
+import LibraryBookshelfGrid from '@/components/LibraryBookshelfGrid';
+import LibraryEditorialList from '@/components/LibraryEditorialList';
 
-export default function TuSachPage() {
+const CATEGORIES = [
+  { id: 'all', name: 'Tất Cả Tủ Sách' },
+  { id: 'Kinh Thánh', name: 'Kinh Thánh' },
+  { id: 'Thần Học', name: 'Thần Học & Giáo Lý' },
+  { id: 'Linh Đạo', name: 'Linh Đạo & Tu Đức' },
+  { id: 'Giáo Phụ', name: 'Giáo Phụ Triết Học' },
+  { id: 'Hạnh Các Thánh', name: 'Hạnh Các Thánh' }
+];
+
+export default function BookLibraryPage() {
   const [books, setBooks] = useState<LibraryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'shelf' | 'list'>('shelf');
+
+  // Auth & Download Quota
   const [user, setUser] = useState<UserProfile | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [downloadingSlug, setDownloadingSlug] = useState<string | null>(null);
   const [downloadMessage, setDownloadMessage] = useState<{ text: string; isError: boolean } | null>(null);
 
-  const CATEGORIES = [
-    { id: 'all', name: 'Tất Cả Sách' },
-    { id: 'kinh-thanh', name: 'Nghiên Cứu Kinh Thánh' },
-    { id: 'than-hoc', name: 'Thần Học & Tín Lý' },
-    { id: 'linh-dao', name: 'Linh Đạo & Suy Niệm' },
-    { id: 'giao-phu', name: 'Giáo Phụ & Lịch Sử' },
-    { id: 'hanh-cac-thanh', name: 'Hạnh Các Thánh' }
-  ];
-
   useEffect(() => {
     setUser(getStoredUser());
-
-    async function loadBooks() {
-      setIsLoading(true);
-      const data = await fetchLibraryItems('book');
-      setBooks(data);
-      setIsLoading(false);
-    }
     loadBooks();
-  }, []);
+  }, [selectedCategory]);
+
+  const loadBooks = async () => {
+    setIsLoading(true);
+    const data = await fetchLibraryItems('book', selectedCategory);
+    setBooks(data);
+    setIsLoading(false);
+  };
+
+  const filteredBooks = books.filter((b) => {
+    const matchSearch = 
+      b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      b.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (b.description && b.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchSearch;
+  });
 
   const handleDownload = async (book: LibraryItem) => {
     setDownloadMessage(null);
+    const currentUser = getStoredUser();
 
-    if (!user) {
+    if (!currentUser) {
+      setUser(null);
       setShowAuthModal(true);
       return;
     }
 
     setDownloadingSlug(book.slug);
-    try {
-      const res = await fetch(`/api/library/download/${book.slug}?userId=${user.id}&userRole=${encodeURIComponent(user.role || 'Học Viên')}`);
-      const result = await res.json();
 
-      if (!res.ok) {
-        throw new Error(result.error || 'Không thể xử lý yêu cầu tải về.');
+    try {
+      const quota = await checkUserDownloadQuota(currentUser.id, currentUser.role);
+      if (!quota.canDownload && !quota.isUnlimited) {
+        setDownloadMessage({
+          text: `Bạn đã sử dụng hết 5 lượt tải miễn phí trong hôm nay. Vui lòng thử lại sau 24h hoặc liên hệ Admin.`,
+          isError: true
+        });
+        setDownloadingSlug(null);
+        return;
       }
 
-      setDownloadMessage({ text: `Đang tải cuốn "${book.title}" về máy thành công!`, isError: false });
+      const res = await fetch(`/api/library/download/${book.slug}?userId=${currentUser.id}&userRole=${encodeURIComponent(currentUser.role || 'Học Viên')}`);
+      const result = await res.json();
+
+      if (!res.ok) throw new Error(result.error || 'Lỗi khi tải file.');
+
+      setDownloadMessage({
+        text: `Đang tải tác phẩm "${book.title}". Lượt tải còn lại trong ngày: ${quota.isUnlimited ? 'Vô hạn' : Math.max(0, quota.remainingQuota - 1) + '/5'}`,
+        isError: false
+      });
 
       if (result.downloadUrl) {
         const link = document.createElement('a');
@@ -82,81 +109,119 @@ export default function TuSachPage() {
         document.body.removeChild(link);
       }
     } catch (err: any) {
-      setDownloadMessage({ text: err.message || 'Lỗi khi tải tài liệu.', isError: true });
+      setDownloadMessage({
+        text: err.message || 'Lỗi không xác định khi tải tài liệu.',
+        isError: true
+      });
     } finally {
       setDownloadingSlug(null);
     }
   };
 
-  const filteredBooks = books.filter((book) => {
-    const matchCategory = selectedCategory === 'all' || book.category === selectedCategory;
-    const matchQuery = book.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                       book.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                       (book.description && book.description.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchCategory && matchQuery;
-  });
+  // Stats calculation
+  const totalViews = books.reduce((acc, curr) => acc + (curr.view_count || 0), 0);
+  const totalDownloads = books.reduce((acc, curr) => acc + (curr.download_count || 0), 0);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col font-sans transition-colors duration-300 pt-24 sm:pt-28 md:pt-32 pb-24">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] pt-24 sm:pt-28 pb-20 font-sans">
       
-      {/* ── 1. HERO HEADER ── */}
-      <section className="relative w-full py-12 px-4 sm:px-6 lg:px-8 border-b border-[var(--border-card)]">
-        <div className="max-w-6xl mx-auto text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-bold uppercase tracking-widest shadow-sm">
-            <BookOpen className="w-3.5 h-3.5 text-amber-500" />
-            <span>Kho Tàng Văn Bản &amp; Tri Thức Công Giáo</span>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+        
+        {/* ── 1. HERO HEADER ── */}
+        <section className="text-center space-y-4 max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-serif italic">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Kho Tàng Văn Khố &amp; Tri Thức Đức Tin Công Giáo</span>
           </div>
 
-          <h1 className="font-serif font-black text-3xl sm:text-5xl lg:text-6xl text-[var(--text-main)] leading-tight tracking-tight">
-            Tủ Sách Nghiên Cứu
+          <h1 className="font-serif font-black text-3xl sm:text-5xl text-[var(--text-main)] tracking-tight">
+            Tủ Sách Nghiên Cứu Thần Học
           </h1>
 
-          <p className="font-serif text-sm sm:text-lg text-[var(--text-muted)] leading-relaxed italic max-w-2xl mx-auto">
-            &ldquo;Tuyển tập các tác phẩm kinh điển về Kinh Thánh, Thần Học, Giáo Phụ, Linh Đạo và Hạnh Các Thánh được số hóa phục vụ học tập và nghiên cứu đức tin.&rdquo;
+          <p className="font-serif text-sm sm:text-base text-[var(--text-muted)] leading-relaxed">
+            Tra cứu và thưởng thức các tác phẩm Kinh Thánh, Thông Điệp Tông Tòa, Giáo Phụ học và tác phẩm tu đức với Trình Đọc Lật Trang A4 nguyên bản.
           </p>
 
-          {/* Quick Switch to Documents */}
-          <div className="pt-2">
-            <Link
-              href="/thu-vien/tai-lieu"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs font-bold text-[var(--text-muted)] hover:text-amber-500 hover:border-amber-500/40 transition"
-            >
-              <FileText className="w-3.5 h-3.5 text-amber-500" />
-              <span>Chuyển sang Kho Tài Liệu Mục Vụ &amp; Giáo Án &rarr;</span>
-            </Link>
+          {/* Quick Stats Bar */}
+          <div className="flex flex-wrap items-center justify-center gap-6 pt-2 text-xs text-[var(--text-muted)] font-serif">
+            <span className="flex items-center gap-1.5">
+              <BookOpen className="w-4 h-4 text-amber-500" />
+              <strong className="text-[var(--text-main)]">{books.length}</strong> Đầu Sách Nghiên Cứu
+            </span>
+            <span>•</span>
+            <span className="flex items-center gap-1.5">
+              <Eye className="w-4 h-4 text-amber-500" />
+              <strong className="text-[var(--text-main)]">{totalViews.toLocaleString()}</strong> Lượt Đọc
+            </span>
+            <span>•</span>
+            <span className="flex items-center gap-1.5">
+              <Download className="w-4 h-4 text-amber-500" />
+              <strong className="text-[var(--text-main)]">{totalDownloads.toLocaleString()}</strong> Lượt Tải
+            </span>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ── 2. SEARCH & FILTER BAR ── */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-6">
-        
-        {/* Search and Category Pills */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        {/* ── 2. CONTROLS BAR: SEARCH, FILTERS & VIEW MODE ── */}
+        <section className="p-4 sm:p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-4">
           
-          {/* Search Box */}
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm tên sách, tác giả, chủ đề..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs text-[var(--text-main)] focus:outline-none focus:border-amber-500 transition shadow-inner"
-            />
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            
+            {/* Search Input */}
+            <div className="relative w-full md:w-96">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+              <input
+                type="text"
+                placeholder="Tìm theo tên sách, tác giả, nội dung..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-11 pr-4 py-2.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs sm:text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-amber-500 transition"
+              />
+            </div>
+
+            {/* Dual View Mode Switcher */}
+            <div className="flex items-center gap-1 p-1 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] self-end md:self-auto">
+              <button
+                type="button"
+                onClick={() => setViewMode('shelf')}
+                className={`px-3 py-1.5 rounded-xl font-serif font-bold text-xs flex items-center gap-1.5 transition ${
+                  viewMode === 'shelf'
+                    ? 'bg-amber-500 text-slate-950 shadow font-black'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                }`}
+                title="Xem dạng Kệ Sách 3D Vatican"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>Kệ Sách 3D</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-1.5 rounded-xl font-serif font-bold text-xs flex items-center gap-1.5 transition ${
+                  viewMode === 'list'
+                    ? 'bg-amber-500 text-slate-950 shadow font-black'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                }`}
+                title="Xem dạng Danh Sách Thẻ Kính Màu"
+              >
+                <ListFilter className="w-3.5 h-3.5" />
+                <span>Danh Sách Thẻ</span>
+              </button>
+            </div>
+
           </div>
 
           {/* Category Filter Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 border-t border-[var(--border-card)]">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat.id}
                 type="button"
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition border ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-serif whitespace-nowrap transition ${
                   selectedCategory === cat.id
-                    ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md font-black'
-                    : 'bg-[var(--bg-card)] border-[var(--border-card)] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-amber-500/40'
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
+                    : 'bg-[var(--bg-main)] text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--border-card)]'
                 }`}
               >
                 {cat.name}
@@ -164,25 +229,25 @@ export default function TuSachPage() {
             ))}
           </div>
 
-        </div>
+        </section>
 
-        {/* Global Download Feedback Banner */}
+        {/* Download Feedback Alert */}
         {downloadMessage && (
-          <div className={`p-3 rounded-2xl text-xs font-bold flex items-center gap-2 animate-fadeIn ${
+          <div className={`p-4 rounded-2xl text-xs font-bold flex items-center gap-2 animate-fadeIn ${
             downloadMessage.isError
               ? 'bg-red-500/10 border border-red-500/30 text-red-400'
               : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
           }`}>
-            {downloadMessage.isError ? <AlertCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+            {downloadMessage.isError ? <AlertCircle className="w-4 h-4 shrink-0" /> : <CheckCircle2 className="w-4 h-4 shrink-0" />}
             <span>{downloadMessage.text}</span>
           </div>
         )}
 
-        {/* ── 3. BOOKS GRID ── */}
+        {/* ── 3. BOOKS DISPLAY (3D SHELF / EDITORIAL LIST) ── */}
         {isLoading ? (
           <div className="py-20 text-center space-y-3">
             <Loader2 className="w-8 h-8 text-amber-500 animate-spin mx-auto" />
-            <p className="font-serif text-sm text-[var(--text-muted)] italic">Đang tải tủ sách thư viện...</p>
+            <p className="font-serif text-sm text-[var(--text-muted)] italic">Đang sắp xếp tủ sách thư viện...</p>
           </div>
         ) : filteredBooks.length === 0 ? (
           <div className="py-20 text-center bg-[var(--bg-card)] rounded-3xl border border-[var(--border-card)] space-y-3">
@@ -191,92 +256,23 @@ export default function TuSachPage() {
               Không tìm thấy cuốn sách nào phù hợp với bộ lọc.
             </p>
           </div>
+        ) : viewMode === 'shelf' ? (
+          <LibraryBookshelfGrid
+            items={filteredBooks}
+            itemType="book"
+            onDownload={handleDownload}
+            downloadingSlug={downloadingSlug}
+          />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredBooks.map((book) => (
-              <div
-                key={book.id}
-                className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-amber-500/50 shadow-xl flex flex-col justify-between overflow-hidden group transition-all duration-300"
-              >
-                {/* Book Cover Header Banner */}
-                <Link
-                  href={`/thu-vien/sach/${book.slug}`}
-                  className={`h-36 bg-gradient-to-br ${book.cover_bg_gradient || 'from-amber-700 to-slate-950'} p-5 flex flex-col justify-between relative overflow-hidden block group-hover:opacity-95 transition-opacity`}
-                >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none"></div>
-                  
-                  <div className="flex items-center justify-between relative z-10">
-                    <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-black/40 backdrop-blur-md text-amber-300 border border-white/10">
-                      {book.format}
-                    </span>
-                    <span className="text-[11px] text-white/80 font-mono font-semibold">
-                      {book.pages_count > 0 ? `${book.pages_count} trang` : ''} {book.file_size_label ? `• ${book.file_size_label}` : ''}
-                    </span>
-                  </div>
-
-                  <div className="relative z-10">
-                    <span className="text-[11px] text-amber-200/90 font-serif italic block truncate">
-                      {book.author}
-                    </span>
-                    <h3 className="font-serif font-black text-lg text-white leading-snug drop-shadow-md line-clamp-2">
-                      {book.title}
-                    </h3>
-                  </div>
-                </Link>
-
-                {/* Book Content & Summary */}
-                <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
-                  <Link href={`/thu-vien/sach/${book.slug}`} className="block group/desc">
-                    <p className="font-serif text-xs text-[var(--text-muted)] line-clamp-3 leading-relaxed italic group-hover/desc:text-[var(--text-main)] transition-colors">
-                      &ldquo;{book.description}&rdquo;
-                    </p>
-                  </Link>
-
-                  <div className="space-y-3 pt-3 border-t border-[var(--border-card)]">
-                    
-                    <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)]">
-                      <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" /> {book.view_count} đọc</span>
-                      <span className="flex items-center gap-1"><Download className="w-3.5 h-3.5 text-amber-500" /> {book.download_count} tải</span>
-                    </div>
-
-                    {/* Dual Action Buttons */}
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      
-                      {/* View Detail & Read Online */}
-                      <Link
-                        href={`/thu-vien/sach/${book.slug}`}
-                        className="py-2.5 px-3 rounded-xl bg-amber-500 text-slate-950 font-serif font-black text-xs flex items-center justify-center gap-1.5 hover:bg-amber-400 transition shadow-md shadow-amber-500/20"
-                      >
-                        <BookOpen className="w-3.5 h-3.5" />
-                        <span>Xem &amp; Đọc Sách</span>
-                      </Link>
-
-                      {/* Download File */}
-                      <button
-                        type="button"
-                        onClick={() => handleDownload(book)}
-                        disabled={downloadingSlug === book.slug}
-                        className="py-2.5 px-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500 text-[var(--text-main)] font-serif font-bold text-xs flex items-center justify-center gap-1.5 hover:text-amber-500 transition shadow-sm disabled:opacity-50"
-                      >
-                        {downloadingSlug === book.slug ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <Download className="w-3.5 h-3.5 text-amber-500" />
-                        )}
-                        <span>Tải Về</span>
-                      </button>
-
-                    </div>
-
-                  </div>
-                </div>
-
-              </div>
-            ))}
-          </div>
+          <LibraryEditorialList
+            items={filteredBooks}
+            itemType="book"
+            onDownload={handleDownload}
+            downloadingSlug={downloadingSlug}
+          />
         )}
 
-      </section>
+      </div>
 
       {/* Auth Modal */}
       {showAuthModal && (
