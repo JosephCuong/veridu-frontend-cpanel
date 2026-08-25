@@ -1,70 +1,76 @@
 import React from 'react';
-import Image from 'next/image';
+import { Metadata } from 'next';
 import { fetchCharacters } from '@/lib/api';
-import { BookOpen, Sparkles, User, BookMarked, Target } from 'lucide-react';
-import Link from 'next/link';
+import CharacterExplorer from '@/components/CharacterExplorer';
+import { Sparkles, Scroll, BookOpen, Crown } from 'lucide-react';
 
-export const revalidate = 3600; // Cache for 1 hour
+export const revalidate = 3600; // Cache for 1 hour with ISR
+
+export const metadata: Metadata = {
+  title: 'Nhân Vật Kinh Thánh | Thư Viện Wiki VERIDU',
+  description: 'Khám phá tiểu sử, niên biểu lịch sử, ý nghĩa thần học và các trích đoạn Kinh Thánh của các nhân vật then chốt trong Lịch sử Cứu Độ.',
+  openGraph: {
+    title: 'Nhân Vật Kinh Thánh | VERIDU',
+    description: 'Bản đồ nhân vật và bách khoa toàn thư đức tin Công giáo về các nhân vật Cựu Ước và Tân Ước.',
+  }
+};
 
 export default async function CharactersPage() {
   const characters = await fetchCharacters();
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] transition-colors duration-300 flex flex-col font-sans pt-24 sm:pt-28 md:pt-36 pb-16">
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 w-full space-y-12">
-        <div className="text-center space-y-4 max-w-3xl mx-auto">
-          <span className="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Hệ Thống Nhân Vật
-          </span>
-          <h1 className="font-serif font-black text-3xl sm:text-5xl text-[var(--text-main)]">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] transition-colors duration-300 flex flex-col font-sans pt-24 sm:pt-28 md:pt-32 pb-20">
+      
+      {/* ── Top Hero Header Section ── */}
+      <section className="relative overflow-hidden py-8 sm:py-12 px-4 sm:px-6 lg:px-8 border-b border-[var(--border-card)]/50 bg-gradient-to-b from-amber-500/5 via-transparent to-transparent">
+        
+        {/* Subtle Stained-Glass Ambient Blur */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 sm:w-[600px] h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
+
+        <div className="max-w-4xl mx-auto text-center space-y-5">
+          
+          {/* Catholic Liturgical Tag */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-bold uppercase tracking-widest shadow-sm">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <span>Kho Tàng Lịch Sử Cứu Độ (Heilsgeschichte)</span>
+          </div>
+
+          {/* Main Title */}
+          <h1 className="font-serif font-black text-3xl sm:text-5xl lg:text-6xl text-[var(--text-main)] tracking-tight leading-tight">
             Nhân Vật Kinh Thánh
           </h1>
-          <p className="text-[var(--text-muted)] text-base leading-relaxed">
-            Khám phá tiểu sử, vai trò và ý nghĩa thần học của các nhân vật quan trọng trong Lịch sử Cứu Độ.
+
+          {/* Subtitle */}
+          <p className="font-serif text-sm sm:text-lg text-[var(--text-muted)] max-w-2xl mx-auto leading-relaxed italic">
+            &ldquo;Khám phá hành trình đức tin, tiểu sử lịch sử và ý nghĩa thần học sâu sắc của các Tổ phụ, Ngôn sứ, Vua và các Thánh Tông đồ.&rdquo;
           </p>
+
+          {/* Quick Stats Badges */}
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-[var(--text-muted)]">
+            <div className="flex items-center gap-1.5 bg-[var(--bg-card)] px-3 py-1.5 rounded-xl border border-[var(--border-card)] shadow-sm">
+              <Scroll className="w-3.5 h-3.5 text-amber-500" />
+              <span>Cựu Ước &amp; Tân Ước</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 bg-[var(--bg-card)] px-3 py-1.5 rounded-xl border border-[var(--border-card)] shadow-sm">
+              <BookOpen className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Trích dẫn Kinh Thánh Phụng Vụ</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 bg-[var(--bg-card)] px-3 py-1.5 rounded-xl border border-[var(--border-card)] shadow-sm">
+              <Crown className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Hồ Sơ Wiki Toàn Diện</span>
+            </div>
+          </div>
+
         </div>
+      </section>
 
-        {characters.length === 0 ? (
-          <div className="text-center py-20 bg-[var(--bg-card)] rounded-3xl border border-[var(--border-card)]">
-            <User className="w-12 h-12 text-[var(--text-muted)] mx-auto mb-4 opacity-50" />
-            <p className="text-[var(--text-muted)]">Chưa có dữ liệu nhân vật. Vui lòng cập nhật từ hệ thống.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {characters.map((char) => (
-              <div key={char.id} className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-6 hover:border-amber-500/50 hover:shadow-xl transition-all flex flex-col h-full space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 overflow-hidden flex-shrink-0 flex items-center justify-center text-amber-500 relative">
-                    {char.avatar_url ? (
-                      <Image src={char.avatar_url} alt={char.name} fill className="object-cover" sizes="(max-width: 64px) 100vw, 64px" />
-                    ) : (
-                      <User className="w-8 h-8 opacity-50" />
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="font-serif font-bold text-xl text-[var(--text-main)]">{char.name}</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {char.role && <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 uppercase tracking-wider">{char.role}</span>}
-                      {char.era && <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 uppercase tracking-wider">{char.era}</span>}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-sm text-[var(--text-muted)] line-clamp-3 leading-relaxed flex-1" dangerouslySetInnerHTML={{ __html: char.biography || '' }} />
-
-                {char.theology && (
-                  <div className="pt-4 border-t border-[var(--border-card)]">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-500 uppercase tracking-wider mb-2">
-                      <Target className="w-3.5 h-3.5" /> Bài Học Thần Học
-                    </div>
-                    <p className="text-sm italic text-[var(--text-main)] line-clamp-2">{char.theology}</p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+      {/* ── Main Interactive Directory Container ── */}
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+        <CharacterExplorer initialCharacters={characters} />
       </main>
+
     </div>
   );
 }

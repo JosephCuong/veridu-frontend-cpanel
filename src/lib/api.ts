@@ -71,16 +71,40 @@ export interface CourseDetail extends Course {
   lessons: Lesson[];
 }
 
+export interface CharacterScripture {
+  reference: string;
+  book_slug: string;
+  chapter: number;
+  note?: string;
+  text: string;
+}
+
+export interface CharacterRelationship {
+  name: string;
+  role: string;
+  slug?: string;
+}
+
 export interface Character {
   id: string | number;
+  slug: string;
   name: string;
-  biography?: string;
-  role?: string;
-  era?: string;
-  theology?: string;
+  original_name?: string;
+  meaning?: string;
+  testament: 'cuu-uoc' | 'tan-uoc' | string;
+  role: string;
+  era: string;
+  feast_day?: string;
   avatar_url?: string;
-  slug?: string;
-  description?: string;
+  cover_image?: string;
+  short_description?: string;
+  biography?: string;
+  scriptures?: CharacterScripture[];
+  theology?: string;
+  virtues?: string[];
+  relationships?: CharacterRelationship[];
+  timeline_order?: number;
+  created_at?: string;
 }
 
 export interface TimelineEventData {
@@ -376,22 +400,71 @@ export async function fetchCharacters(): Promise<Character[]> {
     const { data, error } = await supabase
       .from('characters')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('timeline_order', { ascending: true });
 
     if (error || !data) return [];
 
     return data.map((p: any) => ({
       id: p.id,
+      slug: p.slug || '',
       name: p.name,
-      biography: p.biography || '',
+      original_name: p.original_name || '',
+      meaning: p.meaning || '',
+      testament: p.testament || 'cuu-uoc',
       role: p.role || '',
       era: p.era || '',
+      feast_day: p.feast_day || '',
+      avatar_url: p.avatar_url || '',
+      cover_image: p.cover_image || '',
+      short_description: p.short_description || '',
+      biography: p.biography || '',
+      scriptures: p.scriptures || [],
       theology: p.theology || '',
-      avatar_url: p.avatar_url || ''
+      virtues: p.virtues || [],
+      relationships: p.relationships || [],
+      timeline_order: p.timeline_order || 100,
+      created_at: p.created_at
     }));
   } catch (error) {
     console.error('Lỗi khi tải danh sách nhân vật từ Supabase', error);
     return [];
+  }
+}
+
+export async function fetchCharacterBySlug(slug: string): Promise<Character | null> {
+  try {
+    const { data, error } = await supabase
+      .from('characters')
+      .select('*')
+      .eq('slug', slug)
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    return {
+      id: data.id,
+      slug: data.slug || '',
+      name: data.name,
+      original_name: data.original_name || '',
+      meaning: data.meaning || '',
+      testament: data.testament || 'cuu-uoc',
+      role: data.role || '',
+      era: data.era || '',
+      feast_day: data.feast_day || '',
+      avatar_url: data.avatar_url || '',
+      cover_image: data.cover_image || '',
+      short_description: data.short_description || '',
+      biography: data.biography || '',
+      scriptures: data.scriptures || [],
+      theology: data.theology || '',
+      virtues: data.virtues || [],
+      relationships: data.relationships || [],
+      timeline_order: data.timeline_order || 100,
+      created_at: data.created_at
+    };
+  } catch (error) {
+    console.error(`Lỗi khi tải nhân vật [${slug}] từ Supabase:`, error);
+    return null;
   }
 }
 
