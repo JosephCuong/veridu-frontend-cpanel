@@ -70,8 +70,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`/kinh-thanh/${subPath}`, request.url), { status: 301 });
   }
 
-  // Preserve dedicated library subpages like /thu-vien/sach and /thu-vien/tai-lieu
-  if (cleanPath.startsWith('/thu-vien/') && cleanPath !== '/thu-vien' && cleanPath !== '/thu-vien/sach' && cleanPath !== '/thu-vien/tai-lieu') {
+  // Preserve dedicated library subpages like /thu-vien/sach, /thu-vien/tai-lieu, and /thu-vien/doc
+  if (
+    cleanPath.startsWith('/thu-vien/') && 
+    cleanPath !== '/thu-vien' && 
+    cleanPath !== '/thu-vien/sach' && 
+    cleanPath !== '/thu-vien/tai-lieu' &&
+    !cleanPath.startsWith('/thu-vien/doc')
+  ) {
     const slug = cleanPath.replace('/thu-vien/', '');
     return NextResponse.redirect(new URL(`/${slug}`, request.url), { status: 301 });
   }
