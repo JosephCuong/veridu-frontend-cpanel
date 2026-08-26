@@ -1,18 +1,22 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { fetchCourses, getLibraryArticles } from '@/lib/api';
+import { fetchCourses, getLibraryArticles, fetchCatechismEntries } from '@/lib/api';
+import CatechismExplorer from '@/components/CatechismExplorer';
 import { 
-  BookOpen, Cross, Shield, Flame, Award, ChevronRight, Download, FileText, CheckCircle2, ArrowRight, Sun
+  BookOpen, Cross, Shield, Flame, Award, ChevronRight, Download, FileText, CheckCircle2, ArrowRight, Sun, Sparkles
 } from 'lucide-react';
 
+export const revalidate = 3600;
+
 export const metadata = {
-  title: 'Giáo Lý Hội Thánh Công Giáo — Học Hỏi & Nghiên Cứu | VERIDU',
-  description: 'Trung tâm tổng hợp các khóa học, bài viết suy niệm, đề thi và tài liệu Giáo Lý Hội Thánh Công Giáo (CCC / Youcat).',
+  title: 'Giáo Lý Hội Thánh Công Giáo — Khảo Cứu & Học Hỏi Toàn Thư | VERIDU',
+  description: 'Hệ thống khảo cứu Sách Giáo Lý Hội Thánh Công Giáo (CCC & Bản Toát Yếu Compendium) với 4 Trụ Cột Đức Tin, tra cứu số đoạn tức thì và các khóa học giáo lý.',
 };
 
 export default async function GiaoLyLandingPage() {
-  // Fetch courses and articles
+  // Fetch Catechism, Courses and Articles from Supabase
+  const catechismEntries = await fetchCatechismEntries();
   const allCourses = await fetchCourses();
   const allArticles = await getLibraryArticles();
 
@@ -30,133 +34,67 @@ export default async function GiaoLyLandingPage() {
     a.category?.toLowerCase().includes('thần học')
   );
 
-  // 4 Pillars of Catholic Catechism with SVG Icons
-  const PILLARS = [
-    {
-      number: 'I',
-      title: 'Tuyên Xưng Đức Tin',
-      subtitle: 'Kinh Tin Kính của các Tông Đồ',
-      description: 'Mầu nhiệm Một Thiên Chúa Ba Ngôi, Công Trình Tạo Dựng, Nhập Thể, Cứu Chuộc và Hội Thánh Duy Nhất, Thánh Thiện, Công Giáo và Tông Truyền.',
-      icon: <Cross className="w-6 h-6 text-amber-500" />,
-      color: 'from-amber-500/20 to-amber-600/5',
-      borderColor: 'border-amber-500/30'
-    },
-    {
-      number: 'II',
-      title: 'Cử Hành Mầu Nhiệm Kitô Giáo',
-      subtitle: 'Bảy Bí Tích & Phụng Vụ',
-      description: 'Ân sủng cứu độ được trao ban qua Phụng vụ Thánh Thể, các Bí tích Khai tâm, Bí tích Chữa lành và Bí tích Phục vụ sự hiệp thông.',
-      icon: <Sun className="w-6 h-6 text-rose-500" />,
-      color: 'from-rose-500/20 to-rose-600/5',
-      borderColor: 'border-rose-500/30'
-    },
-    {
-      number: 'III',
-      title: 'Đời Sống Trong Đức Kitô',
-      subtitle: 'Mười Điều Răn & Tám Mối Phúc',
-      description: 'Phẩm giá con người được dựng nên theo hình ảnh Thiên Chúa, ơn gọi nên thánh và luật yêu thương trong đời sống luân lý Kitô giáo.',
-      icon: <Shield className="w-6 h-6 text-emerald-500" />,
-      color: 'from-emerald-500/20 to-emerald-600/5',
-      borderColor: 'border-emerald-500/30'
-    },
-    {
-      number: 'IV',
-      title: 'Kinh Nguyện Kitô Giáo',
-      subtitle: 'Kinh Lạy Cha & Đời Sống Cầu Nguyện',
-      description: 'Ý nghĩa của việc cầu nguyện trong đời sống đức tin, lời kinh Chúa Giêsu truyền dạy và tâm tình hiệp thông cùng Mẹ Maria và các Thánh.',
-      icon: <Flame className="w-6 h-6 text-indigo-500" />,
-      color: 'from-indigo-500/20 to-indigo-600/5',
-      borderColor: 'border-indigo-500/30'
-    }
-  ];
-
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col font-sans transition-colors duration-300 pb-24 pt-20 md:pt-28">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col font-sans transition-colors duration-300 pb-24 pt-16 md:pt-20">
       
-      {/* 1. SACRED HERO SECTION */}
-      <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 lg:px-12 overflow-hidden border-b border-[var(--border-card)]">
-        <div className="absolute inset-0 bg-gradient-to-b from-amber-500/10 via-transparent to-transparent pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none" />
+      {/* 1. SACRED HERO BANNER */}
+      <section className="relative w-full py-16 sm:py-20 px-4 sm:px-6 lg:px-12 overflow-hidden border-b border-amber-500/20 bg-gradient-to-b from-stone-950 via-stone-900 to-[var(--bg-main)] text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(#d97706_1px,transparent_1px)] [background-size:24px_24px] opacity-15 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none" />
 
-        <div className="max-w-5xl mx-auto text-center space-y-6 relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-semibold tracking-wider backdrop-blur-md">
-            <span>✦</span>
+        <div className="max-w-5xl mx-auto text-center space-y-5 relative z-10">
+          
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-serif font-bold tracking-wider backdrop-blur-md shadow-lg">
+            <Cross className="w-3.5 h-3.5 text-amber-400" />
             <span>KHO TÀNG ĐỨC TIN HỘI THÁNH CÔNG GIÁO</span>
-            <span>✦</span>
+            <Cross className="w-3.5 h-3.5 text-amber-400" />
           </div>
 
-          <h1 className="font-serif font-black text-4xl sm:text-5xl lg:text-6xl text-[var(--text-main)] tracking-tight leading-tight">
+          <h1 className="font-serif font-black text-4xl sm:text-5xl lg:text-6xl text-white tracking-tight leading-tight drop-shadow-md">
             Giáo Lý Hội Thánh Công Giáo
           </h1>
 
-          <p className="text-[var(--text-muted)] text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
-            Hệ thống hóa toàn bộ giáo huấn nền tảng, các lớp học đức tin, bài viết giải thích tín lý và đề thi giáo lý chuẩn mực dành cho mọi Kitô hữu.
+          <p className="text-stone-300 text-sm sm:text-base max-w-3xl mx-auto leading-relaxed font-serif italic">
+            Hệ thống hóa toàn diện 4 Trụ Cột Đức Tin, Bản Toát Yếu (Compendium), các bài khảo cứu tín lý và đề thi giáo lý chuẩn mực phục vụ đời sống Kitô hữu.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-            <Link
-              href="/quiz"
-              className="px-7 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-amber-500/20 hover:scale-105"
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
+            <a
+              href="#khao-cuu-giao-ly"
+              className="px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-xs flex items-center gap-2 transition-all shadow-xl shadow-amber-500/20 hover:scale-105"
             >
-              <Award className="w-4 h-4" />
-              <span>Thi Đấu Trường Giáo Lý</span>
-            </Link>
+              <BookOpen className="w-4 h-4" />
+              <span>Khảo Cứu Sách Giáo Lý Ngay</span>
+            </a>
 
             <Link
-              href="/khoa-hoc"
-              className="px-7 py-3.5 rounded-2xl bg-[var(--bg-card)] hover:bg-[var(--bg-card)]/80 text-[var(--text-main)] font-bold text-xs border border-[var(--border-card)] backdrop-blur-md transition-all flex items-center gap-2 hover:scale-105"
+              href="/quiz"
+              className="px-6 py-3 rounded-2xl bg-black/40 hover:bg-white/10 text-stone-200 font-serif font-bold text-xs border border-white/15 backdrop-blur-md transition-all flex items-center gap-2 hover:scale-105"
             >
-              <BookOpen className="w-4 h-4 text-amber-500" />
-              <span>Xem Khóa Học Giáo Lý</span>
+              <Award className="w-4 h-4 text-amber-400" />
+              <span>Đấu Trường Giáo Lý</span>
             </Link>
           </div>
+
         </div>
       </section>
 
-      {/* 2. 4 TRỤ CỘT GIÁO LÝ */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-10">
-        <div className="text-center space-y-2">
-          <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-widest">
-            Bản Tóm Lược
+      {/* 2. INTERACTIVE CATECHISM EXPLORER (4 TRỤ CỘT, TRÌNH ĐỌC & TOÁT YẾU) */}
+      <section id="khao-cuu-giao-ly" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full space-y-6 scroll-mt-24">
+        <div className="border-b border-amber-500/20 pb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <BookOpen className="w-5 h-5 text-amber-500" />
+            <h2 className="font-serif font-bold text-xl sm:text-2xl text-[var(--text-main)]">
+              Hệ Thống Khảo Cứu Toàn Thư (CCC &amp; Compendium)
+            </h2>
+          </div>
+          <span className="text-xs font-serif font-bold text-[var(--text-muted)] hidden sm:block">
+            Tòa Thánh Vatican Ban Hành
           </span>
-          <h2 className="font-serif font-black text-2xl sm:text-3xl text-[var(--text-main)]">
-            Bốn Trụ Cột Giáo Lý Hội Thánh (CCC)
-          </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {PILLARS.map((p) => (
-            <div 
-              key={p.number}
-              className={`p-6 rounded-3xl bg-[var(--bg-card)] border ${p.borderColor} backdrop-blur-xl shadow-xl flex flex-col justify-between space-y-4 hover:scale-[1.02] transition-transform`}
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-                    {p.icon}
-                  </div>
-                  <span className="font-serif font-black text-xs text-amber-600 dark:text-amber-400 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
-                    Phần {p.number}
-                  </span>
-                </div>
-                <h3 className="font-serif font-bold text-lg text-[var(--text-main)] leading-snug">
-                  {p.title}
-                </h3>
-                <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
-                  {p.subtitle}
-                </p>
-                <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                  {p.description}
-                </p>
-              </div>
-
-              <div className="pt-2 border-t border-[var(--border-card)] flex items-center justify-between text-[11px] text-[var(--text-muted)]">
-                <span>Hội Thánh Công Giáo</span>
-                <span className="text-amber-500 font-bold flex items-center gap-1">Tìm hiểu <ArrowRight className="w-3 h-3" /></span>
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* Client Interactive Catechism Explorer */}
+        <CatechismExplorer initialEntries={catechismEntries} />
       </section>
 
       {/* 3. CÁC KHÓA HỌC GIÁO LÝ NỔI BẬT */}

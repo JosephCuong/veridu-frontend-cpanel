@@ -1144,3 +1144,66 @@ export async function recordDownloadItem(itemId: number, itemSlug: string, userI
     console.error('Lỗi khi ghi nhận lượt tải:', err);
   }
 }
+
+// ─── Catechism Entries (Supabase Integration) ─────────────────
+export interface ScriptureRef {
+  reference: string;
+  book_slug: string;
+  chapter: number;
+  text: string;
+}
+
+export interface CatechismEntry {
+  id: number;
+  part_number: number;
+  part_title: string;
+  section_title?: string;
+  chapter_title?: string;
+  article_number?: number;
+  paragraph_start: number;
+  paragraph_end: number;
+  ccc_number_range: string;
+  compendium_number?: number;
+  question?: string;
+  title: string;
+  summary?: string;
+  content_html: string;
+  scripture_references?: ScriptureRef[];
+  cross_references?: string[];
+  tags?: string[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export async function fetchCatechismEntries(partNumber?: number, searchQuery?: string): Promise<CatechismEntry[]> {
+  try {
+    let query = supabase
+      .from('catechism_entries')
+      .select('*')
+      .order('part_number', { ascending: true })
+      .order('paragraph_start', { ascending: true });
+
+    if (partNumber && partNumber > 0) {
+      query = query.eq('part_number', partNumber);
+    }
+
+    if (searchQuery && searchQuery.trim()) {
+      const q = searchQuery.trim();
+      const numMatch = q.match(/\d+/);
+      if (numMatch) {
+        const num = parseInt(numMatch[0]);
+        query = query.or(`paragraph_start.lte.${num},paragraph_end.gte.${num},compendium_number.eq.${num},title.ilike.%${q}%,summary.ilike.%${q}%`);
+      } else {
+        query = query.or(`title.ilike.%${q}%,summary.ilike.%${q}%,section_title.ilike.%${q}%,chapter_title.ilike.%${q}%,content_html.ilike.%${q}%`);
+      }
+    }
+
+    const { data, error } = await query;
+    if (error || !data) return [];
+    return data as CatechismEntry[];
+  } catch (error) {
+    console.error('Lỗi khi tải dữ liệu Giáo Lý từ Supabase:', error);
+    return [];
+  }
+}
+
