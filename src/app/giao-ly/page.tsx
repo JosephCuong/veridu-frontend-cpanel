@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { fetchCourses, getLibraryArticles, fetchCatechismEntries } from '@/lib/api';
+import { fetchCourses, getLibraryArticles, fetchCatechismParagraphs } from '@/lib/api';
 import CatechismExplorer from '@/components/CatechismExplorer';
 import { 
   BookOpen, Cross, Shield, Flame, Award, ChevronRight, Download, FileText, CheckCircle2, ArrowRight, Sun, Sparkles
@@ -11,12 +11,12 @@ export const revalidate = 3600;
 
 export const metadata = {
   title: 'Giáo Lý Hội Thánh Công Giáo — Khảo Cứu & Học Hỏi Toàn Thư | VERIDU',
-  description: 'Hệ thống khảo cứu Sách Giáo Lý Hội Thánh Công Giáo (CCC & Bản Toát Yếu Compendium) với 4 Trụ Cột Đức Tin, tra cứu số đoạn tức thì và các khóa học giáo lý.',
+  description: 'Hệ thống khảo cứu Sách Giáo Lý Hội Thánh Công Giáo (CCC Toàn Thư 2865 số) với 4 Trụ Cột Đức Tin, 5 chế độ đọc, thẻ lật ôn tập và tra cứu số đoạn tức thì.',
 };
 
 export default async function GiaoLyLandingPage() {
-  // Fetch Catechism, Courses and Articles from Supabase
-  const catechismEntries = await fetchCatechismEntries();
+  // Fetch 400 initial Catechism Paragraphs (Total count: 1836 in DB)
+  const { data: catechismParagraphs, count: totalCount } = await fetchCatechismParagraphs(undefined, undefined, undefined, 500, 0);
   const allCourses = await fetchCourses();
   const allArticles = await getLibraryArticles();
 
@@ -79,13 +79,13 @@ export default async function GiaoLyLandingPage() {
         </div>
       </section>
 
-      {/* 2. INTERACTIVE CATECHISM EXPLORER (4 TRỤ CỘT, TRÌNH ĐỌC & TOÁT YẾU) */}
+      {/* 2. INTERACTIVE CATECHISM EXPLORER (5 CHẾ ĐỘ ĐỌC & GAME HÓA) */}
       <section id="khao-cuu-giao-ly" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full space-y-6 scroll-mt-24">
         <div className="border-b border-amber-500/20 pb-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <BookOpen className="w-5 h-5 text-amber-500" />
             <h2 className="font-serif font-bold text-xl sm:text-2xl text-[var(--text-main)]">
-              Hệ Thống Khảo Cứu Toàn Thư (CCC &amp; Compendium)
+              Hệ Thống Khảo Cứu Toàn Thư (CCC 1 - 2865)
             </h2>
           </div>
           <span className="text-xs font-serif font-bold text-[var(--text-muted)] hidden sm:block">
@@ -94,8 +94,12 @@ export default async function GiaoLyLandingPage() {
         </div>
 
         {/* Client Interactive Catechism Explorer */}
-        <CatechismExplorer initialEntries={catechismEntries} />
+        <CatechismExplorer 
+          initialParagraphs={catechismParagraphs} 
+          totalCount={totalCount} 
+        />
       </section>
+
 
       {/* 3. CÁC KHÓA HỌC GIÁO LÝ NỔI BẬT */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">

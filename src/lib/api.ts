@@ -1,6 +1,8 @@
 // Updated api.ts with status = 'published' filter for public endpoints
 import { supabase } from './supabaseClient';
 import { formatImageUrl } from './htmlProcessor';
+export { supabase };
+
 
 export interface Article {
   id: number | string;
@@ -1206,4 +1208,87 @@ export async function fetchCatechismEntries(partNumber?: number, searchQuery?: s
     return [];
   }
 }
+
+// ─── Catechism Paragraphs (Full 1827+ CSV Ingestion) ───────────
+export interface CatechismParagraph {
+  id: number;
+  section_identifier: string;
+  paragraph_number?: number;
+  paragraph_str: string;
+  title: string;
+  part_number: number;
+  part_title: string;
+  section_title?: string;
+  chapter_title?: string;
+  article_title?: string;
+  full_path?: string;
+  is_in_brief: boolean;
+  cross_references?: number[];
+  footnotes?: string;
+  content_html: string;
+  plain_text?: string;
+  created_at?: string;
+}
+
+export async function fetchCatechismParagraphs(
+  partNumber?: number,
+  searchQuery?: string,
+  inBriefOnly?: boolean,
+  limit: number = 300,
+  offset: number = 0
+): Promise<{ data: CatechismParagraph[]; count: number }> {
+  try {
+    let query = supabase
+      .from('catechism_paragraphs')
+      .select('*', { count: 'exact' })
+      .order('part_number', { ascending: true })
+      .order('paragraph_number', { ascending: true, nullsFirst: false });
+
+    if (partNumber !== undefined && partNumber !== null && partNumber >= 0) {
+      query = query.eq('part_number', partNumber);
+    }
+
+    if (inBriefOnly) {
+      query = query.eq('is_in_brief', true);
+    }
+
+    if (searchQuery && searchQuery.trim()) {
+      const q = searchQuery.trim();
+      const numMatch = q.match(/^\d+$/);
+      if (numMatch) {
+        const num = parseInt(numMatch[0]);
+        query = query.or(`paragraph_number.eq.${num},title.ilike.%Số ${num}%`);
+      } else {
+        query = query.or(`title.ilike.%${q}%,plain_text.ilike.%${q}%,full_path.ilike.%${q}%`);
+      }
+    }
+
+    query = query.range(offset, offset + limit - 1);
+
+    const { data, count, error } = await query;
+    if (error || !data) return { data: [], count: 0 };
+    return { data: data as CatechismParagraph[], count: count || 0 };
+  } catch (error) {
+    console.error('Lỗi khi tải danh sách đoạn Giáo Lý:', error);
+    return { data: [], count: 0 };
+  }
+}
+
+export async function fetchCatechismParagraphByNumber(num: number): Promise<CatechismParagraph | null> {
+  try {
+    const { data, error } = await supabase
+      .from('catechism_paragraphs')
+      .select('*')
+      .eq('paragraph_number', num)
+      .limit(1)
+      .single();
+
+    if (error || !data) return null;
+    return data as CatechismParagraph;
+  } catch (error) {
+    console.error(`Lỗi khi tải số giáo lý ${num}:`, error);
+    return null;
+  }
+}
+
 
