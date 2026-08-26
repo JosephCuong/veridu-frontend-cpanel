@@ -1,5 +1,6 @@
 // Updated api.ts with status = 'published' filter for public endpoints
 import { supabase } from './supabaseClient';
+import { formatImageUrl } from './htmlProcessor';
 
 export interface Article {
   id: number | string;
@@ -499,18 +500,6 @@ export async function fetchTimelineEventBySlug(slug: string): Promise<TimelineEv
   }
 }
 
-function formatImageUrl(url?: string | null): string {
-  if (!url) return '';
-  const trimmed = url.trim();
-  if (trimmed.includes('drive.google.com') || trimmed.includes('docs.google.com')) {
-    const fileIdMatch = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || trimmed.match(/id=([a-zA-Z0-9_-]+)/);
-    if (fileIdMatch && fileIdMatch[1]) {
-      return `https://lh3.googleusercontent.com/d/${fileIdMatch[1]}`;
-    }
-  }
-  return trimmed;
-}
-
 // ─── Characters Fetcher (Supabase Integration) ─────────────────
 export async function fetchCharacters(): Promise<Character[]> {
   try {
@@ -531,8 +520,8 @@ export async function fetchCharacters(): Promise<Character[]> {
       role: p.role || '',
       era: p.era || '',
       feast_day: p.feast_day || '',
-      avatar_url: formatImageUrl(p.avatar_url),
-      cover_image: formatImageUrl(p.cover_image),
+      avatar_url: formatImageUrl(p.avatar_url, 'avatar'),
+      cover_image: formatImageUrl(p.cover_image, 'cover'),
       short_description: p.short_description || '',
       biography: p.biography || '',
       scriptures: p.scriptures || [],
@@ -568,8 +557,8 @@ export async function fetchCharacterBySlug(slug: string): Promise<Character | nu
       role: data.role || '',
       era: data.era || '',
       feast_day: data.feast_day || '',
-      avatar_url: formatImageUrl(data.avatar_url),
-      cover_image: formatImageUrl(data.cover_image),
+      avatar_url: formatImageUrl(data.avatar_url, 'avatar'),
+      cover_image: formatImageUrl(data.cover_image, 'cover'),
       short_description: data.short_description || '',
       biography: data.biography || '',
       scriptures: data.scriptures || [],

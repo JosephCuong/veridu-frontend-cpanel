@@ -108,20 +108,37 @@ export function extractExcerptFromHtml(html: string): string {
   return '';
 }
 
+export type ImageSizeOption = 'avatar' | 'cover' | 'thumb' | 'raw';
+
 /**
- * Formats any image URL, converting Google Drive preview links into high-speed direct CDN links.
+ * Formats any image URL, converting Google Drive preview links into high-speed direct CDN links with dynamic resizing.
  */
-export function formatImageUrl(url?: string | null): string {
+export function formatImageUrl(url?: string | null, size: ImageSizeOption = 'raw'): string {
   if (!url || typeof url !== 'string' || !url.trim()) return '';
   const trimmed = url.trim();
 
-  // Convert Google Drive view/open links to direct lh3 CDN URLs
+  // 1. Extract Google Drive file ID if present
+  let fileId: string | null = null;
   if (trimmed.includes('drive.google.com') || trimmed.includes('docs.google.com')) {
-    const fileIdMatch = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) 
+    const match = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) 
       || trimmed.match(/id=([a-zA-Z0-9_-]+)/)
       || trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/);
-    if (fileIdMatch && fileIdMatch[1]) {
-      return `https://lh3.googleusercontent.com/d/${fileIdMatch[1]}`;
+    if (match && match[1]) fileId = match[1];
+  } else if (trimmed.includes('lh3.googleusercontent.com/d/')) {
+    const match = trimmed.match(/lh3\.googleusercontent\.com\/d\/([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) fileId = match[1];
+  }
+
+  // 2. Return optimized size variant if it's a Google CDN image
+  if (fileId) {
+    switch (size) {
+      case 'avatar':
+      case 'thumb':
+        return `https://lh3.googleusercontent.com/d/${fileId}=w400-h400-c`;
+      case 'cover':
+        return `https://lh3.googleusercontent.com/d/${fileId}=w1600`;
+      default:
+        return `https://lh3.googleusercontent.com/d/${fileId}`;
     }
   }
 
