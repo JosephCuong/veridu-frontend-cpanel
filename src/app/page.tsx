@@ -35,15 +35,14 @@ export default async function Home() {
         <Hero3DSection />
 
         {/* 🕊️ 2. LỜI CHÚA HÔM NAY / SACRED DAILY SCRIPTURE */}
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-[var(--bg-card)] border border-amber-500/30 rounded-3xl p-8 sm:p-12 backdrop-blur-2xl shadow-2xl relative overflow-hidden text-center space-y-5">
             <div className="absolute top-0 right-0 w-72 h-72 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-72 h-72 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-semibold tracking-wider">
-              <span>✦</span>
-              <span>LỜI CHÚA LÀ KIM CHỈ NAM</span>
-              <span>✦</span>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-serif font-bold uppercase tracking-wider">
+              <Cross className="w-3.5 h-3.5 text-amber-500" />
+              <span>Lời Chúa Soi Đường</span>
             </div>
 
             <div className="relative max-w-4xl mx-auto py-2">
@@ -75,8 +74,8 @@ export default async function Home() {
           <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             <div className="flex justify-between items-end mb-6 border-b border-[var(--border-card)]/60 pb-4">
               <div>
-                <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 tracking-wider uppercase">Suy Niệm & Thần Học</span>
-                <h2 className="font-serif font-black text-2xl sm:text-3xl text-[var(--text-main)]">Bài Viết Mới Cập Nhật</h2>
+                <span className="text-xs font-serif font-bold text-amber-700 dark:text-amber-400 tracking-wider uppercase">Suy Niệm &amp; Thần Học</span>
+                <h2 className="font-serif font-bold text-2xl sm:text-3xl text-[var(--text-main)]">Bài Viết Mới Cập Nhật</h2>
               </div>
               <Link href="/thu-vien" className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1">
                 Xem toàn bộ thư viện &rarr;
@@ -90,8 +89,8 @@ export default async function Home() {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="flex justify-between items-end border-b border-[var(--border-card)]/60 pb-4">
             <div>
-              <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 tracking-wider uppercase">Học Hỏi Đức Tin</span>
-              <h2 className="font-serif font-black text-2xl sm:text-3xl text-[var(--text-main)]">Các Khóa Học Giáo Lý</h2>
+              <span className="text-xs font-serif font-bold text-amber-700 dark:text-amber-400 tracking-wider uppercase">Học Hỏi Đức Tin</span>
+              <h2 className="font-serif font-bold text-2xl sm:text-3xl text-[var(--text-main)]">Các Khóa Học Giáo Lý</h2>
             </div>
             <Link href="/khoa-hoc" className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1">
               Xem tất cả khóa học &rarr;
@@ -140,8 +139,8 @@ export default async function Home() {
         {embedUrl && (
           <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             <div className="text-center mb-6">
-              <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 tracking-wider uppercase">Góc Nhìn Linh Đạo</span>
-              <h2 className="font-serif font-black text-3xl sm:text-4xl text-[var(--text-main)] mt-1">
+              <span className="text-xs font-serif font-bold text-amber-700 dark:text-amber-400 tracking-wider uppercase">Góc Nhìn Linh Đạo</span>
+              <h2 className="font-serif font-bold text-3xl sm:text-4xl text-[var(--text-main)] mt-1">
                 Giới Thiệu Nền Tảng VERIDU
               </h2>
             </div>
@@ -164,11 +163,11 @@ export default async function Home() {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-8 flex flex-col justify-center space-y-6">
-              <span className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wider inline-block">Cộng Đoàn Hiệp Thông</span>
-              <h2 className="font-serif font-black text-3xl sm:text-4xl lg:text-5xl text-[var(--text-main)] leading-tight">
+              <span className="text-xs font-serif font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider inline-block">Cộng Đoàn Hiệp Thông</span>
+              <h2 className="font-serif font-bold text-3xl sm:text-4xl lg:text-5xl text-[var(--text-main)] leading-tight">
                 Kết Nối Cùng Chúng Tôi Trên <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">Facebook</span>
               </h2>
-              <p className="text-[var(--text-muted)] text-base sm:text-lg max-w-xl leading-relaxed">
+              <p className="text-[var(--text-muted)] text-base sm:text-lg max-w-xl leading-relaxed font-sans">
                 Đồng hành cùng VERIDU để đón nhận các bài viết thần học chuyên sâu, thông báo các lớp học Thánh Kinh và tin tức phụng vụ từ trang chính thức.
               </p>
               <div className="pt-2">
