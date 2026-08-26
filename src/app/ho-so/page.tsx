@@ -927,7 +927,14 @@ export default function ProfileDashboardPage() {
                   className={`cursor-pointer rounded-2xl border-2 transition-all overflow-hidden bg-[var(--bg-main)] p-2 text-center group ${formData.avatar === char.avatar_url ? 'border-amber-500 shadow-lg shadow-amber-500/30 ring-2 ring-amber-500/50' : 'border-transparent hover:border-amber-500/50'}`}
                 >
                   <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-2">
-                    <Image src={char.avatar_url!} alt={char.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 768px) 33vw, 20vw" />
+                    <Image 
+                      src={char.avatar_url!} 
+                      alt={char.name} 
+                      fill 
+                      className="object-cover group-hover:scale-105 transition-transform duration-300" 
+                      sizes="(max-width: 768px) 33vw, 20vw" 
+                      unoptimized={char.avatar_url?.includes('googleusercontent.com')}
+                    />
                   </div>
                   <div className="text-xs font-bold text-[var(--text-main)] truncate">{char.name}</div>
                 </div>

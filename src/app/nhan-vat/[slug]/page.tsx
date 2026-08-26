@@ -99,8 +99,24 @@ export default async function CharacterDetailPage({ params }: { params: { slug: 
       {/* ── Hero Banner & Character Profile Header ── */}
       <section className="relative overflow-hidden bg-gradient-to-b from-stone-900 via-stone-800 to-amber-950 text-white py-12 sm:py-16 px-4 sm:px-6 lg:px-8 border-b border-amber-500/30">
         
+        {/* Sacred Cover Background Artwork */}
+        {character.cover_image && (
+          <div className="absolute inset-0 z-0">
+            <Image
+              src={character.cover_image}
+              alt={`${character.name} Background`}
+              fill
+              className="object-cover opacity-20 filter blur-[2px] scale-105"
+              priority
+              unoptimized={character.cover_image.includes('googleusercontent.com')}
+              sizes="100vw"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-stone-950/80 via-stone-900/90 to-amber-950/95" />
+          </div>
+        )}
+
         {/* Background Ambient Glow */}
-        <div className="absolute inset-0 bg-[radial-gradient(#d97706_1px,transparent_1px)] [background-size:24px_24px] opacity-15"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(#d97706_1px,transparent_1px)] [background-size:24px_24px] opacity-15 pointer-events-none"></div>
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="max-w-5xl mx-auto relative z-10">
@@ -118,6 +134,7 @@ export default async function CharacterDetailPage({ params }: { params: { slug: 
                       fill
                       className="object-cover"
                       priority
+                      unoptimized={character.avatar_url.includes('googleusercontent.com')}
                       sizes="(max-width: 768px) 192px, 224px"
                     />
                   ) : (

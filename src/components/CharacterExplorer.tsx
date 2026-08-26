@@ -252,6 +252,7 @@ export default function CharacterExplorer({ initialCharacters }: CharacterExplor
                             fill
                             className="object-cover group-hover:scale-110 transition-transform duration-500"
                             sizes="80px"
+                            unoptimized={char.avatar_url.includes('googleusercontent.com')}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-amber-500/20 text-amber-500 font-serif font-black text-xl">
@@ -364,7 +365,14 @@ export default function CharacterExplorer({ initialCharacters }: CharacterExplor
                       {/* Avatar */}
                       <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden relative border border-amber-500/30 flex-shrink-0 shadow-md">
                         {char.avatar_url ? (
-                          <Image src={char.avatar_url} alt={char.name} fill className="object-cover" sizes="64px" />
+                          <Image 
+                            src={char.avatar_url} 
+                            alt={char.name} 
+                            fill 
+                            className="object-cover" 
+                            sizes="64px" 
+                            unoptimized={char.avatar_url.includes('googleusercontent.com')}
+                          />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-amber-500/20 text-amber-500 font-serif font-bold">
                             {char.name.charAt(0)}
