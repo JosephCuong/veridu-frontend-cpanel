@@ -9,7 +9,6 @@ import {
   Compass, 
   Layers, 
   Search, 
-  Sparkles, 
   BookOpen, 
   ExternalLink, 
   Cross, 
@@ -427,7 +426,7 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
             
             {/* Overlay Map Help Badge */}
             <div className="absolute top-4 right-4 z-[400] bg-slate-950/80 backdrop-blur-md border border-amber-500/40 text-amber-300 text-[10px] sm:text-xs font-bold px-3 py-1.5 rounded-full shadow-lg pointer-events-none flex items-center gap-1.5">
-              <Sparkles className="w-3 h-3 text-amber-400" />
+              <MapPin className="w-3 h-3 text-amber-400" />
               <span>Chạm hoặc nhấp vào ghim để định vị</span>
             </div>
           </div>
@@ -616,7 +615,7 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
               {selectedLocation.theology && (
                 <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 via-[var(--bg-main)] to-amber-500/5 border border-amber-500/30 space-y-1.5">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <Cross className="w-3.5 h-3.5 text-amber-500" />
                     <span>Ý Nghĩa Thần Học &amp; Biểu Tượng Cứu Độ</span>
                   </div>
                   <p className="font-serif italic text-xs sm:text-sm text-[var(--text-main)] leading-relaxed">

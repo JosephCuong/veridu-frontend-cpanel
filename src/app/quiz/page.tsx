@@ -13,7 +13,6 @@ import {
   Play, 
   PlusCircle, 
   ShieldCheck, 
-  Sparkles, 
   BookOpen, 
   Scroll, 
   Cross, 
@@ -193,7 +192,7 @@ export default function QuizPage() {
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { id: 'all', label: 'Tất Cả', icon: <Sparkles className="w-3 h-3 text-amber-500" /> },
+                    { id: 'all', label: 'Tất Cả', icon: <BookOpen className="w-3 h-3 text-amber-500" /> },
                     { id: 'Cựu Ước', label: 'Cựu Ước', icon: <Scroll className="w-3 h-3 text-amber-600" /> },
                     { id: 'Tân Ước', label: 'Tân Ước', icon: <Cross className="w-3 h-3 text-emerald-500" /> },
                     { id: 'Giáo Lý', label: 'Giáo Lý', icon: <Church className="w-3 h-3 text-indigo-400" /> }

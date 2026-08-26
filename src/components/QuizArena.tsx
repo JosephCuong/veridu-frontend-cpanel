@@ -26,7 +26,6 @@ import {
   ArrowRight, 
   Users, 
   ShieldCheck, 
-  Sparkles, 
   UserCheck, 
   Radio, 
   Award,
@@ -338,7 +337,7 @@ export default function QuizArena({ mode, roomPin = '789012', category = 'all' }
           
           <div className="text-center space-y-2">
             <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-bold uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5" /> Chuẩn Bị Vào Phòng Thi (PIN: {roomPin})
+              <Users className="w-3.5 h-3.5" /> Chuẩn Bị Vào Phòng Thi (PIN: {roomPin})
             </div>
             <h2 className="font-serif font-black text-3xl sm:text-4xl text-[var(--text-main)]">
               Chọn Nhân Vật Kinh Thánh Đại Diện

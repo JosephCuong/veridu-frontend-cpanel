@@ -11,7 +11,7 @@ import {
   ChevronLeft, ChevronRight, ChevronDown, 
   Columns, MessageSquareText, Headphones, 
   X, Heart, Shield, Compass, PlayCircle, Settings2, BookOpen, Search, Menu, 
-  MapPin, LayoutGrid, Type, ExternalLink, Sparkles
+  MapPin, LayoutGrid, Type, ExternalLink, Scroll
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -740,7 +740,7 @@ export default function BibleReader({
             {/* Header & Close Button */}
             <div className="flex items-center justify-between pb-3 border-b border-[var(--border-card)] mb-3">
               <span className="font-serif font-bold text-xs text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-amber-500" />
+                <BookOpen className="w-4 h-4 text-amber-500" />
                 <span>Không Gian Phân Tích</span>
               </span>
               <button 

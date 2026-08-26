@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { fetchCourses, getLibraryArticles } from '@/lib/api';
 import { 
-  BookOpen, Cross, Shield, Flame, Award, ChevronRight, Download, FileText, CheckCircle2, ArrowRight, Sparkles, Sun
+  BookOpen, Cross, Shield, Flame, Award, ChevronRight, Download, FileText, CheckCircle2, ArrowRight, Sun
 } from 'lucide-react';
 
 export const metadata = {

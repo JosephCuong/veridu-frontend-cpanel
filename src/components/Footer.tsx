@@ -16,7 +16,6 @@ import {
   Mail, 
   FileText, 
   Library, 
-  Sparkles,
   Phone,
   CheckCircle2,
   AlertCircle,

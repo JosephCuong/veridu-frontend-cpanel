@@ -1,7 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import SalvationTimeline from '@/components/SalvationTimeline';
-import { Clock, Sparkles, Scroll, Cross, Church } from 'lucide-react';
+import { Clock, Scroll, Cross, Church } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Dòng Thời Gian Lịch Sử Cứu Độ & Giáo Hội | VERIDU',

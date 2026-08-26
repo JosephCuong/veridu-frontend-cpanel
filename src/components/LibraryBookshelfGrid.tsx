@@ -8,9 +8,7 @@ import {
   Download, 
   Eye, 
   Layers, 
-  Sparkles, 
   ExternalLink, 
-  Zap,
   Clock,
   Presentation
 } from 'lucide-react';
@@ -136,8 +134,8 @@ export default function LibraryBookshelfGrid({
                               </>
                             ) : (
                               <>
-                                <Zap className="w-3.5 h-3.5 fill-current" />
-                                <span>Đọc Nhanh (A4)</span>
+                                <BookOpen className="w-3.5 h-3.5" />
+                                <span>Đọc Sách (A4)</span>
                               </>
                             )}
                           </Link>

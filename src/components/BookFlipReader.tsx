@@ -18,7 +18,6 @@ import {
   Moon, 
   Scroll, 
   X, 
-  Sparkles, 
   ShieldCheck,
   RotateCw,
   Loader2,
@@ -498,7 +497,7 @@ export default function BookFlipReader({ item, streamUrl }: BookFlipReaderProps)
                     <canvas ref={canvasRightRef} className="max-w-full max-h-full object-contain pointer-events-none shadow-sm" />
                   ) : (
                     <div className="text-center space-y-2 opacity-40">
-                      <Sparkles className="w-8 h-8 mx-auto text-amber-500" />
+                      <BookOpen className="w-8 h-8 mx-auto text-amber-500" />
                       <p className="font-serif text-xs italic">Hết Tác Phẩm</p>
                     </div>
                   )}

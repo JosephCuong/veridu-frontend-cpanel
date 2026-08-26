@@ -1,7 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import BibleMap from '@/components/BibleMap';
-import { Compass, Sparkles, MapPin, Globe, Scroll } from 'lucide-react';
+import { Compass, MapPin, Globe, Scroll } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Bản Đồ Kinh Thánh & Địa Danh Thánh Địa | VERIDU',

@@ -6,7 +6,6 @@ import { notFound } from 'next/navigation';
 import { fetchCharacterBySlug, fetchCharacters } from '@/lib/api';
 import { 
   ArrowLeft, 
-  Sparkles, 
   BookOpen, 
   Calendar, 
   Crown, 

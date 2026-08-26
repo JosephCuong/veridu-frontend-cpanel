@@ -18,7 +18,6 @@ import {
   Download, 
   ArrowLeft, 
   Eye, 
-  Sparkles, 
   ListOrdered, 
   Paperclip, 
   CheckCircle2, 
@@ -339,8 +338,8 @@ export default function DocumentDetailPage() {
                   : 'bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-main)]'
               }`}
             >
-              <Sparkles className="w-4 h-4" />
-              <span>Nội Dung Hướng Dẫn Giáo Án</span>
+              <Presentation className="w-4 h-4" />
+              <span>Giới Thiệu Giáo Án / Slide</span>
             </button>
 
             {item.table_of_contents && item.table_of_contents.length > 0 && (
@@ -378,8 +377,8 @@ export default function DocumentDetailPage() {
           {/* ── TAB 1: FULL SUMMARY ── */}
           {activeTab === 'summary' && (
             <div className="p-6 sm:p-10 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-6 animate-fadeIn">
-              <h2 className="font-serif font-black text-xl sm:text-2xl text-[var(--text-main)] flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-amber-500" />
+              <h2 className="font-serif font-bold text-xl sm:text-2xl text-[var(--text-main)] flex items-center gap-2">
+                <Presentation className="w-5 h-5 text-amber-500" />
                 <span>Mục Tiêu &amp; Phương Pháp Sư Phạm</span>
               </h2>
 
@@ -400,7 +399,7 @@ export default function DocumentDetailPage() {
           {activeTab === 'toc' && item.table_of_contents && (
             <div className="p-6 sm:p-10 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-6 animate-fadeIn">
               <div className="flex items-center justify-between">
-                <h2 className="font-serif font-black text-xl sm:text-2xl text-[var(--text-main)] flex items-center gap-2">
+                <h2 className="font-serif font-bold text-xl sm:text-2xl text-[var(--text-main)] flex items-center gap-2">
                   <ListOrdered className="w-5 h-5 text-amber-500" />
                   <span>Danh Sách Các Bài Giảng</span>
                 </h2>
@@ -436,7 +435,7 @@ export default function DocumentDetailPage() {
           {/* ── TAB 3: ATTACHMENTS ── */}
           {activeTab === 'attachments' && item.attachments && (
             <div className="p-6 sm:p-10 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-6 animate-fadeIn">
-              <h2 className="font-serif font-black text-xl sm:text-2xl text-[var(--text-main)] flex items-center gap-2">
+              <h2 className="font-serif font-bold text-xl sm:text-2xl text-[var(--text-main)] flex items-center gap-2">
                 <Paperclip className="w-5 h-5 text-amber-500" />
                 <span>Tệp Đính Kèm, Slide PPTX &amp; Bài Tập</span>
               </h2>
@@ -479,9 +478,9 @@ export default function DocumentDetailPage() {
         {relatedItems.length > 0 && (
           <section className="space-y-6 pt-6 border-t border-[var(--border-card)]">
             <div className="flex items-center justify-between">
-              <h3 className="font-serif font-black text-xl sm:text-2xl text-[var(--text-main)] flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-amber-500" />
-                <span>Tài Liệu Cùng Chuyên Mục Bạn Có Thể Thích</span>
+              <h3 className="font-serif font-bold text-xl sm:text-2xl text-[var(--text-main)] flex items-center gap-2">
+                <FileText className="w-5 h-5 text-amber-500" />
+                <span>Tài Liệu Cùng Chuyên Mục</span>
               </h3>
               <Link
                 href="/thu-vien/tai-lieu"

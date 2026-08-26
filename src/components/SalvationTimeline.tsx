@@ -5,7 +5,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { 
   Clock, 
-  Sparkles, 
   GitCommitVertical, 
   LayoutGrid, 
   SlidersHorizontal, 
@@ -499,7 +498,7 @@ export default function SalvationTimeline() {
                   {evt.theology && (
                     <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 via-[var(--bg-main)] to-amber-500/5 border border-amber-500/30 space-y-1">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                        <Cross className="w-3.5 h-3.5 text-amber-500" />
                         <span>Ý Nghĩa Thần Học &amp; Bài Học Tâm Linh</span>
                       </div>
                       <p className="font-serif italic text-xs sm:text-sm text-[var(--text-main)] leading-relaxed">
@@ -685,7 +684,7 @@ export default function SalvationTimeline() {
                       {activeEvt.theology && (
                         <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-1">
                           <span className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                            <Sparkles className="w-3.5 h-3.5" /> Ý Nghĩa Thần Học
+                            <Cross className="w-3.5 h-3.5 text-amber-500" /> Ý Nghĩa Thần Học
                           </span>
                           <p className="font-serif italic text-xs sm:text-sm text-[var(--text-main)]">
                             {activeEvt.theology}

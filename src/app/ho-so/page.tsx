@@ -11,7 +11,8 @@ import { supabase } from '@/lib/supabaseClient';
 import { 
   User, Mail, Church, Compass, Award, Flame, Shield, LogOut, 
   Settings, BookOpen, CheckCircle, Clock, Save, Phone, Image as ImageIcon,
-  Heart, Calendar, Loader2, Trophy, Trash2, ArrowRight, PlayCircle, BarChart3, AlertTriangle, Check, Sparkles, Plus, Eye, Cross
+  Heart, Calendar, Loader2, Trophy, Trash2, ArrowRight, PlayCircle, BarChart3, 
+  AlertTriangle, Check, Plus, Eye, Cross, FileText
 } from 'lucide-react';
 
 import { 
@@ -320,7 +321,7 @@ export default function ProfileDashboardPage() {
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <FileText className="w-4 h-4 text-amber-500" />
                   <span>Quản Lý Bài Viết</span>
                 </div>
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'posts' ? 'bg-slate-950 text-amber-400' : 'bg-[var(--bg-main)] text-[var(--text-muted)]'}`}>
@@ -670,7 +671,7 @@ export default function ProfileDashboardPage() {
                 <div className="flex items-center justify-between flex-wrap gap-4 border-b border-[var(--border-card)] pb-4">
                   <div>
                     <h2 className="font-serif font-bold text-xl text-amber-600 dark:text-amber-400 flex items-center gap-2">
-                      <Sparkles className="w-6 h-6 text-amber-500" /> Quản Lý Bài Viết ({userPosts.length})
+                      <FileText className="w-6 h-6 text-amber-500" /> Quản Lý Bài Viết ({userPosts.length})
                     </h2>
                     <p className="text-xs text-[var(--text-muted)] mt-1">
                       Danh sách bài viết đã xuất bản trên VERIDU. Bạn có thể xem và quản lý trực tiếp.

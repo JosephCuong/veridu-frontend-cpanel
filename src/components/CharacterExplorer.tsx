@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { Character } from '@/lib/api';
 import { 
   Search, 
-  Sparkles, 
   LayoutGrid, 
   GitCommitVertical, 
   BookOpen, 
@@ -159,24 +158,26 @@ export default function CharacterExplorer({ initialCharacters }: CharacterExplor
 
             <button
               onClick={() => setTestamentFilter('cuu-uoc')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
                 testamentFilter === 'cuu-uoc'
                   ? 'bg-amber-600/20 text-amber-500 border border-amber-600/50 shadow-sm'
                   : 'bg-[var(--bg-main)] text-[var(--text-muted)] border border-transparent hover:border-[var(--border-card)]'
               }`}
             >
-              📜 Cựu Ước ({initialCharacters.filter(c => c.testament === 'cuu-uoc').length})
+              <Scroll className="w-3.5 h-3.5" />
+              <span>Cựu Ước ({initialCharacters.filter(c => c.testament === 'cuu-uoc').length})</span>
             </button>
 
             <button
               onClick={() => setTestamentFilter('tan-uoc')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
                 testamentFilter === 'tan-uoc'
                   ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/50 shadow-sm'
                   : 'bg-[var(--bg-main)] text-[var(--text-muted)] border border-transparent hover:border-[var(--border-card)]'
               }`}
             >
-              ✝️ Tân Ước ({initialCharacters.filter(c => c.testament === 'tan-uoc').length})
+              <Cross className="w-3.5 h-3.5" />
+              <span>Tân Ước ({initialCharacters.filter(c => c.testament === 'tan-uoc').length})</span>
             </button>
           </div>
 
@@ -415,7 +416,7 @@ export default function CharacterExplorer({ initialCharacters }: CharacterExplor
                   {/* Theology Lesson Highlight */}
                   {char.theology && (
                     <div className="mt-4 pt-3 border-t border-[var(--border-card)] text-xs text-[var(--text-main)] italic flex items-center gap-2">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                      <BookOpen className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
                       <span className="line-clamp-1">{char.theology}</span>
                     </div>
                   )}

@@ -1,7 +1,7 @@
 import React from 'react';
 
 import BibleMap from '@/components/BibleMap';
-import { Compass, Sparkles } from 'lucide-react';
+import { Compass } from 'lucide-react';
 
 export default function BibleMapPage() {
   return (
@@ -10,8 +10,8 @@ export default function BibleMapPage() {
         
         {/* Page Header */}
         <div className="space-y-4 text-center max-w-3xl mx-auto">
-          <span className="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Interactive 3D Geography
+          <span className="px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-serif font-bold uppercase tracking-wider inline-flex items-center gap-1.5">
+            <Compass className="w-3.5 h-3.5 text-amber-500" /> Khảo Cứu Địa Lý Thánh Kinh
           </span>
           <h1 className="font-serif font-black text-3xl sm:text-5xl text-[var(--text-main)] leading-tight">
             Bản Đồ Kinh Thánh & Địa Danh Cứu Độ

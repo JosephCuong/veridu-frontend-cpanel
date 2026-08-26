@@ -1,7 +1,7 @@
 import React from 'react';
 
 import SalvationTimeline from '@/components/SalvationTimeline';
-import { Clock, Sparkles } from 'lucide-react';
+import { Clock } from 'lucide-react';
 
 export default function SalvationTimelinePage() {
   return (
@@ -9,8 +9,8 @@ export default function SalvationTimelinePage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-8 flex-1 w-full">
         {/* Page Header */}
         <div className="space-y-4 text-center max-w-3xl mx-auto">
-          <span className="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-400 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> Salvation History Visualization
+          <span className="px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-400 text-xs font-serif font-bold uppercase tracking-wider inline-flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> Tiến Trình Lịch Sử Cứu Độ
           </span>
           <h1 className="font-serif font-black text-3xl sm:text-5xl text-[var(--text-main)]">
             Dòng Thời Gian Lịch Sử Cứu Độ

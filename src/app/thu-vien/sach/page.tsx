@@ -7,7 +7,6 @@ import {
   BookOpen, 
   Search, 
   Download, 
-  Sparkles, 
   Layers, 
   CheckCircle2, 
   AlertCircle, 
@@ -129,12 +128,12 @@ export default function BookLibraryPage() {
         
         {/* ── 1. HERO HEADER ── */}
         <section className="text-center space-y-4 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-serif italic">
-            <Sparkles className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-serif">
+            <BookOpen className="w-3.5 h-3.5" />
             <span>Kho Tàng Văn Khố &amp; Tri Thức Đức Tin Công Giáo</span>
           </div>
 
-          <h1 className="font-serif font-black text-3xl sm:text-5xl text-[var(--text-main)] tracking-tight">
+          <h1 className="font-serif font-bold text-3xl sm:text-5xl text-[var(--text-main)] tracking-tight">
             Tủ Sách Nghiên Cứu Thần Học
           </h1>
 

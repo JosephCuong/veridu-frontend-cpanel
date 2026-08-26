@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 
 import { 
   Play, CheckCircle, Circle, BookOpen, Clock, 
-  Video, Headphones, ChevronLeft, ChevronRight, Award, Sparkles, Loader2, Book, Quote
+  Video, Headphones, ChevronLeft, ChevronRight, Award, Loader2, Book, Quote
 } from 'lucide-react';
 import Link from 'next/link';
 import { fetchCourseBySlug, CourseDetail, Lesson } from '@/lib/api';

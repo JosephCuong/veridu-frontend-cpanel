@@ -8,7 +8,7 @@ import VisualArticleRenderer from '@/components/VisualArticleRenderer';
 import ShareButtons from '@/components/ShareButtons';
 import TableOfContents from '@/components/TableOfContents';
 import AdminEditFloatingButton from '@/components/AdminEditFloatingButton';
-import { BookOpen, Sparkles, Heart, ArrowLeft, Cross, Calendar, Clock, User, Tag } from 'lucide-react';
+import { BookOpen, Heart, ArrowLeft, Cross, Calendar, Clock, User, Tag } from 'lucide-react';
 
 const RESERVED_SLUGS = new Set([
   'admin', 'wp-admin', 'thu-vien', 'courses', 'khoa-hoc', 'doc-kinh-thanh', 

@@ -2,7 +2,7 @@ import React from 'react';
 import { Metadata } from 'next';
 import { fetchCharacters } from '@/lib/api';
 import CharacterExplorer from '@/components/CharacterExplorer';
-import { Sparkles, Scroll, BookOpen, Crown } from 'lucide-react';
+import { Scroll, BookOpen, Crown } from 'lucide-react';
 
 export const revalidate = 3600; // Cache for 1 hour with ISR
 
@@ -30,8 +30,8 @@ export default async function CharactersPage() {
         <div className="max-w-4xl mx-auto text-center space-y-5">
           
           {/* Catholic Liturgical Tag */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-bold uppercase tracking-widest shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-serif font-bold uppercase tracking-widest shadow-sm">
+            <BookOpen className="w-3.5 h-3.5 text-amber-500" />
             <span>Kho Tàng Lịch Sử Cứu Độ (Heilsgeschichte)</span>
           </div>
 

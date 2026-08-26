@@ -18,7 +18,6 @@ import {
   AlertCircle, 
   Loader2,
   Tv,
-  Sparkles,
   Share2,
   Layers,
   X

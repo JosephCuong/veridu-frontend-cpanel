@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { 
-  BookOpen, Compass, Clock, Award, PlayCircle, ArrowRight, Sparkles, MapPin
+  BookOpen, Compass, Clock, Award, PlayCircle, ArrowRight, MapPin
 } from 'lucide-react';
 
 interface ThemeConfig {

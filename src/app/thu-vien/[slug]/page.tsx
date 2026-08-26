@@ -7,7 +7,7 @@ import { Metadata } from 'next';
 import VisualArticleRenderer from '@/components/VisualArticleRenderer';
 import ShareButtons from '@/components/ShareButtons';
 import TableOfContents from '@/components/TableOfContents';
-import { BookOpen, Sparkles, Heart, ArrowLeft, Cross, Calendar, Clock, User, Tag } from 'lucide-react';
+import { BookOpen, Heart, ArrowLeft, Cross, Calendar, Clock, User, Tag } from 'lucide-react';
 
 // ─── GENERATE METADATA FROM SITESEO ──────────────────────────────────────────
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -217,7 +217,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
               <article className="p-6 sm:p-12 rounded-3xl glass-panel space-y-8 relative overflow-hidden">
                 <header className="space-y-4 border-b border-slate-200/50 dark:border-white/10 pb-8 text-center sm:text-left relative z-10">
                   <span className="px-3.5 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-700 dark:text-amber-400 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm">
-                    <Sparkles className="w-3.5 h-3.5" /> Suy Niệm Lời Chúa
+                    <BookOpen className="w-3.5 h-3.5" /> Suy Niệm Lời Chúa
                   </span>
                   <h1 className="font-serif font-black text-3xl sm:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-red-600 dark:from-amber-400 dark:to-red-400 leading-[1.2] drop-shadow-sm" dangerouslySetInnerHTML={{ __html: titleText }} />
                   <MetaDataRow article={article} />

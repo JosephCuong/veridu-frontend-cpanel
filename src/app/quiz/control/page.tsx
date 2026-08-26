@@ -27,7 +27,6 @@ import {
   UserX, 
   Users, 
   ShieldAlert, 
-  Sparkles, 
   Trophy, 
   RotateCcw, 
   Key, 
@@ -642,9 +641,9 @@ export default function GLVRoomControlPage() {
               <button
                 type="button"
                 onClick={handleCreateRoom}
-                className="w-full py-4 rounded-2xl bg-amber-500 text-slate-950 font-serif font-black text-base sm:text-lg flex items-center justify-center gap-2 hover:bg-amber-400 transition-all shadow-xl shadow-amber-500/20"
+                className="w-full py-4 rounded-2xl bg-amber-500 text-slate-950 font-serif font-bold text-base sm:text-lg flex items-center justify-center gap-2 hover:bg-amber-400 transition-all shadow-xl shadow-amber-500/20"
               >
-                <Sparkles className="w-5 h-5 fill-current" />
+                <Play className="w-5 h-5 fill-current" />
                 <span>KHỞI TẠO PHÒNG THI &amp; TẠO MÃ PIN &rarr;</span>
               </button>
 
@@ -852,7 +851,7 @@ export default function GLVRoomControlPage() {
             {roomStatus === 'showing_answer' && (
               <div className="p-6 rounded-3xl bg-amber-500/10 border-2 border-amber-500/40 space-y-3 animate-fadeIn">
                 <div className="flex items-center gap-2 text-xs font-bold text-amber-600 dark:text-amber-400">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <BookOpen className="w-4 h-4 text-amber-500" />
                   <span>Giải Thích &amp; Trích Dẫn Kinh Thánh</span>
                 </div>
                 {questions[currentQIndex].scriptureRef && (

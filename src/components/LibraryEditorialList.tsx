@@ -8,8 +8,6 @@ import {
   Download, 
   Eye, 
   Layers, 
-  Sparkles, 
-  Zap, 
   Clock, 
   Paperclip,
   ChevronRight,
@@ -134,8 +132,8 @@ export default function LibraryEditorialList({
                   </>
                 ) : (
                   <>
-                    <Zap className="w-3.5 h-3.5 fill-current" />
-                    <span>Đọc Nhanh</span>
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span>Đọc Sách</span>
                   </>
                 )}
               </Link>

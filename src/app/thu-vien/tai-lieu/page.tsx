@@ -7,7 +7,6 @@ import {
   FileText, 
   Search, 
   Download, 
-  Sparkles, 
   Layers, 
   CheckCircle2, 
   AlertCircle, 

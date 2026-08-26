@@ -15,7 +15,6 @@ import {
   Type, 
   FileText, 
   X, 
-  Sparkles, 
   AlertTriangle, 
   Grid, 
   HelpCircle, 
@@ -26,7 +25,8 @@ import {
   AlignRight,
   Info,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  LayoutGrid
 } from 'lucide-react';
 
 export interface VeriduBlock {
@@ -553,7 +553,7 @@ export default function VeriduBlockEditor({ blocks, onChange, onSelectBlock }: V
           <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[var(--border-card)] pb-4">
               <h3 className="font-bold text-lg text-amber-500 flex items-center gap-2 font-serif">
-                <Sparkles className="w-5 h-5 text-amber-500" /> Thư Viện 12 Khối Elementor Pro VERIDU
+                <LayoutGrid className="w-5 h-5 text-amber-500" /> Thư Viện 12 Khối Trình Bày VERIDU
               </h3>
               <button onClick={() => setShowBlockDrawer(false)} className="text-[var(--text-muted)] hover:text-[var(--text-main)]">
                 <X className="w-5 h-5" />

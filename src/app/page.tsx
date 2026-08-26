@@ -7,7 +7,7 @@ import SocialFeed from '@/components/SocialFeed';
 import ArticleCarousel from '@/components/ArticleCarousel';
 import { fetchCourses, fetchHomepageData } from '@/lib/api';
 import { 
-  BookOpen, ChevronRight, PlayCircle, Sparkles, MapPin, Clock, ShieldCheck, Cross, Quote, Award, Library, Users, ArrowRight
+  BookOpen, ChevronRight, PlayCircle, MapPin, Clock, ShieldCheck, Cross, Quote, Award, Library, Users, ArrowRight
 } from 'lucide-react';
 
 export default async function Home() {

@@ -18,7 +18,6 @@ import {
   Download, 
   ArrowLeft, 
   Eye, 
-  Sparkles, 
   ListOrdered, 
   Paperclip, 
   CheckCircle2, 
@@ -332,8 +331,8 @@ export default function BookDetailPage() {
                   : 'bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-main)]'
               }`}
             >
-              <Sparkles className="w-4 h-4" />
-              <span>Giới Thiệu Chuyên Sâu</span>
+              <BookOpen className="w-4 h-4" />
+              <span>Giới Thiệu Tác Phẩm</span>
             </button>
 
             {item.table_of_contents && item.table_of_contents.length > 0 && (
@@ -371,8 +370,8 @@ export default function BookDetailPage() {
           {/* ── TAB 1: FULL SUMMARY ── */}
           {activeTab === 'summary' && (
             <div className="p-6 sm:p-10 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-6 animate-fadeIn">
-              <h2 className="font-serif font-black text-xl sm:text-2xl text-[var(--text-main)] flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-amber-500" />
+              <h2 className="font-serif font-bold text-xl sm:text-2xl text-[var(--text-main)] flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-amber-500" />
                 <span>Bối Cảnh &amp; Giá Trị Linh Đạo</span>
               </h2>
 
@@ -393,7 +392,7 @@ export default function BookDetailPage() {
           {activeTab === 'toc' && item.table_of_contents && (
             <div className="p-6 sm:p-10 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-6 animate-fadeIn">
               <div className="flex items-center justify-between">
-                <h2 className="font-serif font-black text-xl sm:text-2xl text-[var(--text-main)] flex items-center gap-2">
+                <h2 className="font-serif font-bold text-xl sm:text-2xl text-[var(--text-main)] flex items-center gap-2">
                   <ListOrdered className="w-5 h-5 text-amber-500" />
                   <span>Mục Lục Các Chương Hồi</span>
                 </h2>
@@ -429,7 +428,7 @@ export default function BookDetailPage() {
           {/* ── TAB 3: ATTACHMENTS ── */}
           {activeTab === 'attachments' && item.attachments && (
             <div className="p-6 sm:p-10 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-6 animate-fadeIn">
-              <h2 className="font-serif font-black text-xl sm:text-2xl text-[var(--text-main)] flex items-center gap-2">
+              <h2 className="font-serif font-bold text-xl sm:text-2xl text-[var(--text-main)] flex items-center gap-2">
                 <Paperclip className="w-5 h-5 text-amber-500" />
                 <span>Tệp Đính Kèm &amp; Tài Liệu Bổ Trợ</span>
               </h2>
@@ -472,9 +471,9 @@ export default function BookDetailPage() {
         {relatedItems.length > 0 && (
           <section className="space-y-6 pt-6 border-t border-[var(--border-card)]">
             <div className="flex items-center justify-between">
-              <h3 className="font-serif font-black text-xl sm:text-2xl text-[var(--text-main)] flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-amber-500" />
-                <span>Tác Phẩm Cùng Chuyên Mục Bạn Có Thể Thích</span>
+              <h3 className="font-serif font-bold text-xl sm:text-2xl text-[var(--text-main)] flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-amber-500" />
+                <span>Tác Phẩm Cùng Chuyên Mục</span>
               </h3>
               <Link
                 href="/thu-vien/sach"

@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
-  Sparkles, 
   Upload, 
   FileCode, 
   Eye, 
@@ -33,7 +32,6 @@ import {
   Trash2,
   FileUp,
   Check,
-  Zap,
   Monitor,
   Tablet,
   Smartphone,
@@ -368,7 +366,7 @@ function DangBaiContent() {
 
           <div className="flex items-center gap-2.5">
             <span className="p-2 rounded-xl bg-amber-500/10 text-amber-500 font-black border border-amber-500/20">
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+              <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
             </span>
             <div>
               <h1 className="font-serif font-bold text-xs sm:text-sm md:text-base text-[var(--text-main)] flex items-center gap-2 truncate max-w-[200px] sm:max-w-xs md:max-w-md">
@@ -660,7 +658,7 @@ function DangBaiContent() {
             {sidebarTab === 'widgets' && (
               <div className="p-4 space-y-4">
                 <div className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5" /> Thêm Khối Vào Canvas
+                  <LayoutGrid className="w-3.5 h-3.5" /> Thêm Khối Vào Canvas
                 </div>
                 <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
                   Nhấp vào khối bên dưới để chèn vào bài viết:
@@ -817,7 +815,7 @@ function DangBaiContent() {
             {analysisNotice && (
               <div className="w-full p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-between gap-4 text-xs text-indigo-600 dark:text-indigo-300 font-medium animate-in fade-in">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-indigo-500 shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-indigo-500 shrink-0" />
                   <span>{analysisNotice}</span>
                 </div>
                 <button
@@ -833,7 +831,7 @@ function DangBaiContent() {
             {/* MODE SWITCHER: SOẠN KHỐI VS XEM TRƯỚC */}
             <div className="w-full flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-md">
               <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-muted)]">
-                <Zap className="w-4 h-4 text-amber-500" />
+                <Sliders className="w-4 h-4 text-amber-500" />
                 <span>Mô Hình Làm Việc:</span>
               </div>
               
