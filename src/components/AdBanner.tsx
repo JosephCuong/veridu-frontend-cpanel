@@ -15,7 +15,7 @@ export default function AdBanner({
   responsive = true,
   className = ''
 }: AdBannerProps) {
-  const clientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || 'ca-pub-3636359556839352';
+  const clientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || 'ca-pub-5209827375568934';
 
   useEffect(() => {
     try {

@@ -4,7 +4,7 @@ import React from 'react';
 import Script from 'next/script';
 
 export default function GoogleAnalytics() {
-  const gaId = process.env.NEXT_PUBLIC_GA_ID || 'G-QCX13Y1G7C'; // Configured or Default ID
+  const gaId = process.env.NEXT_PUBLIC_GA_ID || 'G-DDK6K002MD';
 
   if (!gaId) return null;
 

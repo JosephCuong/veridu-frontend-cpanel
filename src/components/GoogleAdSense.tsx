@@ -4,7 +4,7 @@ import React from 'react';
 import Script from 'next/script';
 
 export default function GoogleAdSense() {
-  const clientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || 'ca-pub-3636359556839352';
+  const clientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || 'ca-pub-5209827375568934';
 
   if (!clientId) return null;
 
