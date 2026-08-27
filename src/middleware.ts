@@ -22,6 +22,9 @@ const KNOWN_ROUTES = new Set([
   '/sach-tranh',
   '/sach-tranh/studio',
   '/quiz',
+  '/game',
+  '/game/hanh-trinh-dat-hua',
+  '/game/trieu-phu-duc-tin',
 
 
   '/quiz/control',

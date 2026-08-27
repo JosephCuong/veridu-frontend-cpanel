@@ -384,6 +384,16 @@ export default function LiturgicalHeader() {
               Đấu Trường
             </Link>
 
+            {/* 7. GAME GIÁO LÝ */}
+            <Link 
+              href="/game" 
+              className={`py-1 text-[var(--text-main)] hover:text-amber-500 transition-colors ${
+                pathname.startsWith('/game') ? 'text-amber-500 font-black' : ''
+              }`}
+            >
+              Game
+            </Link>
+
 
           </nav>
         </div>
@@ -526,6 +536,11 @@ export default function LiturgicalHeader() {
           {/* 6. ĐẤU TRƯỜNG */}
           <Link href="/quiz" className="block py-2.5 text-sm font-bold text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2.5">
             <Flame className="w-4 h-4 text-amber-500" /> Đấu Trường
+          </Link>
+
+          {/* 7. CỔNG GAME GIÁO LÝ */}
+          <Link href="/game" className="block py-2.5 text-sm font-bold text-amber-600 dark:text-amber-400 hover:text-amber-500 flex items-center gap-2.5">
+            <Award className="w-4 h-4 text-amber-500" /> Cổng Game Giáo Lý
           </Link>
 
 
