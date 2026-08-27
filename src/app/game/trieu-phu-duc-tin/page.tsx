@@ -72,6 +72,12 @@ export default function TrieuPhuDucTinPage() {
     checkDailyFreePlay();
     loadGameSettings();
     loadDynamicQuestions();
+
+    const handleUserUpdate = (e: any) => {
+      if (e.detail) setUser(e.detail);
+    };
+    window.addEventListener('veridu_user_updated', handleUserUpdate);
+    return () => window.removeEventListener('veridu_user_updated', handleUserUpdate);
   }, []);
 
   const loadGameSettings = async () => {
@@ -262,19 +268,21 @@ export default function TrieuPhuDucTinPage() {
     const today = new Date().toISOString().slice(0, 10);
     const lastPlayed = typeof window !== 'undefined' ? localStorage.getItem('veridu_last_free_play_date') : null;
 
+    const curUser = getStoredUser();
+    const currentManna = curUser?.manna !== undefined ? curUser.manna : 100;
+
     if (lastPlayed !== today) {
-      // Free play today!
+      // First game of the day is FREE
       localStorage.setItem('veridu_last_free_play_date', today);
       setHasFreePlayToday(false);
     } else {
-      // Deduct 20 Manna
-      const curUser = getStoredUser();
-      const currentManna = curUser?.manna || 100;
+      // Subsequent games cost 20 Manna
       if (currentManna < 20) {
         setShowMannaAlert(true);
         return;
       }
-      addFaithPoints(0, -20);
+      const updated = addFaithPoints(0, -20);
+      if (updated) setUser(updated);
     }
 
     loadDynamicQuestions();
@@ -350,24 +358,40 @@ export default function TrieuPhuDucTinPage() {
   const awardRewards = (status: 'victory' | 'failed' | 'walk_away' | 'timeout') => {
     let finalXP = 0;
     let finalManna = earnedMannaBonus;
+    let newTitle: string | undefined = undefined;
+    let newBadge: string | undefined = undefined;
 
     if (status === 'victory') {
       finalXP = gameQuestions[14]?.prize_xp || 20000;
       finalManna += 50;
+      newTitle = 'Tiến Sĩ Hội Thánh';
+      newBadge = 'tien_si_hoi_thanh';
     } else if (status === 'walk_away') {
       finalXP = gameQuestions[currentLevel]?.prize_xp || 0;
+      if (currentLevel >= 9) {
+        newTitle = 'Môn Đệ Kiên Vững';
+        newBadge = 'mon_de_kien_vung';
+      } else if (currentLevel >= 4) {
+        newTitle = 'Tân Tòng Nhiệt Thành';
+        newBadge = 'tan_tong_nhiet_thanh';
+      }
     } else {
       // Failed or Timeout: Safe milestones at Level 5 (index 4) or Level 10 (index 9)
       if (currentLevel >= 9) {
         finalXP = gameQuestions[9]?.prize_xp || 2500;
+        newTitle = 'Môn Đệ Kiên Vững';
+        newBadge = 'mon_de_kien_vung';
       } else if (currentLevel >= 4) {
         finalXP = gameQuestions[4]?.prize_xp || 200;
+        newTitle = 'Tân Tòng Nhiệt Thành';
+        newBadge = 'tan_tong_nhiet_thanh';
       } else {
         finalXP = 0;
       }
     }
 
-    addFaithPoints(finalXP, finalManna);
+    const updated = addFaithPoints(finalXP, finalManna, newTitle, newBadge);
+    if (updated) setUser(updated);
   };
 
   // Lifeline Actions
@@ -440,14 +464,26 @@ export default function TrieuPhuDucTinPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Daily Free Play / Manna Status Badge */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-slate-800/80 border border-slate-700 text-xs font-serif">
-              <Zap className="w-3.5 h-3.5 text-amber-400" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* User Faith Points & Manna HUD */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-slate-800/90 border border-amber-500/30 text-xs font-serif shadow-inner">
+              <div className="flex items-center gap-1 text-amber-400 font-mono font-bold" title="Điểm Faith XP tích lũy">
+                <Trophy className="w-3.5 h-3.5" />
+                <span>{(user?.points || 0).toLocaleString('vi-VN')} XP</span>
+              </div>
+              <div className="w-px h-3.5 bg-slate-700" />
+              <div className="flex items-center gap-1 text-emerald-400 font-mono font-bold" title="Bánh Manna hiện có">
+                <Zap className="w-3.5 h-3.5" />
+                <span>{user?.manna !== undefined ? user.manna : 100} Manna</span>
+              </div>
+            </div>
+
+            {/* Daily Free Play Badge */}
+            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-slate-800/80 border border-slate-700 text-xs font-serif">
               {hasFreePlayToday ? (
-                <span className="text-emerald-400 font-bold">Lượt Miễn Phí Hôm Nay</span>
+                <span className="text-emerald-400 font-bold text-[11px]">✨ Lượt Miễn Phí</span>
               ) : (
-                <span className="text-stone-300">20 Manna / Lượt</span>
+                <span className="text-stone-400 text-[11px]">20 Manna / Lượt</span>
               )}
             </div>
 

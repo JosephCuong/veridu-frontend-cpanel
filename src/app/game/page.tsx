@@ -24,7 +24,7 @@ import {
   Tv,
   Cross
 } from 'lucide-react';
-import { getStoredUser } from '@/lib/auth';
+import { getStoredUser, addFaithPoints } from '@/lib/auth';
 import { ARCADE_GAMES, MANNA_STORE_ITEMS, GameEvent } from '@/lib/gamesData';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -48,10 +48,35 @@ export default function GameArcadeHubPage() {
   useEffect(() => {
     const u = getStoredUser();
     setUser(u);
+    if (u) {
+      setProfile((prev: any) => ({
+        ...prev,
+        total_xp: u.points !== undefined ? u.points : prev.total_xp,
+        manna: u.manna !== undefined ? u.manna : prev.manna,
+        current_title: (u as any).current_title || prev.current_title,
+        badges: u.badges || prev.badges
+      }));
+    }
     loadGameEvents();
     if (u && u.id) {
       loadGameProfile(u.id);
     }
+
+    const handleUserUpdate = (e: any) => {
+      if (e.detail) {
+        setUser(e.detail);
+        setProfile((prev: any) => ({
+          ...prev,
+          total_xp: e.detail.points !== undefined ? e.detail.points : prev.total_xp,
+          manna: e.detail.manna !== undefined ? e.detail.manna : prev.manna,
+          current_title: e.detail.current_title || prev.current_title,
+          badges: e.detail.badges || prev.badges
+        }));
+      }
+    };
+
+    window.addEventListener('veridu_user_updated', handleUserUpdate);
+    return () => window.removeEventListener('veridu_user_updated', handleUserUpdate);
   }, []);
 
   const loadGameProfile = async (userId: string | number) => {
@@ -132,6 +157,7 @@ export default function GameArcadeHubPage() {
 
     const newManna = profile.manna - item.cost;
     setProfile((prev: any) => ({ ...prev, manna: newManna }));
+    addFaithPoints(0, -item.cost, undefined, item.id);
     setRedeemSuccess(`Chúc mừng! Bạn đã đổi thành công "${item.name}"!`);
     setTimeout(() => setRedeemSuccess(null), 4000);
 

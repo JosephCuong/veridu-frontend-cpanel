@@ -164,33 +164,71 @@ export function clearQuizHistory() {
   localStorage.removeItem('veridu_quiz_history');
 }
 
-export function addFaithPoints(points: number, mannaOrReason?: number | string) {
-  if (typeof window === 'undefined') return;
-  const current = getStoredUser();
-  if (current) {
-    const newPoints = (current.points || 0) + points;
-    const mannaDelta = typeof mannaOrReason === 'number' ? mannaOrReason : 0;
-    const newManna = Math.max(0, (current.manna !== undefined ? current.manna : 100) + mannaDelta);
+export function addFaithPoints(points: number, mannaOrReason?: number | string, newTitle?: string, newBadge?: string): UserProfile | null {
+  if (typeof window === 'undefined') return null;
+  const current = getStoredUser() || {
+    id: 'guest_' + Date.now(),
+    username: 'khach_hanh_huong',
+    email: '',
+    displayName: 'Khách Hành Hương',
+    christianName: '',
+    parish: '',
+    diocese: '',
+    role: 'Học Viên',
+    streak: 1,
+    points: 0,
+    manna: 100,
+    badges: ['tan_tong']
+  };
 
-    const updated: UserProfile = { 
-      ...current, 
-      points: newPoints,
-      manna: newManna
-    };
-    saveAuthSession(getAuthToken() || '', updated, true);
-    
-    // Background update to Supabase
-    if (current.id && typeof current.id === 'string' && current.id.includes('-')) {
-      import('./supabaseClient').then(async ({ supabase }) => {
-        try {
-          await supabase.from('profiles').update({
-            points: newPoints,
-            manna: newManna,
-            updated_at: new Date().toISOString()
-          }).eq('id', current.id);
-        } catch (err) {}
-      });
-    }
+  const newPoints = Math.max(0, (current.points || 0) + points);
+  const mannaDelta = typeof mannaOrReason === 'number' ? mannaOrReason : 0;
+  const newManna = Math.max(0, (current.manna !== undefined ? current.manna : 100) + mannaDelta);
+
+  const existingBadges = Array.isArray(current.badges) ? [...current.badges] : ['tan_tong'];
+  if (newBadge && !existingBadges.includes(newBadge)) {
+    existingBadges.push(newBadge);
   }
+
+  const updated: UserProfile = { 
+    ...current, 
+    points: newPoints,
+    manna: newManna,
+    badges: existingBadges,
+    ...(newTitle ? { current_title: newTitle } : {})
+  };
+
+  saveAuthSession(getAuthToken() || 'guest_token', updated, true);
+
+  // Dispatch live window event so all UI components update immediately
+  window.dispatchEvent(new CustomEvent('veridu_user_updated', { detail: updated }));
+
+  // Background update to Supabase (both profiles & game_profiles)
+  if (current.id && typeof current.id === 'string' && current.id.includes('-')) {
+    import('./supabaseClient').then(async ({ supabase }) => {
+      try {
+        await supabase.from('profiles').update({
+          points: newPoints,
+          manna: newManna,
+          badges: existingBadges,
+          current_title: newTitle || (current as any).current_title || 'Tân Tòng',
+          updated_at: new Date().toISOString()
+        }).eq('id', current.id);
+
+        await supabase.from('game_profiles').upsert({
+          user_id: current.id,
+          username: current.username || current.email,
+          display_name: current.displayName,
+          total_xp: newPoints,
+          manna: newManna,
+          badges: existingBadges,
+          current_title: newTitle || (current as any).current_title || 'Tân Tòng',
+          updated_at: new Date().toISOString()
+        });
+      } catch (err) {}
+    });
+  }
+
+  return updated;
 }
 
