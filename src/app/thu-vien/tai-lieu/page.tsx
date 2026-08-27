@@ -123,24 +123,20 @@ export default function DocumentsLibraryPage() {
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] pb-20 font-sans">
       
-      {/* ── 1. SACRED HERO SECTION (STAINED-GLASS BACKDROP) ── */}
-      <section className="relative overflow-hidden pt-28 sm:pt-36 pb-16 sm:pb-24 border-b border-[var(--border-card)] mb-10">
-        <div 
-          className="absolute inset-0 bg-cover bg-center transition-all duration-1000 scale-105"
-          style={{ 
-            backgroundImage: `url('https://images.unsplash.com/photo-1548625361-9c8eb25c56df?q=80&w=1920&auto=format&fit=crop')` 
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-950/80 to-[var(--bg-main)] backdrop-blur-[2px]" />
+      {/* ── 1. SACRED HERO SECTION (CLEAN PARCHMENT / LIGHT & DARK COMPLIANT) ── */}
+      <section className="relative w-full pt-28 sm:pt-36 pb-14 sm:pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-[var(--border-card)] bg-gradient-to-b from-amber-500/[0.04] via-transparent to-[var(--bg-main)] mb-10">
+        <div className="absolute inset-0 bg-[radial-gradient(#d97706_1px,transparent_1px)] [background-size:24px_24px] opacity-10 dark:opacity-15 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-amber-500/5 dark:bg-amber-500/10 rounded-full blur-[100px] pointer-events-none" />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5">
-          <h1 className="font-serif font-black text-3xl sm:text-5xl lg:text-6xl tracking-tight leading-tight">
-            <span className="bg-gradient-to-r from-amber-100 via-amber-300 to-amber-100 bg-clip-text text-transparent drop-shadow-sm">
-              Tài Liệu Phụng Vụ &amp; Slide Giáo Án
+        <div className="relative max-w-4xl mx-auto text-center space-y-4">
+          <h1 className="font-serif font-black text-3xl sm:text-5xl lg:text-6xl text-[var(--text-main)] tracking-tight leading-tight">
+            Tài Liệu Phụng Vụ{' '}
+            <span className="bg-gradient-to-r from-amber-700 via-amber-600 to-amber-800 dark:from-amber-300 dark:via-amber-400 dark:to-amber-100 bg-clip-text text-transparent">
+              &amp; Slide Bài Giảng
             </span>
           </h1>
 
-          <p className="text-sm sm:text-base lg:text-lg text-stone-300 max-w-2xl mx-auto font-serif leading-relaxed">
+          <p className="font-serif italic text-sm sm:text-base lg:text-lg text-[var(--text-muted)] max-w-2xl sm:max-w-3xl mx-auto leading-relaxed">
             Hệ thống giáo án điện tử PowerPoint, slide trình chiếu giáo lý 16:9, sổ tay huynh trưởng và văn kiện phụng vụ phục vụ công tác tông đồ.
           </p>
 

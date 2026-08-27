@@ -87,51 +87,42 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
   return (
     <div className="w-full pb-20">
       
-      {/* ── 1. SACRED HERO SECTION (STAINED-GLASS BACKDROP) ── */}
-      <section className="relative overflow-hidden pt-28 sm:pt-36 pb-16 sm:pb-24 border-b border-[var(--border-card)]">
-        {/* Background Image with Dark Glass Overlay */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center transition-all duration-1000 scale-105"
-          style={{ 
-            backgroundImage: `url('https://images.unsplash.com/photo-1548625361-9c8eb25c56df?q=80&w=1920&auto=format&fit=crop')` 
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-950/80 to-[var(--bg-main)] backdrop-blur-[2px]" />
+      {/* ── 1. SACRED HERO SECTION (CLEAN PARCHMENT / LIGHT & DARK COMPLIANT) ── */}
+      <section className="relative w-full pt-28 sm:pt-36 pb-14 sm:pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-[var(--border-card)] bg-gradient-to-b from-amber-500/[0.04] via-transparent to-[var(--bg-main)]">
+        <div className="absolute inset-0 bg-[radial-gradient(#d97706_1px,transparent_1px)] [background-size:24px_24px] opacity-10 dark:opacity-15 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-amber-500/5 dark:bg-amber-500/10 rounded-full blur-[100px] pointer-events-none" />
 
-        {/* Hero Content Container */}
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5">
-          <h1 className="font-serif font-black text-3xl sm:text-5xl lg:text-6xl tracking-tight leading-tight">
-            <span className="bg-gradient-to-r from-amber-100 via-amber-300 to-amber-100 bg-clip-text text-transparent drop-shadow-sm">
-              Thư Viện Tri Thức &amp; Suy Niệm
+        <div className="relative max-w-4xl mx-auto text-center space-y-4">
+          <h1 className="font-serif font-black text-3xl sm:text-5xl lg:text-6xl text-[var(--text-main)] tracking-tight leading-tight">
+            Thư Viện Bài Viết{' '}
+            <span className="bg-gradient-to-r from-amber-700 via-amber-600 to-amber-800 dark:from-amber-300 dark:via-amber-400 dark:to-amber-100 bg-clip-text text-transparent">
+              &amp; Suy Niệm Công Giáo
             </span>
           </h1>
 
-          <p className="text-sm sm:text-base lg:text-lg text-stone-300 max-w-2xl mx-auto font-serif leading-relaxed">
-            Tổng hợp các bài khảo cứu Thần học, Giáo luật Phụng vụ, Linh đạo sống đức tin và các bài viết tương tác giáo lý trực quan.
+          <p className="font-serif italic text-sm sm:text-base lg:text-lg text-[var(--text-muted)] max-w-2xl sm:max-w-3xl mx-auto leading-relaxed">
+            Tổng hợp các bài khảo cứu Thần học, Giáo luật Phụng vụ, Linh đạo sống đức tin và các bài viết giáo lý tương tác trực quan.
           </p>
 
-          {/* Quick Stats Badges */}
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-            <div className="px-4 py-2 rounded-2xl bg-slate-900/80 border border-amber-500/30 backdrop-blur-md flex items-center gap-2 text-xs font-serif shadow-lg">
-              <BookOpen className="w-4 h-4 text-amber-400" />
-              <span className="text-stone-200">
-                <strong className="text-amber-400 font-mono">{initialArticles.length}</strong> Bài viết tuyển chọn
-              </span>
+            <div className="px-3.5 py-1.5 rounded-full bg-[var(--bg-card)] border border-[var(--border-card)] flex items-center gap-2 text-xs font-serif text-[var(--text-muted)] shadow-sm">
+              <BookOpen className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span><strong className="text-[var(--text-main)] font-mono">{initialArticles.length}</strong> Bài viết tuyển chọn</span>
             </div>
 
             <Link
               href="/thu-vien/sach"
-              className="px-4 py-2 rounded-2xl bg-slate-900/80 hover:bg-amber-500/20 border border-[var(--border-card)] hover:border-amber-500/50 backdrop-blur-md flex items-center gap-2 text-xs font-serif text-stone-300 hover:text-amber-300 transition shadow-lg"
+              className="px-3.5 py-1.5 rounded-full bg-[var(--bg-card)] hover:border-amber-500/50 border border-[var(--border-card)] flex items-center gap-1.5 text-xs font-serif text-[var(--text-muted)] hover:text-[var(--text-main)] transition shadow-sm"
             >
-              <BookMarked className="w-4 h-4 text-indigo-400" />
+              <BookMarked className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
               <span>Tủ Sách Điện Tử</span>
             </Link>
 
             <Link
               href="/thu-vien/tai-lieu"
-              className="px-4 py-2 rounded-2xl bg-slate-900/80 hover:bg-amber-500/20 border border-[var(--border-card)] hover:border-amber-500/50 backdrop-blur-md flex items-center gap-2 text-xs font-serif text-stone-300 hover:text-amber-300 transition shadow-lg"
+              className="px-3.5 py-1.5 rounded-full bg-[var(--bg-card)] hover:border-amber-500/50 border border-[var(--border-card)] flex items-center gap-1.5 text-xs font-serif text-[var(--text-muted)] hover:text-[var(--text-main)] transition shadow-sm"
             >
-              <FileDown className="w-4 h-4 text-emerald-400" />
+              <FileDown className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>Tài Liệu PDF</span>
             </Link>
           </div>
