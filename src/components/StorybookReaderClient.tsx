@@ -14,15 +14,16 @@ import {
   Minimize2, 
   Share2, 
   BookOpen, 
-  HelpCircle,
-  Play,
-  Pause,
-  Music,
-  RefreshCw,
-  Check
+  HelpCircle, 
+  Play, 
+  Pause, 
+  Music, 
+  RefreshCw, 
+  Check,
+  Tv
 } from 'lucide-react';
 import { addFaithPoints } from '@/lib/auth';
-import { resolveMediaUrl } from '@/lib/driveHelper';
+import { resolveMediaUrl, extractYouTubeVideoId } from '@/lib/driveHelper';
 import { StorybookPage, StorybookQuizQuestion, StorybookParentGuide, StorybookTimestamp } from '@/lib/storybooksData';
 
 interface StorybookProps {
@@ -36,6 +37,9 @@ interface StorybookProps {
     description?: string;
     moral_lesson?: string;
     full_audio_url?: string;
+    music_bg_url?: string;
+    youtube_video_id?: string;
+    youtube_url?: string;
     audio_timestamps?: StorybookTimestamp[];
     pages_data: StorybookPage[];
     quiz_data: StorybookQuizQuestion[];
@@ -46,6 +50,9 @@ interface StorybookProps {
 export default function StorybookReaderClient({ book }: StorybookProps) {
   const pages: StorybookPage[] = useMemo(() => book.pages_data || [], [book.pages_data]);
   const totalPages = pages.length || book.total_pages || 10;
+
+  // View Mode: 'book' (3D Spread) vs 'video' (YouTube Cinema)
+  const [viewMode, setViewMode] = useState<'book' | 'video'>('book');
 
   // Reading State
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
@@ -75,6 +82,8 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
   const [faithXpEarned, setFaithXpEarned] = useState(0);
   const [copiedUrl, setCopiedUrl] = useState(false);
 
+  const youtubeId = book.youtube_video_id || (book.youtube_url ? extractYouTubeVideoId(book.youtube_url) : null);
+
   const currentPage = pages[currentPageIndex] || {
     page_number: currentPageIndex + 1,
     image_url: `/storybooks/cong-trinh-sang-tao/page_${currentPageIndex + 1}.png`,
@@ -82,7 +91,6 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
     estimated_duration: 15
   };
 
-  // Sound Effect for realistic 3D book page flip
   const playPageTurnSound = useCallback(() => {
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -105,7 +113,6 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
     } catch (e) {}
   }, []);
 
-  // Web Audio Synthetic Celestial Background Music
   const toggleBgm = () => {
     if (isBgmActive) {
       bgmOscillatorsRef.current.forEach(node => {
@@ -142,7 +149,6 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
     }
   };
 
-  // Turn page forward
   const goToNextPage = useCallback(() => {
     if (autoFlipTimeoutRef.current) clearTimeout(autoFlipTimeoutRef.current);
     setIsWaitingToFlip(false);
@@ -157,7 +163,6 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
     }
   }, [currentPageIndex, totalPages, playPageTurnSound]);
 
-  // Turn page backward
   const goToPrevPage = useCallback(() => {
     if (autoFlipTimeoutRef.current) clearTimeout(autoFlipTimeoutRef.current);
     setIsWaitingToFlip(false);
@@ -169,7 +174,6 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
     }
   }, [currentPageIndex, playPageTurnSound]);
 
-  // Handle Page Narration Finished (Triggers 1.5s Pause -> Auto Flip)
   const handlePageAudioFinished = useCallback(() => {
     if (autoPageTurn) {
       setIsWaitingToFlip(true);
@@ -182,7 +186,6 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
     }
   }, [autoPageTurn, goToNextPage]);
 
-  // Web speech fallback
   const fallbackWebSpeech = useCallback((text: string, duration: number) => {
     if (typeof window === 'undefined') return;
 
@@ -207,7 +210,6 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
     }
   }, [handlePageAudioFinished]);
 
-  // Play narration audio for current page
   const playCurrentPageAudio = useCallback((pageIdx: number) => {
     const curPage = pages[pageIdx];
     if (!curPage) return;
@@ -217,7 +219,6 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
     setCurrentTimeSec(0);
     setIsWaitingToFlip(false);
 
-    // Audio file or stream (supports .mp3, .wav, .m4a, .ogg and Google Drive)
     const rawAudio = curPage.audio_url || book.full_audio_url;
     const resolvedAudio = rawAudio ? resolveMediaUrl(rawAudio, 'audio') : '';
 
@@ -238,7 +239,6 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
     fallbackWebSpeech(curPage.text_script, duration);
   }, [pages, book.full_audio_url, fallbackWebSpeech]);
 
-  // Progress ticker effect
   useEffect(() => {
     if (playbackTimerRef.current) clearInterval(playbackTimerRef.current);
 
@@ -259,7 +259,6 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
     };
   }, [isPlayingAudio, isWaitingToFlip, pageDurationSec, handlePageAudioFinished]);
 
-  // When page index changes, trigger audio if playing
   useEffect(() => {
     if (isPlayingAudio) {
       playCurrentPageAudio(currentPageIndex);
@@ -288,17 +287,19 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
     }
   }, [isPlayingAudio, playCurrentPageAudio, currentPageIndex]);
 
-  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight' || e.key === 'PageDown') {
-        goToNextPage();
-      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-        goToPrevPage();
-      } else if (e.key === ' ') {
-        e.preventDefault();
-        togglePlayAudio();
-      } else if (e.key === 'Escape') {
+      if (viewMode === 'book') {
+        if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+          goToNextPage();
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+          goToPrevPage();
+        } else if (e.key === ' ') {
+          e.preventDefault();
+          togglePlayAudio();
+        }
+      }
+      if (e.key === 'Escape') {
         setShowQuizModal(false);
         setShowGuideModal(false);
       }
@@ -306,9 +307,8 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [goToNextPage, goToPrevPage, togglePlayAudio]);
+  }, [goToNextPage, goToPrevPage, togglePlayAudio, viewMode]);
 
-  // Clean up audio on unmount
   useEffect(() => {
     return () => {
       bgmOscillatorsRef.current.forEach(node => {
@@ -338,7 +338,6 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
     }
   };
 
-  // Quiz Handling
   const handleSelectOption = (qIdx: number, optIdx: number) => {
     if (quizSubmitted) return;
     setSelectedAnswers(prev => ({ ...prev, [qIdx]: optIdx }));
@@ -373,10 +372,9 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-stone-950 text-stone-100 font-sans select-none overflow-hidden">
       
-      {/* Hidden Audio Controller */}
       <audio ref={audioElRef} className="hidden" onEnded={handlePageAudioFinished} />
 
-      {/* ── 1. SACRED STORYBOOK TOP NAVBAR ── */}
+      {/* ── 1. TOP NAVBAR ── */}
       <header className="h-16 border-b border-stone-800 bg-stone-900/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between gap-3 z-30 shrink-0">
         
         {/* Left: Close Button & Title */}
@@ -394,82 +392,123 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
           </h1>
         </div>
 
-        {/* Center: Page Counter Navigator */}
-        <div className="flex items-center gap-2 bg-stone-950/80 px-3 py-1.5 rounded-full border border-stone-800 shadow-inner">
-          <button
-            onClick={goToPrevPage}
-            disabled={currentPageIndex === 0}
-            className="p-1 rounded-full text-stone-400 hover:text-amber-400 disabled:opacity-30 disabled:hover:text-stone-400 transition cursor-pointer"
-            title="Trang trước (←)"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
+        {/* Center: Mode Switcher (3D Book vs YouTube Video) & Page Counter */}
+        <div className="flex items-center gap-2">
+          {youtubeId && (
+            <div className="flex items-center bg-stone-950/80 p-1 rounded-full border border-stone-800 shadow-inner">
+              <button
+                onClick={() => {
+                  setViewMode('book');
+                }}
+                className={`px-3 py-1 rounded-full text-xs font-serif font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                  viewMode === 'book'
+                    ? 'bg-amber-500 text-slate-950 shadow-md'
+                    : 'text-stone-400 hover:text-stone-200'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Sách Lật 3D</span>
+              </button>
 
-          <span className="text-xs font-serif font-bold text-amber-400 min-w-[50px] text-center tracking-wider">
-            {currentPageIndex + 1} / {totalPages}
-          </span>
+              <button
+                onClick={() => {
+                  setViewMode('video');
+                  if (isPlayingAudio) togglePlayAudio();
+                }}
+                className={`px-3 py-1 rounded-full text-xs font-serif font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                  viewMode === 'video'
+                    ? 'bg-rose-600 text-white shadow-md'
+                    : 'text-stone-400 hover:text-rose-400'
+                }`}
+              >
+                <Tv className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Xem Video</span>
+              </button>
+            </div>
+          )}
 
-          <button
-            onClick={goToNextPage}
-            disabled={currentPageIndex === totalPages - 1}
-            className="p-1 rounded-full text-stone-400 hover:text-amber-400 disabled:opacity-30 disabled:hover:text-stone-400 transition cursor-pointer"
-            title="Trang sau (→)"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
+          {viewMode === 'book' && (
+            <div className="flex items-center gap-2 bg-stone-950/80 px-3 py-1.5 rounded-full border border-stone-800 shadow-inner">
+              <button
+                onClick={goToPrevPage}
+                disabled={currentPageIndex === 0}
+                className="p-1 rounded-full text-stone-400 hover:text-amber-400 disabled:opacity-30 disabled:hover:text-stone-400 transition cursor-pointer"
+                title="Trang trước (←)"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              <span className="text-xs font-serif font-bold text-amber-400 min-w-[50px] text-center tracking-wider">
+                {currentPageIndex + 1} / {totalPages}
+              </span>
+
+              <button
+                onClick={goToNextPage}
+                disabled={currentPageIndex === totalPages - 1}
+                className="p-1 rounded-full text-stone-400 hover:text-amber-400 disabled:opacity-30 disabled:hover:text-stone-400 transition cursor-pointer"
+                title="Trang sau (→)"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Right Action Controls: Listen, BGM, Auto-flip toggle, Quiz, Fullscreen */}
+        {/* Right Action Controls: Listen, BGM, Auto-flip, Quiz, Fullscreen */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           
-          {/* 🔊 LISTEN / PLAY / PAUSE BUTTON */}
-          <button
-            onClick={togglePlayAudio}
-            className={`px-3 sm:px-4 py-1.5 rounded-full text-xs font-serif font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer ${
-              isPlayingAudio 
-                ? 'bg-amber-500 text-slate-950 ring-2 ring-amber-400/50' 
-                : 'bg-stone-800 text-amber-300 hover:bg-stone-700 border border-amber-500/30'
-            }`}
-            title="Bật/Tắt giọng đọc lời thoại tiếng Việt"
-          >
-            {isPlayingAudio ? (
-              <>
-                <Pause className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Tạm Dừng</span>
-              </>
-            ) : (
-              <>
-                <Volume2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Listen</span>
-              </>
-            )}
-          </button>
+          {viewMode === 'book' && (
+            <>
+              {/* 🔊 LISTEN / PLAY / PAUSE BUTTON */}
+              <button
+                onClick={togglePlayAudio}
+                className={`px-3 sm:px-4 py-1.5 rounded-full text-xs font-serif font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer ${
+                  isPlayingAudio 
+                    ? 'bg-amber-500 text-slate-950 ring-2 ring-amber-400/50' 
+                    : 'bg-stone-800 text-amber-300 hover:bg-stone-700 border border-amber-500/30'
+                }`}
+                title="Bật/Tắt giọng đọc lời thoại tiếng Việt"
+              >
+                {isPlayingAudio ? (
+                  <>
+                    <Pause className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Tạm Dừng</span>
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Listen</span>
+                  </>
+                )}
+              </button>
 
-          {/* 🔄 Auto Page Turn Toggle */}
-          <button
-            onClick={() => setAutoPageTurn(!autoPageTurn)}
-            className={`p-2 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
-              autoPageTurn 
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' 
-                : 'text-stone-500 hover:text-stone-300 hover:bg-stone-800'
-            }`}
-            title={autoPageTurn ? "Tự động lật trang: Đang BẬT (Sau khi đọc xong nghỉ 1.5s)" : "Tự động lật trang: Đang TẮT"}
-          >
-            <RefreshCw className={`w-4 h-4 ${autoPageTurn ? 'text-amber-400' : ''}`} />
-          </button>
+              {/* 🔄 Auto Page Turn Toggle */}
+              <button
+                onClick={() => setAutoPageTurn(!autoPageTurn)}
+                className={`p-2 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                  autoPageTurn 
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' 
+                    : 'text-stone-500 hover:text-stone-300 hover:bg-stone-800'
+                }`}
+                title={autoPageTurn ? "Tự động lật trang: Đang BẬT" : "Tự động lật trang: Đang TẮT"}
+              >
+                <RefreshCw className={`w-4 h-4 ${autoPageTurn ? 'text-amber-400' : ''}`} />
+              </button>
 
-          {/* 🎵 BGM Ambient Sound */}
-          <button
-            onClick={toggleBgm}
-            className={`p-2 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
-              isBgmActive 
-                ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' 
-                : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800'
-            }`}
-            title="Bật/Tắt Nhạc Nền Thiên Thần"
-          >
-            <Music className="w-4 h-4" />
-          </button>
+              {/* 🎵 BGM Ambient Sound */}
+              <button
+                onClick={toggleBgm}
+                className={`p-2 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                  isBgmActive 
+                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' 
+                    : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800'
+                }`}
+                title="Bật/Tắt Nhạc Nền Thiên Thần"
+              >
+                <Music className="w-4 h-4" />
+              </button>
+            </>
+          )}
 
           {/* Mini Quiz */}
           <button
@@ -506,92 +545,98 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
         </div>
       </header>
 
-      {/* ── 2. REALISTIC 2-PAGE SPREAD STORYBOOK VIEWPORT ── */}
+      {/* ── 2. MAIN VIEWPORT (BOOK SPREAD vs YOUTUBE CINEMA) ── */}
       <main className="flex-1 flex items-center justify-center p-3 sm:p-6 md:p-8 lg:p-12 relative overflow-hidden bg-radial from-stone-900 via-stone-950 to-black">
         
-        {/* Subtle Ambient Background Light */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[550px] bg-amber-500/5 rounded-full blur-[140px] pointer-events-none" />
 
-        {/* Left Side Floating Arrow */}
-        <button
-          onClick={goToPrevPage}
-          disabled={currentPageIndex === 0}
-          className="absolute left-2 sm:left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-stone-900/80 hover:bg-amber-500 text-stone-300 hover:text-slate-950 border border-stone-700 hover:border-amber-400 backdrop-blur-md flex items-center justify-center transition-all shadow-xl disabled:opacity-20 disabled:hover:bg-stone-900/80 disabled:hover:text-stone-300 cursor-pointer"
-          title="Trang trước (←)"
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-
-        {/* Right Side Floating Arrow */}
-        <button
-          onClick={goToNextPage}
-          disabled={currentPageIndex === totalPages - 1}
-          className="absolute right-2 sm:right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-stone-900/80 hover:bg-amber-500 text-stone-300 hover:text-slate-950 border border-stone-700 hover:border-amber-400 backdrop-blur-md flex items-center justify-center transition-all shadow-xl disabled:opacity-20 disabled:hover:bg-stone-900/80 disabled:hover:text-stone-300 cursor-pointer"
-          title="Trang sau (→)"
-        >
-          <ChevronRight className="w-6 h-6" />
-        </button>
-
-        {/* 2-PAGE SPREAD CONTAINER */}
-        <div className="w-full max-w-5xl max-h-[82vh] aspect-[16/12] sm:aspect-[16/12.3] rounded-3xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] border-2 border-stone-800/80 flex flex-col relative bg-stone-900">
-          
-          {/* Central 3D Book Spine Shadow */}
-          <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-12 bg-gradient-to-r from-transparent via-stone-950/25 to-transparent pointer-events-none z-10" />
-
-          {/* Full High-Resolution Spread Image (.png, .webp, .jpg or Google Drive) */}
-          <div className="relative w-full flex-1 overflow-hidden">
-            <Image
-              src={resolvedImageSrc}
-              alt={currentPage.caption || `Trang ${currentPage.page_number}`}
-              fill
-              priority
-              className="object-contain transition-opacity duration-300"
-              sizes="(max-width: 1280px) 100vw, 1280px"
+        {viewMode === 'video' && youtubeId ? (
+          /* 🎬 YOUTUBE CINEMA PLAYER */
+          <div className="w-full max-w-5xl aspect-video rounded-3xl overflow-hidden shadow-2xl border-2 border-stone-800 relative bg-black">
+            <iframe
+              src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0`}
+              title={book.title}
+              className="w-full h-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
             />
           </div>
-
-          {/* DYNAMIC AUDIO PROGRESS BAR & PACING CONTROLLER */}
-          <div className="bg-stone-950/85 backdrop-blur-md border-t border-stone-800 px-4 py-2.5 flex items-center justify-between gap-3 z-20">
-            
-            <div className="flex items-center gap-2 text-xs font-serif text-stone-300">
-              <button
-                onClick={togglePlayAudio}
-                className="p-1.5 rounded-lg bg-amber-500 text-slate-950 hover:bg-amber-400 transition"
-              >
-                {isPlayingAudio ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-              </button>
-
-              <span className="font-mono text-[11px] text-amber-400">
-                {formatTime(currentTimeSec)} / {formatTime(pageDurationSec)}
-              </span>
-
-              {isWaitingToFlip && (
-                <span className="text-[11px] text-amber-400 animate-pulse font-serif italic hidden sm:inline">
-                  ✦ Chuẩn bị lật trang...
-                </span>
-              )}
-            </div>
-
-            {/* Audio Progress Bar */}
-            <div className="flex-1 max-w-md h-1.5 bg-stone-800 rounded-full overflow-hidden relative">
-              <div
-                className="h-full bg-gradient-to-r from-amber-600 via-amber-400 to-amber-300 transition-all duration-300 rounded-full shadow-sm"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-
-            {/* Parent Guide Button */}
+        ) : (
+          /* 📖 2-PAGE SPREAD 3D BOOK VIEWPORT */
+          <>
             <button
-              onClick={() => setShowGuideModal(true)}
-              className="text-stone-400 hover:text-amber-400 text-xs font-serif flex items-center gap-1"
+              onClick={goToPrevPage}
+              disabled={currentPageIndex === 0}
+              className="absolute left-2 sm:left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-stone-900/80 hover:bg-amber-500 text-stone-300 hover:text-slate-950 border border-stone-700 hover:border-amber-400 backdrop-blur-md flex items-center justify-center transition-all shadow-xl disabled:opacity-20 disabled:hover:bg-stone-900/80 disabled:hover:text-stone-300 cursor-pointer"
+              title="Trang trước (←)"
             >
-              <HelpCircle className="w-3.5 h-3.5 text-amber-500" />
-              <span className="hidden sm:inline">Góc Phụ Huynh</span>
+              <ChevronLeft className="w-6 h-6" />
             </button>
 
-          </div>
+            <button
+              onClick={goToNextPage}
+              disabled={currentPageIndex === totalPages - 1}
+              className="absolute right-2 sm:right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-stone-900/80 hover:bg-amber-500 text-stone-300 hover:text-slate-950 border border-stone-700 hover:border-amber-400 backdrop-blur-md flex items-center justify-center transition-all shadow-xl disabled:opacity-20 disabled:hover:bg-stone-900/80 disabled:hover:text-stone-300 cursor-pointer"
+              title="Trang sau (→)"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
 
-        </div>
+            <div className="w-full max-w-5xl max-h-[82vh] aspect-[16/12] sm:aspect-[16/12.3] rounded-3xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] border-2 border-stone-800/80 flex flex-col relative bg-stone-900">
+              
+              <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-12 bg-gradient-to-r from-transparent via-stone-950/25 to-transparent pointer-events-none z-10" />
+
+              <div className="relative w-full flex-1 overflow-hidden">
+                <Image
+                  src={resolvedImageSrc}
+                  alt={currentPage.caption || `Trang ${currentPage.page_number}`}
+                  fill
+                  priority
+                  className="object-contain transition-opacity duration-300"
+                  sizes="(max-width: 1280px) 100vw, 1280px"
+                />
+              </div>
+
+              {/* DYNAMIC AUDIO PROGRESS BAR */}
+              <div className="bg-stone-950/85 backdrop-blur-md border-t border-stone-800 px-4 py-2.5 flex items-center justify-between gap-3 z-20">
+                <div className="flex items-center gap-2 text-xs font-serif text-stone-300">
+                  <button
+                    onClick={togglePlayAudio}
+                    className="p-1.5 rounded-lg bg-amber-500 text-slate-950 hover:bg-amber-400 transition"
+                  >
+                    {isPlayingAudio ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                  </button>
+
+                  <span className="font-mono text-[11px] text-amber-400">
+                    {formatTime(currentTimeSec)} / {formatTime(pageDurationSec)}
+                  </span>
+
+                  {isWaitingToFlip && (
+                    <span className="text-[11px] text-amber-400 animate-pulse font-serif italic hidden sm:inline">
+                      ✦ Chuẩn bị lật trang...
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex-1 max-w-md h-1.5 bg-stone-800 rounded-full overflow-hidden relative">
+                  <div
+                    className="h-full bg-gradient-to-r from-amber-600 via-amber-400 to-amber-300 transition-all duration-300 rounded-full shadow-sm"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+
+                <button
+                  onClick={() => setShowGuideModal(true)}
+                  className="text-stone-400 hover:text-amber-400 text-xs font-serif flex items-center gap-1"
+                >
+                  <HelpCircle className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="hidden sm:inline">Góc Phụ Huynh</span>
+                </button>
+              </div>
+
+            </div>
+          </>
+        )}
 
       </main>
 

@@ -19,11 +19,15 @@ import {
   Layers,
   Award,
   Music,
-  Link as LinkIcon
+  Tv,
+  Code,
+  Copy,
+  Upload,
+  X
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { getStoredUser } from '@/lib/auth';
-import { resolveMediaUrl } from '@/lib/driveHelper';
+import { resolveMediaUrl, extractYouTubeVideoId } from '@/lib/driveHelper';
 import { DEFAULT_STORYBOOKS, StorybookItem, StorybookPage, StorybookQuizQuestion } from '@/lib/storybooksData';
 
 export default function AdminStorybookStudioPage() {
@@ -37,6 +41,11 @@ export default function AdminStorybookStudioPage() {
   const [activeBook, setActiveBook] = useState<StorybookItem>(DEFAULT_STORYBOOKS[0]);
   const [activeTab, setActiveTab] = useState<'info' | 'pages' | 'quiz' | 'guide'>('pages');
   const [selectedPageIndex, setSelectedPageIndex] = useState<number>(0);
+
+  // Quick JSON Tool Modal
+  const [showJsonModal, setShowJsonModal] = useState(false);
+  const [jsonInput, setJsonInput] = useState('');
+  const [jsonCopied, setJsonCopied] = useState(false);
 
   useEffect(() => {
     const u = getStoredUser();
@@ -73,7 +82,6 @@ export default function AdminStorybookStudioPage() {
     const newTimestamps: any[] = [];
     const updatedPages = currentPages.map((p, idx) => {
       const words = (p.text_script || '').trim().split(/\s+/).filter(Boolean).length;
-      // ~3.2 words per second + 2s breathing pause
       const dur = Math.max(10, Math.round(words * 0.38) + 2);
       const end = currentStart + dur;
       
@@ -133,6 +141,36 @@ export default function AdminStorybookStudioPage() {
       setStatusMsg({ type: 'error', text: e.message || 'Lỗi mạng khi kết nối tới Supabase.' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Quick JSON Import
+  const handleApplyJson = () => {
+    try {
+      const parsed = JSON.parse(jsonInput);
+      if (!parsed.title && !parsed.slug) {
+        alert('Dữ liệu JSON không hợp lệ. Cần ít nhất trường "title" hoặc "slug".');
+        return;
+      }
+      setActiveBook(prev => ({
+        ...prev,
+        ...parsed,
+        id: prev.id
+      }));
+      setShowJsonModal(false);
+      setStatusMsg({ type: 'success', text: 'Đã nhập dữ liệu JSON thành công vào Studio! Hãy bấm "Lưu Vào Supabase".' });
+      setTimeout(() => setStatusMsg(null), 4000);
+    } catch (e: any) {
+      alert('Lỗi cú pháp JSON: ' + e.message);
+    }
+  };
+
+  const handleCopyJson = () => {
+    const jsonStr = JSON.stringify(activeBook, null, 2);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(jsonStr);
+      setJsonCopied(true);
+      setTimeout(() => setJsonCopied(false), 2000);
     }
   };
 
@@ -238,6 +276,18 @@ export default function AdminStorybookStudioPage() {
           </div>
 
           <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => {
+                setJsonInput(JSON.stringify(activeBook, null, 2));
+                setShowJsonModal(true);
+              }}
+              className="px-3.5 py-2 rounded-xl border border-[var(--border-card)] hover:border-amber-500/50 text-[var(--text-muted)] hover:text-amber-600 font-serif font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+              title="Nhập hoặc Xuất mã JSON trọn gói"
+            >
+              <Code className="w-4 h-4" />
+              <span>Dán / Xuất JSON</span>
+            </button>
+
             <Link
               href={`/sach-tranh/${activeBook.slug}`}
               target="_blank"
@@ -282,7 +332,7 @@ export default function AdminStorybookStudioPage() {
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            <span>1. Thông Tin Tác Phẩm</span>
+            <span>1. Thông Tin Tác Phẩm &amp; YouTube</span>
           </button>
 
           <button
@@ -323,12 +373,11 @@ export default function AdminStorybookStudioPage() {
         </div>
       </div>
 
-      {/* ── 3. TAB 1: STORYBOOK METADATA ── */}
+      {/* ── 3. TAB 1: STORYBOOK METADATA & YOUTUBE ── */}
       {activeTab === 'info' && (
         <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            {/* Left: General Form */}
             <div className="lg:col-span-2 space-y-6 p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-lg">
               <h3 className="font-serif font-bold text-lg text-[var(--text-main)] border-b border-[var(--border-card)] pb-3">
                 Thông Tin Tác Phẩm
@@ -400,6 +449,32 @@ export default function AdminStorybookStudioPage() {
                   />
                 </div>
 
+                {/* 🎬 YOUTUBE VIDEO URL */}
+                <div className="space-y-1.5 sm:col-span-2 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30">
+                  <label className="text-xs font-bold text-rose-600 dark:text-rose-400 font-serif flex items-center gap-1.5">
+                    <Tv className="w-4 h-4" />
+                    <span>Link Video YouTube Của Câu Chuyện Này (Tùy Chọn)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={activeBook.youtube_url || ''}
+                    onChange={e => {
+                      const val = e.target.value;
+                      const ytid = extractYouTubeVideoId(val);
+                      setActiveBook(prev => ({
+                        ...prev,
+                        youtube_url: val,
+                        youtube_video_id: ytid || ''
+                      }));
+                    }}
+                    placeholder="https://www.youtube.com/watch?v=... hoặc https://youtu.be/..."
+                    className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs font-mono focus:border-rose-500 outline-none"
+                  />
+                  <p className="text-[11px] text-[var(--text-muted)]">
+                    ✦ Khi điền link YouTube, trong trình đọc sách sẽ xuất hiện nút <strong>"🎬 Xem Video"</strong> để người dùng chuyển sang chế độ rạp chiếu phim.
+                  </p>
+                </div>
+
                 <div className="space-y-1.5 sm:col-span-2">
                   <label className="text-xs font-bold text-[var(--text-muted)] font-serif">File Audio Toàn Cuốn (Link .mp3, .wav, hoặc Google Drive)</label>
                   <input
@@ -409,9 +484,6 @@ export default function AdminStorybookStudioPage() {
                     placeholder="https://drive.google.com/file/d/... hoặc /storybooks/audio.mp3"
                     className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs font-mono focus:border-amber-500 outline-none"
                   />
-                  <p className="text-[11px] text-[var(--text-muted)]">
-                    ✦ Hỗ trợ file .mp3, .wav, .m4a, .ogg hoặc liên kết chia sẻ Google Drive trực tiếp.
-                  </p>
                 </div>
 
                 <div className="space-y-1.5 sm:col-span-2">
@@ -436,7 +508,7 @@ export default function AdminStorybookStudioPage() {
               </div>
             </div>
 
-            {/* Right: Cover Preview */}
+            {/* Right: Cover & YouTube Preview */}
             <div className="space-y-6">
               <div className="p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-lg space-y-4">
                 <h3 className="font-serif font-bold text-base text-[var(--text-main)] border-b border-[var(--border-card)] pb-2">
@@ -463,6 +535,22 @@ export default function AdminStorybookStudioPage() {
                   />
                 </div>
               </div>
+
+              {activeBook.youtube_video_id && (
+                <div className="p-4 rounded-2xl bg-stone-950 border border-stone-800 space-y-2">
+                  <span className="text-[11px] font-bold text-rose-400 font-serif flex items-center gap-1">
+                    <Tv className="w-3.5 h-3.5" /> Video YouTube Đã Nhận Diện (ID: {activeBook.youtube_video_id})
+                  </span>
+                  <div className="aspect-video w-full rounded-xl overflow-hidden">
+                    <iframe
+                      src={`https://www.youtube.com/embed/${activeBook.youtube_video_id}`}
+                      className="w-full h-full border-0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
           </div>
@@ -790,6 +878,63 @@ export default function AdminStorybookStudioPage() {
                   }))}
                   className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs font-serif focus:border-amber-500 outline-none leading-relaxed"
                 />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 7. QUICK JSON IMPORT/EXPORT MODAL ── */}
+      {showJsonModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="max-w-3xl w-full p-6 sm:p-8 rounded-3xl bg-stone-900 border-2 border-stone-700 shadow-2xl text-stone-100 space-y-5">
+            <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Code className="w-5 h-5 text-amber-400" />
+                <h3 className="font-serif font-bold text-lg text-stone-100">
+                  Công Cụ Dán &amp; Xuất Dữ Liệu JSON Nhanh
+                </h3>
+              </div>
+              <button onClick={() => setShowJsonModal(false)} className="p-1.5 rounded-lg text-stone-400 hover:text-stone-100">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs font-serif text-stone-400">
+              Bạn có thể sao chép mã JSON do Trợ lý AI tạo ra rồi dán vào khung bên dưới và nhấn <strong>"Áp Dụng Vào Studio"</strong> để tự động điền toàn bộ 10 trang, câu đố và âm thanh chỉ trong 1 giây!
+            </p>
+
+            <textarea
+              rows={12}
+              value={jsonInput}
+              onChange={e => setJsonInput(e.target.value)}
+              className="w-full p-4 rounded-2xl bg-stone-950 border border-stone-800 text-xs font-mono text-amber-300 focus:border-amber-500 outline-none leading-relaxed"
+              placeholder='Dán đoạn mã JSON sách tranh vào đây...'
+            />
+
+            <div className="flex items-center justify-between pt-2">
+              <button
+                onClick={handleCopyJson}
+                className="px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-serif font-bold flex items-center gap-1.5 cursor-pointer"
+              >
+                <Copy className="w-4 h-4" />
+                <span>{jsonCopied ? 'Đã Sao Chép JSON!' : 'Sao Chép JSON Sách Này'}</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowJsonModal(false)}
+                  className="px-4 py-2 rounded-xl bg-stone-800 text-stone-400 hover:text-stone-200 text-xs font-serif font-bold cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleApplyJson}
+                  className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-serif font-black flex items-center gap-1.5 shadow-lg cursor-pointer"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Áp Dụng Vào Studio</span>
+                </button>
               </div>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
+import { extractYouTubeVideoId } from '@/lib/driveHelper';
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,6 +18,8 @@ export async function POST(req: NextRequest) {
       moral_lesson,
       full_audio_url,
       music_bg_url,
+      youtube_url,
+      youtube_video_id,
       audio_timestamps,
       pages_data,
       quiz_data,
@@ -26,6 +29,8 @@ export async function POST(req: NextRequest) {
     if (!slug || !title) {
       return NextResponse.json({ success: false, error: 'Thiếu slug hoặc tiêu đề sách tranh' }, { status: 400 });
     }
+
+    const resolvedYoutubeId = youtube_video_id || (youtube_url ? extractYouTubeVideoId(youtube_url) : '');
 
     const payload = {
       slug: slug.trim(),
@@ -39,6 +44,8 @@ export async function POST(req: NextRequest) {
       moral_lesson: moral_lesson || '',
       full_audio_url: full_audio_url || '',
       music_bg_url: music_bg_url || '',
+      youtube_url: youtube_url || '',
+      youtube_video_id: resolvedYoutubeId || '',
       audio_timestamps: audio_timestamps || [],
       pages_data: pages_data || [],
       quiz_data: quiz_data || [],
@@ -46,7 +53,6 @@ export async function POST(req: NextRequest) {
       updated_at: new Date().toISOString()
     };
 
-    // 1. Check if record exists by id or slug
     let query = supabase.from('storybooks').select('id');
     if (id) {
       query = query.eq('id', id);
@@ -63,7 +69,6 @@ export async function POST(req: NextRequest) {
     let savedBook;
 
     if (existingRows && existingRows.length > 0) {
-      // Update existing record
       const targetId = existingRows[0].id;
       const { data: updatedData, error: updateError } = await supabase
         .from('storybooks')
@@ -76,7 +81,6 @@ export async function POST(req: NextRequest) {
       }
       savedBook = updatedData?.[0] || { id: targetId, ...payload };
     } else {
-      // Insert new record
       const { data: insertedData, error: insertError } = await supabase
         .from('storybooks')
         .insert({

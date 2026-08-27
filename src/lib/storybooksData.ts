@@ -3,10 +3,10 @@ export interface StorybookPage {
   image_url: string;
   text_script: string;
   caption?: string;
-  audio_url?: string; // Optional per-page audio file
-  start_time?: number; // In seconds (for full audio track)
-  end_time?: number; // In seconds (for full audio track)
-  estimated_duration?: number; // In seconds
+  audio_url?: string;
+  start_time?: number;
+  end_time?: number;
+  estimated_duration?: number;
 }
 
 export interface StorybookTimestamp {
@@ -41,6 +41,9 @@ export interface StorybookItem {
   description: string;
   moral_lesson: string;
   full_audio_url?: string;
+  music_bg_url?: string;
+  youtube_video_id?: string;
+  youtube_url?: string;
   audio_timestamps?: StorybookTimestamp[];
   pages_data: StorybookPage[];
   quiz_data: StorybookQuizQuestion[];
@@ -61,7 +64,10 @@ export const DEFAULT_STORYBOOKS: StorybookItem[] = [
     total_pages: 10,
     description: 'Cuốn sách tranh thiếu nhi đưa các em nhỏ bước vào buổi bình minh của nhân loại, chiêm ngưỡng quyền năng và tình yêu vô biên của Thiên Chúa qua 7 ngày sáng tạo trời đất, muôn loài và con người.',
     moral_lesson: 'Khắc sâu lòng biết ơn Đấng Sáng Tạo, biết nâng niu vạn vật và nhận thức phẩm giá cao quý của mỗi con người.',
-    full_audio_url: '', // Can be populated with an MP3 URL
+    full_audio_url: '',
+    music_bg_url: '',
+    youtube_video_id: '',
+    youtube_url: '',
     audio_timestamps: [
       { page: 1, start: 0, end: 15, duration: 15 },
       { page: 2, start: 15, end: 32, duration: 17 },

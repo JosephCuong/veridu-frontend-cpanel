@@ -9,7 +9,8 @@ import {
   Volume2, 
   Award, 
   Moon, 
-  ArrowRight
+  ArrowRight,
+  Tv
 } from 'lucide-react';
 
 export const revalidate = 60;
@@ -97,7 +98,6 @@ export default async function StorybooksLibraryPage() {
               <span>Quản Trị Studio</span>
             </Link>
           </div>
-
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -118,6 +118,11 @@ export default async function StorybooksLibraryPage() {
                   <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-amber-300 border border-amber-500/30 text-[10px] font-bold flex items-center gap-1">
                     <Volume2 className="w-3 h-3" /> Audio
                   </span>
+                  {(book.youtube_video_id || book.youtube_url) && (
+                    <span className="px-2.5 py-1 rounded-full bg-rose-600/80 backdrop-blur-md text-white border border-rose-500/40 text-[10px] font-bold flex items-center gap-1">
+                      <Tv className="w-3 h-3" /> Video
+                    </span>
+                  )}
                   <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-emerald-300 border border-emerald-500/30 text-[10px] font-bold flex items-center gap-1">
                     <Award className="w-3 h-3" /> Quiz
                   </span>
