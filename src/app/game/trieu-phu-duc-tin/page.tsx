@@ -20,7 +20,9 @@ import {
   Cross,
   Shield,
   LogOut,
-  AlertTriangle
+  AlertTriangle,
+  Info,
+  X
 } from 'lucide-react';
 import { getStoredUser, addFaithPoints } from '@/lib/auth';
 import { MILLIONAIRE_QUESTIONS, MillionaireQuestion } from '@/lib/gamesData';
@@ -46,14 +48,14 @@ export default function TruthConquestGamePage() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
-  // 4 Sacred Lifelines
+  // Modals (Saint, Spirit, Change, Rules)
   const [lifeline5050Used, setLifeline5050Used] = useState(false);
   const [lifelineSaintUsed, setLifelineSaintUsed] = useState(false);
   const [lifelineSpiritUsed, setLifelineSpiritUsed] = useState(false);
   const [lifelineChangeUsed, setLifelineChangeUsed] = useState(false);
 
   const [hiddenOptions, setHiddenOptions] = useState<number[]>([]);
-  const [activeModal, setActiveModal] = useState<'saint' | 'spirit' | 'change' | null>(null);
+  const [activeModal, setActiveModal] = useState<'saint' | 'spirit' | 'change' | 'rules' | null>(null);
 
   const curQuestion: MillionaireQuestion = MILLIONAIRE_QUESTIONS[currentLevel] || MILLIONAIRE_QUESTIONS[0];
 
@@ -155,9 +157,9 @@ export default function TruthConquestGamePage() {
     }
   }, [playSound, safeXpEarned]);
 
-  // 15s Countdown Engine
+  // 15s Countdown Engine (Automatically paused when activeModal !== null)
   useEffect(() => {
-    if (gameEnded || isLocked || activeModal) {
+    if (gameEnded || isLocked || activeModal !== null) {
       if (timerRef.current) clearInterval(timerRef.current);
       return;
     }
@@ -361,7 +363,7 @@ export default function TruthConquestGamePage() {
           {/* LEFT 8 COLS: QUESTION STAGE, LIFELINES & ANSWERS */}
           <div className="lg:col-span-8 flex flex-col justify-between space-y-4">
             
-            {/* Top Stage Control Strip: Level Badge + Single 15s Circular Countdown + 4 Lifelines */}
+            {/* Top Stage Control Strip: Level Badge + Timer & Luật Chơi + 4 Lifelines */}
             <div className="p-3.5 sm:p-4 rounded-3xl bg-stone-900/90 border border-stone-800 backdrop-blur-md shadow-xl flex flex-wrap items-center justify-between gap-3">
               
               {/* Level Indicator */}
@@ -376,29 +378,42 @@ export default function TruthConquestGamePage() {
                 )}
               </div>
 
-              {/* 15s Single Circular Animated Timer (No duplicate text) */}
-              <div className="relative w-12 h-12 flex items-center justify-center">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                  <path
-                    className="text-stone-800"
-                    strokeWidth="3.5"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                  <path
-                    className={`${timerColor} transition-all duration-1000`}
-                    strokeDasharray={`${timerPercent}, 100`}
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                </svg>
-                <span className={`absolute text-xs font-mono font-black ${isUrgent ? 'text-rose-400 animate-ping' : 'text-stone-100'}`}>
-                  {timeLeft}s
-                </span>
+              {/* Central Widget: 15s Timer & "Luật Chơi" Button Right Next To It */}
+              <div className="flex items-center gap-2.5">
+                {/* 15s Single Circular Animated Timer */}
+                <div className="relative w-12 h-12 flex items-center justify-center">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                    <path
+                      className="text-stone-800"
+                      strokeWidth="3.5"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <path
+                      className={`${timerColor} transition-all duration-1000`}
+                      strokeDasharray={`${timerPercent}, 100`}
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                  </svg>
+                  <span className={`absolute text-xs font-mono font-black ${isUrgent ? 'text-rose-400 animate-ping' : 'text-stone-100'}`}>
+                    {timeLeft}s
+                  </span>
+                </div>
+
+                {/* LUẬT CHƠI BUTTON (Right Next to Timer) */}
+                <button
+                  onClick={() => setActiveModal('rules')}
+                  className="px-3 py-1.5 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 text-xs font-serif font-bold flex items-center gap-1.5 transition shadow-sm cursor-pointer hover:scale-105"
+                  title="Xem luật chơi và quy tắc giải thưởng"
+                >
+                  <Info className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Luật Chơi</span>
+                </button>
               </div>
 
               {/* 4 Lifelines */}
@@ -621,7 +636,83 @@ export default function TruthConquestGamePage() {
 
         </div>
 
-        {/* ── 3. INTERACTIVE SAINT & COMMUNITY POLL MODAL ── */}
+        {/* ── 3. MODAL POPUP LUẬT CHƠI (HOW TO PLAY) ── */}
+        {activeModal === 'rules' && (
+          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="max-w-lg w-full p-6 sm:p-8 rounded-3xl bg-stone-900 border-2 border-amber-500/50 shadow-2xl text-stone-100 space-y-5 animate-in zoom-in-95 duration-200 relative">
+              
+              <button 
+                onClick={() => setActiveModal(null)}
+                className="absolute top-5 right-5 p-1.5 rounded-full bg-stone-800 text-stone-400 hover:text-stone-100 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <div className="flex items-center gap-3 border-b border-stone-800 pb-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                  <Info className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-serif font-black text-lg text-amber-300">
+                    Luật Chơi: Chinh Phục Chân Lý
+                  </h3>
+                  <span className="text-[11px] text-stone-400 font-serif">Quy tắc đấu trường &amp; Cách tính điểm</span>
+                </div>
+              </div>
+
+              <div className="space-y-3.5 text-xs font-serif leading-relaxed text-stone-300 max-h-[60vh] overflow-y-auto pr-1">
+                <div className="p-3 rounded-2xl bg-stone-950 border border-stone-800 space-y-1">
+                  <strong className="text-amber-400 font-bold flex items-center gap-1.5">
+                    <Clock className="w-4 h-4" /> 1. Thời Gian 15 Giây Căng Thẳng
+                  </strong>
+                  <p className="text-stone-400">
+                    Mỗi câu hỏi có đúng <strong>15 giây</strong> suy nghĩ. Khi thời gian còn dưới 5 giây, khung câu hỏi sẽ <strong>nhấp nháy đỏ rực</strong> cảnh báo khẩn cấp.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-stone-950 border border-stone-800 space-y-1">
+                  <strong className="text-emerald-400 font-bold flex items-center gap-1.5">
+                    <Award className="w-4 h-4" /> 2. Thang Điểm &amp; Mốc An Toàn
+                  </strong>
+                  <p className="text-stone-400">
+                    Vượt qua <strong>Câu 5 (Mốc 1)</strong> để bảo lưu tối thiểu 10.000 XP. Chinh phục trọn vẹn <strong>Câu 10</strong> để nhận danh hiệu <em>Tiến Sĩ Hội Thánh</em> và 200.000 XP.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-stone-950 border border-stone-800 space-y-1">
+                  <strong className="text-amber-300 font-bold flex items-center gap-1.5">
+                    <Shield className="w-4 h-4" /> 3. Bốn Quyền Trợ Giúp Phụng Vụ
+                  </strong>
+                  <ul className="list-disc list-inside space-y-1 text-stone-400 pt-1">
+                    <li><strong>50:50</strong>: Loại bỏ ngay 2 đáp án sai.</li>
+                    <li><strong>Thánh Bổn Mạng</strong>: Xem biểu đồ tỷ lệ bình chọn của cộng đồng.</li>
+                    <li><strong>Ơn Soi Sáng</strong>: Mở cuộn Lời Chúa gợi ý đáp án.</li>
+                    <li><strong>Đổi Câu</strong>: Đổi sang câu hỏi khác cùng độ khó.</li>
+                  </ul>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-stone-950 border border-stone-800 space-y-1">
+                  <strong className="text-rose-400 font-bold flex items-center gap-1.5">
+                    <LogOut className="w-4 h-4" /> 4. Dừng Cuộc Chơi (Bảo Toàn Điểm)
+                  </strong>
+                  <p className="text-stone-400">
+                    Nếu gặp câu hỏi quá khó, bạn có quyền bấm <strong>"Dừng Cuộc Chơi"</strong> để bảo lưu toàn bộ số XP hiện có vào hồ sơ thay vì mạo hiểm mất trắng.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setActiveModal(null)}
+                className="w-full py-2.5 rounded-xl bg-amber-500 text-slate-950 font-serif font-bold text-xs shadow-md hover:bg-amber-400 transition"
+              >
+                Đã Hiểu · Tiếp Tục Chơi Ngay
+              </button>
+
+            </div>
+          </div>
+        )}
+
+        {/* ── 4. INTERACTIVE SAINT & COMMUNITY POLL MODAL ── */}
         {activeModal === 'saint' && (
           <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
             <div className="max-w-md w-full p-6 sm:p-8 rounded-3xl bg-stone-900 border-2 border-amber-500/50 shadow-2xl text-stone-100 space-y-5 animate-in zoom-in-95 duration-200">
@@ -671,7 +762,7 @@ export default function TruthConquestGamePage() {
           </div>
         )}
 
-        {/* ── 4. SCRIPTURE SCROLL MODAL (ƠN SOI SÁNG) ── */}
+        {/* ── 5. SCRIPTURE SCROLL MODAL (ƠN SOI SÁNG) ── */}
         {activeModal === 'spirit' && (
           <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
             <div className="max-w-md w-full p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-stone-900 to-stone-950 border-2 border-amber-500 shadow-2xl text-stone-100 space-y-5 animate-in zoom-in-95 duration-200">
@@ -703,7 +794,7 @@ export default function TruthConquestGamePage() {
           </div>
         )}
 
-        {/* ── 5. CHANGE QUESTION NOTICE ── */}
+        {/* ── 6. CHANGE QUESTION NOTICE ── */}
         {activeModal === 'change' && (
           <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
             <div className="max-w-md w-full p-6 rounded-3xl bg-stone-900 border-2 border-amber-500 shadow-2xl text-stone-100 text-center space-y-4">
@@ -724,7 +815,7 @@ export default function TruthConquestGamePage() {
           </div>
         )}
 
-        {/* ── 6. GAME OVER / VICTORY MODAL ── */}
+        {/* ── 7. GAME OVER / VICTORY MODAL ── */}
         {gameEnded && (
           <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
             <div className="max-w-lg w-full p-8 rounded-3xl bg-stone-900 border-2 border-amber-500 shadow-2xl text-stone-100 text-center space-y-5">
