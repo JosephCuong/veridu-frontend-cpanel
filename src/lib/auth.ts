@@ -22,6 +22,7 @@ export interface UserProfile {
   role: 'Học Viên' | 'Giáo Lý Viên' | 'Quản Trị Viên' | 'Người Đóng Góp' | 'Học Giả VERIDU' | string;
   streak: number;
   points?: number;
+  manna?: number;
   badges?: string[];
   createdAt?: string;
   quizHistory?: QuizAttempt[];
@@ -163,12 +164,19 @@ export function clearQuizHistory() {
   localStorage.removeItem('veridu_quiz_history');
 }
 
-export function addFaithPoints(points: number, reason?: string) {
+export function addFaithPoints(points: number, mannaOrReason?: number | string) {
   if (typeof window === 'undefined') return;
   const current = getStoredUser();
   if (current) {
     const newPoints = (current.points || 0) + points;
-    const updated = { ...current, points: newPoints };
+    const mannaDelta = typeof mannaOrReason === 'number' ? mannaOrReason : 0;
+    const newManna = Math.max(0, (current.manna !== undefined ? current.manna : 100) + mannaDelta);
+
+    const updated: UserProfile = { 
+      ...current, 
+      points: newPoints,
+      manna: newManna
+    };
     saveAuthSession(getAuthToken() || '', updated, true);
     
     // Background update to Supabase
@@ -177,6 +185,7 @@ export function addFaithPoints(points: number, reason?: string) {
         try {
           await supabase.from('profiles').update({
             points: newPoints,
+            manna: newManna,
             updated_at: new Date().toISOString()
           }).eq('id', current.id);
         } catch (err) {}

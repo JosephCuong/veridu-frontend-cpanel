@@ -30,7 +30,16 @@ import { getStoredUser } from '@/lib/auth';
 
 export default function QuizBankStudioPage() {
   const [user, setUser] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'list' | 'import' | 'create'>('list');
+  const [activeTab, setActiveTab] = useState<'list' | 'import' | 'create' | 'settings'>('list');
+  
+  // Game Background Settings State
+  const [gameSettings, setGameSettings] = useState({
+    landing_bg_url: 'https://images.unsplash.com/photo-1548625361-9c8eb25c56df?q=80&w=1920&auto=format&fit=crop',
+    millionaire_bg_url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=1920&auto=format&fit=crop',
+    overlay_opacity: 0.85
+  });
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsMessage, setSettingsMessage] = useState<string | null>(null);
   
   // List State
   const [questions, setQuestions] = useState<any[]>([]);
@@ -71,7 +80,41 @@ export default function QuizBankStudioPage() {
   useEffect(() => {
     setUser(getStoredUser());
     loadQuestions();
+    loadGameCustomSettings();
   }, [page, subjectFilter, difficultyFilter, gradeFilter]);
+
+  const loadGameCustomSettings = async () => {
+    try {
+      const res = await fetch('/api/game/settings');
+      const data = await res.json();
+      if (data.success && data.settings) {
+        setGameSettings(data.settings);
+      }
+    } catch (e) {}
+  };
+
+  const handleSaveGameSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSettingsSaving(true);
+    setSettingsMessage(null);
+    try {
+      const res = await fetch('/api/game/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(gameSettings)
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSettingsMessage('Đã lưu thành công cài đặt hình nền và độ mờ cho các game!');
+      } else {
+        setSettingsMessage('Lỗi: ' + data.error);
+      }
+    } catch (err: any) {
+      setSettingsMessage('Lỗi kết nối: ' + err.message);
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
 
   const loadQuestions = async () => {
     setLoading(true);
@@ -357,6 +400,18 @@ export default function QuizBankStudioPage() {
             >
               <Plus className="w-4 h-4" />
               <span>Soạn Câu Hỏi</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`px-4 py-2 rounded-xl text-xs font-serif font-bold transition flex items-center gap-2 cursor-pointer ${
+                activeTab === 'settings'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Cài Đặt Nền Game</span>
             </button>
           </div>
         </div>
@@ -864,6 +919,117 @@ export default function QuizBankStudioPage() {
                   Lưu Câu Hỏi Vào Ngân Hàng
                 </button>
               </div>
+            </form>
+          </div>
+        )}
+
+        {/* ── 5. TAB 4: GAME & BACKGROUND SETTINGS ── */}
+        {activeTab === 'settings' && (
+          <div className="max-w-3xl mx-auto p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-6">
+            <div>
+              <h3 className="font-serif font-bold text-lg text-[var(--text-main)] flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-500" />
+                <span>Tùy Chỉnh Hình Nền &amp; Lớp Phủ Mờ Game</span>
+              </h3>
+              <p className="text-xs text-[var(--text-muted)] font-serif mt-1">
+                Admin có thể dán đường dẫn ảnh nền độ phân giải cao và chỉnh độ tối của lớp phủ mờ (Dark Overlay) cho Cổng Game và Game Chinh Phục Chân Lý.
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveGameSettings} className="space-y-5">
+              
+              {/* Landing Page Background */}
+              <div className="space-y-2">
+                <label className="text-xs font-serif font-bold text-[var(--text-main)] block">
+                  1. Hình Nền Cổng Game Landing Page (/game)
+                </label>
+                <input
+                  type="url"
+                  required
+                  value={gameSettings.landing_bg_url}
+                  onChange={(e) => setGameSettings({ ...gameSettings, landing_bg_url: e.target.value })}
+                  placeholder="https://images.unsplash.com/..."
+                  className="w-full px-4 py-2.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs text-[var(--text-main)] focus:outline-none focus:border-amber-500 font-mono"
+                />
+              </div>
+
+              {/* Millionaire Page Background */}
+              <div className="space-y-2">
+                <label className="text-xs font-serif font-bold text-[var(--text-main)] block">
+                  2. Hình Nền Trang Trò Chơi Chinh Phục Chân Lý (/game/trieu-phu-duc-tin)
+                </label>
+                <input
+                  type="url"
+                  required
+                  value={gameSettings.millionaire_bg_url}
+                  onChange={(e) => setGameSettings({ ...gameSettings, millionaire_bg_url: e.target.value })}
+                  placeholder="https://images.unsplash.com/..."
+                  className="w-full px-4 py-2.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs text-[var(--text-main)] focus:outline-none focus:border-amber-500 font-mono"
+                />
+              </div>
+
+              {/* Dark Overlay Opacity Slider */}
+              <div className="space-y-2 p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)]">
+                <div className="flex items-center justify-between text-xs font-serif font-bold">
+                  <span>3. Độ Tối Lớp Phủ Mờ (Dark Overlay Opacity):</span>
+                  <span className="font-mono text-amber-500">{Math.round(gameSettings.overlay_opacity * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.10"
+                  max="0.95"
+                  step="0.05"
+                  value={gameSettings.overlay_opacity}
+                  onChange={(e) => setGameSettings({ ...gameSettings, overlay_opacity: parseFloat(e.target.value) })}
+                  className="w-full accent-amber-500 cursor-pointer"
+                />
+                <span className="text-[11px] text-[var(--text-muted)] font-serif block">
+                  (Độ tối càng cao chữ đọc càng rõ nét; độ tối thấp sẽ nhìn thấy rõ hình nền phía sau).
+                </span>
+              </div>
+
+              {/* Preset Wallpapers */}
+              <div className="space-y-2">
+                <label className="text-xs font-serif font-bold text-[var(--text-main)] block">
+                  Gợi Ý Ảnh Nền Thánh Thiêng Mẫu:
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { label: 'Thánh Đường Kính Màu', url: 'https://images.unsplash.com/photo-1548625361-9c8eb25c56df?q=80&w=1920&auto=format&fit=crop' },
+                    { label: 'Cổ Thư Kinh Thánh', url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=1920&auto=format&fit=crop' },
+                    { label: 'Sa Mạc Sinai Hoàng Hôn', url: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=1920&auto=format&fit=crop' },
+                    { label: 'Đức Mẹ & Thánh Tâm', url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=1920&auto=format&fit=crop' }
+                  ].map((preset, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setGameSettings({ ...gameSettings, landing_bg_url: preset.url, millionaire_bg_url: preset.url })}
+                      className="p-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500 text-[11px] font-serif text-[var(--text-muted)] hover:text-amber-500 transition text-center truncate cursor-pointer"
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {settingsMessage && (
+                <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-serif font-bold flex items-center gap-2">
+                  <Check className="w-4 h-4 shrink-0" />
+                  <span>{settingsMessage}</span>
+                </div>
+              )}
+
+              <div className="flex justify-end pt-3">
+                <button
+                  type="submit"
+                  disabled={settingsSaving}
+                  className="px-6 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-serif font-black shadow-lg shadow-amber-500/20 cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                >
+                  {settingsSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                  <span>{settingsSaving ? 'Đang Lưu...' : 'Lưu Cài Đặt Nền Game'}</span>
+                </button>
+              </div>
+
             </form>
           </div>
         )}
