@@ -78,32 +78,38 @@ export default function QuizPage() {
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 flex flex-col font-sans transition-colors duration-300 pt-24 sm:pt-28 md:pt-32 pb-20">
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-12 flex-1 w-full">
         
-        {/* ── Hero Header ── */}
-        <header className="space-y-4 max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-bold uppercase tracking-widest shadow-sm">
-            <Gamepad2 className="w-3.5 h-3.5 text-amber-500" />
-            <span>Đấu Trường Tri Thức Công Giáo &amp; Kinh Thánh</span>
+        {/* ── 1. SACRED HERO SECTION (STAINED-GLASS BACKDROP) ── */}
+        <section className="relative overflow-hidden -mx-4 sm:-mx-6 lg:-mx-8 pt-20 sm:pt-28 pb-16 sm:pb-20 border-b border-[var(--border-card)] mb-10">
+          <div 
+            className="absolute inset-0 bg-cover bg-center transition-all duration-1000 scale-105"
+            style={{ 
+              backgroundImage: `url('https://images.unsplash.com/photo-1519817650390-64a93db51149?q=80&w=1920&auto=format&fit=crop')` 
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-950/80 to-[var(--bg-main)] backdrop-blur-[2px]" />
+
+          <div className="relative max-w-4xl mx-auto px-4 text-center space-y-5">
+            <h1 className="font-serif font-black text-3xl sm:text-5xl lg:text-6xl tracking-tight leading-tight">
+              <span className="bg-gradient-to-r from-amber-100 via-amber-300 to-amber-100 bg-clip-text text-transparent drop-shadow-sm">
+                Đấu Trường Tri Thức Công Giáo
+              </span>
+            </h1>
+
+            <p className="text-sm sm:text-base lg:text-lg text-stone-300 max-w-2xl mx-auto font-serif leading-relaxed">
+              Kiểm tra và bồi dưỡng tri thức Kinh Thánh, Giáo Lý và Phụng Vụ qua các chế độ thi đấu trực tiếp thời gian thực.
+            </p>
+
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <Link
+                href="/quiz/control"
+                className="px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-black text-xs sm:text-sm flex items-center gap-2 transition shadow-lg shadow-amber-500/20"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>Tạo Phòng Thi (Dành Cho GLV &amp; Quản Trò)</span>
+              </Link>
+            </div>
           </div>
-
-          <h1 className="font-serif font-black text-3xl sm:text-5xl lg:text-6xl text-[var(--text-main)] leading-tight tracking-tight">
-            Đấu Trường Quiz
-          </h1>
-
-          <p className="font-serif text-sm sm:text-lg text-[var(--text-muted)] leading-relaxed italic max-w-2xl mx-auto">
-            &ldquo;Kiểm tra và bồi dưỡng tri thức Kinh Thánh, Giáo Lý và Phụng Vụ qua các chế độ thi đấu trực tiếp thời gian thực.&rdquo;
-          </p>
-
-          {/* Quick Host Action Bar */}
-          <div className="pt-2 flex justify-center">
-            <Link
-              href="/quiz/control"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-500/60 text-amber-600 dark:text-amber-400 font-bold text-xs sm:text-sm transition shadow-sm hover:shadow-md"
-            >
-              <PlusCircle className="w-4 h-4 text-amber-500" />
-              <span>Tạo Phòng Thi (Dành Cho GLV &amp; Quản Trò) &rarr;</span>
-            </Link>
-          </div>
-        </header>
+        </section>
 
         {/* ── Game Modes Grid ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">

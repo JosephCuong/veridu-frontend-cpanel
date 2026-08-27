@@ -122,43 +122,50 @@ export default function BookLibraryPage() {
   const totalDownloads = books.reduce((acc, curr) => acc + (curr.download_count || 0), 0);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] pt-24 sm:pt-28 pb-20 font-sans">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] pb-20 font-sans">
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        
-        {/* ── 1. HERO HEADER ── */}
-        <section className="text-center space-y-4 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-serif">
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>Kho Tàng Văn Khố &amp; Tri Thức Đức Tin Công Giáo</span>
-          </div>
+      {/* ── 1. SACRED HERO SECTION (STAINED-GLASS BACKDROP) ── */}
+      <section className="relative overflow-hidden pt-28 sm:pt-36 pb-16 sm:pb-24 border-b border-[var(--border-card)] mb-10">
+        <div 
+          className="absolute inset-0 bg-cover bg-center transition-all duration-1000 scale-105"
+          style={{ 
+            backgroundImage: `url('https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=1920&auto=format&fit=crop')` 
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-950/80 to-[var(--bg-main)] backdrop-blur-[2px]" />
 
-          <h1 className="font-serif font-bold text-3xl sm:text-5xl text-[var(--text-main)] tracking-tight">
-            Tủ Sách Nghiên Cứu Thần Học
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5">
+          <h1 className="font-serif font-black text-3xl sm:text-5xl lg:text-6xl tracking-tight leading-tight">
+            <span className="bg-gradient-to-r from-amber-100 via-amber-300 to-amber-100 bg-clip-text text-transparent drop-shadow-sm">
+              Tủ Sách Điện Tử &amp; Thần Học
+            </span>
           </h1>
 
-          <p className="font-serif text-sm sm:text-base text-[var(--text-muted)] leading-relaxed">
+          <p className="text-sm sm:text-base lg:text-lg text-stone-300 max-w-2xl mx-auto font-serif leading-relaxed">
             Tra cứu và thưởng thức các tác phẩm Kinh Thánh, Thông Điệp Tông Tòa, Giáo Phụ học và tác phẩm tu đức với Trình Đọc Lật Trang A4 nguyên bản.
           </p>
 
           {/* Quick Stats Bar */}
-          <div className="flex flex-wrap items-center justify-center gap-6 pt-2 text-xs text-[var(--text-muted)] font-serif">
-            <span className="flex items-center gap-1.5">
-              <BookOpen className="w-4 h-4 text-amber-500" />
-              <strong className="text-[var(--text-main)]">{books.length}</strong> Đầu Sách Nghiên Cứu
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1.5">
-              <Eye className="w-4 h-4 text-amber-500" />
-              <strong className="text-[var(--text-main)]">{totalViews.toLocaleString()}</strong> Lượt Đọc
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1.5">
-              <Download className="w-4 h-4 text-amber-500" />
-              <strong className="text-[var(--text-main)]">{totalDownloads.toLocaleString()}</strong> Lượt Tải
-            </span>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <div className="px-4 py-2 rounded-2xl bg-slate-900/80 border border-amber-500/30 backdrop-blur-md flex items-center gap-2 text-xs font-serif shadow-lg">
+              <BookOpen className="w-4 h-4 text-amber-400" />
+              <span className="text-stone-200">
+                <strong className="text-amber-400 font-mono">{books.length}</strong> Đầu Sách Nghiên Cứu
+              </span>
+            </div>
+            <div className="px-4 py-2 rounded-2xl bg-slate-900/80 border border-[var(--border-card)] backdrop-blur-md flex items-center gap-2 text-xs font-serif text-stone-300 shadow-lg">
+              <Eye className="w-4 h-4 text-emerald-400" />
+              <span><strong className="text-stone-200 font-mono">{totalViews.toLocaleString()}</strong> Lượt Đọc</span>
+            </div>
+            <div className="px-4 py-2 rounded-2xl bg-slate-900/80 border border-[var(--border-card)] backdrop-blur-md flex items-center gap-2 text-xs font-serif text-stone-300 shadow-lg">
+              <Download className="w-4 h-4 text-indigo-400" />
+              <span><strong className="text-stone-200 font-mono">{totalDownloads.toLocaleString()}</strong> Lượt Tải</span>
+            </div>
           </div>
-        </section>
+        </div>
+      </section>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
 
         {/* ── 2. CONTROLS BAR: SEARCH, FILTERS & VIEW MODE ── */}
         <section className="p-4 sm:p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-4">

@@ -121,43 +121,50 @@ export default function DocumentsLibraryPage() {
   const totalDownloads = docs.reduce((acc, curr) => acc + (curr.download_count || 0), 0);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] pt-24 sm:pt-28 pb-20 font-sans">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] pb-20 font-sans">
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        
-        {/* ── 1. HERO HEADER ── */}
-        <section className="text-center space-y-4 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-500 text-xs font-serif italic">
-            <Presentation className="w-3.5 h-3.5" />
-            <span>Kho Học Liệu &amp; Bài Giảng Giáo Lý Mục Vụ</span>
-          </div>
+      {/* ── 1. SACRED HERO SECTION (STAINED-GLASS BACKDROP) ── */}
+      <section className="relative overflow-hidden pt-28 sm:pt-36 pb-16 sm:pb-24 border-b border-[var(--border-card)] mb-10">
+        <div 
+          className="absolute inset-0 bg-cover bg-center transition-all duration-1000 scale-105"
+          style={{ 
+            backgroundImage: `url('https://images.unsplash.com/photo-1548625361-9c8eb25c56df?q=80&w=1920&auto=format&fit=crop')` 
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-950/80 to-[var(--bg-main)] backdrop-blur-[2px]" />
 
-          <h1 className="font-serif font-black text-3xl sm:text-5xl text-[var(--text-main)] tracking-tight">
-            Kho Tài Liệu &amp; Slide Bài Giảng
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5">
+          <h1 className="font-serif font-black text-3xl sm:text-5xl lg:text-6xl tracking-tight leading-tight">
+            <span className="bg-gradient-to-r from-amber-100 via-amber-300 to-amber-100 bg-clip-text text-transparent drop-shadow-sm">
+              Tài Liệu Phụng Vụ &amp; Slide Giáo Án
+            </span>
           </h1>
 
-          <p className="font-serif text-sm sm:text-base text-[var(--text-muted)] leading-relaxed">
+          <p className="text-sm sm:text-base lg:text-lg text-stone-300 max-w-2xl mx-auto font-serif leading-relaxed">
             Hệ thống giáo án điện tử PowerPoint, slide trình chiếu giáo lý 16:9, sổ tay huynh trưởng và văn kiện phụng vụ phục vụ công tác tông đồ.
           </p>
 
           {/* Quick Stats Bar */}
-          <div className="flex flex-wrap items-center justify-center gap-6 pt-2 text-xs text-[var(--text-muted)] font-serif">
-            <span className="flex items-center gap-1.5">
-              <FileText className="w-4 h-4 text-orange-500" />
-              <strong className="text-[var(--text-main)]">{docs.length}</strong> Bộ Tài Liệu / Giáo Án
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1.5">
-              <Eye className="w-4 h-4 text-orange-500" />
-              <strong className="text-[var(--text-main)]">{totalViews.toLocaleString()}</strong> Lượt Xem
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1.5">
-              <Download className="w-4 h-4 text-orange-500" />
-              <strong className="text-[var(--text-main)]">{totalDownloads.toLocaleString()}</strong> Lượt Tải
-            </span>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <div className="px-4 py-2 rounded-2xl bg-slate-900/80 border border-orange-500/30 backdrop-blur-md flex items-center gap-2 text-xs font-serif shadow-lg">
+              <Presentation className="w-4 h-4 text-orange-400" />
+              <span className="text-stone-200">
+                <strong className="text-orange-400 font-mono">{docs.length}</strong> Bộ Tài Liệu / Giáo Án
+              </span>
+            </div>
+            <div className="px-4 py-2 rounded-2xl bg-slate-900/80 border border-[var(--border-card)] backdrop-blur-md flex items-center gap-2 text-xs font-serif text-stone-300 shadow-lg">
+              <Eye className="w-4 h-4 text-emerald-400" />
+              <span><strong className="text-stone-200 font-mono">{totalViews.toLocaleString()}</strong> Lượt Xem</span>
+            </div>
+            <div className="px-4 py-2 rounded-2xl bg-slate-900/80 border border-[var(--border-card)] backdrop-blur-md flex items-center gap-2 text-xs font-serif text-stone-300 shadow-lg">
+              <Download className="w-4 h-4 text-indigo-400" />
+              <span><strong className="text-stone-200 font-mono">{totalDownloads.toLocaleString()}</strong> Lượt Tải</span>
+            </div>
           </div>
-        </section>
+        </div>
+      </section>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
 
         {/* ── 2. CONTROLS BAR: SEARCH, FILTERS & VIEW MODE ── */}
         <section className="p-4 sm:p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-4">
