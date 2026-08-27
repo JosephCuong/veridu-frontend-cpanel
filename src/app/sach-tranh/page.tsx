@@ -44,9 +44,7 @@ export default async function StorybooksLibraryPage() {
 
         <div className="max-w-5xl mx-auto text-center space-y-5 relative z-10">
           
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-serif font-bold tracking-wider backdrop-blur-md shadow-sm">
-            <span>KHO TÀNG SÁCH TRANH KINH THÁNH THIẾU NHI &amp; GIA ĐÌNH</span>
-          </div>
+          
 
           <h1 className="font-serif font-black text-3xl sm:text-5xl text-[var(--text-main)] tracking-tight leading-tight">
             Chuyện Kinh Thánh{' '}

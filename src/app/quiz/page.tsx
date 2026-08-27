@@ -75,38 +75,39 @@ export default function QuizPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 flex flex-col font-sans transition-colors duration-300 pt-24 sm:pt-28 md:pt-32 pb-20">
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-12 flex-1 w-full">
-        
-        {/* ── 1. SACRED HERO SECTION (CLEAN PARCHMENT / LIGHT & DARK COMPLIANT) ── */}
-        <section className="relative w-full pt-16 sm:pt-24 pb-12 sm:pb-16 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-[var(--border-card)] bg-gradient-to-b from-amber-500/[0.04] via-transparent to-[var(--bg-main)] -mx-4 sm:-mx-6 lg:-mx-8 mb-10">
-          <div className="absolute inset-0 bg-[radial-gradient(#d97706_1px,transparent_1px)] [background-size:24px_24px] opacity-10 dark:opacity-15 pointer-events-none" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-amber-500/5 dark:bg-amber-500/10 rounded-full blur-[100px] pointer-events-none" />
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 flex flex-col font-sans transition-colors duration-300 pb-20">
+      
+      {/* ── 1. SACRED HERO SECTION (FULL WIDTH EDGE-TO-EDGE) ── */}
+      <section className="relative w-full pt-28 sm:pt-36 pb-14 sm:pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-[var(--border-card)] bg-gradient-to-b from-amber-500/[0.04] via-transparent to-[var(--bg-main)] mb-10">
+        <div className="absolute inset-0 bg-[radial-gradient(#d97706_1px,transparent_1px)] [background-size:24px_24px] opacity-10 dark:opacity-15 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-amber-500/5 dark:bg-amber-500/10 rounded-full blur-[120px] pointer-events-none" />
 
-          <div className="relative max-w-4xl mx-auto text-center space-y-4">
-            <h1 className="font-serif font-black text-3xl sm:text-5xl lg:text-6xl text-[var(--text-main)] tracking-tight leading-tight">
-              Đấu Trường{' '}
-              <span className="bg-gradient-to-r from-amber-700 via-amber-600 to-amber-800 dark:from-amber-300 dark:via-amber-400 dark:to-amber-100 bg-clip-text text-transparent">
-                Tri Thức Công Giáo
-              </span>
-            </h1>
+        <div className="relative max-w-4xl mx-auto text-center space-y-4">
+          <h1 className="font-serif font-black text-3xl sm:text-5xl lg:text-6xl text-[var(--text-main)] tracking-tight leading-tight">
+            Đấu Trường{' '}
+            <span className="bg-gradient-to-r from-amber-700 via-amber-600 to-amber-800 dark:from-amber-300 dark:via-amber-400 dark:to-amber-100 bg-clip-text text-transparent">
+              Tri Thức Công Giáo
+            </span>
+          </h1>
 
-            <p className="font-serif italic text-sm sm:text-base lg:text-lg text-[var(--text-muted)] max-w-2xl sm:max-w-3xl mx-auto leading-relaxed">
-              Kiểm tra và bồi dưỡng tri thức Kinh Thánh, Giáo Lý và Phụng Vụ qua các chế độ thi đấu trực tiếp thời gian thực.
-            </p>
+          <p className="font-serif italic text-sm sm:text-base lg:text-lg text-[var(--text-muted)] max-w-2xl sm:max-w-3xl mx-auto leading-relaxed">
+            Kiểm tra và bồi dưỡng tri thức Kinh Thánh, Giáo Lý và Phụng Vụ qua các chế độ thi đấu trực tiếp thời gian thực.
+          </p>
 
-            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-              <Link
-                href="/quiz/control"
-                className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-serif font-black text-xs sm:text-sm flex items-center gap-2 transition shadow-lg shadow-amber-500/20 cursor-pointer"
-              >
-                <PlusCircle className="w-4 h-4" />
-                <span>Tạo Phòng Thi (Dành Cho GLV &amp; Quản Trò)</span>
-              </Link>
-            </div>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <Link
+              href="/quiz/control"
+              className="px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-black text-xs sm:text-sm flex items-center gap-2 transition shadow-lg shadow-amber-500/20 cursor-pointer"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>Tạo Phòng Thi (Dành Cho GLV &amp; Quản Trò)</span>
+            </Link>
           </div>
-        </section>
+        </div>
+      </section>
 
+      {/* ── 2. MAIN CONTENT CONTAINER ── */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 flex-1 w-full">
         {/* ── Game Modes Grid ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
           

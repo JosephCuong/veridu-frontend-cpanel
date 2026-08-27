@@ -177,26 +177,20 @@ export default function GameArcadeHubPage() {
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col font-sans transition-colors duration-300 pb-24 pt-16 md:pt-20">
       
-      {/* ── 1. SACRED ARCADE HERO BANNER ── */}
-      <section className="relative w-full py-16 sm:py-24 px-4 sm:px-6 lg:px-12 overflow-hidden border-b border-amber-500/20 bg-gradient-to-b from-amber-500/[0.08] via-amber-500/[0.03] to-[var(--bg-main)] dark:from-stone-950 dark:via-stone-900 dark:to-[var(--bg-main)]">
-        <div className="absolute inset-0 bg-[radial-gradient(#d97706_1px,transparent_1px)] [background-size:24px_24px] opacity-15 pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none" />
+      {/* ── 1. SACRED ARCADE HERO BANNER (CLEAN PARCHMENT / LIGHT & DARK COMPLIANT) ── */}
+      <section className="relative w-full pt-28 sm:pt-36 pb-14 sm:pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-[var(--border-card)] bg-gradient-to-b from-amber-500/[0.04] via-transparent to-[var(--bg-main)]">
+        <div className="absolute inset-0 bg-[radial-gradient(#d97706_1px,transparent_1px)] [background-size:24px_24px] opacity-10 dark:opacity-15 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-amber-500/5 dark:bg-amber-500/10 rounded-full blur-[120px] pointer-events-none" />
 
-        <div className="max-w-5xl mx-auto text-center space-y-6 relative z-10">
-          
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-serif font-bold tracking-wider backdrop-blur-md shadow-sm">
-            <Gamepad2 className="w-4 h-4 text-amber-500" />
-            <span>CỔNG WEBGAME GIÁO LÝ THIẾU NHI &amp; GIA ĐÌNH</span>
-          </div>
-
+        <div className="relative max-w-4xl mx-auto text-center space-y-4">
           <h1 className="font-serif font-black text-3xl sm:text-5xl lg:text-6xl text-[var(--text-main)] tracking-tight leading-tight">
             Đấu Trường Đức Tin{' '}
-            <span className="bg-gradient-to-r from-amber-700 via-amber-600 to-amber-800 dark:from-amber-200 dark:via-amber-400 dark:to-amber-100 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-amber-700 via-amber-600 to-amber-800 dark:from-amber-300 dark:via-amber-400 dark:to-amber-100 bg-clip-text text-transparent">
               Học Mà Chơi
             </span>
           </h1>
 
-          <p className="text-slate-600 dark:text-stone-300 text-sm sm:text-lg max-w-3xl mx-auto leading-relaxed font-serif italic">
+          <p className="font-serif italic text-sm sm:text-base lg:text-lg text-[var(--text-muted)] max-w-2xl sm:max-w-3xl mx-auto leading-relaxed">
             Bước vào thế giới game hóa giáo lý sống động: Chinh phục bản đồ chiến đấu Kinh Thánh 2D, đấu trí đỉnh cao tại Ai Là Triệu Phú Đức Tin, tích lũy Faith XP và rinh về Bánh Manna đổi quà!
           </p>
 
