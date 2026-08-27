@@ -100,16 +100,16 @@ export default async function CatechismPartPage({ params }: { params: { part: st
   const { data: paragraphs, count } = await fetchCatechismParagraphs(currentPart.partNumber, undefined, undefined, 1000, 0);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col font-sans transition-colors duration-300 pb-24 pt-16 md:pt-20">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col font-sans transition-colors duration-300 pb-24 pt-24 sm:pt-28 md:pt-32">
       
-      {/* 1. COMPACT BREADCRUMB & HEADER */}
-      <div className="w-full border-b border-[var(--border-card)] bg-[var(--bg-card)]/80 backdrop-blur-md sticky top-16 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      {/* 1. COMPACT BREADCRUMB & HEADER (PROPERLY SPACED BELOW NAVBAR) */}
+      <div className="w-full border-b border-[var(--border-card)] bg-[var(--bg-card)]/90 backdrop-blur-md sticky top-16 md:top-20 z-20 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
           
           <div className="flex items-center gap-3">
             <Link
               href="/giao-ly"
-              className="p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs font-serif font-bold text-[var(--text-muted)] hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-500/50 flex items-center gap-1 transition shadow-sm"
+              className="px-3 py-1.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs font-serif font-bold text-[var(--text-muted)] hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-500/50 flex items-center gap-1 transition shadow-sm"
             >
               <ChevronLeft className="w-4 h-4" />
               <span>Trở về Giáo Lý</span>
@@ -117,22 +117,22 @@ export default async function CatechismPartPage({ params }: { params: { part: st
 
             <div className="h-4 w-[1px] bg-[var(--border-card)] hidden sm:block" />
 
-            <div className="text-xs font-serif">
+            <div className="text-xs font-serif hidden sm:block">
               <span className="text-[var(--text-muted)]">Sách Giáo Lý Hội Thánh › </span>
               <strong className="text-amber-700 dark:text-amber-400">{currentPart.title}</strong>
             </div>
           </div>
 
           {/* Quick Part Switcher Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
             {Object.values(PARTS_MAP).map(p => (
               <Link
                 key={p.slug}
                 href={`/giao-ly/doc/${p.slug}`}
                 className={`px-3 py-1.5 rounded-xl text-xs font-serif font-bold whitespace-nowrap transition ${
                   p.slug === currentPart.slug
-                    ? 'bg-amber-500 text-slate-950 shadow-md scale-105'
-                    : 'bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                    ? 'bg-amber-500 text-slate-950 shadow-md font-black scale-105'
+                    : 'bg-[var(--bg-main)] border border-[var(--border-card)] text-[var(--text-muted)] hover:text-[var(--text-main)]'
                 }`}
               >
                 {p.partNumber === 0 ? 'Mở Đầu' : `Phần ${p.roman}`}
@@ -143,11 +143,11 @@ export default async function CatechismPartPage({ params }: { params: { part: st
         </div>
       </div>
 
-      {/* 2. DEDICATED PART HERO (ADAPTIVE LIGHT / DARK CONTRAST) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 w-full">
-        <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-amber-500/[0.08] via-amber-500/[0.03] to-[var(--bg-card)] dark:from-stone-900/90 dark:to-[var(--bg-card)] border border-amber-500/30 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden backdrop-blur-xl">
+      {/* 2. DEDICATED PART HERO (CLEAN PARCHMENT CONTRAST) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4 w-full">
+        <div className="p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden backdrop-blur-xl">
           <div className="space-y-2 relative z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-300 font-serif font-bold text-xs">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 font-serif font-bold text-xs">
               <BookOpen className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span>{currentPart.range} • {count} Điều Khoản Khảo Cứu</span>
             </div>
@@ -162,7 +162,7 @@ export default async function CatechismPartPage({ params }: { params: { part: st
           <div className="flex items-center gap-3 relative z-10 flex-shrink-0">
             <Link
               href="/giao-ly/the-lat"
-              className="px-4 py-2.5 rounded-2xl bg-[var(--bg-card)] border border-amber-500/30 hover:border-amber-500 text-xs font-serif font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5 transition shadow-sm"
+              className="px-4 py-2.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500 text-xs font-serif font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5 transition shadow-sm"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
               <span>Thẻ Lật Ghi Nhớ</span>
@@ -170,7 +170,7 @@ export default async function CatechismPartPage({ params }: { params: { part: st
 
             <Link
               href="/quiz"
-              className="px-4 py-2.5 rounded-2xl bg-amber-500 text-slate-950 hover:bg-amber-400 text-xs font-serif font-bold flex items-center gap-1.5 transition shadow-lg"
+              className="px-4 py-2.5 rounded-2xl bg-amber-500 text-slate-950 hover:bg-amber-400 text-xs font-serif font-bold flex items-center gap-1.5 transition shadow-lg shadow-amber-500/20"
             >
               <Award className="w-3.5 h-3.5" />
               <span>Đấu Trường Quiz</span>
@@ -179,8 +179,8 @@ export default async function CatechismPartPage({ params }: { params: { part: st
         </div>
       </div>
 
-      {/* 3. DEDICATED FULL-TEXT READER CLIENT */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+      {/* 3. DEDICATED 2-COLUMN FULL-TEXT READER CLIENT */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mt-2">
         <CatechismReaderClient 
           paragraphs={paragraphs} 
           currentPartConfig={currentPart} 

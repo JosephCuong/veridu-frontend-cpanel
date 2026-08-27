@@ -3,10 +3,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { CatechismParagraph } from '@/lib/api';
+import AdBanner from '@/components/AdBanner';
 import { 
   BookOpen, 
   Layers, 
-  Book, 
   Bookmark, 
   Share2, 
   ChevronLeft, 
@@ -18,12 +18,14 @@ import {
   Sparkles, 
   Award, 
   ArrowRight, 
-  Eye, 
   X, 
   Search, 
   BookMarked,
   RotateCw,
-  ExternalLink
+  ExternalLink,
+  Hash,
+  Gamepad2,
+  Library
 } from 'lucide-react';
 
 interface CatechismReaderClientProps {
@@ -40,8 +42,8 @@ interface CatechismReaderClientProps {
 }
 
 export default function CatechismReaderClient({ paragraphs, currentPartConfig }: CatechismReaderClientProps) {
-  // Reading Mode: 'continuous' | 'single' | 'bookflip'
-  const [viewMode, setViewMode] = useState<'continuous' | 'single' | 'bookflip'>('continuous');
+  // Reading Mode: 'single' | 'continuous'
+  const [viewMode, setViewMode] = useState<'single' | 'continuous'>('single');
   const [isFocusMode, setIsFocusMode] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [jumpInput, setJumpInput] = useState<string>('');
@@ -51,15 +53,12 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
   // Single & Continuous index
   const [currentIndex, setCurrentIndex] = useState<number>(0);
 
-  // Bookflip page
-  const [bookPage, setBookPage] = useState<number>(0);
-
-  // Popover modal state
+  // Popover modal state for cross references
   const [popoverNumber, setPopoverNumber] = useState<number | null>(null);
   const [popoverData, setPopoverData] = useState<CatechismParagraph | null>(null);
   const [popoverLoading, setPopoverLoading] = useState<boolean>(false);
 
-  // Local bookmarks & read tracking
+  // Local bookmarks
   const [bookmarks, setBookmarks] = useState<Set<number>>(new Set());
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
@@ -70,7 +69,7 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
     } catch (e) {}
   }, []);
 
-  // Filtered and sorted paragraphs (Strictly ascending by paragraph_number or id)
+  // Filtered and sorted paragraphs
   const sortedAndFiltered = useMemo(() => {
     const list = paragraphs.filter(p => {
       if (inBriefOnly && !p.is_in_brief) return false;
@@ -98,541 +97,500 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
       const idx = sortedAndFiltered.findIndex(p => p.paragraph_number === num);
       if (idx >= 0) {
         setCurrentIndex(idx);
-        setBookPage(Math.floor(idx / 2));
         setJumpInput('');
+        if (viewMode === 'continuous') {
+          const el = document.getElementById(`ccc-p-${num}`);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
       } else {
-        openCccPopover(num);
+        alert(`Không tìm thấy số điều khoản ${num} trong ${currentPartConfig.title}.`);
       }
     }
   };
 
-  const openCccPopover = async (num: number) => {
-    setPopoverNumber(num);
+  const toggleBookmark = (num: number) => {
+    const next = new Set(bookmarks);
+    if (next.has(num)) {
+      next.delete(num);
+    } else {
+      next.add(num);
+    }
+    setBookmarks(next);
+    localStorage.setItem('veridu_ccc_bookmarks', JSON.stringify(Array.from(next)));
+  };
+
+  const handleShare = (num: number) => {
+    if (typeof window !== 'undefined') {
+      const url = `${window.location.origin}/giao-ly/doc/${currentPartConfig.slug}?num=${num}`;
+      navigator.clipboard.writeText(url);
+      setCopiedId(num);
+      setTimeout(() => setCopiedId(null), 2500);
+    }
+  };
+
+  const openCrossReference = async (refNum: number) => {
+    setPopoverNumber(refNum);
     setPopoverLoading(true);
     try {
-      const local = paragraphs.find(p => p.paragraph_number === num);
-      if (local) {
-        setPopoverData(local);
-      } else {
-        const res = await fetch(`/api/catechism/${num}`);
-        if (res.ok) {
-          const data = await res.json();
-          setPopoverData(data);
-        }
+      const res = await fetch(`/api/catechism/${refNum}`);
+      const data = await res.json();
+      if (data && data.paragraph) {
+        setPopoverData(data.paragraph);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.warn('Load ref error:', err);
     } finally {
       setPopoverLoading(false);
     }
   };
 
-  const toggleBookmark = (num?: number) => {
-    if (!num) return;
-    const updated = new Set(bookmarks);
-    if (updated.has(num)) updated.delete(num);
-    else updated.add(num);
-    setBookmarks(updated);
-    try {
-      localStorage.setItem('veridu_ccc_bookmarks', JSON.stringify(Array.from(updated)));
-    } catch (e) {}
-  };
-
-  const handleCopy = (p: CatechismParagraph) => {
-    if (typeof navigator !== 'undefined') {
-      const textToCopy = `[${p.title}]\n${p.plain_text || ''}\nNguồn: Giáo Lý Hội Thánh Công Giáo — VERIDU (https://www.thapgia.com/giao-ly)`;
-      navigator.clipboard.writeText(textToCopy);
-      setCopiedId(p.id);
-      setTimeout(() => setCopiedId(null), 2500);
-    }
-  };
+  const fontSizeClass = fontSize === 'xlarge' 
+    ? 'text-lg sm:text-xl leading-relaxed sm:leading-loose'
+    : fontSize === 'large'
+    ? 'text-base sm:text-lg leading-relaxed sm:leading-loose'
+    : 'text-sm sm:text-base leading-relaxed';
 
   return (
-    <div className={`space-y-6 w-full ${isFocusMode ? 'fixed inset-0 z-50 bg-[var(--bg-main)] p-4 sm:p-8 overflow-y-auto' : ''}`}>
+    <div className={`space-y-6 ${isFocusMode ? 'fixed inset-0 z-50 bg-[var(--bg-main)] p-4 sm:p-8 overflow-y-auto' : ''}`}>
       
-      {/* ── FOCUS MODE HEADER ── */}
-      {isFocusMode && (
-        <div className="max-w-5xl mx-auto flex items-center justify-between pb-4 border-b border-[var(--border-card)]">
-          <div className="flex items-center gap-2 text-amber-500 font-serif font-bold text-sm">
-            <BookOpen className="w-4 h-4" />
-            <span>Chế Độ Đọc Tĩnh Tâm — {currentPartConfig.title}</span>
-          </div>
+      {/* ── 1. READING TOOLBAR ── */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-sm">
+        
+        {/* View Mode Switcher */}
+        <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto scrollbar-none">
           <button
-            onClick={() => setIsFocusMode(false)}
-            className="px-4 py-1.5 rounded-full bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-amber-500/50 text-xs font-bold flex items-center gap-1.5"
+            onClick={() => setViewMode('single')}
+            className={`px-3.5 py-2 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+              viewMode === 'single'
+                ? 'bg-amber-500 text-slate-950 font-black shadow-md'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-main)]'
+            }`}
           >
-            <Minimize2 className="w-3.5 h-3.5" />
-            <span>Thoát Chế Độ Tĩnh Tâm</span>
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Từng Số Đoạn</span>
+          </button>
+
+          <button
+            onClick={() => setViewMode('continuous')}
+            className={`px-3.5 py-2 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+              viewMode === 'continuous'
+                ? 'bg-amber-500 text-slate-950 font-black shadow-md'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-main)]'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Đọc Toàn Văn</span>
+          </button>
+
+          <button
+            onClick={() => setInBriefOnly(!inBriefOnly)}
+            className={`px-3.5 py-2 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+              inBriefOnly
+                ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40 font-black'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-main)]'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>{inBriefOnly ? '✓ Đang Lọc Tóm Lược' : 'Chỉ Tóm Lược'}</span>
           </button>
         </div>
-      )}
 
-      {/* ── TOOLBAR: 4 MODES, JUMP INPUT & FONT SIZE ── */}
-      {!isFocusMode && (
-        <div className="p-4 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
-          
-          {/* Mode Switchers */}
-          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+        {/* Font Size & Focus Mode Tools */}
+        <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+          {/* Font Size Adjuster */}
+          <div className="flex items-center gap-1 bg-[var(--bg-main)] p-1 rounded-2xl border border-[var(--border-card)]">
             <button
-              onClick={() => setViewMode('continuous')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-serif font-bold flex items-center gap-2 whitespace-nowrap transition ${
-                viewMode === 'continuous'
-                  ? 'bg-amber-500 text-slate-950 shadow-md scale-105'
-                  : 'text-[var(--text-muted)] hover:text-amber-500'
-              }`}
+              onClick={() => setFontSize('normal')}
+              className={`px-2.5 py-1 rounded-xl text-xs font-serif ${fontSize === 'normal' ? 'bg-amber-500 text-slate-950 font-bold shadow-sm' : 'text-[var(--text-muted)]'}`}
+              title="Cỡ chữ tiêu chuẩn"
             >
-              <Layers className="w-4 h-4" />
-              <span>Đọc Toàn Văn</span>
+              A
             </button>
-
             <button
-              onClick={() => setViewMode('single')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-serif font-bold flex items-center gap-2 whitespace-nowrap transition ${
-                viewMode === 'single'
-                  ? 'bg-amber-500 text-slate-950 shadow-md scale-105'
-                  : 'text-[var(--text-muted)] hover:text-amber-500'
-              }`}
+              onClick={() => setFontSize('large')}
+              className={`px-2.5 py-1 rounded-xl text-sm font-serif ${fontSize === 'large' ? 'bg-amber-500 text-slate-950 font-bold shadow-sm' : 'text-[var(--text-muted)]'}`}
+              title="Cỡ chữ lớn"
             >
-              <BookOpen className="w-4 h-4" />
-              <span>Từng Số Đoạn</span>
+              A+
             </button>
-
             <button
-              onClick={() => setViewMode('bookflip')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-serif font-bold flex items-center gap-2 whitespace-nowrap transition ${
-                viewMode === 'bookflip'
-                  ? 'bg-amber-500 text-slate-950 shadow-md scale-105'
-                  : 'text-[var(--text-muted)] hover:text-amber-500'
-              }`}
+              onClick={() => setFontSize('xlarge')}
+              className={`px-2.5 py-1 rounded-xl text-base font-serif ${fontSize === 'xlarge' ? 'bg-amber-500 text-slate-950 font-bold shadow-sm' : 'text-[var(--text-muted)]'}`}
+              title="Cỡ chữ rất lớn"
             >
-              <Book className="w-4 h-4" />
-              <span>Sách Lật 2 Trang</span>
-            </button>
-
-            <button
-              onClick={() => setInBriefOnly(!inBriefOnly)}
-              className={`px-3 py-2 rounded-xl text-xs font-serif font-bold whitespace-nowrap flex items-center gap-1.5 transition ${
-                inBriefOnly
-                  ? 'bg-amber-500 text-slate-950 shadow-sm'
-                  : 'bg-[var(--bg-main)] border border-[var(--border-card)] text-amber-500'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Chỉ Tóm Lược</span>
+              A++
             </button>
           </div>
 
-          {/* Jump input & Font Controls */}
-          <div className="flex items-center gap-2">
-            <form onSubmit={handleJump} className="relative flex items-center">
-              <input
-                type="text"
-                value={jumpInput}
-                onChange={(e) => setJumpInput(e.target.value)}
-                placeholder="Nhảy đến số..."
-                className="w-36 sm:w-44 pl-3 pr-7 py-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 text-xs font-serif outline-none"
-              />
-              <button type="submit" className="absolute right-2 text-amber-500 hover:scale-110">
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </form>
-
-            <button
-              onClick={() => setFontSize(prev => prev === 'normal' ? 'large' : prev === 'large' ? 'xlarge' : 'normal')}
-              className="p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs text-[var(--text-muted)] hover:text-amber-500"
-              title="Chỉnh cỡ chữ"
-            >
-              <Type className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => setIsFocusMode(!isFocusMode)}
-              className="p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs text-[var(--text-muted)] hover:text-amber-500"
-              title="Toàn màn hình"
-            >
-              <Maximize2 className="w-4 h-4" />
-            </button>
-          </div>
-
+          {/* Focus Mode Button */}
+          <button
+            onClick={() => setIsFocusMode(!isFocusMode)}
+            className="p-2.5 rounded-2xl bg-[var(--bg-main)] hover:bg-amber-500 hover:text-slate-950 text-[var(--text-muted)] border border-[var(--border-card)] transition cursor-pointer"
+            title={isFocusMode ? 'Thoát chế độ tập trung' : 'Chế độ đọc tập trung toàn màn hình'}
+          >
+            {isFocusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
         </div>
-      )}
 
-      {/* ── MODE 1: CONTINUOUS FULL-TEXT READER (2 COLUMNS) ── */}
-      {viewMode === 'continuous' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      </div>
+
+      {/* ── 2. TWO-COLUMN WORKSPACE (70% READER + 30% STICKY SIDEBAR) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        {/* ════════════════════════════════════════════════════════════════════
+            LEFT COLUMN: CATECHISM CONTENT READING AREA (70% - 8/12 COLUMNS)
+           ════════════════════════════════════════════════════════════════════ */}
+        <div className="lg:col-span-8 space-y-6">
           
-          {/* Left Column: Sorted Table of Contents (4/12) */}
-          {!isFocusMode && (
-            <aside className="lg:col-span-4 space-y-3 lg:sticky lg:top-28 max-h-[75vh] overflow-y-auto pr-1 custom-scrollbar">
+          {viewMode === 'single' && activeParagraph ? (
+            /* ── Single Paragraph Card View ── */
+            <div className="p-6 sm:p-10 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-6 transition-all relative">
               
-              {/* Search Bar in Sidebar */}
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-amber-500" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Tìm kiếm trong phần này..."
-                  className="w-full pl-8 pr-7 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] focus:border-amber-500 text-xs font-serif outline-none"
-                />
-                {searchQuery && (
-                  <button 
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--text-muted)] hover:text-amber-500"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-
-              <div className="text-xs font-serif font-bold text-[var(--text-muted)] uppercase tracking-wider px-2 flex items-center justify-between">
-                <span>Mục Lục ({sortedAndFiltered.length} điều)</span>
-                <span>Thứ tự: Tăng dần</span>
-              </div>
-
-
-              <div className="space-y-2">
-                {sortedAndFiltered.map((p, idx) => {
-                  const isSelected = p.id === activeParagraph?.id;
-                  const isBookmarked = bookmarks.has(p.paragraph_number || -1);
-
-                  return (
-                    <button
-                      key={p.id}
-                      onClick={() => setCurrentIndex(idx)}
-                      className={`w-full text-left p-3.5 rounded-2xl border transition-all flex flex-col space-y-1.5 group ${
-                        isSelected
-                          ? 'bg-amber-500/15 border-amber-500 shadow-md ring-1 ring-amber-500/40'
-                          : 'bg-[var(--bg-card)] border-[var(--border-card)] hover:border-amber-500/40'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between text-[10px] font-bold">
-                        <span className="px-2 py-0.5 rounded-full bg-[var(--bg-main)] text-amber-500 border border-amber-500/30">
-                          {p.title}
-                        </span>
-                        <div className="flex items-center gap-1.5">
-                          {p.is_in_brief && <span className="text-amber-400 font-serif">Tóm lược</span>}
-                          {isBookmarked && <Bookmark className="w-3 h-3 text-amber-500 fill-amber-500" />}
-                        </div>
-                      </div>
-                      <p className="font-serif text-xs text-[var(--text-main)] group-hover:text-amber-500 transition-colors line-clamp-2 leading-relaxed">
-                        {p.plain_text}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-            </aside>
-          )}
-
-          {/* Right Column: Reading Canvas (8/12) */}
-          <main className={`${isFocusMode ? 'max-w-4xl mx-auto col-span-12' : 'lg:col-span-8'} space-y-6`}>
-            {activeParagraph && (
-              <article className="p-6 sm:p-10 rounded-3xl bg-[var(--bg-card)] border border-amber-500/30 shadow-2xl space-y-8 backdrop-blur-xl">
-                
-                {/* Header Metadata */}
-                <div className="space-y-3 border-b border-[var(--border-card)] pb-6">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <span className="px-3.5 py-1 rounded-full bg-amber-500 text-slate-950 font-serif font-black text-xs shadow-sm">
-                        {activeParagraph.title}
-                      </span>
-                      {activeParagraph.is_in_brief && (
-                        <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 font-serif font-bold text-xs border border-amber-500/40">
-                          ✦ TÓM LƯỢC TÍN LÝ
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => toggleBookmark(activeParagraph.paragraph_number)}
-                        className={`p-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs transition ${
-                          bookmarks.has(activeParagraph.paragraph_number || -1)
-                            ? 'text-amber-500 border-amber-500'
-                            : 'text-[var(--text-muted)] hover:text-amber-500'
-                        }`}
-                        title="Đánh dấu trang"
-                      >
-                        <Bookmark className="w-3.5 h-3.5" />
-                      </button>
-
-                      <button
-                        onClick={() => handleCopy(activeParagraph)}
-                        className="p-2 rounded-xl bg-[var(--bg-main)] hover:bg-amber-500/10 border border-[var(--border-card)] text-xs text-[var(--text-muted)] hover:text-amber-500 transition"
-                        title="Sao chép trích đoạn"
-                      >
-                        {copiedId === activeParagraph.id ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="text-xs font-serif text-[var(--text-muted)] leading-relaxed">
-                    <span>{activeParagraph.full_path}</span>
-                  </div>
-                </div>
-
-                {/* HTML Content Body */}
-                <div 
-                  className={`prose dark:prose-invert max-w-none font-serif text-[var(--text-main)] leading-relaxed space-y-4 ${
-                    fontSize === 'xlarge' ? 'text-xl sm:text-2xl leading-loose' : fontSize === 'large' ? 'text-lg sm:text-xl leading-relaxed' : 'text-base sm:text-lg'
-                  }`}
-                  dangerouslySetInnerHTML={{ __html: activeParagraph.content_html }}
-                />
-
-                {/* Cross References (Click to Open Popover) */}
-                {activeParagraph.cross_references && activeParagraph.cross_references.length > 0 && (
-                  <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 block">
-                      Tham Chiếu Chéo Các Số Giáo Lý Khác:
+              {/* Header Meta: Number, Section Path, Actions */}
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border-card)]/60 pb-5">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="px-3.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 font-serif font-black text-sm">
+                      GLHTCG Số {activeParagraph.paragraph_number}
                     </span>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {activeParagraph.cross_references.map(num => (
-                        <button
-                          key={num}
-                          onClick={() => openCccPopover(num)}
-                          className="px-3 py-1 rounded-xl bg-[var(--bg-card)] border border-amber-500/40 text-xs font-serif font-bold text-amber-500 hover:bg-amber-500 hover:text-slate-950 transition flex items-center gap-1 shadow-sm"
-                        >
-                          <span>CCC #{num}</span>
-                          <Eye className="w-3 h-3" />
-                        </button>
-                      ))}
-                    </div>
+                    {activeParagraph.is_in_brief && (
+                      <span className="px-2.5 py-0.5 rounded-md bg-amber-500 text-slate-950 font-serif font-bold text-[10px] uppercase tracking-wider">
+                        Tóm Lược
+                      </span>
+                    )}
                   </div>
-                )}
-
-                {/* Footnotes */}
-                {activeParagraph.footnotes && (
-                  <div className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs font-serif italic text-stone-400 leading-relaxed">
-                    <strong className="font-sans not-italic text-[10px] uppercase font-bold text-amber-500 block mb-1">Nguồn &amp; Chú Dẫn Huấn Quyền:</strong>
-                    {activeParagraph.footnotes}
-                  </div>
-                )}
-
-                {/* Bottom Navigation Buttons */}
-                <div className="pt-4 border-t border-[var(--border-card)] flex items-center justify-between">
-                  <button
-                    disabled={currentIndex === 0}
-                    onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
-                    className="px-4 py-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500 disabled:opacity-30 text-xs font-serif font-bold flex items-center gap-1.5 transition"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                    <span>Số Trước</span>
-                  </button>
-
-                  <Link
-                    href="/giao-ly/the-lat"
-                    className="px-4 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 font-serif font-bold text-xs flex items-center gap-1.5 transition"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Học Thẻ Lật</span>
-                  </Link>
-
-                  <button
-                    disabled={currentIndex >= sortedAndFiltered.length - 1}
-                    onClick={() => setCurrentIndex(prev => Math.min(sortedAndFiltered.length - 1, prev + 1))}
-                    className="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 hover:bg-amber-400 disabled:opacity-30 text-xs font-serif font-bold flex items-center gap-1.5 transition shadow-md"
-                  >
-                    <span>Số Kế Tiếp</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
+                  {activeParagraph.full_path && (
+                    <p className="text-xs text-[var(--text-muted)] font-serif line-clamp-1">
+                      {activeParagraph.full_path}
+                    </p>
+                  )}
                 </div>
 
-              </article>
-            )}
-          </main>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleBookmark(activeParagraph.paragraph_number ?? (activeParagraph as any).id ?? 0)}
+                    className={`p-2.5 rounded-2xl border transition cursor-pointer ${
+                      bookmarks.has(activeParagraph.paragraph_number ?? (activeParagraph as any).id ?? 0)
+                        ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-md'
+                        : 'bg-[var(--bg-main)] text-[var(--text-muted)] border-[var(--border-card)] hover:text-amber-500'
+                    }`}
+                    title="Đánh dấu ghi nhớ"
+                  >
+                    <Bookmark className="w-4 h-4" />
+                  </button>
 
-        </div>
-      )}
-
-      {/* ── MODE 2: SINGLE PARAGRAPH STUDY ── */}
-      {viewMode === 'single' && (
-        <div className="max-w-4xl mx-auto space-y-6">
-          {activeParagraph && (
-            <div className="p-8 sm:p-12 rounded-3xl bg-[var(--bg-card)] border-2 border-amber-500/30 shadow-2xl space-y-8 backdrop-blur-xl">
-              <div className="flex items-center justify-between border-b border-[var(--border-card)] pb-4">
-                <span className="font-serif font-black text-2xl text-amber-500">
-                  {activeParagraph.title}
-                </span>
-                <span className="text-xs font-serif text-[var(--text-muted)]">
-                  {currentPartConfig.title}
-                </span>
+                  <button
+                    onClick={() => handleShare(activeParagraph.paragraph_number ?? (activeParagraph as any).id ?? 0)}
+                    className="p-2.5 rounded-2xl bg-[var(--bg-main)] text-[var(--text-muted)] hover:text-amber-500 border border-[var(--border-card)] transition cursor-pointer"
+                    title="Sao chép liên kết chia sẻ"
+                  >
+                    {copiedId === (activeParagraph.paragraph_number ?? (activeParagraph as any).id ?? 0) ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
-              <div 
-                className={`prose dark:prose-invert max-w-none font-serif text-[var(--text-main)] leading-loose ${
-                  fontSize === 'xlarge' ? 'text-2xl' : fontSize === 'large' ? 'text-xl' : 'text-lg'
-                }`}
-                dangerouslySetInnerHTML={{ __html: activeParagraph.content_html }}
-              />
+              {/* Main Text Content */}
+              <div className="space-y-4">
+                {activeParagraph.title && (
+                  <h3 className="font-serif font-bold text-lg sm:text-xl text-[var(--text-main)]">
+                    {activeParagraph.title}
+                  </h3>
+                )}
 
-              <div className="flex items-center justify-between pt-6 border-t border-[var(--border-card)]">
+                <div 
+                  className={`font-serif text-[var(--text-main)] ${fontSizeClass}`}
+                  dangerouslySetInnerHTML={{ __html: activeParagraph.content_html || activeParagraph.plain_text || '' }}
+                />
+              </div>
+
+              {/* Cross References & Citations */}
+              {activeParagraph.cross_references && activeParagraph.cross_references.length > 0 && (
+                <div className="pt-4 border-t border-[var(--border-card)]/60 space-y-2">
+                  <span className="text-xs font-serif font-bold text-[var(--text-muted)] uppercase tracking-wider block">
+                    Đối Chiếu Điều Khoản Liên Quan:
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {activeParagraph.cross_references.map(ref => (
+                      <button
+                        key={ref}
+                        onClick={() => openCrossReference(ref)}
+                        className="px-2.5 py-1 rounded-xl bg-amber-500/10 hover:bg-amber-500 hover:text-slate-950 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-xs font-mono font-bold transition cursor-pointer"
+                      >
+                        CCC #{ref}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Prev / Next Pagination Controls */}
+              <div className="flex items-center justify-between pt-6 border-t border-[var(--border-card)]/60">
                 <button
-                  disabled={currentIndex === 0}
+                  disabled={currentIndex <= 0}
                   onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
-                  className="px-5 py-2.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] font-serif font-bold text-xs flex items-center gap-2 hover:border-amber-500 disabled:opacity-30"
+                  className="px-4 py-2.5 rounded-2xl bg-[var(--bg-main)] hover:bg-amber-500 hover:text-slate-950 disabled:opacity-30 disabled:hover:bg-[var(--bg-main)] disabled:hover:text-[var(--text-muted)] border border-[var(--border-card)] text-xs font-serif font-bold flex items-center gap-1.5 transition cursor-pointer"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   <span>Điều Khoản Trước</span>
                 </button>
 
+                <span className="text-xs font-serif text-[var(--text-muted)]">
+                  {currentIndex + 1} / {sortedAndFiltered.length}
+                </span>
+
                 <button
                   disabled={currentIndex >= sortedAndFiltered.length - 1}
                   onClick={() => setCurrentIndex(prev => Math.min(sortedAndFiltered.length - 1, prev + 1))}
-                  className="px-5 py-2.5 rounded-2xl bg-amber-500 text-slate-950 font-serif font-bold text-xs flex items-center gap-2 hover:bg-amber-400 disabled:opacity-30 shadow-lg"
+                  className="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 disabled:opacity-30 border border-amber-500 text-xs font-serif font-bold flex items-center gap-1.5 transition shadow-md cursor-pointer"
                 >
                   <span>Điều Khoản Kế Tiếp</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
+
+            </div>
+          ) : (
+            /* ── Continuous Scroll View ── */
+            <div className="space-y-6">
+              {sortedAndFiltered.map((p, idx) => (
+                <article
+                  key={p.id || p.paragraph_number}
+                  id={`ccc-p-${p.paragraph_number}`}
+                  className="p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-md space-y-4 hover:border-amber-500/40 transition"
+                >
+                  <div className="flex items-center justify-between border-b border-[var(--border-card)]/40 pb-3">
+                    <span className="px-3 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 font-serif font-bold text-xs">
+                      GLHTCG Số {p.paragraph_number}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => toggleBookmark(p.paragraph_number ?? (p as any).id ?? 0)}
+                        className={`p-1.5 rounded-xl border ${bookmarks.has(p.paragraph_number ?? (p as any).id ?? 0) ? 'bg-amber-500 text-slate-950' : 'text-[var(--text-muted)] border-transparent'}`}
+                      >
+                        <Bookmark className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div 
+                    className={`font-serif text-[var(--text-main)] ${fontSizeClass}`}
+                    dangerouslySetInnerHTML={{ __html: p.content_html || p.plain_text || '' }}
+                  />
+                </article>
+              ))}
             </div>
           )}
-        </div>
-      )}
 
-      {/* ── MODE 3: BOOKFLIP 2 PAGES ── */}
-      {viewMode === 'bookflip' && (
-        <div className="max-w-6xl mx-auto space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-            
-            {/* Left Page */}
-            <div className="p-8 rounded-3xl bg-[var(--bg-card)] border-2 border-amber-500/30 shadow-2xl flex flex-col justify-between space-y-6">
-              <div className="space-y-4">
-                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest block border-b border-[var(--border-card)] pb-2">
-                  Trang Trái • {sortedAndFiltered[bookPage * 2]?.title || 'Hết'}
-                </span>
-                {sortedAndFiltered[bookPage * 2] ? (
-                  <div 
-                    className="prose dark:prose-invert max-w-none font-serif text-sm leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: sortedAndFiltered[bookPage * 2].content_html }}
-                  />
-                ) : (
-                  <p className="text-xs font-serif text-[var(--text-muted)]">Hết trang</p>
-                )}
-              </div>
-              <span className="text-[10px] text-stone-500 font-serif text-center block pt-2 border-t border-[var(--border-card)]">
-                Trang {bookPage * 2 + 1}
-              </span>
-            </div>
-
-            {/* Right Page */}
-            <div className="p-8 rounded-3xl bg-[var(--bg-card)] border-2 border-amber-500/30 shadow-2xl flex flex-col justify-between space-y-6">
-              <div className="space-y-4">
-                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest block border-b border-[var(--border-card)] pb-2">
-                  Trang Phải • {sortedAndFiltered[bookPage * 2 + 1]?.title || 'Hết'}
-                </span>
-                {sortedAndFiltered[bookPage * 2 + 1] ? (
-                  <div 
-                    className="prose dark:prose-invert max-w-none font-serif text-sm leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: sortedAndFiltered[bookPage * 2 + 1].content_html }}
-                  />
-                ) : (
-                  <p className="text-xs font-serif text-[var(--text-muted)]">Hết trang</p>
-                )}
-              </div>
-              <span className="text-[10px] text-stone-500 font-serif text-center block pt-2 border-t border-[var(--border-card)]">
-                Trang {bookPage * 2 + 2}
-              </span>
-            </div>
-
+          {/* ── In-Feed Native Free Ad Space / Banner Tài Trợ ── */}
+          <div className="pt-4">
+            <AdBanner
+              slotId="giao-ly-infeed"
+              format="horizontal"
+              customTitle="Tủ Sách Thần Học & Khảo Cứu Đức Tin VERIDU"
+              customSubtitle="Khám phá các bản dịch tài liệu Công Đồng, Thông Điệp Tông Tòa và Sách Giáo Lý giải thích mở rộng."
+              customLink="/thu-vien/sach"
+            />
           </div>
 
-          {/* Book Navigator */}
-          <div className="flex items-center justify-between p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)]">
-            <button
-              disabled={bookPage === 0}
-              onClick={() => setBookPage(prev => Math.max(0, prev - 1))}
-              className="px-4 py-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] font-serif font-bold text-xs flex items-center gap-1.5 disabled:opacity-30"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Lật Trang Trước</span>
-            </button>
-
-            <span className="text-xs font-serif font-bold text-amber-500">
-              Trang {bookPage + 1} / {Math.ceil(sortedAndFiltered.length / 2)}
-            </span>
-
-            <button
-              disabled={(bookPage + 1) * 2 >= sortedAndFiltered.length}
-              onClick={() => setBookPage(prev => prev + 1)}
-              className="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-serif font-bold text-xs flex items-center gap-1.5 disabled:opacity-30 shadow-md"
-            >
-              <span>Lật Trang Sau</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
         </div>
-      )}
 
-      {/* ── MODAL POPOVER FOR CCC CROSS-REFERENCES ── */}
-      {popoverNumber !== null && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="max-w-2xl w-full p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border-2 border-amber-500/50 shadow-2xl space-y-6 animate-in zoom-in-95 duration-200">
-            
-            <div className="flex items-center justify-between border-b border-[var(--border-card)] pb-3">
-              <div className="flex items-center gap-2">
-                <BookMarked className="w-5 h-5 text-amber-500" />
-                <h3 className="font-serif font-bold text-lg text-[var(--text-main)]">
-                  Khảo Cứu Nhanh: GLHTCG Số {popoverNumber}
-                </h3>
-              </div>
+        {/* ════════════════════════════════════════════════════════════════════
+            RIGHT COLUMN: STICKY SIDEBAR (30% - 4/12 COLUMNS)
+           ════════════════════════════════════════════════════════════════════ */}
+        <aside className="lg:col-span-4 space-y-6 lg:sticky lg:top-28">
+          
+          {/* Block 1: Fast Jump to Paragraph & Search */}
+          <div className="p-5 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-sm space-y-3">
+            <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-2">
+              <Hash className="w-4 h-4" />
+              <span>Nhảy Đến Số Đoạn CCC</span>
+            </h4>
+
+            <form onSubmit={handleJump} className="flex gap-2">
+              <input
+                type="number"
+                value={jumpInput}
+                onChange={(e) => setJumpInput(e.target.value)}
+                placeholder="Nhập số đoạn (vd: 27)..."
+                className="flex-1 px-3.5 py-2.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs text-[var(--text-main)] focus:outline-none focus:border-amber-500 font-sans shadow-inner"
+              />
               <button
-                onClick={() => setPopoverNumber(null)}
-                className="p-1.5 rounded-full hover:bg-[var(--bg-main)] text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                type="submit"
+                className="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-serif font-bold shadow-md cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                Nhảy
               </button>
+            </form>
+
+            <div className="relative pt-2">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Tìm từ khóa trong phần này..."
+                className="w-full pl-9 pr-8 py-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs text-[var(--text-main)] focus:outline-none focus:border-amber-500 font-sans"
+              />
+              <Search className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-3 top-4" />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-4 text-[var(--text-muted)] hover:text-rose-500"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Block 2: Paragraph TOC List Navigator */}
+          <div className="p-5 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                <Layers className="w-4 h-4" />
+                <span>Mục Lục Số Đoạn</span>
+              </h4>
+              <span className="text-[11px] font-mono text-[var(--text-muted)]">
+                {sortedAndFiltered.length} điều khoản
+              </span>
+            </div>
+
+            <div className="max-h-72 overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-amber-500/20">
+              {sortedAndFiltered.map((p, idx) => {
+                const isSelected = viewMode === 'single' && currentIndex === idx;
+                return (
+                  <button
+                    key={p.id || p.paragraph_number}
+                    onClick={() => {
+                      setCurrentIndex(idx);
+                      if (viewMode === 'continuous') {
+                        const el = document.getElementById(`ccc-p-${p.paragraph_number}`);
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                    }}
+                    className={`w-full px-3 py-2 rounded-xl text-left text-xs font-serif flex items-center justify-between transition cursor-pointer ${
+                      isSelected
+                        ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
+                        : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-main)]'
+                    }`}
+                  >
+                    <span className="truncate">Số {p.paragraph_number}: {p.title || 'Điều khoản'}</span>
+                    {p.is_in_brief && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300 font-bold shrink-0 ml-1">
+                        Tóm Lược
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Block 3: Free Advertisement / Google AdSense Sidebar Box */}
+          <AdBanner
+            slotId="giao-ly-sidebar"
+            format="rectangle"
+            customTitle="Ủng Hộ Dự Án Số Hóa Giáo Lý VERIDU"
+            customSubtitle="Cùng chung tay lan tỏa Lời Chúa và kho tàng tri thức Huấn Quyền Công Giáo đến hàng triệu tín hữu."
+            customLink="/thu-vien/dang-bai"
+          />
+
+          {/* Block 4: Educational Shortcuts */}
+          <div className="p-5 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-sm space-y-3">
+            <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              <span>Khảo Cứu &amp; Ôn Luyện</span>
+            </h4>
+
+            <div className="space-y-2">
+              <Link
+                href="/giao-ly/the-lat"
+                className="flex items-center gap-3 p-3 rounded-2xl bg-[var(--bg-main)] hover:bg-amber-500/10 border border-[var(--border-card)] hover:border-amber-500/40 transition group"
+              >
+                <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h5 className="font-serif font-bold text-xs text-[var(--text-main)] group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                    Thẻ Lật Ghi Nhớ Tín Lý
+                  </h5>
+                  <p className="text-[10px] text-[var(--text-muted)] font-serif truncate">Học qua flashcard trực quan</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[var(--text-muted)] group-hover:translate-x-1 transition-transform" />
+              </Link>
+
+              <Link
+                href="/quiz"
+                className="flex items-center gap-3 p-3 rounded-2xl bg-[var(--bg-main)] hover:bg-amber-500/10 border border-[var(--border-card)] hover:border-amber-500/40 transition group"
+              >
+                <div className="w-8 h-8 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                  <Award className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h5 className="font-serif font-bold text-xs text-[var(--text-main)] group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                    Đấu Trường Quiz Giáo Lý
+                  </h5>
+                  <p className="text-[10px] text-[var(--text-muted)] font-serif truncate">Thử thách tri thức thời gian thực</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[var(--text-muted)] group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
+
+        </aside>
+
+      </div>
+
+      {/* ── 3. CROSS REFERENCE POPOVER MODAL ── */}
+      {popoverNumber && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="max-w-xl w-full p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border-2 border-amber-500 shadow-2xl space-y-4 relative animate-in zoom-in-95 duration-200">
+            <button
+              onClick={() => { setPopoverNumber(null); setPopoverData(null); }}
+              className="absolute top-4 right-4 p-2 rounded-full bg-[var(--bg-main)] text-[var(--text-muted)] hover:text-[var(--text-main)]"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 rounded-full bg-amber-500 text-slate-950 font-serif font-bold text-xs">
+                CCC #{popoverNumber}
+              </span>
+              <h4 className="font-serif font-bold text-base text-[var(--text-main)]">
+                Đối Chiếu Trực Tiếp
+              </h4>
             </div>
 
             {popoverLoading ? (
-              <div className="py-12 text-center text-xs font-serif text-amber-500 animate-pulse">
-                Đang tải điều khoản số {popoverNumber}...
+              <div className="p-8 text-center text-xs font-serif text-[var(--text-muted)]">
+                Đang tải điều khoản đối chiếu...
               </div>
             ) : popoverData ? (
-              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-                <div className="text-xs font-serif text-[var(--text-muted)]">
-                  {popoverData.full_path}
-                </div>
-                <div 
-                  className="prose dark:prose-invert max-w-none font-serif text-sm leading-relaxed text-[var(--text-main)]"
-                  dangerouslySetInnerHTML={{ __html: popoverData.content_html }}
-                />
-                {popoverData.footnotes && (
-                  <div className="p-3 rounded-xl bg-[var(--bg-main)] text-[11px] font-serif italic text-stone-400">
-                    {popoverData.footnotes}
-                  </div>
+              <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+                {popoverData.title && (
+                  <h5 className="font-serif font-bold text-sm text-amber-600 dark:text-amber-400">
+                    {popoverData.title}
+                  </h5>
                 )}
+                <div 
+                  className="font-serif text-xs leading-relaxed text-[var(--text-main)]"
+                  dangerouslySetInnerHTML={{ __html: popoverData.content_html || popoverData.plain_text || '' }}
+                />
               </div>
             ) : (
-              <p className="text-xs font-serif text-[var(--text-muted)] text-center py-6">
-                Chưa có dữ liệu chi tiết cho số {popoverNumber}.
+              <p className="text-xs text-[var(--text-muted)] font-serif">
+                Không thể tải thông tin điều khoản #{popoverNumber}.
               </p>
             )}
 
-            <div className="flex items-center justify-between pt-3 border-t border-[var(--border-card)]">
+            <div className="pt-2 flex justify-end">
               <button
-                onClick={() => {
-                  const idx = sortedAndFiltered.findIndex(p => p.paragraph_number === popoverNumber);
-                  if (idx >= 0) {
-                    setCurrentIndex(idx);
-                    setViewMode('continuous');
-                    setPopoverNumber(null);
-                  }
-                }}
-                className="text-xs font-serif font-bold text-amber-500 hover:underline flex items-center gap-1"
-              >
-                <ArrowRight className="w-3.5 h-3.5" />
-                <span>Mở trong Trình Đọc Này</span>
-              </button>
-
-              <button
-                onClick={() => setPopoverNumber(null)}
-                className="px-4 py-2 rounded-xl bg-[var(--bg-main)] font-serif font-bold text-xs"
+                onClick={() => { setPopoverNumber(null); setPopoverData(null); }}
+                className="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold font-serif"
               >
                 Đóng
               </button>
             </div>
-
           </div>
         </div>
       )}
