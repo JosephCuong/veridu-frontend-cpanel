@@ -20,10 +20,12 @@ import {
   Cross,
   Shield,
   LogOut,
-  ChevronRight
+  AlertTriangle
 } from 'lucide-react';
 import { getStoredUser, addFaithPoints } from '@/lib/auth';
 import { MILLIONAIRE_QUESTIONS, MillionaireQuestion } from '@/lib/gamesData';
+
+const TOTAL_TIME = 15; // 15 seconds per question
 
 export default function TruthConquestGamePage() {
   const [user, setUser] = useState<any>(null);
@@ -39,8 +41,8 @@ export default function TruthConquestGamePage() {
   const [accumulatedXp, setAccumulatedXp] = useState(0);
   const [safeXpEarned, setSafeXpEarned] = useState(0);
 
-  // 30-Second Dramatic Countdown Timer
-  const [timeLeft, setTimeLeft] = useState(30);
+  // 15-Second Dramatic Countdown Timer
+  const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
@@ -60,7 +62,7 @@ export default function TruthConquestGamePage() {
   }, []);
 
   // Web Audio Synthesizer Engine for Dramatic Suspense
-  const playSound = useCallback((type: 'tick' | 'heartbeat' | 'lock' | 'correct' | 'wrong' | 'fanfare') => {
+  const playSound = useCallback((type: 'tick' | 'heartbeat' | 'lock' | 'correct' | 'wrong' | 'fanfare' | 'urgent') => {
     if (!soundEnabled) return;
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -78,13 +80,13 @@ export default function TruthConquestGamePage() {
         gain.connect(ctx.destination);
         osc.start();
         osc.stop(ctx.currentTime + 0.05);
-      } else if (type === 'heartbeat') {
+      } else if (type === 'heartbeat' || type === 'urgent') {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(95, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(45, ctx.currentTime + 0.12);
-        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        osc.frequency.setValueAtTime(type === 'urgent' ? 120 : 95, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.12);
+        gain.gain.setValueAtTime(type === 'urgent' ? 0.15 : 0.1, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -153,7 +155,7 @@ export default function TruthConquestGamePage() {
     }
   }, [playSound, safeXpEarned]);
 
-  // 30s Countdown Engine
+  // 15s Countdown Engine
   useEffect(() => {
     if (gameEnded || isLocked || activeModal) {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -167,9 +169,9 @@ export default function TruthConquestGamePage() {
           handleTimeOut();
           return 0;
         }
-        if (prev <= 6) {
-          playSound('heartbeat');
-        } else if (prev % 2 === 0) {
+        if (prev <= 5) {
+          playSound('urgent');
+        } else {
           playSound('tick');
         }
         return prev - 1;
@@ -212,7 +214,7 @@ export default function TruthConquestGamePage() {
             setIsRevealed(false);
             setIsCorrect(null);
             setHiddenOptions([]);
-            setTimeLeft(30);
+            setTimeLeft(TOTAL_TIME);
           } else {
             playSound('fanfare');
             setGameEnded(true);
@@ -272,7 +274,7 @@ export default function TruthConquestGamePage() {
   const useChangeQuestion = () => {
     if (lifelineChangeUsed || isLocked || gameEnded) return;
     setLifelineChangeUsed(true);
-    setTimeLeft(30);
+    setTimeLeft(TOTAL_TIME);
     setActiveModal('change');
   };
 
@@ -290,12 +292,17 @@ export default function TruthConquestGamePage() {
     setLifelineSpiritUsed(false);
     setLifelineChangeUsed(false);
     setHiddenOptions([]);
-    setTimeLeft(30);
+    setTimeLeft(TOTAL_TIME);
   };
 
-  // Dynamic SVG Timer Circle
-  const timerPercent = (timeLeft / 30) * 100;
-  const timerColor = timeLeft > 12 ? 'text-emerald-500 stroke-emerald-500' : timeLeft > 5 ? 'text-amber-500 stroke-amber-500' : 'text-rose-500 stroke-rose-500 animate-pulse';
+  // Dynamic SVG Timer Circle for 15 Seconds
+  const timerPercent = (timeLeft / TOTAL_TIME) * 100;
+  const isUrgent = timeLeft <= 5;
+  const timerColor = isUrgent
+    ? 'text-rose-500 stroke-rose-500 animate-pulse'
+    : timeLeft > 8
+    ? 'text-emerald-500 stroke-emerald-500'
+    : 'text-amber-500 stroke-amber-500';
 
   const saintPoll = [
     { label: 'A', percent: curQuestion.answer_index === 0 ? 68 : 12 },
@@ -305,17 +312,18 @@ export default function TruthConquestGamePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-stone-900 via-stone-950 to-black text-stone-100 flex flex-col font-sans select-none pb-12 pt-16 md:pt-20">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-stone-900 via-stone-950 to-black text-stone-100 flex flex-col font-sans select-none pb-12 pt-28 sm:pt-32">
       
-      {/* ── 1. COMPACT INTEGRATED ARENA HEADER ── */}
-      <header className="h-14 border-b border-stone-800/80 bg-stone-950/70 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between gap-4 sticky top-16 z-30">
+      {/* ── 1. CLEAN INTEGRATED ARENA TOP BAR (NO OVERLAPS) ── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mb-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link
             href="/game"
-            className="p-1.5 rounded-xl text-stone-400 hover:text-stone-100 hover:bg-stone-800 transition"
+            className="p-2 rounded-2xl bg-stone-900/90 border border-stone-800 text-stone-400 hover:text-amber-400 hover:border-amber-500/40 transition shadow-md flex items-center gap-1.5 text-xs font-serif font-bold"
             title="Về Cổng Game"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">Cổng Game</span>
           </Link>
           <div>
             <div className="flex items-center gap-2">
@@ -323,75 +331,72 @@ export default function TruthConquestGamePage() {
                 ĐẤU TRƯỜNG PHỤNG VỤ
               </span>
             </div>
-            <h1 className="font-serif font-black text-sm sm:text-base text-stone-100 truncate">
+            <h1 className="font-serif font-black text-base sm:text-xl text-stone-100 truncate">
               Chinh Phục Chân Lý
             </h1>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-400 text-xs font-mono font-bold">
-            <Coins className="w-3.5 h-3.5" />
-            <span>{accumulatedXp.toLocaleString()} XP</span>
+          <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-amber-400 text-xs font-mono font-bold shadow-sm">
+            <Coins className="w-3.5 h-3.5 text-amber-500" />
+            <span>{accumulatedXp.toLocaleString()} Faith XP</span>
           </div>
 
           <button
             onClick={() => setSoundEnabled(!soundEnabled)}
-            className="p-1.5 rounded-xl text-stone-400 hover:text-stone-100 hover:bg-stone-800 transition cursor-pointer"
+            className="p-2 rounded-2xl bg-stone-900/90 border border-stone-800 text-stone-400 hover:text-stone-100 hover:border-amber-500/40 transition cursor-pointer shadow-md"
             title={soundEnabled ? "Tắt âm thanh" : "Bật âm thanh"}
           >
             {soundEnabled ? <Volume2 className="w-4 h-4 text-amber-400" /> : <VolumeX className="w-4 h-4" />}
           </button>
         </div>
-      </header>
+      </div>
 
       {/* ── 2. FULL-VIEW GAMESHOW STAGE ── */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex flex-col justify-center">
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex flex-col justify-center">
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
           
           {/* LEFT 8 COLS: QUESTION STAGE, LIFELINES & ANSWERS */}
-          <div className="lg:col-span-8 flex flex-col justify-between space-y-5">
+          <div className="lg:col-span-8 flex flex-col justify-between space-y-4">
             
-            {/* Top Stage Control Strip: Level Badge + 30s Countdown + 4 Lifelines */}
-            <div className="p-3.5 sm:p-4 rounded-3xl bg-stone-900/80 border border-stone-800/80 backdrop-blur-md shadow-xl flex flex-wrap items-center justify-between gap-3">
+            {/* Top Stage Control Strip: Level Badge + Single 15s Circular Countdown + 4 Lifelines */}
+            <div className="p-3.5 sm:p-4 rounded-3xl bg-stone-900/90 border border-stone-800 backdrop-blur-md shadow-xl flex flex-wrap items-center justify-between gap-3">
               
               {/* Level Indicator */}
               <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 font-mono font-bold text-xs">
+                <span className="px-3.5 py-1.5 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/40 font-mono font-black text-xs shadow-inner">
                   CÂU {currentLevel + 1} / {MILLIONAIRE_QUESTIONS.length}
                 </span>
-                <span className="text-[11px] font-serif text-stone-400 hidden sm:inline">
-                  {curQuestion.is_safe_milestone ? '★ MỐC AN TOÀN' : ''}
-                </span>
+                {curQuestion.is_safe_milestone && (
+                  <span className="text-[11px] font-serif text-amber-400 font-bold px-2 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                    ★ MỐC AN TOÀN
+                  </span>
+                )}
               </div>
 
-              {/* 30s Circular Animated Timer */}
-              <div className="flex items-center gap-2.5 bg-stone-950 px-3.5 py-1.5 rounded-2xl border border-stone-800 shadow-inner">
-                <div className="relative w-8 h-8 flex items-center justify-center">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                    <path
-                      className="text-stone-800"
-                      strokeWidth="3.5"
-                      stroke="currentColor"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                    <path
-                      className={`${timerColor} transition-all duration-1000`}
-                      strokeDasharray={`${timerPercent}, 100`}
-                      strokeWidth="3.5"
-                      strokeLinecap="round"
-                      stroke="currentColor"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                  </svg>
-                  <span className={`absolute text-[11px] font-mono font-black ${timeLeft <= 5 ? 'text-rose-400 animate-ping' : 'text-stone-200'}`}>
-                    {timeLeft}
-                  </span>
-                </div>
-                <span className="text-xs font-mono font-bold text-amber-400">
+              {/* 15s Single Circular Animated Timer (No duplicate text) */}
+              <div className="relative w-12 h-12 flex items-center justify-center">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                  <path
+                    className="text-stone-800"
+                    strokeWidth="3.5"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path
+                    className={`${timerColor} transition-all duration-1000`}
+                    strokeDasharray={`${timerPercent}, 100`}
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                </svg>
+                <span className={`absolute text-xs font-mono font-black ${isUrgent ? 'text-rose-400 animate-ping' : 'text-stone-100'}`}>
                   {timeLeft}s
                 </span>
               </div>
@@ -457,13 +462,28 @@ export default function TruthConquestGamePage() {
 
             </div>
 
-            {/* Spotlight Question Box */}
-            <div className="flex-1 p-6 sm:p-10 rounded-3xl bg-gradient-to-b from-stone-900/90 to-stone-950/90 border-2 border-amber-500/40 min-h-[180px] sm:min-h-[220px] flex flex-col items-center justify-center text-center shadow-[0_20px_50px_rgba(217,119,6,0.12)] relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-600 via-amber-300 to-amber-600" />
+            {/* Spotlight Question Box with Dynamic Red Pulse Under 5 Seconds */}
+            <div className={`flex-1 p-6 sm:p-10 rounded-3xl min-h-[190px] sm:min-h-[230px] flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-300 ${
+              isUrgent
+                ? 'bg-gradient-to-b from-rose-950/40 via-stone-950/90 to-black border-2 border-rose-500 shadow-[0_0_40px_rgba(244,63,94,0.4)] animate-pulse'
+                : 'bg-gradient-to-b from-stone-900/90 to-stone-950/90 border-2 border-amber-500/40 shadow-[0_20px_50px_rgba(217,119,6,0.12)]'
+            }`}>
               
-              <span className="text-[11px] font-mono text-amber-400/90 tracking-widest uppercase font-bold mb-3">
-                ✦ TRỊ GIÁ {curQuestion.prize_xp.toLocaleString()} FAITH XP ✦
-              </span>
+              {/* Top Light Accent Strip */}
+              <div className={`absolute top-0 left-0 right-0 h-1.5 transition-all duration-300 ${
+                isUrgent
+                  ? 'bg-gradient-to-r from-rose-600 via-rose-300 to-rose-600 animate-pulse'
+                  : 'bg-gradient-to-r from-amber-600 via-amber-300 to-amber-600'
+              }`} />
+              
+              <div className="flex items-center gap-2 mb-3">
+                {isUrgent && <AlertTriangle className="w-4 h-4 text-rose-400 animate-bounce" />}
+                <span className={`text-[11px] font-mono tracking-widest uppercase font-bold ${
+                  isUrgent ? 'text-rose-400 animate-pulse' : 'text-amber-400/90'
+                }`}>
+                  {isUrgent ? '⚠️ SẮP HẾT 15 GIÂY!' : `✦ TRỊ GIÁ ${curQuestion.prize_xp.toLocaleString()} FAITH XP ✦`}
+                </span>
+              </div>
 
               <p className="text-lg sm:text-2xl md:text-3xl font-serif font-black text-amber-50 leading-relaxed max-w-2xl drop-shadow-md">
                 "{curQuestion.question}"
@@ -536,7 +556,7 @@ export default function TruthConquestGamePage() {
           </div>
 
           {/* RIGHT 4 COLS: FULL-HEIGHT STAINED-GLASS PRIZE LADDER & SURRENDER */}
-          <div className="lg:col-span-4 p-5 sm:p-6 rounded-3xl bg-stone-900/80 border border-stone-800/80 backdrop-blur-md shadow-xl flex flex-col justify-between space-y-4">
+          <div className="lg:col-span-4 p-5 sm:p-6 rounded-3xl bg-stone-900/90 border border-stone-800 backdrop-blur-md shadow-xl flex flex-col justify-between space-y-4">
             
             <div className="space-y-3">
               <div className="pb-3 border-b border-stone-800 flex items-center justify-between">
@@ -692,7 +712,7 @@ export default function TruthConquestGamePage() {
                 Đã Đổi Câu Hỏi Thành Công!
               </h3>
               <p className="text-xs font-serif text-stone-300">
-                Đồng hồ đã được đặt lại 30 giây. Chúc bạn vững tin vượt ải!
+                Đồng hồ đã được đặt lại 15 giây. Chúc bạn vững tin vượt ải!
               </p>
               <button
                 onClick={() => setActiveModal(null)}
@@ -720,7 +740,7 @@ export default function TruthConquestGamePage() {
                     : endReason === 'surrender'
                     ? 'BẢO TOÀN DANH HIỆU THÀNH CÔNG'
                     : endReason === 'timeout'
-                    ? 'HẾT GIỜ ĐẤU TRÍ'
+                    ? 'HẾT 15 GIÂY ĐẤU TRÍ'
                     : 'KẾT THÚC CHẶNG THỬ THÁCH'}
                 </h3>
                 <p className="text-xs sm:text-sm font-serif text-stone-300">
