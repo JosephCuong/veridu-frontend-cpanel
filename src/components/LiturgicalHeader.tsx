@@ -363,16 +363,16 @@ export default function LiturgicalHeader() {
               Giáo Lý
             </Link>
 
-            {/* 5. SÁCH TRANH THIẾU NHI */}
+            {/* 5. SÁCH TRANH */}
             <Link 
               href="/sach-tranh" 
-              className={`py-1 flex items-center gap-1 text-[var(--text-main)] hover:text-amber-500 transition-colors ${
+              className={`py-1 text-[var(--text-main)] hover:text-amber-500 transition-colors ${
                 pathname.startsWith('/sach-tranh') ? 'text-amber-500 font-black' : ''
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Sách Tranh</span>
+              Sách Tranh
             </Link>
+
 
             {/* 6. ĐẤU TRƯỜNG */}
             <Link 

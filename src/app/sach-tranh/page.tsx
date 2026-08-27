@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
+import { DEFAULT_STORYBOOKS } from '@/lib/storybooksData';
 import { 
   BookOpen, 
   Volume2, 
@@ -27,12 +28,18 @@ export const metadata = {
 };
 
 export default async function StorybooksLibraryPage() {
-  const { data: books } = await supabase
-    .from('storybooks')
-    .select('*')
-    .order('id', { ascending: true });
+  let storybooks = DEFAULT_STORYBOOKS;
 
-  const storybooks = books || [];
+  try {
+    const { data: dbBooks } = await supabase
+      .from('storybooks')
+      .select('*')
+      .order('id', { ascending: true });
+
+    if (dbBooks && dbBooks.length > 0) {
+      storybooks = dbBooks;
+    }
+  } catch (e) {}
 
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col font-sans transition-colors duration-300 pb-24 pt-16 md:pt-20">
@@ -45,9 +52,7 @@ export default async function StorybooksLibraryPage() {
         <div className="max-w-5xl mx-auto text-center space-y-5 relative z-10">
           
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-serif font-bold tracking-wider backdrop-blur-md shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
             <span>KHO TÀNG SÁCH TRANH KINH THÁNH THIẾU NHI &amp; GIA ĐÌNH</span>
-            <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
           </div>
 
           <h1 className="font-serif font-black text-3xl sm:text-5xl text-[var(--text-main)] tracking-tight leading-tight">

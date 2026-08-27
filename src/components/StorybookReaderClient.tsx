@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
@@ -28,26 +27,7 @@ import {
   Music
 } from 'lucide-react';
 import { addFaithPoints } from '@/lib/auth';
-
-interface PageData {
-  page_number: number;
-  image_url: string;
-  text_script: string;
-  caption?: string;
-}
-
-interface QuizQuestion {
-  question: string;
-  options: string[];
-  answer_index: number;
-  explanation: string;
-}
-
-interface ParentGuide {
-  moral_theme?: string;
-  reflection_questions?: string[];
-  family_prayer?: string;
-}
+import { StorybookPage, StorybookQuizQuestion, StorybookParentGuide } from '@/lib/storybooksData';
 
 interface StorybookProps {
   book: {
@@ -59,19 +39,18 @@ interface StorybookProps {
     target_age?: string;
     description?: string;
     moral_lesson?: string;
-    pages_data: PageData[];
-    quiz_data: QuizQuestion[];
-    parent_guide?: ParentGuide;
+    pages_data: StorybookPage[];
+    quiz_data: StorybookQuizQuestion[];
+    parent_guide?: StorybookParentGuide;
   };
 }
 
 export default function StorybookReaderClient({ book }: StorybookProps) {
-  const pages: PageData[] = useMemo(() => book.pages_data || [], [book.pages_data]);
+  const pages: StorybookPage[] = useMemo(() => book.pages_data || [], [book.pages_data]);
   const totalPages = pages.length || book.total_pages || 10;
 
-
   // Reading State
-  const [currentPageIndex, setCurrentPageIndex] = useState(0); // 0-indexed: 0 = page 1, 2 = page 3...
+  const [currentPageIndex, setCurrentPageIndex] = useState(0); // 0-indexed
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
@@ -80,7 +59,6 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
   const [isNarrating, setIsNarrating] = useState(false);
   const [isBgmActive, setIsBgmActive] = useState(false);
   const [isBedtimeMode, setIsBedtimeMode] = useState(false);
-  const [speechSynthesisSupported, setSpeechSynthesisSupported] = useState(false);
   const [speechRate, setSpeechRate] = useState(0.9); // Gentle pace for children
 
   // Quiz Interactive State
@@ -93,13 +71,6 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
   // Audio Context Ref for synthetic celestial BGM and Page Turn Sound
   const audioCtxRef = useRef<AudioContext | null>(null);
   const bgmOscillatorsRef = useRef<any[]>([]);
-
-  // Initialize Speech Synthesis
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      setSpeechSynthesisSupported(true);
-    }
-  }, []);
 
   // Web Audio Synthetic Sound Effects
   const playPageTurnSound = useCallback(() => {
@@ -433,7 +404,7 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
         </div>
       </header>
 
-      {/* ── 2. REALISTIC 2-PAGE SPREAD STORYBOOK VIEWPORT ── */}
+      {/* ── 2. REALISTIC 2-PAGE SPREAD STORYBOOK VIEWPORT (Pixel-perfect match to screenshot) ── */}
       <main className="flex-1 flex items-center justify-center p-3 sm:p-6 md:p-8 lg:p-12 relative overflow-hidden bg-radial from-stone-900 via-stone-950 to-black">
         
         {/* Subtle Ambient Background Light */}
@@ -459,57 +430,32 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
           <ChevronRight className="w-6 h-6" />
         </button>
 
-        {/* 🌟 2-PAGE SPREAD CONTAINER (Exact match to screenshot) */}
-        <div className="w-full max-w-5xl max-h-[82vh] aspect-[16/10] sm:aspect-[16/10.5] rounded-3xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] border-2 border-stone-800/80 flex flex-col md:flex-row relative bg-stone-100 text-stone-900">
+        {/* 🌟 2-PAGE SPREAD CONTAINER (Rendering the 300 DPI spread image directly with 3D spine and shadow) */}
+        <div className="w-full max-w-5xl max-h-[82vh] aspect-[16/12] sm:aspect-[16/12.3] rounded-3xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] border-2 border-stone-800/80 flex relative bg-stone-900">
           
-          {/* Central 3D Book Spine Shadow (Desktop Spread) */}
-          <div className="hidden md:block absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-12 bg-gradient-to-r from-transparent via-stone-950/20 to-transparent pointer-events-none z-10" />
+          {/* Central 3D Book Spine Shadow */}
+          <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-12 bg-gradient-to-r from-transparent via-stone-950/25 to-transparent pointer-events-none z-10" />
 
-          {/* 🖼️ LEFT PAGE: Full-Bleed Artwork */}
-          <div className="flex-1 relative bg-stone-900 overflow-hidden h-[45%] md:h-full">
+          {/* Full High-Resolution 300 DPI Spread Image */}
+          <div className="relative w-full h-full">
             <Image
               src={currentPage.image_url}
               alt={currentPage.caption || `Trang ${currentPage.page_number}`}
               fill
               priority
-              className="object-cover transition-opacity duration-300"
+              className="object-contain transition-opacity duration-300"
+              sizes="(max-width: 1280px) 100vw, 1280px"
             />
-            {/* Soft inner page spine gradient */}
-            <div className="absolute top-0 bottom-0 right-0 w-8 bg-gradient-to-l from-black/25 to-transparent pointer-events-none hidden md:block" />
           </div>
 
-          {/* 📜 RIGHT PAGE: Pure Typography with Sacred Paper Texture */}
-          <div className="flex-1 bg-[#fcfbfa] text-stone-850 p-6 sm:p-10 md:p-12 lg:p-16 flex flex-col justify-between relative overflow-y-auto h-[55%] md:h-full border-t md:border-t-0 md:border-l border-stone-200">
-            
-            {/* Top Right Watermark */}
-            <div className="flex items-center justify-between text-[11px] font-serif tracking-widest text-stone-400 uppercase font-semibold">
-              <span className="text-amber-800/70">{book.title}</span>
-              <span>VERIDU</span>
-            </div>
-
-            {/* Main Narrative Text */}
-            <div className="my-auto py-4 space-y-4">
-              <p className="font-serif text-sm sm:text-base md:text-lg lg:text-xl text-stone-800 leading-relaxed sm:leading-loose text-justify antialiased">
-                {currentPage.text_script}
-              </p>
-            </div>
-
-            {/* Bottom Page Number & Controls */}
-            <div className="flex items-center justify-between pt-4 border-t border-stone-200/60 text-xs font-serif">
-              <button
-                onClick={() => setShowGuideModal(true)}
-                className="text-stone-400 hover:text-amber-700 flex items-center gap-1 font-sans text-[11px]"
-              >
-                <HelpCircle className="w-3.5 h-3.5" />
-                <span>Góc Phụ Huynh</span>
-              </button>
-
-              <span className="font-serif font-bold text-stone-400 text-sm">
-                {currentPage.page_number}
-              </span>
-            </div>
-
-          </div>
+          {/* Parent Guide Quick Trigger at bottom right */}
+          <button
+            onClick={() => setShowGuideModal(true)}
+            className="absolute bottom-3 right-4 z-20 px-3 py-1 rounded-full bg-black/60 hover:bg-amber-500 hover:text-slate-950 text-stone-300 border border-stone-700/50 backdrop-blur-md text-[11px] font-serif flex items-center gap-1 transition shadow-md"
+          >
+            <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
+            <span>Góc Phụ Huynh &amp; Giáo Lý Viên</span>
+          </button>
 
         </div>
 
