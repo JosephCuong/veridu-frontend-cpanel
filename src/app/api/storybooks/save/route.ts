@@ -46,48 +46,53 @@ export async function POST(req: NextRequest) {
       updated_at: new Date().toISOString()
     };
 
-    let result;
+    // 1. Check if record exists by id or slug
+    let query = supabase.from('storybooks').select('id');
     if (id) {
-      // Update existing
-      result = await supabase
+      query = query.eq('id', id);
+    } else {
+      query = query.eq('slug', payload.slug);
+    }
+
+    const { data: existingRows, error: findError } = await query;
+
+    if (findError) {
+      return NextResponse.json({ success: false, error: findError.message }, { status: 500 });
+    }
+
+    let savedBook;
+
+    if (existingRows && existingRows.length > 0) {
+      // Update existing record
+      const targetId = existingRows[0].id;
+      const { data: updatedData, error: updateError } = await supabase
         .from('storybooks')
         .update(payload)
-        .eq('id', id)
-        .select()
-        .single();
-    } else {
-      // Check if slug exists
-      const { data: existing } = await supabase
-        .from('storybooks')
-        .select('id')
-        .eq('slug', payload.slug)
-        .single();
+        .eq('id', targetId)
+        .select();
 
-      if (existing) {
-        result = await supabase
-          .from('storybooks')
-          .update(payload)
-          .eq('id', existing.id)
-          .select()
-          .single();
-      } else {
-        result = await supabase
-          .from('storybooks')
-          .insert({
-            ...payload,
-            created_at: new Date().toISOString()
-          })
-          .select()
-          .single();
+      if (updateError) {
+        return NextResponse.json({ success: false, error: updateError.message }, { status: 500 });
       }
+      savedBook = updatedData?.[0] || { id: targetId, ...payload };
+    } else {
+      // Insert new record
+      const { data: insertedData, error: insertError } = await supabase
+        .from('storybooks')
+        .insert({
+          ...payload,
+          created_at: new Date().toISOString()
+        })
+        .select();
+
+      if (insertError) {
+        return NextResponse.json({ success: false, error: insertError.message }, { status: 500 });
+      }
+      savedBook = insertedData?.[0] || payload;
     }
 
-    if (result.error) {
-      return NextResponse.json({ success: false, error: result.error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true, book: result.data });
+    return NextResponse.json({ success: true, book: savedBook });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message || 'Lỗi xử lý yêu cầu' }, { status: 500 });
   }
 }

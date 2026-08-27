@@ -16,13 +16,10 @@ import {
   Clock, 
   HelpCircle, 
   FileText, 
-  Image as ImageIcon,
   Layers,
   Award,
-  RotateCcw,
-  UploadCloud,
-  ChevronDown,
-  ChevronUp
+  Music,
+  Link as LinkIcon
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { getStoredUser } from '@/lib/auth';
@@ -38,7 +35,7 @@ export default function AdminStorybookStudioPage() {
 
   // Active Editing Book
   const [activeBook, setActiveBook] = useState<StorybookItem>(DEFAULT_STORYBOOKS[0]);
-  const [activeTab, setActiveTab] = useState<'info' | 'pages' | 'quiz' | 'guide'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'pages' | 'quiz' | 'guide'>('pages');
   const [selectedPageIndex, setSelectedPageIndex] = useState<number>(0);
 
   useEffect(() => {
@@ -126,7 +123,9 @@ export default function AdminStorybookStudioPage() {
 
       if (data.success) {
         setStatusMsg({ type: 'success', text: 'Đã lưu và xuất bản sách tranh lên Supabase thành công!' });
-        loadStorybooks();
+        if (data.book && data.book.id) {
+          setActiveBook(prev => ({ ...prev, id: data.book.id }));
+        }
       } else {
         setStatusMsg({ type: 'error', text: data.error || 'Có lỗi xảy ra khi lưu vào Supabase.' });
       }
@@ -152,6 +151,7 @@ export default function AdminStorybookStudioPage() {
       image_url: `/storybooks/cong-trinh-sang-tao/page_${newPageNum}.png`,
       text_script: '',
       caption: `Trang ${newPageNum}`,
+      audio_url: '',
       estimated_duration: 15
     };
     setActiveBook(prev => ({
@@ -219,9 +219,9 @@ export default function AdminStorybookStudioPage() {
           
           <div className="flex items-center gap-3">
             <Link
-              href="/admin"
+              href="/sach-tranh"
               className="p-2 rounded-xl border border-[var(--border-card)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-600 transition"
-              title="Về Trang Quản Trị"
+              title="Về Thư Viện Sách Tranh"
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
@@ -250,7 +250,7 @@ export default function AdminStorybookStudioPage() {
             <button
               onClick={handleSaveBook}
               disabled={saving}
-              className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20 transition disabled:opacity-50"
+              className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20 transition disabled:opacity-50 cursor-pointer"
             >
               <Save className="w-4 h-4" />
               <span>{saving ? 'Đang Lưu...' : 'Lưu Vào Supabase'}</span>
@@ -275,7 +275,7 @@ export default function AdminStorybookStudioPage() {
         <div className="flex items-center gap-2 border-b border-[var(--border-card)] pb-2 overflow-x-auto">
           <button
             onClick={() => setActiveTab('info')}
-            className={`px-4 py-2 rounded-xl font-serif text-xs font-bold transition flex items-center gap-2 whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl font-serif text-xs font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
               activeTab === 'info'
                 ? 'bg-amber-500 text-slate-950 shadow-md'
                 : 'text-[var(--text-muted)] hover:bg-[var(--bg-card)]'
@@ -287,7 +287,7 @@ export default function AdminStorybookStudioPage() {
 
           <button
             onClick={() => setActiveTab('pages')}
-            className={`px-4 py-2 rounded-xl font-serif text-xs font-bold transition flex items-center gap-2 whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl font-serif text-xs font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
               activeTab === 'pages'
                 ? 'bg-amber-500 text-slate-950 shadow-md'
                 : 'text-[var(--text-muted)] hover:bg-[var(--bg-card)]'
@@ -299,7 +299,7 @@ export default function AdminStorybookStudioPage() {
 
           <button
             onClick={() => setActiveTab('quiz')}
-            className={`px-4 py-2 rounded-xl font-serif text-xs font-bold transition flex items-center gap-2 whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl font-serif text-xs font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
               activeTab === 'quiz'
                 ? 'bg-amber-500 text-slate-950 shadow-md'
                 : 'text-[var(--text-muted)] hover:bg-[var(--bg-card)]'
@@ -311,7 +311,7 @@ export default function AdminStorybookStudioPage() {
 
           <button
             onClick={() => setActiveTab('guide')}
-            className={`px-4 py-2 rounded-xl font-serif text-xs font-bold transition flex items-center gap-2 whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl font-serif text-xs font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer ${
               activeTab === 'guide'
                 ? 'bg-amber-500 text-slate-950 shadow-md'
                 : 'text-[var(--text-muted)] hover:bg-[var(--bg-card)]'
@@ -483,7 +483,7 @@ export default function AdminStorybookStudioPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={autoAllocateTimestamps}
-                className="px-3.5 py-1.5 rounded-xl border border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 text-xs font-serif font-bold flex items-center gap-1.5 transition"
+                className="px-3.5 py-1.5 rounded-xl border border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 text-xs font-serif font-bold flex items-center gap-1.5 transition cursor-pointer"
                 title="Tự động đo số lượng từ để chia giây cho 10 trang"
               >
                 <Clock className="w-3.5 h-3.5" />
@@ -492,7 +492,7 @@ export default function AdminStorybookStudioPage() {
 
               <button
                 onClick={handleAddPage}
-                className="px-3.5 py-1.5 rounded-xl bg-amber-500 text-slate-950 hover:bg-amber-400 text-xs font-serif font-bold flex items-center gap-1.5 transition"
+                className="px-3.5 py-1.5 rounded-xl bg-amber-500 text-slate-950 hover:bg-amber-400 text-xs font-serif font-bold flex items-center gap-1.5 transition cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Thêm Trang Mới</span>
@@ -548,7 +548,7 @@ export default function AdminStorybookStudioPage() {
 
                   <button
                     onClick={() => handleDeletePage(selectedPageIndex)}
-                    className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition"
+                    className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition cursor-pointer"
                     title="Xóa trang này"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -581,7 +581,7 @@ export default function AdminStorybookStudioPage() {
                     </div>
                   </div>
 
-                  {/* Page Script & Timestamps */}
+                  {/* Page Script, Audio Link & Timestamps */}
                   <div className="space-y-3 flex flex-col justify-between">
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-[var(--text-muted)] font-serif">Tiêu Đề Phân Đoạn (Caption)</label>
@@ -596,12 +596,30 @@ export default function AdminStorybookStudioPage() {
                     <div className="space-y-1.5 flex-1">
                       <label className="text-xs font-bold text-[var(--text-muted)] font-serif">Lời Kể Kinh Thánh (Text Script) *</label>
                       <textarea
-                        rows={6}
+                        rows={5}
                         value={curPage.text_script || ''}
                         onChange={e => handleUpdatePageField(selectedPageIndex, 'text_script', e.target.value)}
                         className="w-full px-3 py-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs font-serif focus:border-amber-500 outline-none leading-relaxed"
                         placeholder="Nội dung lời đọc cho trang này..."
                       />
+                    </div>
+
+                    {/* 🎵 INDIVIDUAL PAGE AUDIO URL */}
+                    <div className="space-y-1 pt-1">
+                      <label className="text-[11px] font-bold text-[var(--text-muted)] font-serif flex items-center gap-1">
+                        <Volume2 className="w-3.5 h-3.5 text-amber-500" />
+                        <span>Link Audio Đọc Cho Trang Này (Link .mp3, .wav, hoặc Google Drive)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={curPage.audio_url || ''}
+                        onChange={e => handleUpdatePageField(selectedPageIndex, 'audio_url', e.target.value)}
+                        placeholder="https://drive.google.com/file/d/... hoặc /storybooks/audio/page_1.mp3"
+                        className="w-full px-3 py-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs font-mono focus:border-amber-500 outline-none"
+                      />
+                      <p className="text-[10px] text-[var(--text-muted)] italic">
+                        ✦ Nếu có file thu âm riêng cho trang này, dán link vào đây.
+                      </p>
                     </div>
 
                     <div className="grid grid-cols-3 gap-2 pt-2">
@@ -654,7 +672,7 @@ export default function AdminStorybookStudioPage() {
             </span>
             <button
               onClick={handleAddQuiz}
-              className="px-3.5 py-1.5 rounded-xl bg-amber-500 text-slate-950 hover:bg-amber-400 text-xs font-serif font-bold flex items-center gap-1.5 transition"
+              className="px-3.5 py-1.5 rounded-xl bg-amber-500 text-slate-950 hover:bg-amber-400 text-xs font-serif font-bold flex items-center gap-1.5 transition cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Thêm Câu Hỏi</span>
@@ -668,7 +686,7 @@ export default function AdminStorybookStudioPage() {
                   <span className="font-serif font-bold text-sm text-[var(--text-main)]">
                     Câu Hỏi {qIdx + 1}
                   </span>
-                  <button onClick={() => handleDeleteQuiz(qIdx)} className="text-rose-500 hover:text-rose-600">
+                  <button onClick={() => handleDeleteQuiz(qIdx)} className="text-rose-500 hover:text-rose-600 cursor-pointer">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -714,7 +732,7 @@ export default function AdminStorybookStudioPage() {
                     type="text"
                     value={q.explanation || ''}
                     onChange={e => handleUpdateQuizQuestion(qIdx, 'explanation', e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs font-serif focus:border-amber-500 outline-none"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs font-serif focus:border-amber-500 outline-none"
                   />
                 </div>
               </div>
