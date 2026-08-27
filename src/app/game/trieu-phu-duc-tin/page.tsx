@@ -19,7 +19,8 @@ import {
   BookOpen,
   Cross,
   Shield,
-  LogOut
+  LogOut,
+  ChevronRight
 } from 'lucide-react';
 import { getStoredUser, addFaithPoints } from '@/lib/auth';
 import { MILLIONAIRE_QUESTIONS, MillionaireQuestion } from '@/lib/gamesData';
@@ -90,12 +91,11 @@ export default function TruthConquestGamePage() {
         osc.start();
         osc.stop(ctx.currentTime + 0.15);
       } else if (type === 'lock') {
-        // Dramatic Tension Drone
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(146.83, ctx.currentTime); // D3
-        osc.frequency.linearRampToValueAtTime(220, ctx.currentTime + 1.2); // A3
+        osc.frequency.setValueAtTime(146.83, ctx.currentTime);
+        osc.frequency.linearRampToValueAtTime(220, ctx.currentTime + 1.2);
         gain.gain.setValueAtTime(0.08, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.4);
         osc.connect(gain);
@@ -103,7 +103,6 @@ export default function TruthConquestGamePage() {
         osc.start();
         osc.stop(ctx.currentTime + 1.4);
       } else if (type === 'correct') {
-        // Sacred Victory Chord (C Major Arpeggio)
         [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
@@ -129,7 +128,6 @@ export default function TruthConquestGamePage() {
         osc.start();
         osc.stop(ctx.currentTime + 0.45);
       } else if (type === 'fanfare') {
-        // Church Bells Triad
         [523.25, 659.25, 783.99, 1046.50, 1318.51].forEach((freq, i) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
@@ -145,6 +143,15 @@ export default function TruthConquestGamePage() {
       }
     } catch (e) {}
   }, [soundEnabled]);
+
+  const handleTimeOut = useCallback(() => {
+    playSound('wrong');
+    setGameEnded(true);
+    setEndReason('timeout');
+    if (safeXpEarned > 0) {
+      addFaithPoints(safeXpEarned, 'Mốc an toàn Chinh Phục Chân Lý');
+    }
+  }, [playSound, safeXpEarned]);
 
   // 30s Countdown Engine
   useEffect(() => {
@@ -172,16 +179,7 @@ export default function TruthConquestGamePage() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [gameEnded, isLocked, activeModal, playSound]);
-
-  const handleTimeOut = () => {
-    playSound('wrong');
-    setGameEnded(true);
-    setEndReason('timeout');
-    if (safeXpEarned > 0) {
-      addFaithPoints(safeXpEarned, 'Mốc an toàn Chinh Phục Chân Lý');
-    }
-  };
+  }, [gameEnded, isLocked, activeModal, playSound, handleTimeOut]);
 
   // Select and Lock Answer with 1.8s Suspense
   const handleSelectOption = (idx: number) => {
@@ -193,7 +191,6 @@ export default function TruthConquestGamePage() {
 
     if (timerRef.current) clearInterval(timerRef.current);
 
-    // 1.8s Tension Pause before reveal
     setTimeout(() => {
       setIsRevealed(true);
       const correct = idx === curQuestion.answer_index;
@@ -217,7 +214,6 @@ export default function TruthConquestGamePage() {
             setHiddenOptions([]);
             setTimeLeft(30);
           } else {
-            // Grand Victory!
             playSound('fanfare');
             setGameEnded(true);
             setEndReason('victory');
@@ -301,7 +297,6 @@ export default function TruthConquestGamePage() {
   const timerPercent = (timeLeft / 30) * 100;
   const timerColor = timeLeft > 12 ? 'text-emerald-500 stroke-emerald-500' : timeLeft > 5 ? 'text-amber-500 stroke-amber-500' : 'text-rose-500 stroke-rose-500 animate-pulse';
 
-  // Saint Community Poll simulation breakdown
   const saintPoll = [
     { label: 'A', percent: curQuestion.answer_index === 0 ? 68 : 12 },
     { label: 'B', percent: curQuestion.answer_index === 1 ? 72 : 10 },
@@ -310,22 +305,22 @@ export default function TruthConquestGamePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col font-sans select-none pb-24 pt-16 md:pt-20">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-stone-900 via-stone-950 to-black text-stone-100 flex flex-col font-sans select-none pb-12 pt-16 md:pt-20">
       
-      {/* ── 1. HEADER BAR ── */}
-      <header className="h-16 border-b border-stone-800 bg-stone-900/90 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between gap-4 sticky top-16 z-30">
+      {/* ── 1. COMPACT INTEGRATED ARENA HEADER ── */}
+      <header className="h-14 border-b border-stone-800/80 bg-stone-950/70 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between gap-4 sticky top-16 z-30">
         <div className="flex items-center gap-3">
           <Link
             href="/game"
-            className="p-2 rounded-xl text-stone-400 hover:text-stone-100 hover:bg-stone-800 transition"
+            className="p-1.5 rounded-xl text-stone-400 hover:text-stone-100 hover:bg-stone-800 transition"
             title="Về Cổng Game"
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
-                Đấu Trường Phụng Vụ · Via Veritas
+              <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">
+                ĐẤU TRƯỜNG PHỤNG VỤ
               </span>
             </div>
             <h1 className="font-serif font-black text-sm sm:text-base text-stone-100 truncate">
@@ -335,146 +330,147 @@ export default function TruthConquestGamePage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={handleSurrender}
-            disabled={isLocked || gameEnded}
-            className="px-3 py-1.5 rounded-xl border border-stone-700 hover:border-amber-500/40 text-[11px] font-serif font-bold text-stone-300 hover:text-amber-400 flex items-center gap-1.5 transition disabled:opacity-40 cursor-pointer"
-            title="Dừng cuộc chơi và bảo lưu số điểm hiện có"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Dừng Cuộc Chơi ({accumulatedXp.toLocaleString()} XP)</span>
-          </button>
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-400 text-xs font-mono font-bold">
+            <Coins className="w-3.5 h-3.5" />
+            <span>{accumulatedXp.toLocaleString()} XP</span>
+          </div>
 
           <button
             onClick={() => setSoundEnabled(!soundEnabled)}
-            className="p-2 rounded-xl text-stone-400 hover:text-stone-100 hover:bg-stone-800 transition"
+            className="p-1.5 rounded-xl text-stone-400 hover:text-stone-100 hover:bg-stone-800 transition cursor-pointer"
+            title={soundEnabled ? "Tắt âm thanh" : "Bật âm thanh"}
           >
             {soundEnabled ? <Volume2 className="w-4 h-4 text-amber-400" /> : <VolumeX className="w-4 h-4" />}
           </button>
         </div>
       </header>
 
-      {/* ── 2. MAIN ARENA ── */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-8 py-6 w-full space-y-6">
+      {/* ── 2. FULL-VIEW GAMESHOW STAGE ── */}
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex flex-col justify-center">
         
-        {/* Top Controls: 4 Sacred Lifelines & 30s Countdown Timer */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-stone-900/90 p-4 rounded-3xl border border-stone-800 shadow-xl">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
           
-          {/* 4 Lifelines */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full md:w-auto">
-            <button
-              onClick={use5050}
-              disabled={lifeline5050Used || isLocked}
-              className={`px-3.5 py-2 rounded-2xl border text-xs font-serif font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                lifeline5050Used
-                  ? 'bg-stone-950/40 border-stone-800 text-stone-600 opacity-40 cursor-not-allowed'
-                  : 'bg-stone-950 border-amber-500/40 text-amber-300 hover:bg-amber-500/10 shadow-sm'
-              }`}
-              title="Loại bỏ 2 phương án sai"
-            >
-              <Shield className="w-3.5 h-3.5" />
-              <span>50:50</span>
-            </button>
-
-            <button
-              onClick={useSaint}
-              disabled={lifelineSaintUsed || isLocked}
-              className={`px-3.5 py-2 rounded-2xl border text-xs font-serif font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                lifelineSaintUsed
-                  ? 'bg-stone-950/40 border-stone-800 text-stone-600 opacity-40 cursor-not-allowed'
-                  : 'bg-stone-950 border-amber-500/40 text-amber-300 hover:bg-amber-500/10 shadow-sm'
-              }`}
-              title="Hỏi ý Thánh Bổn Mạng & Cộng đồng"
-            >
-              <Users className="w-3.5 h-3.5" />
-              <span>Thánh Bổn Mạng</span>
-            </button>
-
-            <button
-              onClick={useSpirit}
-              disabled={lifelineSpiritUsed || isLocked}
-              className={`px-3.5 py-2 rounded-2xl border text-xs font-serif font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                lifelineSpiritUsed
-                  ? 'bg-stone-950/40 border-stone-800 text-stone-600 opacity-40 cursor-not-allowed'
-                  : 'bg-stone-950 border-amber-500/40 text-amber-300 hover:bg-amber-500/10 shadow-sm'
-              }`}
-              title="Ơn Chúa Thánh Thần soi sáng qua Lời Chúa"
-            >
-              <Flame className="w-3.5 h-3.5 text-amber-500" />
-              <span>Ơn Soi Sáng</span>
-            </button>
-
-            <button
-              onClick={useChangeQuestion}
-              disabled={lifelineChangeUsed || isLocked}
-              className={`px-3.5 py-2 rounded-2xl border text-xs font-serif font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                lifelineChangeUsed
-                  ? 'bg-stone-950/40 border-stone-800 text-stone-600 opacity-40 cursor-not-allowed'
-                  : 'bg-stone-950 border-amber-500/40 text-amber-300 hover:bg-amber-500/10 shadow-sm'
-              }`}
-              title="Đổi câu hỏi cùng độ khó"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span>Đổi Câu Hỏi</span>
-            </button>
-          </div>
-
-          {/* 30s Animated SVG Countdown Timer */}
-          <div className="flex items-center gap-3 bg-stone-950 px-4 py-2 rounded-2xl border border-stone-800">
-            <div className="relative w-10 h-10 flex items-center justify-center">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                <path
-                  className="text-stone-800"
-                  strokeWidth="3.5"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-                <path
-                  className={`${timerColor} transition-all duration-1000`}
-                  strokeDasharray={`${timerPercent}, 100`}
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-              </svg>
-              <span className={`absolute text-xs font-mono font-black ${timeLeft <= 5 ? 'text-rose-400 animate-ping' : 'text-stone-200'}`}>
-                {timeLeft}
-              </span>
-            </div>
-
-            <div className="text-left">
-              <span className="text-[10px] text-stone-400 font-serif block">Thời Gian</span>
-              <span className="text-xs font-mono font-bold text-amber-400">
-                {timeLeft > 5 ? `${timeLeft}s hồi hộp` : '⚠️ SẮP HẾT GIỜ!'}
-              </span>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Board & Ladder Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
-          {/* Question Board */}
-          <div className="lg:col-span-8 space-y-4">
+          {/* LEFT 8 COLS: QUESTION STAGE, LIFELINES & ANSWERS */}
+          <div className="lg:col-span-8 flex flex-col justify-between space-y-5">
             
-            {/* Spotlight Question Box */}
-            <div className="p-6 sm:p-10 rounded-3xl bg-stone-900 border-2 border-amber-500/50 min-h-[170px] flex flex-col items-center justify-center text-center shadow-[0_20px_50px_rgba(217,119,6,0.15)] relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-600 via-amber-300 to-amber-600" />
+            {/* Top Stage Control Strip: Level Badge + 30s Countdown + 4 Lifelines */}
+            <div className="p-3.5 sm:p-4 rounded-3xl bg-stone-900/80 border border-stone-800/80 backdrop-blur-md shadow-xl flex flex-wrap items-center justify-between gap-3">
               
-              <span className="text-[11px] font-mono text-amber-400 tracking-widest uppercase font-bold mb-2">
-                ✦ CÂU HỎI {currentLevel + 1} / {MILLIONAIRE_QUESTIONS.length} · {curQuestion.prize_xp.toLocaleString()} FAITH XP ✦
+              {/* Level Indicator */}
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 font-mono font-bold text-xs">
+                  CÂU {currentLevel + 1} / {MILLIONAIRE_QUESTIONS.length}
+                </span>
+                <span className="text-[11px] font-serif text-stone-400 hidden sm:inline">
+                  {curQuestion.is_safe_milestone ? '★ MỐC AN TOÀN' : ''}
+                </span>
+              </div>
+
+              {/* 30s Circular Animated Timer */}
+              <div className="flex items-center gap-2.5 bg-stone-950 px-3.5 py-1.5 rounded-2xl border border-stone-800 shadow-inner">
+                <div className="relative w-8 h-8 flex items-center justify-center">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                    <path
+                      className="text-stone-800"
+                      strokeWidth="3.5"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <path
+                      className={`${timerColor} transition-all duration-1000`}
+                      strokeDasharray={`${timerPercent}, 100`}
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                  </svg>
+                  <span className={`absolute text-[11px] font-mono font-black ${timeLeft <= 5 ? 'text-rose-400 animate-ping' : 'text-stone-200'}`}>
+                    {timeLeft}
+                  </span>
+                </div>
+                <span className="text-xs font-mono font-bold text-amber-400">
+                  {timeLeft}s
+                </span>
+              </div>
+
+              {/* 4 Lifelines */}
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <button
+                  onClick={use5050}
+                  disabled={lifeline5050Used || isLocked}
+                  className={`p-2 sm:px-3 sm:py-1.5 rounded-xl border text-xs font-serif font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                    lifeline5050Used
+                      ? 'bg-stone-950/40 border-stone-800 text-stone-600 opacity-40 cursor-not-allowed'
+                      : 'bg-stone-950 border-amber-500/40 text-amber-300 hover:bg-amber-500/10 shadow-sm'
+                  }`}
+                  title="50:50 - Loại 2 phương án sai"
+                >
+                  <Shield className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">50:50</span>
+                </button>
+
+                <button
+                  onClick={useSaint}
+                  disabled={lifelineSaintUsed || isLocked}
+                  className={`p-2 sm:px-3 sm:py-1.5 rounded-xl border text-xs font-serif font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                    lifelineSaintUsed
+                      ? 'bg-stone-950/40 border-stone-800 text-stone-600 opacity-40 cursor-not-allowed'
+                      : 'bg-stone-950 border-amber-500/40 text-amber-300 hover:bg-amber-500/10 shadow-sm'
+                  }`}
+                  title="Hỏi ý Thánh Bổn Mạng"
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Thánh Bổn Mạng</span>
+                </button>
+
+                <button
+                  onClick={useSpirit}
+                  disabled={lifelineSpiritUsed || isLocked}
+                  className={`p-2 sm:px-3 sm:py-1.5 rounded-xl border text-xs font-serif font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                    lifelineSpiritUsed
+                      ? 'bg-stone-950/40 border-stone-800 text-stone-600 opacity-40 cursor-not-allowed'
+                      : 'bg-stone-950 border-amber-500/40 text-amber-300 hover:bg-amber-500/10 shadow-sm'
+                  }`}
+                  title="Ơn Chúa Thánh Thần soi sáng"
+                >
+                  <Flame className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="hidden md:inline">Ơn Soi Sáng</span>
+                </button>
+
+                <button
+                  onClick={useChangeQuestion}
+                  disabled={lifelineChangeUsed || isLocked}
+                  className={`p-2 sm:px-3 sm:py-1.5 rounded-xl border text-xs font-serif font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                    lifelineChangeUsed
+                      ? 'bg-stone-950/40 border-stone-800 text-stone-600 opacity-40 cursor-not-allowed'
+                      : 'bg-stone-950 border-amber-500/40 text-amber-300 hover:bg-amber-500/10 shadow-sm'
+                  }`}
+                  title="Đổi câu hỏi cùng cấp"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Đổi Câu</span>
+                </button>
+              </div>
+
+            </div>
+
+            {/* Spotlight Question Box */}
+            <div className="flex-1 p-6 sm:p-10 rounded-3xl bg-gradient-to-b from-stone-900/90 to-stone-950/90 border-2 border-amber-500/40 min-h-[180px] sm:min-h-[220px] flex flex-col items-center justify-center text-center shadow-[0_20px_50px_rgba(217,119,6,0.12)] relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-600 via-amber-300 to-amber-600" />
+              
+              <span className="text-[11px] font-mono text-amber-400/90 tracking-widest uppercase font-bold mb-3">
+                ✦ TRỊ GIÁ {curQuestion.prize_xp.toLocaleString()} FAITH XP ✦
               </span>
 
-              <p className="text-base sm:text-2xl font-serif font-black text-amber-50 leading-relaxed max-w-2xl">
+              <p className="text-lg sm:text-2xl md:text-3xl font-serif font-black text-amber-50 leading-relaxed max-w-2xl drop-shadow-md">
                 "{curQuestion.question}"
               </p>
             </div>
 
-            {/* 4 Hexagonal/Slanted Style Answer Options */}
+            {/* 4 Answer Buttons in 2x2 Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               {curQuestion.options.map((opt, idx) => {
                 const isHidden = hiddenOptions.includes(idx);
@@ -482,12 +478,12 @@ export default function TruthConquestGamePage() {
                   return (
                     <div
                       key={idx}
-                      className="p-4 rounded-2xl bg-stone-950/20 border border-stone-900/40 opacity-10 pointer-events-none"
+                      className="p-4 sm:p-5 rounded-2xl bg-stone-950/20 border border-stone-900/40 opacity-10 pointer-events-none min-h-[64px]"
                     />
                   );
                 }
 
-                let btnClasses = 'bg-stone-900/90 border-stone-800 hover:border-amber-500 hover:bg-stone-800 text-stone-200';
+                let btnClasses = 'bg-stone-900/80 border-stone-800 hover:border-amber-500 hover:bg-stone-850 text-stone-100';
                 
                 if (selectedOpt === idx) {
                   if (isRevealed) {
@@ -497,7 +493,6 @@ export default function TruthConquestGamePage() {
                       btnClasses = 'bg-rose-600 border-rose-400 text-white font-bold shadow-lg shadow-rose-600/40';
                     }
                   } else {
-                    // Locked tension state
                     btnClasses = 'bg-amber-500 border-amber-300 text-slate-950 font-black shadow-xl shadow-amber-500/40 animate-pulse scale-[1.02]';
                   }
                 } else if (isRevealed && idx === curQuestion.answer_index) {
@@ -509,12 +504,12 @@ export default function TruthConquestGamePage() {
                     key={idx}
                     disabled={isLocked || gameEnded}
                     onClick={() => handleSelectOption(idx)}
-                    className={`p-4 rounded-2xl border-2 text-xs sm:text-sm font-serif text-left transition-all duration-200 flex items-center gap-3.5 shadow-md cursor-pointer disabled:cursor-not-allowed ${btnClasses}`}
+                    className={`p-4 sm:p-5 rounded-2xl border-2 text-xs sm:text-base font-serif text-left transition-all duration-200 flex items-center gap-3.5 shadow-md cursor-pointer disabled:cursor-not-allowed min-h-[64px] ${btnClasses}`}
                   >
-                    <span className="w-7 h-7 rounded-xl bg-black/40 text-amber-400 font-mono font-bold flex items-center justify-center text-xs shrink-0 border border-amber-500/30">
+                    <span className="w-8 h-8 rounded-xl bg-black/50 text-amber-400 font-mono font-bold flex items-center justify-center text-xs sm:text-sm shrink-0 border border-amber-500/30">
                       {String.fromCharCode(65 + idx)}
                     </span>
-                    <span className="flex-1 leading-snug">{opt}</span>
+                    <span className="flex-1 font-semibold leading-snug">{opt}</span>
                   </button>
                 );
               })}
@@ -522,14 +517,14 @@ export default function TruthConquestGamePage() {
 
             {/* Tension status label */}
             {isLocked && !isRevealed && (
-              <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-serif font-bold text-center animate-pulse">
+              <div className="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs sm:text-sm font-serif font-bold text-center animate-pulse">
                 ⏳ Đang khóa câu trả lời... Giây phút quyết định!
               </div>
             )}
 
             {isRevealed && curQuestion.explanation && (
-              <div className={`p-4 rounded-2xl text-xs font-serif leading-relaxed border ${
-                isCorrect ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+              <div className={`p-4 rounded-2xl text-xs sm:text-sm font-serif leading-relaxed border ${
+                isCorrect ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300' : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
               }`}>
                 <strong className="block font-bold mb-1">
                   {isCorrect ? '✓ Chính xác tuyệt đối!' : '✕ Lời giải thích:'}
@@ -540,44 +535,68 @@ export default function TruthConquestGamePage() {
 
           </div>
 
-          {/* Money/XP Ladder */}
-          <div className="lg:col-span-4 p-5 rounded-3xl bg-stone-900 border border-stone-800 space-y-2 text-xs font-mono shadow-xl">
-            <div className="text-[11px] font-bold text-stone-400 font-serif uppercase tracking-wider pb-3 border-b border-stone-800 flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <Trophy className="w-3.5 h-3.5 text-amber-400" /> Nấc Thang Chân Lý
-              </span>
-              <span className="text-amber-400">Faith XP</span>
+          {/* RIGHT 4 COLS: FULL-HEIGHT STAINED-GLASS PRIZE LADDER & SURRENDER */}
+          <div className="lg:col-span-4 p-5 sm:p-6 rounded-3xl bg-stone-900/80 border border-stone-800/80 backdrop-blur-md shadow-xl flex flex-col justify-between space-y-4">
+            
+            <div className="space-y-3">
+              <div className="pb-3 border-b border-stone-800 flex items-center justify-between">
+                <span className="font-serif font-bold text-xs sm:text-sm text-stone-200 flex items-center gap-1.5 uppercase tracking-wider">
+                  <Trophy className="w-4 h-4 text-amber-400" /> Thang Điểm Tri Thức
+                </span>
+                <span className="text-xs font-mono text-amber-400 font-bold">Faith XP</span>
+              </div>
+
+              {/* 10 Ladder Levels */}
+              <div className="space-y-1.5">
+                {MILLIONAIRE_QUESTIONS.slice().reverse().map((q, idx) => {
+                  const actualLevel = MILLIONAIRE_QUESTIONS.length - 1 - idx;
+                  const isCurrent = actualLevel === currentLevel;
+                  const isPassed = actualLevel < currentLevel;
+
+                  let rowClass = 'text-stone-500 bg-stone-950/40 border border-transparent';
+                  if (isCurrent) {
+                    rowClass = 'bg-amber-500 text-slate-950 font-black shadow-lg shadow-amber-500/30 scale-[1.03] border-amber-300';
+                  } else if (q.is_safe_milestone) {
+                    rowClass = 'text-amber-300 font-bold border border-amber-500/40 bg-amber-500/10';
+                  } else if (isPassed) {
+                    rowClass = 'text-emerald-400 font-semibold bg-emerald-500/5 border-emerald-500/20';
+                  }
+
+                  return (
+                    <div
+                      key={q.id}
+                      className={`flex items-center justify-between py-2 px-3.5 rounded-xl transition-all ${rowClass}`}
+                    >
+                      <span className="font-serif flex items-center gap-2 text-xs sm:text-sm">
+                        <span>Nấc {actualLevel + 1}</span>
+                        {q.is_safe_milestone && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 font-mono font-bold">
+                            MỐC ★
+                          </span>
+                        )}
+                      </span>
+                      <span className="font-mono text-xs sm:text-sm font-bold">{q.prize_xp.toLocaleString()} XP</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="space-y-1">
-              {MILLIONAIRE_QUESTIONS.slice().reverse().map((q, idx) => {
-                const actualLevel = MILLIONAIRE_QUESTIONS.length - 1 - idx;
-                const isCurrent = actualLevel === currentLevel;
-                const isPassed = actualLevel < currentLevel;
-
-                let rowClass = 'text-stone-500 hover:text-stone-400';
-                if (isCurrent) {
-                  rowClass = 'bg-amber-500 text-slate-950 font-black shadow-lg shadow-amber-500/20 scale-[1.02]';
-                } else if (q.is_safe_milestone) {
-                  rowClass = 'text-amber-300 font-bold border border-amber-500/40 bg-amber-500/10';
-                } else if (isPassed) {
-                  rowClass = 'text-emerald-400 font-semibold';
-                }
-
-                return (
-                  <div
-                    key={q.id}
-                    className={`flex items-center justify-between py-1.5 px-3 rounded-xl transition-all ${rowClass}`}
-                  >
-                    <span className="font-serif flex items-center gap-1.5">
-                      <span>Nấc {actualLevel + 1}</span>
-                      {q.is_safe_milestone && <Award className="w-3.5 h-3.5 text-amber-400" />}
-                    </span>
-                    <span className="font-mono">{q.prize_xp.toLocaleString()} XP</span>
-                  </div>
-                );
-              })}
+            {/* Surrender & Walk Away Button */}
+            <div className="pt-3 border-t border-stone-800 space-y-2">
+              <button
+                onClick={handleSurrender}
+                disabled={isLocked || gameEnded || accumulatedXp === 0}
+                className="w-full py-3 rounded-2xl border border-stone-700 hover:border-amber-500/50 bg-stone-950 text-xs sm:text-sm font-serif font-bold text-stone-300 hover:text-amber-300 flex items-center justify-center gap-2 transition disabled:opacity-30 cursor-pointer shadow-sm"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Dừng Cuộc Chơi (Bảo Lưu {accumulatedXp.toLocaleString()} XP)</span>
+              </button>
+              <p className="text-[10px] text-stone-500 text-center font-serif">
+                ✦ Bảo toàn toàn bộ điểm số đạt được vào Hồ Sơ cá nhân.
+              </p>
             </div>
+
           </div>
 
         </div>
