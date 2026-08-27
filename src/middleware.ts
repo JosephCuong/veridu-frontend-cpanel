@@ -21,7 +21,10 @@ const KNOWN_ROUTES = new Set([
   '/tac-gia/dashboard',
   '/sach-tranh',
   '/sach-tranh/studio',
+  '/admin/sach-tranh',
   '/quiz',
+  '/quiz/studio',
+  '/admin/quiz-bank',
   '/game',
   '/game/hanh-trinh-dat-hua',
   '/game/trieu-phu-duc-tin',
@@ -49,8 +52,13 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const cleanPath = pathname.replace(/\/$/, '') || '/';
 
-  // 1. Redirect admin paths to home page
-  if (pathname.startsWith('/admin') || pathname.startsWith('/wp-admin')) {
+  // 1. Redirect legacy wp-admin or general admin paths (except allowed admin studios)
+  if (
+    pathname.startsWith('/wp-admin') ||
+    (pathname.startsWith('/admin') && 
+     pathname !== '/admin/sach-tranh' && 
+     pathname !== '/admin/quiz-bank')
+  ) {
     return NextResponse.redirect(new URL('/', request.url), { status: 301 });
   }
 
