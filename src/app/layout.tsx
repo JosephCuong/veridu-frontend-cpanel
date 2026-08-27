@@ -1,11 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Lora } from "next/font/google";
+import Script from "next/script";
 import BackToTop from "@/components/BackToTop";
 import LiturgicalHeader from "@/components/LiturgicalHeader";
 import Footer from "@/components/Footer";
 import { ToastProvider } from "@/components/Toast";
-import GoogleAnalytics from "@/components/GoogleAnalytics";
-import GoogleAdSense from "@/components/GoogleAdSense";
 import "./globals.css";
 
 const inter = Inter({
@@ -132,29 +131,6 @@ export default function RootLayout({
         <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
         <link rel="dns-prefetch" href="https://cljglzhuwdniynfkzkxc.supabase.co" />
 
-        {/* Google tag (gtag.js) - Google Analytics */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-DDK6K002MD" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-DDK6K002MD', {
-                page_path: window.location.pathname,
-                send_page_view: true
-              });
-            `,
-          }}
-        />
-
-        {/* Google AdSense */}
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5209827375568934"
-          crossOrigin="anonymous"
-        />
-
         {/* JSON-LD Schema */}
         <script
           type="application/ld+json"
@@ -169,6 +145,31 @@ export default function RootLayout({
         />
       </head>
       <body className="w-full min-h-screen flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300">
+        {/* Google tag (gtag.js) - Google Analytics 4 */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-DDK6K002MD"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics-gtag" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-DDK6K002MD', {
+              page_path: window.location.pathname,
+              send_page_view: true
+            });
+          `}
+        </Script>
+
+        {/* Google AdSense */}
+        <Script
+          id="google-adsense-script"
+          strategy="lazyOnload"
+          crossOrigin="anonymous"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5209827375568934"
+        />
+
         <ToastProvider>
           <LiturgicalHeader />
           
