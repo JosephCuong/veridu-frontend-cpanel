@@ -1,52 +1,22 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const KNOWN_ROUTES = new Set([
-  '/',
-  '/thu-vien',
-  '/thu-vien/sach',
-  '/thu-vien/tai-lieu',
-  '/giao-ly',
-  '/khoa-hoc',
-  '/courses',
-  '/kinh-thanh',
-  '/doc-kinh-thanh',
-  '/ban-do',
-  '/ban-do-kinh-thanh',
-  '/lich-su',
-  '/dong-thoi-gian',
-  '/dang-bai',
-  '/nhan-vat',
-  '/tac-gia',
-  '/tac-gia/dashboard',
-  '/sach-tranh',
-  '/sach-tranh/studio',
-  '/admin/sach-tranh',
-  '/quiz',
-  '/quiz/studio',
-  '/admin/quiz-bank',
-  '/game',
-  '/game/hanh-trinh-dat-hua',
-  '/game/trieu-phu-duc-tin',
-
-
-  '/quiz/control',
-  '/quiz/room',
-  '/dang-nhap',
-  '/dang-ky',
-  '/quen-mat-khau',
+// Routes requiring user authentication
+const AUTH_REQUIRED_ROUTES = [
   '/ho-so',
   '/cai-dat',
-  '/search',
-  '/dieu-khoan-su-dung',
-  '/chinh-sach-bao-mat',
-  '/favicon.ico',
-  '/robots.txt',
-  '/sitemap.xml',
-  '/manifest.json',
-  '/site.webmanifest',
-  '/sw.js',
-]);
+  '/dang-bai',
+  '/tac-gia/dashboard',
+  '/quiz/control'
+];
+
+// Routes strictly requiring administrator role
+const ADMIN_REQUIRED_ROUTES = [
+  '/admin/quiz-bank',
+  '/admin/sach-tranh',
+  '/quiz/studio',
+  '/sach-tranh/studio'
+];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -99,12 +69,60 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`/${slug}`, request.url), { status: 301 });
   }
 
-  // 3. Attach standard security headers
+  // ══════════════════════════════════════════════════════════════════════════
+  // 3. SERVER-SIDE ROUTE GUARD (AUTHENTICATION & AUTHORIZATION ENFORCEMENT)
+  // ══════════════════════════════════════════════════════════════════════════
+  const tokenCookie = request.cookies.get('veridu_token')?.value;
+  const userCookie = request.cookies.get('veridu_user')?.value;
+  const hasValidAuthToken = Boolean(tokenCookie && tokenCookie !== 'guest_token');
+
+  // Check if route requires login
+  const isAuthRequired = AUTH_REQUIRED_ROUTES.some(route => cleanPath === route || cleanPath.startsWith(`${route}/`));
+  const isAdminRequired = ADMIN_REQUIRED_ROUTES.some(route => cleanPath === route || cleanPath.startsWith(`${route}/`));
+
+  if (isAuthRequired && !hasValidAuthToken) {
+    const loginRedirectUrl = new URL('/dang-nhap', request.url);
+    loginRedirectUrl.searchParams.set('redirect', cleanPath);
+    return NextResponse.redirect(loginRedirectUrl);
+  }
+
+  if (isAdminRequired) {
+    if (!hasValidAuthToken) {
+      const loginRedirectUrl = new URL('/dang-nhap', request.url);
+      loginRedirectUrl.searchParams.set('redirect', cleanPath);
+      return NextResponse.redirect(loginRedirectUrl);
+    }
+
+    // Role check from user cookie
+    let isUserAdmin = false;
+    if (userCookie) {
+      try {
+        const decoded = userCookie.includes('%') ? decodeURIComponent(userCookie) : userCookie;
+        const parsed = JSON.parse(decoded);
+        if (parsed?.role === 'Quản Trị Viên' || parsed?.role === 'admin') {
+          isUserAdmin = true;
+        }
+      } catch (e) {}
+    }
+
+    if (!isUserAdmin) {
+      return NextResponse.redirect(new URL('/ho-so?error=forbidden', request.url));
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // 4. ATTACH HARDENED SECURITY HEADERS
+  // ══════════════════════════════════════════════════════════════════════════
   const response = NextResponse.next();
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-Frame-Options', 'SAMEORIGIN');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('X-XSS-Protection', '1; mode=block');
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+
+  if (process.env.NODE_ENV === 'production') {
+    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
 
   return response;
 }

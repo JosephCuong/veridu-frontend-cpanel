@@ -129,11 +129,22 @@ export function saveAuthSession(token: string, user: UserProfile, remember: bool
 
 export function logout() {
   if (typeof window !== 'undefined') {
+    // Clear cookies
     Cookies.remove('veridu_token', { path: '/' });
     Cookies.remove('veridu_user', { path: '/' });
+    
+    // Clear local storage
     localStorage.removeItem('veridu_token');
     localStorage.removeItem('veridu_user_profile');
-    window.location.href = '/dang-nhap';
+
+    // Sign out from Supabase Auth Server in background
+    import('./supabaseClient').then(async ({ supabase }) => {
+      try {
+        await supabase.auth.signOut();
+      } catch (err) {}
+    }).finally(() => {
+      window.location.href = '/dang-nhap';
+    });
   }
 }
 

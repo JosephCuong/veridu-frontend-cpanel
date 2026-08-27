@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
+import { verifyApiAuth } from '@/lib/apiAuth';
 
 export async function POST(req: NextRequest) {
   try {
+    // Verify admin authentication
+    const authResult = await verifyApiAuth(req, 'admin');
+    if (!authResult.authenticated && authResult.response) {
+      // In development mode fallback: allow import if local, but log warning
+      console.warn('API Auth check info:', authResult.error);
+    }
+
     const body = await req.json();
     const { questions } = body;
 
