@@ -49,6 +49,7 @@ import {
 } from '@/lib/htmlProcessor';
 import VisualArticleRenderer from '@/components/VisualArticleRenderer';
 import VeriduBlockEditor, { VeriduBlock, compileBlocksToHtml, parseHtmlToBlocks } from '@/components/editor/VeriduBlockEditor';
+import ResourceSubmissionModal from '@/components/ResourceSubmissionModal';
 
 function slugifyVietnamese(str: string): string {
   return str
@@ -102,8 +103,10 @@ function DangBaiContent() {
   // Success Modal State
   const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showResourceModal, setShowResourceModal] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
 
   // Check auth
   useEffect(() => {
@@ -266,8 +269,12 @@ function DangBaiContent() {
     try {
       const finalSlug = slug.trim() || slugifyVietnamese(title);
       const isEdit = !!postId;
-
       const endpoint = isEdit ? '/api/posts/update' : '/api/posts/create';
+
+      const isPrivileged = user?.role === 'admin' || user?.role === 'scholar' || user?.role === 'Quản Trị Viên' || user?.role === 'Học Giả VERIDU';
+
+      const postStatus = isPrivileged ? 'published' : 'pending';
+
       const payload: any = {
         title: title.trim(),
         slug: finalSlug,
@@ -277,7 +284,7 @@ function DangBaiContent() {
         featured_image: featuredImage.trim(),
         content: finalHtml,
         author_id: user?.id || 'eef94645-01fb-471f-9b10-cdd3fea35143',
-        status: 'published'
+        status: postStatus
       };
 
       if (isEdit) payload.id = postId;
@@ -294,7 +301,15 @@ function DangBaiContent() {
       const savedSlug = data.slug || finalSlug;
       setPublishedSlug(savedSlug);
       setShowSuccessModal(true);
-      setMessage({ type: 'success', text: isEdit ? 'Đã cập nhật bài viết thành công!' : 'Đã xuất bản bài viết thành công!' });
+      setMessage({ 
+        type: 'success', 
+        text: isEdit 
+          ? 'Đã cập nhật bài viết thành công!' 
+          : postStatus === 'published' 
+            ? 'Đã xuất bản bài viết thành công!' 
+            : 'Bài viết đã được gửi và đang chờ Ban Quản Trị phê duyệt!' 
+      });
+
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Có lỗi xảy ra khi kết nối Supabase.' });
     } finally {
@@ -439,6 +454,24 @@ function DangBaiContent() {
             </button>
           </div>
 
+          {/* Resource Modal Button */}
+          <button
+            type="button"
+            onClick={() => setShowResourceModal(true)}
+            className="px-3.5 py-1.5 bg-indigo-600/15 hover:bg-indigo-600 text-indigo-700 dark:text-indigo-300 hover:text-white font-bold rounded-2xl text-xs transition-all border border-indigo-500/30 flex items-center gap-1.5 cursor-pointer shadow-sm"
+            title="Gửi tài liệu, sách, giáo án đa định dạng (.pdf, .docx, .pptx, slide)"
+          >
+            <Upload className="w-3.5 h-3.5 text-indigo-500" />
+            <span>Gửi Tài Liệu / Giáo Án</span>
+          </button>
+
+          <Link
+            href="/tac-gia/dashboard"
+            className="px-3 py-1.5 bg-[var(--bg-main)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 font-bold rounded-2xl text-xs border border-[var(--border-card)] flex items-center gap-1 transition"
+          >
+            <span>Dashboard</span>
+          </Link>
+
           {/* Nạp File .HTML Button */}
           <button
             type="button"
@@ -448,6 +481,7 @@ function DangBaiContent() {
           >
             <Upload className="w-3.5 h-3.5" /> Nạp File .HTML
           </button>
+
 
           {/* Publish / Update Button */}
           <button
@@ -937,9 +971,16 @@ function DangBaiContent() {
         </div>
       )}
 
+      {/* RESOURCE SUBMISSION MODAL */}
+      <ResourceSubmissionModal
+        isOpen={showResourceModal}
+        onClose={() => setShowResourceModal(false)}
+      />
+
     </div>
   );
 }
+
 
 export default function DangBaiPage() {
   return (

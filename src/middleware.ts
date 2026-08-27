@@ -17,6 +17,8 @@ const KNOWN_ROUTES = new Set([
   '/dong-thoi-gian',
   '/dang-bai',
   '/nhan-vat',
+  '/tac-gia',
+  '/tac-gia/dashboard',
   '/quiz',
   '/quiz/control',
   '/quiz/room',
