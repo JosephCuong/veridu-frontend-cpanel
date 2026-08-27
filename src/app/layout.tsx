@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Lora } from "next/font/google";
-import Script from "next/script";
 import BackToTop from "@/components/BackToTop";
 import LiturgicalHeader from "@/components/LiturgicalHeader";
 import Footer from "@/components/Footer";
@@ -124,6 +123,22 @@ export default function RootLayout({
       className={`${inter.variable} ${lora.variable} antialiased dark`}
     >
       <head>
+        {/* ── GOOGLE TAG (gtag.js) - STRICTLY IN HEAD FOR GOOGLE SEARCH CONSOLE VERIFICATION ── */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-DDK6K002MD" />
+        <script
+          id="google-tag-init"
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-DDK6K002MD');`,
+          }}
+        />
+
+        {/* ── GOOGLE ADSENSE ── */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5209827375568934"
+          crossOrigin="anonymous"
+        />
+
         {/* Performance Preconnects & DNS-Prefetch */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -145,31 +160,6 @@ export default function RootLayout({
         />
       </head>
       <body className="w-full min-h-screen flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300">
-        {/* Google tag (gtag.js) - Google Analytics 4 */}
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-DDK6K002MD"
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics-gtag" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-DDK6K002MD', {
-              page_path: window.location.pathname,
-              send_page_view: true
-            });
-          `}
-        </Script>
-
-        {/* Google AdSense */}
-        <Script
-          id="google-adsense-script"
-          strategy="lazyOnload"
-          crossOrigin="anonymous"
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5209827375568934"
-        />
-
         <ToastProvider>
           <LiturgicalHeader />
           
