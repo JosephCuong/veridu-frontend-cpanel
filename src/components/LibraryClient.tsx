@@ -3,7 +3,23 @@
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Search, Filter, Layers, Cross, FileText, Heart, Gamepad2, Maximize2, BookOpen } from 'lucide-react';
+import { 
+  ArrowRight, 
+  Search, 
+  Filter, 
+  Layers, 
+  Cross, 
+  FileText, 
+  Heart, 
+  Gamepad2, 
+  BookOpen, 
+  BookMarked,
+  FileDown,
+  Sparkles,
+  X,
+  Calendar,
+  ChevronRight
+} from 'lucide-react';
 import { formatImageUrl } from '@/lib/htmlProcessor';
 
 interface LibraryClientProps {
@@ -14,203 +30,441 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [activeType, setActiveType] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
 
-  // Extract unique categories and types
-  const categories = useMemo(() => {
-    const cats = new Set<string>();
+  // Extract unique categories and count
+  const categoryStats = useMemo(() => {
+    const counts: Record<string, number> = {};
     initialArticles.forEach(article => {
-      if (article.category) cats.add(article.category);
+      if (article.category) {
+        counts[article.category] = (counts[article.category] || 0) + 1;
+      }
     });
-    return Array.from(cats);
+    return counts;
   }, [initialArticles]);
 
+  const categories = useMemo(() => Object.keys(categoryStats), [categoryStats]);
+
   const articleTypes = [
-    { id: 'all', label: 'Tất cả định dạng' },
-    { id: 'standard', label: 'Bài viết (Standard)' },
-    { id: 'meditation', label: 'Suy Niệm' },
-    { id: 'theological', label: 'Thần Học' },
-    { id: 'interactive', label: 'Tương Tác 3D' }
+    { id: 'all', label: 'Tất cả định dạng', icon: Layers },
+    { id: 'standard', label: 'Bài viết Tiêu chuẩn', icon: FileText },
+    { id: 'meditation', label: 'Suy Niệm Lời Chúa', icon: Heart },
+    { id: 'theological', label: 'Nghiên Cứu Thần Học', icon: Cross },
+    { id: 'interactive', label: 'Tương Tác Giáo Lý', icon: Gamepad2 }
   ];
 
-  // Filter logic
+  // Filter & Sort logic
   const filteredArticles = useMemo(() => {
-    return initialArticles.filter(article => {
-      const title = typeof article.title === 'string' ? article.title : article.title?.rendered || '';
-      
-      const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCat = activeCategory === 'all' || article.category === activeCategory;
-      const matchesType = activeType === 'all' || (article.article_type || 'standard') === activeType;
+    return initialArticles
+      .filter(article => {
+        const title = typeof article.title === 'string' ? article.title : article.title?.rendered || '';
+        const excerpt = typeof article.excerpt === 'string' ? article.excerpt : article.excerpt?.rendered || '';
+        
+        const matchesSearch = 
+          title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          excerpt.toLowerCase().includes(searchQuery.toLowerCase());
 
-      return matchesSearch && matchesCat && matchesType;
-    });
-  }, [initialArticles, searchQuery, activeCategory, activeType]);
+        const matchesCat = activeCategory === 'all' || article.category === activeCategory;
+        const matchesType = activeType === 'all' || (article.article_type || 'standard') === activeType;
+
+        return matchesSearch && matchesCat && matchesType;
+      })
+      .sort((a, b) => {
+        const dateA = new Date(a.created_at || a.date || 0).getTime();
+        const dateB = new Date(b.created_at || b.date || 0).getTime();
+        return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
+      });
+  }, [initialArticles, searchQuery, activeCategory, activeType, sortBy]);
+
+  const isFiltering = searchQuery !== '' || activeCategory !== 'all' || activeType !== 'all';
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setActiveCategory('all');
+    setActiveType('all');
+  };
 
   return (
-    <div className="space-y-10">
+    <div className="w-full pb-20">
       
-      {/* Page Title Header */}
-      <header className="space-y-4 text-center sm:text-left border-b border-[var(--border-card)] pb-8">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-bold uppercase tracking-wider">
-          <Cross className="w-3.5 h-3.5" /> Kho Tàng Bài Viết VERIDU
-        </div>
-        <h1 className="font-serif font-black text-3xl sm:text-5xl text-[var(--text-main)] leading-tight">
-          Thư Viện Bài Viết & Suy Niệm Công Giáo
-        </h1>
-        <p className="text-sm sm:text-base text-[var(--text-muted)] max-w-3xl leading-relaxed">
-          Tổng hợp các bài nghiên cứu Giáo luật Phụng vụ, Suy niệm Lời Chúa hằng ngày và các bài viết tương tác giáo lý trực quan.
-        </p>
-      </header>
+      {/* ── 1. SACRED HERO SECTION (STAINED-GLASS BACKDROP) ── */}
+      <section className="relative overflow-hidden pt-28 sm:pt-36 pb-16 sm:pb-24 border-b border-[var(--border-card)]">
+        {/* Background Image with Dark Glass Overlay */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center transition-all duration-1000 scale-105"
+          style={{ 
+            backgroundImage: `url('https://images.unsplash.com/photo-1548625361-9c8eb25c56df?q=80&w=1920&auto=format&fit=crop')` 
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-950/80 to-[var(--bg-main)] backdrop-blur-[2px]" />
 
-      {/* Filter Section */}
-      <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-4 sm:p-6 shadow-xl space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-amber-500" />
-            <h2 className="font-bold text-lg font-serif">Bộ Lọc Tức Thời</h2>
-          </div>
-          
-          <div className="relative w-full md:w-96">
-            <input 
-              type="text" 
-              placeholder="Tìm kiếm bài viết..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 outline-none text-sm transition-all"
-            />
-            <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3.5 top-3" />
-          </div>
-        </div>
+        {/* Hero Content Container */}
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5">
+          <h1 className="font-serif font-black text-3xl sm:text-5xl lg:text-6xl tracking-tight leading-tight">
+            <span className="bg-gradient-to-r from-amber-100 via-amber-300 to-amber-100 bg-clip-text text-transparent drop-shadow-sm">
+              Thư Viện Tri Thức &amp; Suy Niệm
+            </span>
+          </h1>
 
-        <div className="space-y-4">
-          {/* Categories */}
-          {categories.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-bold text-[var(--text-muted)] w-24">Chuyên Mục:</span>
-              <button 
-                onClick={() => setActiveCategory('all')}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${activeCategory === 'all' ? 'bg-amber-500 text-slate-950' : 'bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500/50'}`}
-              >
-                Tất cả
-              </button>
-              {categories.map(cat => (
-                <button 
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${activeCategory === cat ? 'bg-amber-500 text-slate-950' : 'bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500/50'}`}
-                >
-                  {cat}
-                </button>
-              ))}
+          <p className="text-sm sm:text-base lg:text-lg text-stone-300 max-w-2xl mx-auto font-serif leading-relaxed">
+            Tổng hợp các bài khảo cứu Thần học, Giáo luật Phụng vụ, Linh đạo sống đức tin và các bài viết tương tác giáo lý trực quan.
+          </p>
+
+          {/* Quick Stats Badges */}
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <div className="px-4 py-2 rounded-2xl bg-slate-900/80 border border-amber-500/30 backdrop-blur-md flex items-center gap-2 text-xs font-serif shadow-lg">
+              <BookOpen className="w-4 h-4 text-amber-400" />
+              <span className="text-stone-200">
+                <strong className="text-amber-400 font-mono">{initialArticles.length}</strong> Bài viết tuyển chọn
+              </span>
             </div>
-          )}
 
-          {/* Types */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-bold text-[var(--text-muted)] w-24">Định Dạng:</span>
-            {articleTypes.map(type => (
-              <button 
-                key={type.id}
-                onClick={() => setActiveType(type.id)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${activeType === type.id ? 'bg-amber-500 text-slate-950' : 'bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500/50'}`}
-              >
-                {type.id === 'standard' && <FileText className="w-3.5 h-3.5" />}
-                {type.id === 'meditation' && <Heart className="w-3.5 h-3.5" />}
-                {type.id === 'theological' && <Cross className="w-3.5 h-3.5" />}
-                {type.id === 'interactive' && <Gamepad2 className="w-3.5 h-3.5" />}
-                <span>{type.label}</span>
-              </button>
-            ))}
+            <Link
+              href="/thu-vien/sach"
+              className="px-4 py-2 rounded-2xl bg-slate-900/80 hover:bg-amber-500/20 border border-[var(--border-card)] hover:border-amber-500/50 backdrop-blur-md flex items-center gap-2 text-xs font-serif text-stone-300 hover:text-amber-300 transition shadow-lg"
+            >
+              <BookMarked className="w-4 h-4 text-indigo-400" />
+              <span>Tủ Sách Điện Tử</span>
+            </Link>
+
+            <Link
+              href="/thu-vien/tai-lieu"
+              className="px-4 py-2 rounded-2xl bg-slate-900/80 hover:bg-amber-500/20 border border-[var(--border-card)] hover:border-amber-500/50 backdrop-blur-md flex items-center gap-2 text-xs font-serif text-stone-300 hover:text-amber-300 transition shadow-lg"
+            >
+              <FileDown className="w-4 h-4 text-emerald-400" />
+              <span>Tài Liệu PDF</span>
+            </Link>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Masonry Grid */}
-      {filteredArticles.length > 0 ? (
-        <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
-          {filteredArticles.map((article: any) => {
-            const titleText = typeof article.title === 'string' ? article.title : article.title?.rendered || 'Bài viết VERIDU';
-            const templateType = article.article_type || 'standard';
-            const typeLabel = articleTypes.find(t => t.id === templateType)?.label || 'Bài viết';
+      {/* ── 2. TWO-COLUMN MAIN WORKSPACE (ARTICLES 70% + SIDEBAR 30%) ── */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+          
+          {/* ══════════ LEFT COLUMN: ARTICLE FEED (8 / 12 COLS) ══════════ */}
+          <div className="lg:col-span-8 space-y-6">
+            
+            {/* Action & Result Count Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[var(--border-card)]">
+              <div className="flex items-center gap-3">
+                <h2 className="font-serif font-bold text-lg sm:text-xl text-[var(--text-main)] flex items-center gap-2">
+                  <span>Danh Sách Bài Viết</span>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/30 font-mono font-bold">
+                    {filteredArticles.length}
+                  </span>
+                </h2>
 
-            const imgSrc = formatImageUrl(article.thumbnail || article.featured_image);
-
-            return (
-              <div 
-                key={article.id} 
-                className="break-inside-avoid bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl overflow-hidden hover:border-amber-500/50 transition-all shadow-xl group flex flex-col"
-              >
-                <div className="relative overflow-hidden aspect-[16/9] bg-slate-900 flex items-center justify-center">
-                  {imgSrc ? (
-                    <Image 
-                      src={imgSrc} 
-                      alt={titleText.replace(/<[^>]*>?/gm, '')} 
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500" 
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-amber-500/20 via-slate-900 to-indigo-900/40 flex flex-col items-center justify-center gap-2 p-4 text-center">
-                      <BookOpen className="w-10 h-10 text-amber-500/70" />
-                      <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">VERIDU Library</span>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-main)]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </div>
-
-                
-                <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
-                    <div className="space-y-3">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/30">
-                            {typeLabel}
-                            </span>
-                            {article.category && (
-                                <span className="text-[11px] text-[var(--text-muted)] font-bold">{article.category}</span>
-                            )}
-                        </div>
-
-                        <h3 
-                            className="font-serif font-bold text-xl text-[var(--text-main)] group-hover:text-amber-500 transition-colors line-clamp-3 leading-snug"
-                            dangerouslySetInnerHTML={{ __html: titleText }}
-                        />
-
-                        {article.excerpt && (
-                            <div 
-                            className="text-sm text-[var(--text-muted)] line-clamp-3 leading-relaxed"
-                            dangerouslySetInnerHTML={{ __html: article.excerpt }}
-                            />
-                        )}
-                    </div>
-
-                    <div className="pt-4 mt-4 border-t border-[var(--border-card)]">
-                        <Link 
-                            href={`/${article.slug}`}
-                            className="w-full py-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:bg-amber-500 hover:text-slate-950 text-[var(--text-main)] text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
-                        >
-                            {templateType === 'interactive' ? (
-                              <>
-                                <span>Xem Toàn Màn Hình</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-                              </>
-                            ) : (
-                              <>
-                                <span>Đọc Bài Viết</span>
-                                <ArrowRight className="w-3.5 h-3.5" />
-                              </>
-                            )}
-                        </Link>
-                    </div>
-                </div>
+                {isFiltering && (
+                  <button
+                    onClick={handleResetFilters}
+                    className="inline-flex items-center gap-1 text-xs text-rose-500 hover:text-rose-400 font-serif font-bold transition cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>Xóa bộ lọc</span>
+                  </button>
+                )}
               </div>
-            );
-          })}
+
+              {/* Sort Order Toggle */}
+              <div className="flex items-center gap-2 text-xs font-serif">
+                <span className="text-[var(--text-muted)]">Sắp xếp:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest')}
+                  className="px-3 py-1.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-main)] text-xs font-serif font-bold focus:border-amber-500 focus:outline-none cursor-pointer"
+                >
+                  <option value="newest">Mới Nhất</option>
+                  <option value="oldest">Cũ Nhất</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Articles Grid (2 Columns on Medium/Large Screens) */}
+            {filteredArticles.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {filteredArticles.map((article: any) => {
+                  const titleText = typeof article.title === 'string' ? article.title : article.title?.rendered || 'Bài viết VERIDU';
+                  const templateType = article.article_type || 'standard';
+                  const typeObj = articleTypes.find(t => t.id === templateType);
+                  const typeLabel = typeObj?.label || 'Bài viết';
+                  const TypeIcon = typeObj?.icon || FileText;
+
+                  const imgSrc = formatImageUrl(article.thumbnail || article.featured_image);
+                  const postDate = article.created_at || article.date;
+                  const formattedDate = postDate 
+                    ? new Date(postDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                    : null;
+
+                  return (
+                    <article 
+                      key={article.id || article.slug} 
+                      className="bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-amber-500/50 rounded-3xl overflow-hidden transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-amber-500/5 flex flex-col justify-between group"
+                    >
+                      <div>
+                        {/* Thumbnail Container (16:9 Aspect Ratio) */}
+                        <Link href={`/${article.slug}`} className="block relative overflow-hidden aspect-[16/9] bg-slate-900">
+                          {imgSrc ? (
+                            <Image 
+                              src={imgSrc} 
+                              alt={titleText.replace(/<[^>]*>?/gm, '')} 
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-amber-500/20 via-slate-900 to-indigo-900/40 flex flex-col items-center justify-center gap-2 p-4 text-center">
+                              <BookOpen className="w-10 h-10 text-amber-500/60" />
+                              <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">VERIDU Library</span>
+                            </div>
+                          )}
+
+                          {/* Top Badges Overlay */}
+                          <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-slate-950/80 px-2.5 py-1 rounded-full border border-amber-500/30 backdrop-blur-md shadow-md">
+                              <TypeIcon className="w-3 h-3 text-amber-400" />
+                              <span>{typeLabel}</span>
+                            </span>
+
+                            {article.category && (
+                              <span className="text-[10px] font-bold text-stone-200 bg-slate-950/80 px-2.5 py-1 rounded-full border border-slate-700 backdrop-blur-md shadow-md truncate max-w-[120px]">
+                                {article.category}
+                              </span>
+                            )}
+                          </div>
+                        </Link>
+
+                        {/* Article Information Body */}
+                        <div className="p-5 sm:p-6 space-y-3">
+                          {formattedDate && (
+                            <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-muted)] font-serif">
+                              <Calendar className="w-3.5 h-3.5" />
+                              <span>{formattedDate}</span>
+                            </div>
+                          )}
+
+                          <Link href={`/${article.slug}`} className="block group-hover:text-amber-500 transition-colors">
+                            <h3 
+                              className="font-serif font-bold text-lg text-[var(--text-main)] group-hover:text-amber-500 transition-colors line-clamp-2 leading-snug"
+                              dangerouslySetInnerHTML={{ __html: titleText }}
+                            />
+                          </Link>
+
+                          {article.excerpt && (
+                            <div 
+                              className="text-xs text-[var(--text-muted)] line-clamp-3 leading-relaxed font-sans"
+                              dangerouslySetInnerHTML={{ __html: article.excerpt }}
+                            />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Card Action Footer */}
+                      <div className="p-5 sm:p-6 pt-0">
+                        <Link 
+                          href={`/${article.slug}`}
+                          className="w-full py-2.5 rounded-2xl bg-[var(--bg-main)] hover:bg-gradient-to-r hover:from-amber-500 hover:to-amber-600 hover:text-slate-950 text-[var(--text-main)] border border-[var(--border-card)] hover:border-amber-500 text-xs font-serif font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm group-hover:border-amber-500/40"
+                        >
+                          {templateType === 'interactive' ? (
+                            <>
+                              <span>Mở Trải Nghiệm 3D</span>
+                              <Sparkles className="w-3.5 h-3.5 text-amber-500 group-hover:text-slate-950" />
+                            </>
+                          ) : (
+                            <>
+                              <span>Đọc Chi Tiết</span>
+                              <ArrowRight className="w-3.5 h-3.5 text-amber-500 group-hover:text-slate-950 transition-transform group-hover:translate-x-0.5" />
+                            </>
+                          )}
+                        </Link>
+                      </div>
+
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Empty State */
+              <div className="text-center py-20 px-4 bg-[var(--bg-card)] border border-dashed border-[var(--border-card)] rounded-3xl space-y-4">
+                <Layers className="w-12 h-12 mx-auto text-amber-500/40 animate-pulse" />
+                <h3 className="font-serif font-bold text-lg text-[var(--text-main)]">
+                  Không tìm thấy bài viết nào
+                </h3>
+                <p className="text-xs text-[var(--text-muted)] font-serif max-w-md mx-auto">
+                  Không có bài viết nào khớp với từ khóa tìm kiếm hoặc bộ lọc chuyên mục đã chọn.
+                </p>
+                <button
+                  onClick={handleResetFilters}
+                  className="px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-serif font-black shadow-lg shadow-amber-500/20 cursor-pointer"
+                >
+                  Xóa Tất Cả Bộ Lọc
+                </button>
+              </div>
+            )}
+
+          </div>
+
+          {/* ══════════ RIGHT COLUMN: STICKY SIDEBAR (4 / 12 COLS) ══════════ */}
+          <aside className="lg:col-span-4 space-y-6 lg:sticky lg:top-28">
+            
+            {/* 1. Instant Search Widget */}
+            <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-5 sm:p-6 shadow-xl space-y-3">
+              <label className="text-xs font-serif font-bold text-[var(--text-main)] flex items-center gap-2">
+                <Search className="w-4 h-4 text-amber-500" />
+                <span>Tìm Kiếm Nhanh</span>
+              </label>
+              <div className="relative">
+                <input 
+                  type="text" 
+                  placeholder="Nhập tên bài, từ khóa..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] focus:border-amber-500 text-xs text-[var(--text-main)] outline-none transition font-sans placeholder:text-[var(--text-muted)]"
+                />
+                <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3.5 top-3" />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-3 p-0.5 rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* 2. Categories Filter Widget */}
+            <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-serif font-bold text-sm text-[var(--text-main)] flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-amber-500" />
+                  <span>Chuyên Mục</span>
+                </h3>
+                {activeCategory !== 'all' && (
+                  <button
+                    onClick={() => setActiveCategory('all')}
+                    className="text-[11px] text-amber-500 hover:underline font-serif"
+                  >
+                    Mặc định
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <button
+                  onClick={() => setActiveCategory('all')}
+                  className={`w-full px-3.5 py-2 rounded-2xl text-xs font-serif font-bold transition flex items-center justify-between cursor-pointer ${
+                    activeCategory === 'all'
+                      ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                      : 'text-[var(--text-muted)] hover:bg-[var(--bg-main)] hover:text-[var(--text-main)]'
+                  }`}
+                >
+                  <span>Tất Cả Chuyên Mục</span>
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${
+                    activeCategory === 'all' ? 'bg-slate-950/20 text-slate-950 font-black' : 'bg-[var(--bg-main)] text-[var(--text-muted)]'
+                  }`}>
+                    {initialArticles.length}
+                  </span>
+                </button>
+
+                {categories.map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    className={`w-full px-3.5 py-2 rounded-2xl text-xs font-serif font-bold transition flex items-center justify-between cursor-pointer ${
+                      activeCategory === cat
+                        ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                        : 'text-[var(--text-muted)] hover:bg-[var(--bg-main)] hover:text-[var(--text-main)]'
+                    }`}
+                  >
+                    <span className="truncate pr-2">{cat}</span>
+                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full shrink-0 ${
+                      activeCategory === cat ? 'bg-slate-950/20 text-slate-950 font-black' : 'bg-[var(--bg-main)] text-[var(--text-muted)]'
+                    }`}>
+                      {categoryStats[cat] || 0}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 3. Format / Article Type Filter Widget */}
+            <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+              <h3 className="font-serif font-bold text-sm text-[var(--text-main)] flex items-center gap-2">
+                <Layers className="w-4 h-4 text-amber-500" />
+                <span>Định Dạng Bài Đọc</span>
+              </h3>
+
+              <div className="space-y-1.5">
+                {articleTypes.map(type => {
+                  const Icon = type.icon;
+                  const isSelected = activeType === type.id;
+
+                  return (
+                    <button
+                      key={type.id}
+                      onClick={() => setActiveType(type.id)}
+                      className={`w-full px-3.5 py-2 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2 cursor-pointer ${
+                        isSelected
+                          ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                          : 'text-[var(--text-muted)] hover:bg-[var(--bg-main)] hover:text-[var(--text-main)]'
+                      }`}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                      <span>{type.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 4. Quick Library Navigation Shortcuts */}
+            <div className="bg-gradient-to-br from-amber-500/10 via-[var(--bg-card)] to-indigo-500/10 border border-amber-500/30 rounded-3xl p-5 sm:p-6 shadow-xl space-y-3">
+              <h3 className="font-serif font-bold text-sm text-amber-500 flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                <span>Kho Tàng Tài Liệu Mở Rộng</span>
+              </h3>
+              
+              <div className="space-y-2 pt-1">
+                <Link
+                  href="/thu-vien/sach"
+                  className="p-3 rounded-2xl bg-[var(--bg-main)] hover:border-amber-500 border border-[var(--border-card)] flex items-center justify-between text-xs font-serif font-bold text-[var(--text-main)] hover:text-amber-500 transition group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <BookMarked className="w-4 h-4 text-indigo-400" />
+                    <span>Tủ Sách Điện Tử &amp; Giáo Lý</span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-amber-500 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+
+                <Link
+                  href="/thu-vien/tai-lieu"
+                  className="p-3 rounded-2xl bg-[var(--bg-main)] hover:border-amber-500 border border-[var(--border-card)] flex items-center justify-between text-xs font-serif font-bold text-[var(--text-main)] hover:text-amber-500 transition group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <FileDown className="w-4 h-4 text-emerald-400" />
+                    <span>Tài Liệu Phụng Vụ &amp; Giáo Án PDF</span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-amber-500 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+
+                <Link
+                  href="/sach-tranh"
+                  className="p-3 rounded-2xl bg-[var(--bg-main)] hover:border-amber-500 border border-[var(--border-card)] flex items-center justify-between text-xs font-serif font-bold text-[var(--text-main)] hover:text-amber-500 transition group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Gamepad2 className="w-4 h-4 text-amber-400" />
+                    <span>Sách Tranh Lật Trang 3D</span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-amber-500 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </div>
+            </div>
+
+          </aside>
+
         </div>
-      ) : (
-        <div className="text-center py-20 text-[var(--text-muted)] border border-dashed border-[var(--border-card)] rounded-3xl">
-          <Layers className="w-12 h-12 mx-auto mb-4 opacity-30" />
-          <p className="font-serif text-lg">Không tìm thấy bài viết nào phù hợp với bộ lọc.</p>
-        </div>
-      )}
+      </main>
 
     </div>
   );
