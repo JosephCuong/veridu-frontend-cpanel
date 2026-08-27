@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { 
   Gamepad2, 
   Award, 
@@ -19,13 +20,16 @@ import {
   Users, 
   Check, 
   Play, 
-  Volume2
+  Volume2,
+  Tv,
+  Cross
 } from 'lucide-react';
-import { getStoredUser, addFaithPoints } from '@/lib/auth';
+import { getStoredUser } from '@/lib/auth';
 import { ARCADE_GAMES, MANNA_STORE_ITEMS, GameEvent } from '@/lib/gamesData';
 import { supabase } from '@/lib/supabaseClient';
 
 export default function GameArcadeHubPage() {
+  const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>({
     level: 1,
@@ -36,6 +40,10 @@ export default function GameArcadeHubPage() {
   });
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [redeemSuccess, setRedeemSuccess] = useState<string | null>(null);
+
+  // Smooth Launcher Splash State
+  const [launchingGame, setLaunchingGame] = useState<any | null>(null);
+  const [launchProgress, setLaunchProgress] = useState(0);
 
   useEffect(() => {
     const u = getStoredUser();
@@ -68,6 +76,52 @@ export default function GameArcadeHubPage() {
         setEvents(data);
       }
     } catch (e) {}
+  };
+
+  // Play Sacred Chime on Launch
+  const playLaunchSound = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      
+      const freqs = [392.00, 523.25, 659.25, 783.99]; // G4, C5, E5, G5 (Sacred major chord)
+      freqs.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.08);
+        gain.gain.setValueAtTime(0.06, ctx.currentTime + idx * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.08 + 0.6);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + idx * 0.08);
+        osc.stop(ctx.currentTime + idx * 0.08 + 0.6);
+      });
+    } catch (e) {}
+  };
+
+  const handleLaunchGame = (game: any) => {
+    setLaunchingGame(game);
+    setLaunchProgress(15);
+    playLaunchSound();
+
+    const interval = setInterval(() => {
+      setLaunchProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(interval);
+          return 90;
+        }
+        return prev + 25;
+      });
+    }, 120);
+
+    setTimeout(() => {
+      setLaunchProgress(100);
+      setTimeout(() => {
+        router.push(game.play_url);
+      }, 200);
+    }, 600);
   };
 
   const handleRedeemItem = (item: any) => {
@@ -216,13 +270,13 @@ export default function GameArcadeHubPage() {
                   {idx === 0 ? '🗺️ 4 Vùng Đất · 12 Trạm' : '👑 15 Câu Hỏi · 4 Trợ Giúp'}
                 </span>
 
-                <Link
-                  href={game.play_url}
+                <button
+                  onClick={() => handleLaunchGame(game)}
                   className="px-6 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-black text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-amber-500/20 transition-all group-hover:scale-105 cursor-pointer"
                 >
                   <Play className="w-4 h-4 fill-current" />
-                  <span>Chơi Ngay</span>
-                </Link>
+                  <span>Vào Game Ngay</span>
+                </button>
               </div>
             </div>
           ))}
@@ -270,10 +324,10 @@ export default function GameArcadeHubPage() {
                     <span className="text-amber-700 dark:text-amber-300 font-bold">
                       🏆 Thưởng: {evt.reward_badge || 'Huy Hiệu Vinh Danh'}
                     </span>
-                    <Link href="/game/hanh-trinh-dat-hua" className="text-amber-600 dark:text-amber-400 hover:underline font-bold flex items-center gap-1">
+                    <button onClick={() => handleLaunchGame(ARCADE_GAMES[0])} className="text-amber-600 dark:text-amber-400 hover:underline font-bold flex items-center gap-1 cursor-pointer">
                       <span>Tham gia</span>
                       <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
+                    </button>
                   </div>
                 </div>
               ))
@@ -354,6 +408,47 @@ export default function GameArcadeHubPage() {
 
         </div>
       </section>
+
+      {/* ── 5. IMMERSIVE SACRED GAME LAUNCHER OVERLAY ── */}
+      {launchingGame && (
+        <div className="fixed inset-0 z-50 bg-stone-950/90 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-200">
+          
+          <div className="relative w-28 h-28 mb-6 flex items-center justify-center">
+            {/* Pulsing Golden Halo */}
+            <div className="absolute inset-0 rounded-full bg-amber-500/20 animate-ping" />
+            <div className="absolute inset-2 rounded-full bg-amber-500/30 blur-md" />
+            
+            <div className="relative w-24 h-24 rounded-3xl bg-stone-900 border-2 border-amber-400 shadow-2xl flex items-center justify-center text-4xl shadow-amber-500/30">
+              <Cross className="w-12 h-12 text-amber-400 animate-pulse" />
+            </div>
+          </div>
+
+          <div className="space-y-2 max-w-sm">
+            <span className="text-[10px] font-mono text-amber-400 uppercase tracking-widest block font-bold">
+              ✦ VERIDU FAITH ENGINE · ĐANG KHỞI ĐỘNG ✦
+            </span>
+            <h3 className="font-serif font-black text-2xl text-stone-100">
+              {launchingGame.title}
+            </h3>
+            <p className="text-xs text-stone-400 font-serif italic">
+              {launchingGame.subtitle}
+            </p>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="w-64 h-2 bg-stone-800 rounded-full mt-6 overflow-hidden relative border border-stone-700">
+            <div
+              className="h-full bg-gradient-to-r from-amber-600 via-amber-400 to-amber-300 transition-all duration-150 rounded-full"
+              style={{ width: `${launchProgress}%` }}
+            />
+          </div>
+
+          <span className="text-[11px] font-mono text-stone-400 mt-2">
+            Đang tải dữ liệu {launchProgress}%...
+          </span>
+
+        </div>
+      )}
 
     </div>
   );
