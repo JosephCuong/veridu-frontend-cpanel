@@ -2,21 +2,13 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
+import { resolveMediaUrl } from '@/lib/driveHelper';
 import { DEFAULT_STORYBOOKS } from '@/lib/storybooksData';
 import { 
   BookOpen, 
   Volume2, 
-  Sparkles, 
-  Star, 
   Award, 
-  Clock, 
-  Heart, 
-  ChevronRight, 
   Moon, 
-  Sun,
-  Palette,
-  ShieldCheck,
-  Compass,
   ArrowRight
 } from 'lucide-react';
 
@@ -93,9 +85,19 @@ export default async function StorybooksLibraryPage() {
               Danh Mục Sách Tranh Nổi Bật
             </h2>
           </div>
-          <span className="text-xs font-serif text-[var(--text-muted)]">
-            {storybooks.length} tác phẩm tuyển chọn
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-serif text-[var(--text-muted)]">
+              {storybooks.length} tác phẩm tuyển chọn
+            </span>
+            <Link
+              href="/sach-tranh/studio"
+              className="px-3.5 py-1.5 rounded-xl border border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10 text-xs font-serif font-bold flex items-center gap-1.5 transition shadow-sm"
+              title="Mở Studio Soạn Thảo & Đăng Tải Sách Tranh"
+            >
+              <span>Quản Trị Studio</span>
+            </Link>
+          </div>
+
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -104,22 +106,20 @@ export default async function StorybooksLibraryPage() {
               key={book.id}
               className="group rounded-3xl bg-[var(--bg-card)] border-2 border-[var(--border-card)] hover:border-amber-500/50 shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col overflow-hidden"
             >
-              {/* Book Cover Thumbnail with 3D Spine effect */}
               <Link href={`/sach-tranh/${book.slug}`} className="relative aspect-[4/3] w-full overflow-hidden bg-stone-900 block">
                 <Image
-                  src={book.cover_image || '/storybooks/cong-trinh-sang-tao/page_1.png'}
+                  src={resolveMediaUrl(book.cover_image || '/storybooks/cong-trinh-sang-tao/page_1.png', 'image')}
                   alt={book.title}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 
-                {/* Visual Badges Overlay */}
                 <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
                   <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-amber-300 border border-amber-500/30 text-[10px] font-bold flex items-center gap-1">
                     <Volume2 className="w-3 h-3" /> Audio
                   </span>
                   <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-emerald-300 border border-emerald-500/30 text-[10px] font-bold flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" /> Quiz
+                    <Award className="w-3 h-3" /> Quiz
                   </span>
                 </div>
 
@@ -130,7 +130,6 @@ export default async function StorybooksLibraryPage() {
                 </div>
               </Link>
 
-              {/* Book Info */}
               <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-[11px] text-[var(--text-muted)] font-serif">

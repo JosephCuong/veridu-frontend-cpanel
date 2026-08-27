@@ -8,26 +8,21 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Volume2, 
-  VolumeX, 
   Moon, 
-  Sun, 
-  Sparkles, 
   Award, 
   Maximize2, 
   Minimize2, 
-  RotateCcw, 
-  CheckCircle2, 
   Share2, 
-  Download, 
   BookOpen, 
-  Heart, 
   HelpCircle,
   Play,
   Pause,
   Music,
-  RefreshCw
+  RefreshCw,
+  Check
 } from 'lucide-react';
 import { addFaithPoints } from '@/lib/auth';
+import { resolveMediaUrl } from '@/lib/driveHelper';
 import { StorybookPage, StorybookQuizQuestion, StorybookParentGuide, StorybookTimestamp } from '@/lib/storybooksData';
 
 interface StorybookProps {
@@ -53,14 +48,14 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
   const totalPages = pages.length || book.total_pages || 10;
 
   // Reading State
-  const [currentPageIndex, setCurrentPageIndex] = useState(0); // 0-indexed
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
 
   // Audio Playback & Auto-flip Engine State
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [autoPageTurn, setAutoPageTurn] = useState(true); // Default: Auto-flip enabled
+  const [autoPageTurn, setAutoPageTurn] = useState(true);
   const [currentTimeSec, setCurrentTimeSec] = useState(0);
   const [pageDurationSec, setPageDurationSec] = useState(15);
   const [isWaitingToFlip, setIsWaitingToFlip] = useState(false);
@@ -80,7 +75,6 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
   const [faithXpEarned, setFaithXpEarned] = useState(0);
   const [copiedUrl, setCopiedUrl] = useState(false);
 
-  // Calculate current page duration & boundaries
   const currentPage = pages[currentPageIndex] || {
     page_number: currentPageIndex + 1,
     image_url: `/storybooks/cong-trinh-sang-tao/page_${currentPageIndex + 1}.png`,
@@ -125,7 +119,7 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
         const ctx = audioCtxRef.current || new AudioCtx();
         audioCtxRef.current = ctx;
 
-        const freqs = [261.63, 329.63, 392.00, 523.25]; // C, E, G, C (Peaceful celestial harmony)
+        const freqs = [261.63, 329.63, 392.00, 523.25];
         const oscs: any[] = [];
 
         freqs.forEach((freq, idx) => {
@@ -182,44 +176,14 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
       autoFlipTimeoutRef.current = setTimeout(() => {
         setIsWaitingToFlip(false);
         goToNextPage();
-      }, 1500); // 1.5 seconds gentle pause to view the illustration
+      }, 1500);
     } else {
       setIsPlayingAudio(false);
     }
   }, [autoPageTurn, goToNextPage]);
 
-  // Play narration audio for current page
-  const playCurrentPageAudio = useCallback((pageIdx: number) => {
-    const curPage = pages[pageIdx];
-    if (!curPage) return;
-
-    const duration = curPage.estimated_duration || (curPage.end_time && curPage.start_time ? curPage.end_time - curPage.start_time : 15);
-    setPageDurationSec(duration);
-    setCurrentTimeSec(0);
-    setIsWaitingToFlip(false);
-
-    // Case 1: Individual page audio file or full audio track exists
-    const audioSrc = curPage.audio_url || book.full_audio_url;
-    if (audioSrc && audioElRef.current) {
-      const el = audioElRef.current;
-      el.src = audioSrc;
-      if (curPage.start_time) {
-        el.currentTime = curPage.start_time;
-      }
-      el.play().then(() => {
-        setIsPlayingAudio(true);
-      }).catch(() => {
-        // Fallback to Web Speech Synthesis if audio file fails
-        fallbackWebSpeech(curPage.text_script, duration);
-      });
-      return;
-    }
-
-    // Case 2: Web Speech Synthesis & Dynamic Pacing Fallback
-    fallbackWebSpeech(curPage.text_script, duration);
-  }, [pages, book.full_audio_url]);
-
-  const fallbackWebSpeech = (text: string, duration: number) => {
+  // Web speech fallback
+  const fallbackWebSpeech = useCallback((text: string, duration: number) => {
     if (typeof window === 'undefined') return;
 
     if ('speechSynthesis' in window && text) {
@@ -239,12 +203,42 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
       window.speechSynthesis.speak(utterance);
       setIsPlayingAudio(true);
     } else {
-      // Simulate progress timer if speech not available
       setIsPlayingAudio(true);
     }
-  };
+  }, [handlePageAudioFinished]);
 
-  // Progress ticker effect (updates seconds & progress bar smoothly)
+  // Play narration audio for current page
+  const playCurrentPageAudio = useCallback((pageIdx: number) => {
+    const curPage = pages[pageIdx];
+    if (!curPage) return;
+
+    const duration = curPage.estimated_duration || (curPage.end_time && curPage.start_time ? curPage.end_time - curPage.start_time : 15);
+    setPageDurationSec(duration);
+    setCurrentTimeSec(0);
+    setIsWaitingToFlip(false);
+
+    // Audio file or stream (supports .mp3, .wav, .m4a, .ogg and Google Drive)
+    const rawAudio = curPage.audio_url || book.full_audio_url;
+    const resolvedAudio = rawAudio ? resolveMediaUrl(rawAudio, 'audio') : '';
+
+    if (resolvedAudio && audioElRef.current) {
+      const el = audioElRef.current;
+      el.src = resolvedAudio;
+      if (curPage.start_time) {
+        el.currentTime = curPage.start_time;
+      }
+      el.play().then(() => {
+        setIsPlayingAudio(true);
+      }).catch(() => {
+        fallbackWebSpeech(curPage.text_script, duration);
+      });
+      return;
+    }
+
+    fallbackWebSpeech(curPage.text_script, duration);
+  }, [pages, book.full_audio_url, fallbackWebSpeech]);
+
+  // Progress ticker effect
   useEffect(() => {
     if (playbackTimerRef.current) clearInterval(playbackTimerRef.current);
 
@@ -265,7 +259,7 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
     };
   }, [isPlayingAudio, isWaitingToFlip, pageDurationSec, handlePageAudioFinished]);
 
-  // When page index changes, trigger audio if already playing
+  // When page index changes, trigger audio if playing
   useEffect(() => {
     if (isPlayingAudio) {
       playCurrentPageAudio(currentPageIndex);
@@ -277,8 +271,7 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
     };
   }, [currentPageIndex]);
 
-  // Main Toggle Button (Play / Pause Narration)
-  const togglePlayAudio = () => {
+  const togglePlayAudio = useCallback(() => {
     if (isPlayingAudio) {
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         window.speechSynthesis.cancel();
@@ -293,7 +286,7 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
       playCurrentPageAudio(currentPageIndex);
       setIsPlayingAudio(true);
     }
-  };
+  }, [isPlayingAudio, playCurrentPageAudio, currentPageIndex]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -313,7 +306,7 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [goToNextPage, goToPrevPage, isPlayingAudio]);
+  }, [goToNextPage, goToPrevPage, togglePlayAudio]);
 
   // Clean up audio on unmount
   useEffect(() => {
@@ -360,7 +353,7 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
       }
     });
 
-    const xp = correctCount * 25 + 25; // Bonus completion
+    const xp = correctCount * 25 + 25;
     setQuizScore(correctCount);
     setFaithXpEarned(xp);
     setQuizSubmitted(true);
@@ -375,13 +368,15 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
+  const resolvedImageSrc = resolveMediaUrl(currentPage.image_url, 'image');
+
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-stone-950 text-stone-100 font-sans select-none overflow-hidden">
       
       {/* Hidden Audio Controller */}
       <audio ref={audioElRef} className="hidden" onEnded={handlePageAudioFinished} />
 
-      {/* ── 1. SACRED STORYBOOK TOP NAVBAR (Exact match to screenshot) ── */}
+      {/* ── 1. SACRED STORYBOOK TOP NAVBAR ── */}
       <header className="h-16 border-b border-stone-800 bg-stone-900/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between gap-3 z-30 shrink-0">
         
         {/* Left: Close Button & Title */}
@@ -476,7 +471,7 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
             <Music className="w-4 h-4" />
           </button>
 
-          {/* ✨ Mini Quiz */}
+          {/* Mini Quiz */}
           <button
             onClick={() => setShowQuizModal(true)}
             className="p-2 rounded-xl text-stone-400 hover:text-emerald-400 hover:bg-stone-800 transition cursor-pointer"
@@ -537,16 +532,16 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
           <ChevronRight className="w-6 h-6" />
         </button>
 
-        {/* 🌟 2-PAGE SPREAD CONTAINER (Rendering 300 DPI spread image with 3D spine and interactive audio bar) */}
+        {/* 2-PAGE SPREAD CONTAINER */}
         <div className="w-full max-w-5xl max-h-[82vh] aspect-[16/12] sm:aspect-[16/12.3] rounded-3xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] border-2 border-stone-800/80 flex flex-col relative bg-stone-900">
           
           {/* Central 3D Book Spine Shadow */}
           <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-12 bg-gradient-to-r from-transparent via-stone-950/25 to-transparent pointer-events-none z-10" />
 
-          {/* Full High-Resolution 300 DPI Spread Image */}
+          {/* Full High-Resolution Spread Image (.png, .webp, .jpg or Google Drive) */}
           <div className="relative w-full flex-1 overflow-hidden">
             <Image
-              src={currentPage.image_url}
+              src={resolvedImageSrc}
               alt={currentPage.caption || `Trang ${currentPage.page_number}`}
               fill
               priority
@@ -555,7 +550,7 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
             />
           </div>
 
-          {/* 🔊 DYNAMIC AUDIO PROGRESS BAR & PACING CONTROLLER */}
+          {/* DYNAMIC AUDIO PROGRESS BAR & PACING CONTROLLER */}
           <div className="bg-stone-950/85 backdrop-blur-md border-t border-stone-800 px-4 py-2.5 flex items-center justify-between gap-3 z-20">
             
             <div className="flex items-center gap-2 text-xs font-serif text-stone-300">
@@ -628,7 +623,6 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
               </button>
             </div>
 
-            {/* Quiz Questions List */}
             {!quizSubmitted ? (
               <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-1">
                 {(book.quiz_data || []).map((q, qIdx) => (
@@ -666,14 +660,13 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
                   disabled={Object.keys(selectedAnswers).length < (book.quiz_data?.length || 1)}
                   className="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-amber-500/20 transition disabled:opacity-40"
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <Check className="w-4 h-4" />
                   <span>Nộp Bài &amp; Nhận Huy Hiệu</span>
                 </button>
               </div>
             ) : (
-              /* Quiz Results & Rewards View */
               <div className="text-center space-y-6 py-4">
-                <div className="w-20 h-20 rounded-full bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center text-amber-400 mx-auto animate-bounce">
+                <div className="w-20 h-20 rounded-full bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center text-amber-400 mx-auto">
                   <Award className="w-10 h-10" />
                 </div>
 
@@ -706,7 +699,7 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
                     href="/sach-tranh"
                     className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-serif font-bold shadow-lg"
                   >
-                    Đọc Sách Khác
+                    Đóng
                   </Link>
                 </div>
               </div>
@@ -716,7 +709,7 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
         </div>
       )}
 
-      {/* ── 4. PARENT & CATECHIST GUIDE MODAL ── */}
+      {/* ── 4. PARENT GUIDE MODAL ── */}
       {showGuideModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
           <div className="max-w-xl w-full p-6 sm:p-8 rounded-3xl bg-stone-900 border-2 border-amber-500/30 shadow-2xl text-stone-100 space-y-6">

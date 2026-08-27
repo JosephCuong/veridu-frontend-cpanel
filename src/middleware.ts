@@ -20,7 +20,9 @@ const KNOWN_ROUTES = new Set([
   '/tac-gia',
   '/tac-gia/dashboard',
   '/sach-tranh',
+  '/sach-tranh/studio',
   '/quiz',
+
 
   '/quiz/control',
   '/quiz/room',
