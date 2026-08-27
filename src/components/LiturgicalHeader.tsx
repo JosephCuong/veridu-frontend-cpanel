@@ -7,8 +7,9 @@ import { usePathname } from 'next/navigation';
 import { getStoredUser, logout, UserProfile } from '@/lib/auth';
 import { 
   Flame, Moon, Sun, Menu, X, User, LogOut, LogIn, ChevronDown, 
-  BookOpen, MapPin, Clock, Users, FileText, Library, Award, Shield, Cross
+  BookOpen, MapPin, Clock, Users, FileText, Library, Award, Shield, Cross, Sparkles
 } from 'lucide-react';
+
 
 export default function LiturgicalHeader() {
   const pathname = usePathname();
@@ -110,10 +111,11 @@ export default function LiturgicalHeader() {
     ? '/images/veridu_logo_light.png' 
     : '/images/veridu_logo_dark.png';
 
-  // Hide global header in dedicated document reader
-  if (pathname?.startsWith('/thu-vien/doc/')) {
+  // Hide global header in dedicated document reader or storybook reader
+  if (pathname?.startsWith('/thu-vien/doc/') || (pathname !== '/sach-tranh' && pathname?.startsWith('/sach-tranh/'))) {
     return null;
   }
+
 
   return (
     <header 
@@ -361,7 +363,18 @@ export default function LiturgicalHeader() {
               Giáo Lý
             </Link>
 
-            {/* 5. ĐẤU TRƯỜNG */}
+            {/* 5. SÁCH TRANH THIẾU NHI */}
+            <Link 
+              href="/sach-tranh" 
+              className={`py-1 flex items-center gap-1 text-[var(--text-main)] hover:text-amber-500 transition-colors ${
+                pathname.startsWith('/sach-tranh') ? 'text-amber-500 font-black' : ''
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>Sách Tranh</span>
+            </Link>
+
+            {/* 6. ĐẤU TRƯỜNG */}
             <Link 
               href="/quiz" 
               className={`py-1 text-[var(--text-main)] hover:text-amber-500 transition-colors ${
@@ -370,6 +383,7 @@ export default function LiturgicalHeader() {
             >
               Đấu Trường
             </Link>
+
 
           </nav>
         </div>
@@ -504,10 +518,16 @@ export default function LiturgicalHeader() {
             <Cross className="w-4 h-4 text-rose-500" /> Giáo Lý
           </Link>
 
-          {/* 5. ĐẤU TRƯỜNG */}
+          {/* 5. SÁCH TRANH THIẾU NHI */}
+          <Link href="/sach-tranh" className="block py-2.5 text-sm font-bold text-amber-700 dark:text-amber-400 hover:text-amber-500 flex items-center gap-2.5">
+            <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" /> Sách Tranh Thiếu Nhi
+          </Link>
+
+          {/* 6. ĐẤU TRƯỜNG */}
           <Link href="/quiz" className="block py-2.5 text-sm font-bold text-[var(--text-main)] hover:text-amber-500 flex items-center gap-2.5">
             <Flame className="w-4 h-4 text-amber-500" /> Đấu Trường
           </Link>
+
 
           {/* User Section in Drawer */}
           <div className="pt-4 border-t border-[var(--border-card)] space-y-2">

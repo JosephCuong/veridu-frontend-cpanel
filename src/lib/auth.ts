@@ -162,3 +162,26 @@ export function clearQuizHistory() {
   if (typeof window === 'undefined') return;
   localStorage.removeItem('veridu_quiz_history');
 }
+
+export function addFaithPoints(points: number, reason?: string) {
+  if (typeof window === 'undefined') return;
+  const current = getStoredUser();
+  if (current) {
+    const newPoints = (current.points || 0) + points;
+    const updated = { ...current, points: newPoints };
+    saveAuthSession(getAuthToken() || '', updated, true);
+    
+    // Background update to Supabase
+    if (current.id && typeof current.id === 'string' && current.id.includes('-')) {
+      import('./supabaseClient').then(async ({ supabase }) => {
+        try {
+          await supabase.from('profiles').update({
+            points: newPoints,
+            updated_at: new Date().toISOString()
+          }).eq('id', current.id);
+        } catch (err) {}
+      });
+    }
+  }
+}
+
