@@ -1,17 +1,19 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   BibleBook, BibleVerse, ChapterCommentary, BibleTranslation 
 } from '@/lib/bible';
 import { fetchBibleChapter } from '@/lib/api';
 import { BIBLE_LOCATIONS, BibleLocation } from '@/components/BibleMap';
 import { supabase } from '@/lib/supabaseClient';
+import AdBanner from '@/components/AdBanner';
 import { 
   ChevronLeft, ChevronRight, ChevronDown, 
   Columns, MessageSquareText, Headphones, 
   X, Heart, Shield, Compass, PlayCircle, Settings2, BookOpen, Search, Menu, 
-  MapPin, LayoutGrid, Type, ExternalLink, Scroll
+  MapPin, LayoutGrid, Type, ExternalLink, Scroll, Sparkles, Award, ArrowRight,
+  PanelLeftClose, PanelLeftOpen, Bookmark, Check
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -53,11 +55,12 @@ export default function BibleReader({
   const [multiTranslationVerses, setMultiTranslationVerses] = useState<MultiTranslationVerse[]>([]);
   const [isLoadingMultiVerses, setIsLoadingMultiVerses] = useState(false);
 
-  // Column 1 Layout Dock Toggle (Left Nav)
+  // Column 1 Layout Dock Toggle (Left Nav with Auto-collapse)
   const [isNavDocked, setIsNavDocked] = useState(false);
+  const [userToggledNav, setUserToggledNav] = useState(false);
+  const [isHoveringNav, setIsHoveringNav] = useState(false);
 
   // Column 3 Study Pane Toggle & Tabs (Right Pane)
-  // MẶC ĐỊNH ẨN CỘT 3 THEO YÊU CẦU CỦA USER
   const [isStudyPaneOpen, setIsStudyPaneOpen] = useState(false);
   const [activeStudyTab, setActiveStudyTab] = useState<'commentary' | 'parallel' | 'map' | 'video'>('commentary');
 
@@ -70,6 +73,7 @@ export default function BibleReader({
   const [lineHeight, setLineHeight] = useState<number>(1.85);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
+
   // Dropdowns & Read Modes
   const [isChapterMenuOpen, setIsChapterMenuOpen] = useState(false);
   const [readMode, setReadMode] = useState<'single' | 'parallel'>('single');
@@ -81,6 +85,19 @@ export default function BibleReader({
 
   // Search Filter in Left Navigation
   const [bookSearch, setBookSearch] = useState('');
+
+  // ⏱️ Auto-collapse Left Sidebar after 3.5 seconds to expand reading area and reveal right column
+  useEffect(() => {
+    if (userToggledNav) return; // User explicitly chose a state
+
+    const timer = setTimeout(() => {
+      if (!isHoveringNav) {
+        setIsNavDocked(true);
+      }
+    }, 3500);
+
+    return () => clearTimeout(timer);
+  }, [initialBookSlug, initialChapter, userToggledNav, isHoveringNav]);
 
   // Fetch parallel verses when readMode === 'parallel'
   useEffect(() => {
@@ -101,7 +118,7 @@ export default function BibleReader({
     }
   }, [readMode, secondTranslationSlug, selectedBook.slug, currentChapter]);
 
-  // Smart Detection of Holy Land Locations in Chapter (Synchronous useMemo to prevent CLS)
+  // Smart Detection of Holy Land Locations in Chapter
   const detectedLocations = React.useMemo(() => {
     if (!initialVerses || initialVerses.length === 0) return [];
     const fullText = initialVerses.map(v => v.content).join(' ');
@@ -126,7 +143,6 @@ export default function BibleReader({
   // Fetch verse in ALL available translations when a verse is clicked
   const handleVerseClick = async (verseNum: string) => {
     if (selectedVerseNumber === verseNum && isStudyPaneOpen && activeStudyTab === 'parallel') {
-      // Toggle off
       setSelectedVerseNumber(null);
       return;
     }
@@ -137,7 +153,6 @@ export default function BibleReader({
     setIsLoadingMultiVerses(true);
 
     try {
-      // Query Supabase for all verses matching book code, chapter, and verse number
       const { data: bookData } = await supabase
         .from('bible_books')
         .select('id')
@@ -160,7 +175,6 @@ export default function BibleReader({
           }));
           setMultiTranslationVerses(mapped);
         } else {
-          // Fallback to initial verse content
           const curVerse = initialVerses.find(v => String(v.verse) === String(verseNum));
           setMultiTranslationVerses([{
             translationSlug: selectedTranslation.slug,
@@ -178,6 +192,8 @@ export default function BibleReader({
 
   const handleNav = (slug: string, chapter: number, trans: string) => {
     setSelectedVerseNumber(null);
+    // Auto collapse on selecting book/chapter
+    setIsNavDocked(true);
     router.push(`/kinh-thanh/${slug}/${chapter}?t=${trans}`);
   };
 
@@ -201,49 +217,56 @@ export default function BibleReader({
   const otBooks = filteredBooks.filter(b => b.testament === 'Cựu Ước');
   const ntBooks = filteredBooks.filter(b => b.testament === 'Tân Ước');
 
-  const activeVerseObj = selectedVerseNumber ? initialVerses.find(v => String(v.verse) === String(selectedVerseNumber)) : null;
+  const showExpandedNav = !isNavDocked || isHoveringNav;
 
   return (
     <div className="w-full relative bg-[var(--bg-main)] text-[var(--text-main)] min-h-[85vh] font-sans pb-16">
       
       {/* ========================================================================= */}
-      {/* 🌟 FLEXIBLE WORKSPACE GRID (COL 1 NAV - COL 2 READING - COL 3 STUDY)    */}
+      {/* 🌟 3-COLUMN FLEXIBLE WORKSPACE (COL 1 NAV - COL 2 READING - COL 3 STUDY) */}
       {/* ========================================================================= */}
       <div className="grid grid-cols-12 gap-4 xl:gap-6 items-start">
 
         {/* ----------------------------------------------------------------------- */}
-        {/* 📌 CỘT 1: MENU ĐIỀU HƯỚNG SÁCH & CHƯƠNG (BÊN TRÁI)                      */}
+        {/* 📌 CỘT 1: MENU ĐIỀU HƯỚNG SÁCH & CHƯƠNG (AUTO-COLLAPSIBLE LEFT SIDEBAR) */}
         {/* ----------------------------------------------------------------------- */}
-        <aside className={`hidden xl:flex flex-col transition-all duration-300 ${
-          isNavDocked ? 'col-span-1 w-16' : 'col-span-3'
-        } bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-4 shadow-xl backdrop-blur-xl sticky top-20 max-h-[calc(100vh-6rem)] overflow-hidden`}>
+        <aside 
+          onMouseEnter={() => setIsHoveringNav(true)}
+          onMouseLeave={() => setIsHoveringNav(false)}
+          className={`hidden xl:flex flex-col transition-all duration-300 ${
+            showExpandedNav ? 'col-span-3' : 'col-span-1 w-16'
+          } bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-4 shadow-xl backdrop-blur-xl sticky top-28 max-h-[calc(100vh-8rem)] overflow-hidden z-20`}
+        >
           
           {/* Header & Dock Toggle */}
           <div className="flex items-center justify-between pb-3 border-b border-[var(--border-card)] shrink-0">
-            {!isNavDocked && (
+            {showExpandedNav && (
               <h3 className="font-serif font-bold text-xs tracking-wide text-amber-700 dark:text-amber-400 flex items-center gap-1.5 uppercase">
                 <BookOpen className="w-4 h-4 text-amber-500" />
                 <span>Kinh Thánh ({books.length} Sách)</span>
               </h3>
             )}
             <button 
-              onClick={() => setIsNavDocked(!isNavDocked)}
-              title={isNavDocked ? "Mở rộng danh sách Sách" : "Thu gọn thành Dock Icon"}
-              className="p-1.5 rounded-xl bg-[var(--bg-main)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 border border-[var(--border-card)] transition-all mx-auto"
+              onClick={() => {
+                setIsNavDocked(!isNavDocked);
+                setUserToggledNav(true);
+              }}
+              title={isNavDocked ? "Mở rộng danh sách Sách" : "Thu gọn cột trái để mở rộng không gian đọc"}
+              className="p-1.5 rounded-xl bg-[var(--bg-main)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 border border-[var(--border-card)] transition-all mx-auto cursor-pointer"
             >
-              <LayoutGrid className="w-4 h-4" />
+              {isNavDocked ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
             </button>
           </div>
 
           {/* DOCKED MODE (ICON BAR ONLY) */}
-          {isNavDocked ? (
+          {!showExpandedNav ? (
             <div className="py-4 space-y-2 flex flex-col items-center flex-1 overflow-y-auto scrollbar-none">
-              {books.slice(0, 15).map((b) => (
+              {books.slice(0, 20).map((b) => (
                 <button
                   key={b.slug}
                   onClick={() => handleNav(b.slug, 1, selectedTranslation.slug)}
                   title={`${b.nameVi} (${b.totalChapters} Chương)`}
-                  className={`w-10 h-10 rounded-2xl font-serif text-xs font-bold flex items-center justify-center border transition-all ${
+                  className={`w-10 h-10 rounded-2xl font-serif text-xs font-bold flex items-center justify-center border transition-all cursor-pointer ${
                     selectedBook.slug === b.slug 
                       ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md' 
                       : 'bg-[var(--bg-main)] border-[var(--border-card)] hover:border-amber-500/40 text-[var(--text-main)]'
@@ -282,7 +305,7 @@ export default function BibleReader({
                         <div key={b.slug} className="rounded-xl overflow-hidden">
                           <button
                             onClick={() => handleNav(b.slug, 1, selectedTranslation.slug)}
-                            className={`w-full text-left px-3 py-2 rounded-xl transition-all flex items-center justify-between font-serif font-bold ${
+                            className={`w-full text-left px-3 py-2 rounded-xl transition-all flex items-center justify-between font-serif font-bold cursor-pointer ${
                               selectedBook.slug === b.slug
                                 ? 'bg-amber-500 text-slate-950 shadow-sm'
                                 : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
@@ -301,7 +324,7 @@ export default function BibleReader({
                                 <button
                                   key={idx}
                                   onClick={() => handleNav(b.slug, idx + 1, selectedTranslation.slug)}
-                                  className={`py-1 text-center font-sans font-bold rounded-lg text-[11px] transition-all ${
+                                  className={`py-1 text-center font-sans font-bold rounded-lg text-[11px] transition-all cursor-pointer ${
                                     currentChapter === idx + 1
                                       ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
                                       : 'bg-[var(--bg-card)] hover:bg-amber-500/20 text-[var(--text-main)] border border-[var(--border-card)]'
@@ -329,7 +352,7 @@ export default function BibleReader({
                         <div key={b.slug} className="rounded-xl overflow-hidden">
                           <button
                             onClick={() => handleNav(b.slug, 1, selectedTranslation.slug)}
-                            className={`w-full text-left px-3 py-2 rounded-xl transition-all flex items-center justify-between font-serif font-bold ${
+                            className={`w-full text-left px-3 py-2 rounded-xl transition-all flex items-center justify-between font-serif font-bold cursor-pointer ${
                               selectedBook.slug === b.slug
                                 ? 'bg-amber-500 text-slate-950 shadow-sm'
                                 : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
@@ -348,7 +371,7 @@ export default function BibleReader({
                                 <button
                                   key={idx}
                                   onClick={() => handleNav(b.slug, idx + 1, selectedTranslation.slug)}
-                                  className={`py-1 text-center font-sans font-bold rounded-lg text-[11px] transition-all ${
+                                  className={`py-1 text-center font-sans font-bold rounded-lg text-[11px] transition-all cursor-pointer ${
                                     currentChapter === idx + 1
                                       ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
                                       : 'bg-[var(--bg-card)] hover:bg-amber-500/20 text-[var(--text-main)] border border-[var(--border-card)]'
@@ -371,18 +394,16 @@ export default function BibleReader({
 
 
         {/* ----------------------------------------------------------------------- */}
-        {/* 📜 CỘT 2: KHÔNG GIAN ĐỌC CHÍNH (TỰ ĐỘNG MỞ RỘNG KHI CỘT 3 ẨN)          */}
+        {/* 📜 CỘT 2: KHÔNG GIAN ĐỌC KINH THÁNH CHÍNH (EXPANDED TO OCCUPY 8/12)      */}
         {/* ----------------------------------------------------------------------- */}
         <main className={`col-span-12 ${
-          isStudyPaneOpen 
-            ? (isNavDocked ? 'xl:col-span-8 lg:col-span-8' : 'xl:col-span-6 lg:col-span-8')
-            : (isNavDocked ? 'xl:col-span-11 lg:col-span-12' : 'xl:col-span-9 lg:col-span-12')
+          showExpandedNav ? 'xl:col-span-6' : 'xl:col-span-8'
         } space-y-4 transition-all duration-300`}>
           
           {/* Card Khung Đọc Chính */}
           <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl overflow-hidden shadow-2xl backdrop-blur-xl relative min-h-[80vh]">
             
-            {/* 🌟 THANH ĐIỀU HƯỚNG TÍCH HỢP GỌN GÀNG Ở ĐẦU BÀI (NO OVERLAPPING TOOLBAR) */}
+            {/* 🌟 THANH ĐIỀU HƯỚNG TÍCH HỢP GỌN GÀNG Ở ĐẦU BÀI */}
             <div className="border-b border-[var(--border-card)] bg-[var(--bg-card)]/90 px-4 sm:px-8 py-3.5 flex items-center justify-between gap-3 backdrop-blur-md">
               
               {/* Left: Mobile Nav Drawer Button & Book Name Pill Badges */}
@@ -405,7 +426,7 @@ export default function BibleReader({
                   <div className="relative">
                     <button 
                       onClick={() => setIsChapterMenuOpen(!isChapterMenuOpen)}
-                      className="px-3 py-1 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500/50 flex items-center gap-1 transition-all"
+                      className="px-3 py-1 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500/50 flex items-center gap-1 transition-all cursor-pointer"
                     >
                       <span>Chương {currentChapter}</span>
                       <ChevronDown className="w-3 h-3 opacity-70" />
@@ -423,7 +444,7 @@ export default function BibleReader({
                                   setIsChapterMenuOpen(false);
                                   handleNav(selectedBook.slug, i + 1, selectedTranslation.slug);
                                 }}
-                                className={`p-1.5 rounded-lg text-xs font-bold transition-all ${
+                                className={`p-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                                   currentChapter === i + 1
                                     ? 'bg-amber-500 text-slate-950 font-black'
                                     : 'bg-[var(--bg-main)] hover:bg-amber-500/20 text-[var(--text-main)]'
@@ -440,14 +461,14 @@ export default function BibleReader({
                 </div>
               </div>
 
-              {/* Right: Integrated Compact Action Buttons for Column 3 Tabs */}
+              {/* Right: Integrated Compact Action Buttons for Study Pane */}
               <div className="flex items-center gap-1.5 text-xs">
                 
-                {/* 🔀 Song Song 2-3 Bản Dịch Button */}
+                {/* 🔀 Song Song Button */}
                 <button
                   onClick={() => setReadMode(readMode === 'single' ? 'parallel' : 'single')}
                   title="Bật/Tắt Đọc Song Song 2 bản dịch cuộn đồng bộ"
-                  className={`px-2.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1 border text-[11px] sm:text-xs ${
+                  className={`px-2.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1 border text-[11px] sm:text-xs cursor-pointer ${
                     readMode === 'parallel'
                       ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md font-black'
                       : 'bg-[var(--bg-main)] hover:bg-amber-500/10 border-[var(--border-card)] text-[var(--text-main)]'
@@ -457,11 +478,11 @@ export default function BibleReader({
                   <span className="hidden sm:inline">Song Song</span>
                 </button>
 
-                {/* 💬 Chú Giải Button */}
+                {/* 📖 Chú Giải Button */}
                 <button
                   onClick={() => openToolTab('commentary')}
-                  title="Xem Chú Giải Thần Học theo Chương"
-                  className={`px-2.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1 border text-[11px] sm:text-xs ${
+                  title="Mở Chú Giải Thần Học theo Chương"
+                  className={`px-2.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1 border text-[11px] sm:text-xs cursor-pointer ${
                     isStudyPaneOpen && activeStudyTab === 'commentary'
                       ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md font-black'
                       : 'bg-[var(--bg-main)] hover:bg-amber-500/10 border-[var(--border-card)] text-[var(--text-main)]'
@@ -471,27 +492,13 @@ export default function BibleReader({
                   <span className="hidden sm:inline">Chú Giải</span>
                 </button>
 
-                {/* 📑 Đối Chiếu Button */}
-                <button
-                  onClick={() => openToolTab('parallel')}
-                  title="Đối Chiếu Các Bản Dịch"
-                  className={`px-2.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1 border text-[11px] sm:text-xs ${
-                    isStudyPaneOpen && activeStudyTab === 'parallel'
-                      ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md font-black'
-                      : 'bg-[var(--bg-main)] hover:bg-amber-500/10 border-[var(--border-card)] text-[var(--text-main)]'
-                  }`}
-                >
-                  <Columns className="w-3.5 h-3.5 text-indigo-500" />
-                  <span className="hidden sm:inline">Đối Chiếu</span>
-                </button>
-
                 {/* 🗺️ Địa Danh Button */}
                 <button
                   onClick={() => openToolTab('map')}
-                  title="Địa Danh Kinh Thánh trong Chương"
-                  className={`px-2.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1 border text-[11px] sm:text-xs ${
+                  title="Xem Bản Đồ Địa Danh Thánh Địa trong chương này"
+                  className={`px-2.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1 border text-[11px] sm:text-xs cursor-pointer ${
                     isStudyPaneOpen && activeStudyTab === 'map'
-                      ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md font-black'
+                      ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-md font-black'
                       : 'bg-[var(--bg-main)] hover:bg-emerald-500/10 border-[var(--border-card)] text-[var(--text-main)]'
                   }`}
                 >
@@ -504,43 +511,12 @@ export default function BibleReader({
                   )}
                 </button>
 
-                {/* 🎬 Video Button */}
-                {commentary?.videoUrl && (
-                  <button
-                    onClick={() => openToolTab('video')}
-                    title="Xem Video Bối Cảnh"
-                    className={`px-2.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1 border text-[11px] sm:text-xs ${
-                      isStudyPaneOpen && activeStudyTab === 'video'
-                        ? 'bg-rose-500 text-white border-rose-400 shadow-md font-black'
-                        : 'bg-[var(--bg-main)] hover:bg-rose-500/10 border-[var(--border-card)] text-[var(--text-main)]'
-                    }`}
-                  >
-                    <PlayCircle className="w-3.5 h-3.5 text-rose-500" />
-                    <span className="hidden sm:inline">Video</span>
-                  </button>
-                )}
-
-                {/* 🎧 Audio Button */}
-                {commentary?.audioUrl && (
-                  <button
-                    onClick={() => setShowAudioPlayer(!showAudioPlayer)}
-                    title="Bật/Tắt Nghe Audio"
-                    className={`p-1.5 rounded-xl border transition-all ${
-                      showAudioPlayer 
-                        ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md' 
-                        : 'bg-[var(--bg-main)] hover:bg-amber-500/10 border-[var(--border-card)] text-[var(--text-main)]'
-                    }`}
-                  >
-                    <Headphones className="w-4 h-4 text-amber-500" />
-                  </button>
-                )}
-
                 {/* 🎨 Font Customization Dropdown */}
                 <div className="relative">
                   <button 
                     onClick={() => setShowSettingsMenu(!showSettingsMenu)}
                     title="Tùy chỉnh cỡ chữ & phông chữ"
-                    className="p-1.5 rounded-xl bg-[var(--bg-main)] hover:bg-amber-500/10 border border-[var(--border-card)] transition-all"
+                    className="p-1.5 rounded-xl bg-[var(--bg-main)] hover:bg-amber-500/10 border border-[var(--border-card)] transition-all cursor-pointer"
                   >
                     <Type className="w-4 h-4 text-amber-500" />
                   </button>
@@ -586,10 +562,8 @@ export default function BibleReader({
               </div>
             )}
 
-
-            {/* READING PANE BODY CONTENT (BOUNDED MAX WIDTH FOR OPTIMAL EYE READING) */}
+            {/* READING PANE BODY CONTENT */}
             <div className="p-6 sm:p-10 md:p-12 max-w-4xl mx-auto min-h-[70vh] flex flex-col justify-start">
-
               
               {/* Header Title */}
               <div className="text-center mb-10 border-b border-[var(--border-card)] pb-6">
@@ -649,45 +623,27 @@ export default function BibleReader({
                           title="Nhấp để xem đối chiếu tất cả bản dịch của câu này ở Cột 3"
                           className={`flex gap-3 items-start p-3 -mx-3 rounded-2xl transition-all cursor-pointer ${
                             isSelected 
-                              ? 'bg-amber-500/15 border-l-4 border-amber-500 shadow-sm' 
+                              ? 'bg-amber-500/15 border border-amber-500/40 shadow-inner' 
                               : 'hover:bg-[var(--bg-main)]/60'
                           }`}
                         >
-                          {/* Verse Number Indicator */}
-                          <span className={`text-xs font-black mt-1 w-6 text-right shrink-0 select-none ${
-                            isSelected ? 'text-amber-600 dark:text-amber-400 font-bold scale-110' : 'text-[var(--accent-gold)] opacity-80'
-                          }`}>
+                          <sup className="text-xs font-bold text-amber-600 dark:text-amber-400 select-none shrink-0 mt-1 font-sans">
                             {verse.verse}
-                          </span>
+                          </sup>
 
-                          <div className={`flex-1 w-full relative ${readMode === 'parallel' ? 'grid grid-cols-1 md:grid-cols-2 gap-6' : ''}`}>
-                            
-                            {/* Primary Translation */}
-                            <div className="relative">
-                              {readMode === 'parallel' && (
-                                <div className="text-[10px] font-bold text-[var(--text-muted)] mb-1 uppercase tracking-wider">
-                                  {selectedTranslation.name}
-                                </div>
-                              )}
-                              <div dangerouslySetInnerHTML={{ __html: verse.content }} />
-                            </div>
+                          <div className="flex-1 space-y-2">
+                            <p className="text-[var(--text-main)] leading-relaxed">
+                              {verse.content}
+                            </p>
 
-                            {/* Secondary Translation Column in Parallel Mode */}
-                            {readMode === 'parallel' && (
-                              <div className="relative pt-2 md:pt-0 border-t md:border-t-0 md:border-l border-[var(--border-card)] md:pl-4">
-                                <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 mb-1 uppercase tracking-wider">
-                                  {translations.find(t => t.slug === secondTranslationSlug)?.name || 'Bản Dịch Song Song'}
-                                </div>
-                                {isFetchingSecond ? (
-                                  <div className="animate-pulse bg-[var(--border-card)] h-4 rounded w-3/4 mt-1"></div>
-                                ) : sv ? (
-                                  <div className="text-[var(--text-muted)]" dangerouslySetInnerHTML={{ __html: sv.content }} />
-                                ) : (
-                                  <span className="text-[var(--text-muted)] italic text-xs">...</span>
-                                )}
+                            {readMode === 'parallel' && sv && (
+                              <div className="pt-2 border-t border-[var(--border-card)]/50 text-[var(--text-muted)] text-[0.92em] italic">
+                                <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider block not-italic mb-1 font-sans">
+                                  {translations.find(t => t.slug === secondTranslationSlug)?.name}:
+                                </span>
+                                <p>{sv.content}</p>
                               </div>
                             )}
-
                           </div>
                         </div>
                       </div>
@@ -696,35 +652,44 @@ export default function BibleReader({
                 </div>
               )}
 
-              {/* Bottom Inline Chapter Navigation */}
-              <div className="mt-14 pt-6 border-t border-[var(--border-card)] flex items-center justify-between gap-4 text-xs font-bold">
-                <button 
-                  onClick={() => hasPrevChapter && handleNav(selectedBook.slug, currentChapter - 1, selectedTranslation.slug)}
-                  disabled={!hasPrevChapter}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all border ${
-                    hasPrevChapter 
-                      ? 'bg-[var(--bg-main)] text-[var(--text-main)] border-[var(--border-card)] hover:bg-amber-500 hover:text-slate-950 shadow-sm cursor-pointer'
-                      : 'bg-transparent border-[var(--border-card)]/50 text-[var(--text-muted)]/50 cursor-not-allowed'
-                  }`}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  <span>Chương Trước</span>
-                </button>
+              {/* Prev / Next Chapter Navigation Buttons */}
+              <div className="flex items-center justify-between pt-10 mt-12 border-t border-[var(--border-card)]">
+                {hasPrevChapter ? (
+                  <button
+                    onClick={() => handleNav(selectedBook.slug, currentChapter - 1, selectedTranslation.slug)}
+                    className="px-5 py-2.5 rounded-2xl bg-[var(--bg-main)] hover:bg-amber-500 hover:text-slate-950 border border-[var(--border-card)] text-xs font-serif font-bold flex items-center gap-2 transition-all shadow-sm cursor-pointer"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span>Chương {currentChapter - 1}</span>
+                  </button>
+                ) : <div />}
 
-                <button 
-                  onClick={() => hasNextChapter && handleNav(selectedBook.slug, currentChapter + 1, selectedTranslation.slug)}
-                  disabled={!hasNextChapter}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all border ${
-                    hasNextChapter 
-                      ? 'bg-amber-500 text-slate-950 border-amber-400 hover:bg-amber-400 shadow-md cursor-pointer'
-                      : 'bg-transparent border-[var(--border-card)]/50 text-[var(--text-muted)]/50 cursor-not-allowed'
-                  }`}
-                >
-                  <span>Chương {currentChapter + 1}</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+                <span className="text-xs font-serif text-[var(--text-muted)]">
+                  Chương {currentChapter} / {selectedBook.totalChapters}
+                </span>
+
+                {hasNextChapter ? (
+                  <button
+                    onClick={() => handleNav(selectedBook.slug, currentChapter + 1, selectedTranslation.slug)}
+                    className="px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 border border-amber-500 text-xs font-serif font-bold flex items-center gap-2 transition-all shadow-md cursor-pointer"
+                  >
+                    <span>Chương {currentChapter + 1}</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                ) : <div />}
               </div>
 
+            </div>
+
+            {/* In-Feed Native Free Ad Space / Banner Tài Trợ Cuối Bài Đọc */}
+            <div className="p-6 sm:p-10 border-t border-[var(--border-card)]/50">
+              <AdBanner
+                slotId="kinh-thanh-infeed"
+                format="horizontal"
+                customTitle="Bản Đồ 3D Thánh Địa Kinh Thánh VERIDU"
+                customSubtitle="Theo dấu hành trình đức tin của các Tổ Phụ, Xuất Hành và các cuộc du hành truyền giáo của Thánh Phaolô."
+                customLink="/ban-do"
+              />
             </div>
 
           </div>
@@ -732,269 +697,365 @@ export default function BibleReader({
 
 
         {/* ----------------------------------------------------------------------- */}
-        {/* 🔬 CỘT 3: KHÔNG GIAN PHÂN TÍCH & CHÚ GIẢI (MẶC ĐỊNH ẨN TỰ ĐỘNG TRƯỢT RA) */}
+        {/* 🔬 CỘT 3: CỘT PHẢI (STUDY PANE & COMPANION SIDEBAR)                     */}
         {/* ----------------------------------------------------------------------- */}
-        {isStudyPaneOpen && (
-          <aside className="col-span-12 lg:col-span-4 xl:col-span-3 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-4 shadow-2xl backdrop-blur-xl sticky top-20 max-h-[calc(100vh-6rem)] overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
-            
-            {/* Header & Close Button */}
-            <div className="flex items-center justify-between pb-3 border-b border-[var(--border-card)] mb-3">
-              <span className="font-serif font-bold text-xs text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                <BookOpen className="w-4 h-4 text-amber-500" />
-                <span>Không Gian Phân Tích</span>
-              </span>
-              <button 
-                onClick={() => setIsStudyPaneOpen(false)}
-                className="p-1 rounded-full bg-[var(--bg-main)] hover:bg-[var(--border-card)] transition-colors text-[var(--text-muted)]"
-                title="Đóng Cột Phân Tích"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+        <aside className={`col-span-12 ${
+          showExpandedNav ? 'xl:col-span-3' : 'xl:col-span-3'
+        } space-y-5 transition-all duration-300 lg:sticky lg:top-28`}>
+          
+          {/* STATE A: ACTIVE DEEP STUDY PANE */}
+          {isStudyPaneOpen ? (
+            <div className="bg-[var(--bg-card)] border border-amber-500/40 rounded-3xl p-5 shadow-2xl backdrop-blur-xl animate-in fade-in">
+              {/* Header & Close Button */}
+              <div className="flex items-center justify-between pb-3 border-b border-[var(--border-card)] mb-3">
+                <span className="font-serif font-bold text-xs text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <BookOpen className="w-4 h-4 text-amber-500" />
+                  <span>Không Gian Phân Tích</span>
+                </span>
+                <button 
+                  onClick={() => setIsStudyPaneOpen(false)}
+                  className="p-1 rounded-full bg-[var(--bg-main)] hover:bg-[var(--border-card)] transition-colors text-[var(--text-muted)] cursor-pointer"
+                  title="Đóng Cột Phân Tích"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
 
-            {/* Compact Tabs Bar Header */}
-            <div className="grid grid-cols-4 gap-1 p-1 bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl shrink-0 mb-4 text-[11px] font-bold">
-              <button
-                onClick={() => setActiveStudyTab('commentary')}
-                title="Chú giải Thần học theo Chương"
-                className={`py-1.5 px-1 rounded-xl flex items-center justify-center gap-1 transition-all ${
-                  activeStudyTab === 'commentary'
-                    ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                <MessageSquareText className="w-3.5 h-3.5 shrink-0" />
-                <span>Chú giải</span>
-              </button>
+              {/* Compact Tabs Bar Header */}
+              <div className="grid grid-cols-4 gap-1 p-1 bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl shrink-0 mb-4 text-[11px] font-bold">
+                <button
+                  onClick={() => setActiveStudyTab('commentary')}
+                  title="Chú giải Thần học theo Chương"
+                  className={`py-1.5 px-1 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                    activeStudyTab === 'commentary'
+                      ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                  }`}
+                >
+                  <MessageSquareText className="w-3.5 h-3.5 shrink-0" />
+                  <span>Chú giải</span>
+                </button>
 
-              <button
-                onClick={() => setActiveStudyTab('parallel')}
-                title="Đối chiếu tất cả bản dịch"
-                className={`py-1.5 px-1 rounded-xl flex items-center justify-center gap-1 transition-all ${
-                  activeStudyTab === 'parallel'
-                    ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                <Columns className="w-3.5 h-3.5 shrink-0" />
-                <span>Đối chiếu</span>
-              </button>
+                <button
+                  onClick={() => setActiveStudyTab('parallel')}
+                  title="Đối chiếu tất cả bản dịch"
+                  className={`py-1.5 px-1 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                    activeStudyTab === 'parallel'
+                      ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                  }`}
+                >
+                  <Columns className="w-3.5 h-3.5 shrink-0" />
+                  <span>Đối chiếu</span>
+                </button>
 
-              <button
-                onClick={() => setActiveStudyTab('map')}
-                title="Địa danh 3D Kinh Thánh"
-                className={`py-1.5 px-1 rounded-xl flex items-center justify-center gap-1 transition-all ${
-                  activeStudyTab === 'map'
-                    ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                <MapPin className="w-3.5 h-3.5 shrink-0" />
-                <span>Địa danh</span>
-              </button>
+                <button
+                  onClick={() => setActiveStudyTab('map')}
+                  title="Địa danh 3D Kinh Thánh"
+                  className={`py-1.5 px-1 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                    activeStudyTab === 'map'
+                      ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                  }`}
+                >
+                  <MapPin className="w-3.5 h-3.5 shrink-0" />
+                  <span>Địa danh</span>
+                </button>
 
-              <button
-                onClick={() => setActiveStudyTab('video')}
-                title="Video & Suy niệm"
-                className={`py-1.5 px-1 rounded-xl flex items-center justify-center gap-1 transition-all ${
-                  activeStudyTab === 'video'
-                    ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                <PlayCircle className="w-3.5 h-3.5 shrink-0" />
-                <span>Video</span>
-              </button>
-            </div>
+                <button
+                  onClick={() => setActiveStudyTab('video')}
+                  title="Video & Suy niệm"
+                  className={`py-1.5 px-1 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                    activeStudyTab === 'video'
+                      ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                  }`}
+                >
+                  <PlayCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>Video</span>
+                </button>
+              </div>
 
-            {/* TAB CONTENT BODY */}
-            <div className="overflow-y-auto space-y-4 pr-1 scrollbar-thin scrollbar-thumb-[var(--border-card)] max-h-[calc(100vh-12rem)]">
-              
-              {/* TAB 1: CHÚ GIẢI THEO CHƯƠNG (AS REQUESTED BY USER) */}
-              {activeStudyTab === 'commentary' && (
-                <div className="space-y-3 text-xs">
-                  <div className="text-[11px] font-bold text-[var(--text-muted)] border-b border-[var(--border-card)] pb-2 uppercase tracking-wider">
-                    Chú Giải Thần Học: {selectedBook.nameVi} - Chương {currentChapter}
-                  </div>
-
-                  {commentary?.historicalContext && (
-                    <div className="bg-[var(--bg-main)]/60 rounded-2xl p-4 border border-[var(--border-card)]">
-                      <h4 className="font-serif font-bold text-amber-700 dark:text-amber-400 mb-2 flex items-center gap-1.5 text-xs">
-                        <Compass className="w-4 h-4" /> Bối Cảnh Lịch Sử
-                      </h4>
-                      <p className="leading-relaxed text-[var(--text-muted)]">{commentary.historicalContext}</p>
+              {/* TAB CONTENT BODY */}
+              <div className="overflow-y-auto space-y-4 pr-1 scrollbar-thin scrollbar-thumb-[var(--border-card)] max-h-[calc(100vh-16rem)]">
+                
+                {/* TAB 1: CHÚ GIẢI THEO CHƯƠNG */}
+                {activeStudyTab === 'commentary' && (
+                  <div className="space-y-3 text-xs">
+                    <div className="text-[11px] font-bold text-[var(--text-muted)] border-b border-[var(--border-card)] pb-2 uppercase tracking-wider">
+                      Chú Giải Thần Học: {selectedBook.nameVi} - Chương {currentChapter}
                     </div>
-                  )}
 
-                  {commentary?.theologicalMeaning && (
-                    <div className="bg-[var(--bg-main)]/60 rounded-2xl p-4 border border-[var(--border-card)]">
-                      <h4 className="font-serif font-bold text-indigo-600 dark:text-indigo-400 mb-2 flex items-center gap-1.5 text-xs">
-                        <Shield className="w-4 h-4" /> Ý Nghĩa Thần Học
-                      </h4>
-                      <p className="leading-relaxed text-[var(--text-muted)]">{commentary.theologicalMeaning}</p>
-                    </div>
-                  )}
-
-                  {commentary?.practicalApplication && (
-                    <div className="bg-[var(--bg-main)]/60 rounded-2xl p-4 border border-[var(--border-card)]">
-                      <h4 className="font-serif font-bold text-rose-600 dark:text-rose-400 mb-2 flex items-center gap-1.5 text-xs">
-                        <Heart className="w-4 h-4" /> Bài Học Thực Hành
-                      </h4>
-                      <p className="leading-relaxed text-[var(--text-muted)]">{commentary.practicalApplication}</p>
-                    </div>
-                  )}
-
-                  {(!commentary || !(commentary.historicalContext || commentary.theologicalMeaning || commentary.practicalApplication)) && (
-                    <div className="text-center py-10 text-[var(--text-muted)] italic">
-                      Chương này hiện chưa có bài viết chú giải thần học.
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* TAB 2: ĐỐI CHIẾU CÂU TRÊN TẤT CẢ BẢN DỊCH HIỆN CÓ (MULTI-TRANSLATION) */}
-              {activeStudyTab === 'parallel' && (
-                <div className="space-y-3 text-xs">
-                  {selectedVerseNumber ? (
-                    <div className="space-y-3">
-                      <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3 flex items-center justify-between">
-                        <span className="font-bold text-amber-800 dark:text-amber-400">
-                          Đối Chiếu Câu {selectedVerseNumber} ({multiTranslationVerses.length} bản dịch)
-                        </span>
-                        <button 
-                          onClick={() => setSelectedVerseNumber(null)}
-                          className="p-1 hover:bg-amber-500/20 rounded-full transition-colors"
-                        >
-                          <X className="w-3.5 h-3.5 text-amber-700 dark:text-amber-300" />
-                        </button>
+                    {commentary?.historicalContext && (
+                      <div className="bg-[var(--bg-main)]/60 rounded-2xl p-4 border border-[var(--border-card)]">
+                        <h4 className="font-serif font-bold text-amber-700 dark:text-amber-400 mb-2 flex items-center gap-1.5 text-xs">
+                          <Compass className="w-4 h-4" /> Bối Cảnh Lịch Sử
+                        </h4>
+                        <p className="leading-relaxed text-[var(--text-muted)]">{commentary.historicalContext}</p>
                       </div>
+                    )}
 
-                      {isLoadingMultiVerses ? (
-                        <div className="py-8 text-center text-[var(--text-muted)] animate-pulse">
-                          Đang tải tất cả bản dịch...
-                        </div>
-                      ) : (
-                        <div className="space-y-2.5">
-                          {multiTranslationVerses.map((item, idx) => (
-                            <div key={idx} className="p-3 bg-[var(--bg-main)] rounded-2xl border border-[var(--border-card)] space-y-1">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">
-                                {item.translationName}
-                              </span>
-                              <div className="text-xs leading-relaxed" dangerouslySetInnerHTML={{ __html: item.verseText }} />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-center py-10 text-[var(--text-muted)] italic space-y-2">
-                      <Columns className="w-8 h-8 mx-auto opacity-30" />
-                      <p>Nhấp vào một câu Kinh Thánh ở Cột 2 để xem câu đó đồng thời trên tất cả các bản dịch hiện có!</p>
-                    </div>
-                  )}
-                </div>
-              )}
+                    {commentary?.theologicalMeaning && (
+                      <div className="bg-[var(--bg-main)]/60 rounded-2xl p-4 border border-[var(--border-card)]">
+                        <h4 className="font-serif font-bold text-indigo-600 dark:text-indigo-400 mb-2 flex items-center gap-1.5 text-xs">
+                          <Shield className="w-4 h-4" /> Ý Nghĩa Thần Học
+                        </h4>
+                        <p className="leading-relaxed text-[var(--text-muted)]">{commentary.theologicalMeaning}</p>
+                      </div>
+                    )}
 
-              {/* TAB 3: ĐỊA DÀNH 3D MÓC NỐI TỰ ĐỘNG (SMART LOCATION DETECTION) */}
-              {activeStudyTab === 'map' && (
-                <div className="space-y-3 text-xs">
-                  <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 border-b border-[var(--border-card)] pb-2 flex items-center justify-between">
-                    <span className="flex items-center gap-1.5">
-                      <MapPin className="w-4 h-4" /> Địa Danh Trong Chương
-                    </span>
-                    <span className="bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full text-[10px]">
-                      {detectedLocations.length} địa danh
-                    </span>
+                    {commentary?.practicalApplication && (
+                      <div className="bg-[var(--bg-main)]/60 rounded-2xl p-4 border border-[var(--border-card)]">
+                        <h4 className="font-serif font-bold text-rose-600 dark:text-rose-400 mb-2 flex items-center gap-1.5 text-xs">
+                          <Heart className="w-4 h-4" /> Bài Học Thực Hành
+                        </h4>
+                        <p className="leading-relaxed text-[var(--text-muted)]">{commentary.practicalApplication}</p>
+                      </div>
+                    )}
+
+                    {(!commentary || !(commentary.historicalContext || commentary.theologicalMeaning || commentary.practicalApplication)) && (
+                      <div className="text-center py-10 text-[var(--text-muted)] italic">
+                        Chương này hiện chưa có bài viết chú giải thần học.
+                      </div>
+                    )}
                   </div>
+                )}
 
-                  {detectedLocations.length > 0 ? (
-                    <div className="space-y-3">
-                      {detectedLocations.map((loc) => (
-                        <div key={loc.id} className="bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl overflow-hidden shadow-sm hover:border-emerald-500/40 transition-all">
-                          {loc.imageUrl && (
-                            <div className="relative w-full h-24">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={loc.imageUrl} alt={loc.nameVi} className="w-full h-full object-cover" />
-                              <span className="absolute bottom-2 left-2 text-[9px] font-bold bg-black/70 text-white px-2 py-0.5 rounded-full backdrop-blur-sm">
-                                {loc.era}
-                              </span>
-                            </div>
-                          )}
-                          <div className="p-3 space-y-2">
-                            <h5 className="font-serif font-bold text-sm text-[var(--text-main)]">{loc.nameVi}</h5>
-                            <p className="text-[11px] text-[var(--text-muted)] line-clamp-2 leading-relaxed">{loc.description}</p>
-                            
-                            <Link 
-                              href="/ban-do"
-                              className="w-full py-1.5 rounded-xl bg-emerald-600 text-white font-bold flex items-center justify-center gap-1 text-[11px] hover:bg-emerald-500 transition-colors shadow-sm"
-                            >
-                              <span>Khám Phá Bản Đồ 3D</span>
-                              <ExternalLink className="w-3 h-3" />
-                            </Link>
+                {/* TAB 2: ĐỐI CHIẾU CÂU TRÊN TẤT CẢ BẢN DỊCH */}
+                {activeStudyTab === 'parallel' && (
+                  <div className="space-y-3 text-xs">
+                    {selectedVerseNumber ? (
+                      <div className="space-y-3">
+                        <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3 flex items-center justify-between">
+                          <span className="font-bold text-amber-800 dark:text-amber-400">
+                            Đối Chiếu Câu {selectedVerseNumber} ({multiTranslationVerses.length} bản dịch)
+                          </span>
+                          <button 
+                            onClick={() => setSelectedVerseNumber(null)}
+                            className="p-1 hover:bg-amber-500/20 rounded-full transition-colors cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5 text-amber-700 dark:text-amber-300" />
+                          </button>
+                        </div>
+
+                        {isLoadingMultiVerses ? (
+                          <div className="py-8 text-center text-[var(--text-muted)] animate-pulse">
+                            Đang tải tất cả bản dịch...
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="p-4 bg-[var(--bg-main)] rounded-2xl border border-[var(--border-card)] space-y-3 text-center">
-                      <MapPin className="w-8 h-8 mx-auto text-emerald-500 opacity-40" />
-                      <p className="text-[var(--text-muted)] leading-relaxed">
-                        Không phát hiện tên địa danh nổi bật nào trong chương này. Bạn có thể mở Bản đồ 3D để khám phá Vùng Đất Thánh!
-                      </p>
-                      <Link 
-                        href="/ban-do" 
-                        className="w-full py-2.5 rounded-xl bg-emerald-600 text-white font-bold flex items-center justify-center gap-2 hover:bg-emerald-500 transition-colors shadow-md"
-                      >
-                        <span>Mở Bản Đồ 3D Toàn Màn Hình</span>
-                        <ExternalLink className="w-4 h-4" />
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* TAB 4: VIDEO & BÀI SUY NIỆM LIÊN KẾT */}
-              {activeStudyTab === 'video' && (
-                <div className="space-y-3 text-xs">
-                  {commentary?.videoUrl ? (
-                    <div className="rounded-2xl overflow-hidden border border-[var(--border-card)] bg-black shadow-lg">
-                      <div className="relative pt-[56.25%] w-full">
-                        <iframe
-                          src={commentary.videoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'www.youtube.com/embed/')}
-                          className="absolute inset-0 w-full h-full"
-                          allowFullScreen
-                        ></iframe>
+                        ) : (
+                          <div className="space-y-2.5">
+                            {multiTranslationVerses.map((item, idx) => (
+                              <div key={idx} className="p-3 bg-[var(--bg-main)] rounded-2xl border border-[var(--border-card)] space-y-1">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">
+                                  {item.translationName}
+                                </span>
+                                <div className="text-xs leading-relaxed" dangerouslySetInnerHTML={{ __html: item.verseText }} />
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-[var(--text-muted)] italic">
-                      Video bối cảnh cho chương này đang được biên soạn.
-                    </div>
-                  )}
+                    ) : (
+                      <div className="text-center py-10 text-[var(--text-muted)] italic space-y-2">
+                        <Columns className="w-8 h-8 mx-auto opacity-30" />
+                        <p>Nhấp vào một câu Kinh Thánh ở Cột giữa để xem câu đó đồng thời trên tất cả các bản dịch hiện có!</p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
-                  {/* Linked Library Articles Button */}
-                  <Link 
-                    href="/thu-vien" 
-                    className="w-full py-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-indigo-500 text-[var(--text-main)] font-bold flex items-center justify-center gap-2 transition-all"
+                {/* TAB 3: ĐỊA DANH 3D */}
+                {activeStudyTab === 'map' && (
+                  <div className="space-y-3 text-xs">
+                    <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 border-b border-[var(--border-card)] pb-2 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <MapPin className="w-4 h-4" /> Địa Danh Trong Chương
+                      </span>
+                      <span className="bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full text-[10px]">
+                        {detectedLocations.length} địa danh
+                      </span>
+                    </div>
+
+                    {detectedLocations.length > 0 ? (
+                      <div className="space-y-3">
+                        {detectedLocations.map((loc) => (
+                          <div key={loc.id} className="bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl overflow-hidden shadow-sm hover:border-emerald-500/40 transition-all">
+                            {loc.imageUrl && (
+                              <div className="relative w-full h-24">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={loc.imageUrl} alt={loc.nameVi} className="w-full h-full object-cover" />
+                                <span className="absolute bottom-2 left-2 text-[9px] font-bold bg-black/70 text-white px-2 py-0.5 rounded-full backdrop-blur-sm">
+                                  {loc.era}
+                                </span>
+                              </div>
+                            )}
+                            <div className="p-3 space-y-2">
+                              <h5 className="font-serif font-bold text-sm text-[var(--text-main)]">{loc.nameVi}</h5>
+                              <p className="text-[11px] text-[var(--text-muted)] line-clamp-2 leading-relaxed">{loc.description}</p>
+                              
+                              <Link 
+                                href="/ban-do"
+                                className="w-full py-1.5 rounded-xl bg-emerald-600 text-white font-bold flex items-center justify-center gap-1 text-[11px] hover:bg-emerald-500 transition-colors shadow-sm"
+                              >
+                                <span>Khám Phá Bản Đồ 3D</span>
+                                <ExternalLink className="w-3 h-3" />
+                              </Link>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-[var(--bg-main)] rounded-2xl border border-[var(--border-card)] space-y-3 text-center">
+                        <MapPin className="w-8 h-8 mx-auto text-emerald-500 opacity-40" />
+                        <p className="text-[var(--text-muted)] leading-relaxed">
+                          Không phát hiện tên địa danh nổi bật nào trong chương này.
+                        </p>
+                        <Link 
+                          href="/ban-do" 
+                          className="w-full py-2.5 rounded-xl bg-emerald-600 text-white font-bold flex items-center justify-center gap-2 hover:bg-emerald-500 transition-colors shadow-md"
+                        >
+                          <span>Mở Bản Đồ 3D Toàn Màn Hình</span>
+                          <ExternalLink className="w-4 h-4" />
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* TAB 4: VIDEO */}
+                {activeStudyTab === 'video' && (
+                  <div className="space-y-3 text-xs">
+                    {commentary?.videoUrl ? (
+                      <div className="rounded-2xl overflow-hidden border border-[var(--border-card)] bg-black shadow-lg">
+                        <div className="relative pt-[56.25%] w-full">
+                          <iframe
+                            src={commentary.videoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'www.youtube.com/embed/')}
+                            className="absolute inset-0 w-full h-full"
+                            allowFullScreen
+                          ></iframe>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-[var(--text-muted)] italic">
+                        Video bối cảnh cho chương này đang được biên soạn.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+              </div>
+            </div>
+          ) : (
+            /* STATE B: COMPANION STUDY SIDEBAR (DEFAULT STATE WHEN RIGHT PANE IS CLOSED) */
+            <div className="space-y-5">
+              
+              {/* Quick Tools Trigger Card */}
+              <div className="p-5 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-sm space-y-3">
+                <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <span>Công Cụ Khảo Cứu Nhanh</span>
+                </h4>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => openToolTab('commentary')}
+                    className="p-3 rounded-2xl bg-[var(--bg-main)] hover:bg-amber-500/15 border border-[var(--border-card)] hover:border-amber-500/40 text-left transition group cursor-pointer"
                   >
-                    <BookOpen className="w-4 h-4 text-indigo-500" />
-                    <span>Xem Bài Viết Thư Viện Liên Quan</span>
+                    <MessageSquareText className="w-4 h-4 text-amber-500 mb-1" />
+                    <span className="font-serif font-bold text-xs block text-[var(--text-main)] group-hover:text-amber-600 dark:group-hover:text-amber-400">Chú Giải</span>
+                    <span className="text-[10px] text-[var(--text-muted)] font-serif">Theo chương</span>
+                  </button>
+
+                  <button
+                    onClick={() => openToolTab('parallel')}
+                    className="p-3 rounded-2xl bg-[var(--bg-main)] hover:bg-amber-500/15 border border-[var(--border-card)] hover:border-amber-500/40 text-left transition group cursor-pointer"
+                  >
+                    <Columns className="w-4 h-4 text-amber-500 mb-1" />
+                    <span className="font-serif font-bold text-xs block text-[var(--text-main)] group-hover:text-amber-600 dark:group-hover:text-amber-400">Đối Chiếu</span>
+                    <span className="text-[10px] text-[var(--text-muted)] font-serif">Đa bản dịch</span>
+                  </button>
+
+                  <button
+                    onClick={() => openToolTab('map')}
+                    className="p-3 rounded-2xl bg-[var(--bg-main)] hover:bg-emerald-500/15 border border-[var(--border-card)] hover:border-emerald-500/40 text-left transition group cursor-pointer"
+                  >
+                    <MapPin className="w-4 h-4 text-emerald-500 mb-1" />
+                    <span className="font-serif font-bold text-xs block text-[var(--text-main)] group-hover:text-emerald-600 dark:group-hover:text-emerald-400">Địa Danh</span>
+                    <span className="text-[10px] text-[var(--text-muted)] font-serif">Bản đồ 3D</span>
+                  </button>
+
+                  <button
+                    onClick={() => openToolTab('video')}
+                    className="p-3 rounded-2xl bg-[var(--bg-main)] hover:bg-rose-500/15 border border-[var(--border-card)] hover:border-rose-500/40 text-left transition group cursor-pointer"
+                  >
+                    <PlayCircle className="w-4 h-4 text-rose-500 mb-1" />
+                    <span className="font-serif font-bold text-xs block text-[var(--text-main)] group-hover:text-rose-600 dark:group-hover:text-rose-400">Video</span>
+                    <span className="text-[10px] text-[var(--text-muted)] font-serif">Bối cảnh</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Free Advertisement / Google AdSense Sidebar Box */}
+              <AdBanner
+                slotId="kinh-thanh-sidebar"
+                format="rectangle"
+                customTitle="Tủ Sách & Bản Đồ 3D Kinh Thánh"
+                customSubtitle="Khám phá toàn bộ bối cảnh địa lý và văn hóa thời Cựu Ước & Tân Ước cùng VERIDU."
+                customLink="/ban-do"
+              />
+
+              {/* Shortcuts to 3D Map & Quiz */}
+              <div className="p-5 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-sm space-y-3">
+                <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-2">
+                  <Award className="w-4 h-4 text-amber-500" />
+                  <span>Trải Nghiệm Tương Tác</span>
+                </h4>
+
+                <div className="space-y-2">
+                  <Link
+                    href="/ban-do"
+                    className="flex items-center gap-3 p-3 rounded-2xl bg-[var(--bg-main)] hover:bg-emerald-500/10 border border-[var(--border-card)] hover:border-emerald-500/40 transition group"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h5 className="font-serif font-bold text-xs text-[var(--text-main)] group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                        Bản Đồ Thánh Địa 3D
+                      </h5>
+                      <p className="text-[10px] text-[var(--text-muted)] font-serif truncate">Khám phá vị trí địa lý Kinh Thánh</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-[var(--text-muted)] group-hover:translate-x-1 transition-transform" />
+                  </Link>
+
+                  <Link
+                    href="/quiz"
+                    className="flex items-center gap-3 p-3 rounded-2xl bg-[var(--bg-main)] hover:bg-amber-500/10 border border-[var(--border-card)] hover:border-amber-500/40 transition group"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                      <Award className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h5 className="font-serif font-bold text-xs text-[var(--text-main)] group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                        Đấu Trường Quiz Kinh Thánh
+                      </h5>
+                      <p className="text-[10px] text-[var(--text-muted)] font-serif truncate">Trắc nghiệm tri thức Lời Chúa</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-[var(--text-muted)] group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </div>
-              )}
+              </div>
 
             </div>
-          </aside>
-        )}
+          )}
+
+        </aside>
 
       </div>
-
 
       {/* ========================================================================= */}
       {/* 📱 MOBILE DRAWERS FOR NAVIGATION                                         */}
       {/* ========================================================================= */}
-
-      {/* Mobile Nav Drawer (Left) */}
       {showMobileNavDrawer && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm xl:hidden flex animate-in fade-in">
           <div className="w-4/5 max-w-xs bg-[var(--bg-card)] h-full p-4 flex flex-col border-r border-[var(--border-card)] shadow-2xl">
