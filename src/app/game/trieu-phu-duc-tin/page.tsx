@@ -25,6 +25,7 @@ import {
   X
 } from 'lucide-react';
 import { getStoredUser, addFaithPoints } from '@/lib/auth';
+import { supabase } from '@/lib/supabaseClient';
 import { MILLIONAIRE_QUESTIONS, MillionaireQuestion } from '@/lib/gamesData';
 
 const TOTAL_TIME = 15; // 15 seconds per question
@@ -32,6 +33,8 @@ const TOTAL_TIME = 15; // 15 seconds per question
 export default function TruthConquestGamePage() {
   const [user, setUser] = useState<any>(null);
   const [currentLevel, setCurrentLevel] = useState(0);
+  const [gameQuestions, setGameQuestions] = useState<MillionaireQuestion[]>(MILLIONAIRE_QUESTIONS);
+  const [isBankLoading, setIsBankLoading] = useState(false);
   
   // Game Play States
   const [selectedOpt, setSelectedOpt] = useState<number | null>(null);
@@ -57,11 +60,54 @@ export default function TruthConquestGamePage() {
   const [hiddenOptions, setHiddenOptions] = useState<number[]>([]);
   const [activeModal, setActiveModal] = useState<'saint' | 'spirit' | 'change' | 'rules' | null>(null);
 
-  const curQuestion: MillionaireQuestion = MILLIONAIRE_QUESTIONS[currentLevel] || MILLIONAIRE_QUESTIONS[0];
+  const curQuestion: MillionaireQuestion = gameQuestions[currentLevel] || gameQuestions[0] || MILLIONAIRE_QUESTIONS[0];
 
   useEffect(() => {
     setUser(getStoredUser());
+    loadDynamicQuestions();
   }, []);
+
+  const loadDynamicQuestions = async () => {
+    try {
+      setIsBankLoading(true);
+      const { data, error } = await supabase
+        .from('catechism_quiz_bank')
+        .select('*');
+
+      if (!error && data && data.length >= 10) {
+        const easy = data.filter((q: any) => q.difficulty === 'Dễ').sort(() => 0.5 - Math.random());
+        const med = data.filter((q: any) => q.difficulty === 'Trung Bình').sort(() => 0.5 - Math.random());
+        const hard = data.filter((q: any) => q.difficulty === 'Khó').sort(() => 0.5 - Math.random());
+
+        const prizes = [1000, 2000, 3000, 5000, 10000, 20000, 40000, 70000, 100000, 200000];
+        const selected = [
+          ...easy.slice(0, 4),
+          ...med.slice(0, 3),
+          ...hard.slice(0, 3)
+        ];
+
+        if (selected.length === 10) {
+          const mapped: MillionaireQuestion[] = selected.map((q: any, idx: number) => ({
+            id: q.id,
+            level: idx + 1,
+            question: q.title,
+            options: Array.isArray(q.options) ? q.options : [],
+            answer_index: typeof q.answer_index === 'number' ? q.answer_index : 0,
+            explanation: q.explanation || 'Theo Giáo Lý Hội Thánh Công Giáo.',
+            scripture_hint: q.hint || q.bible_book || 'Tin tưởng và phó thác nơi Chúa.',
+            saint_advice: 'Thánh Bổn Mạng: Hãy suy xét cẩn trọng dựa trên Đức Tin và sự thật.',
+            prize_xp: prizes[idx],
+            prize_manna: (idx + 1) * 50,
+            is_safe_milestone: idx === 4 || idx === 9
+          }));
+          setGameQuestions(mapped);
+        }
+      }
+    } catch (e) {
+    } finally {
+      setIsBankLoading(false);
+    }
+  };
 
   // Web Audio Synthesizer Engine for Dramatic Suspense
   const playSound = useCallback((type: 'tick' | 'heartbeat' | 'lock' | 'correct' | 'wrong' | 'fanfare' | 'urgent') => {
@@ -209,7 +255,7 @@ export default function TruthConquestGamePage() {
         }
 
         setTimeout(() => {
-          if (currentLevel < MILLIONAIRE_QUESTIONS.length - 1) {
+          if (currentLevel < gameQuestions.length - 1) {
             setCurrentLevel(prev => prev + 1);
             setSelectedOpt(null);
             setIsLocked(false);
@@ -281,6 +327,7 @@ export default function TruthConquestGamePage() {
   };
 
   const restartGame = () => {
+    loadDynamicQuestions();
     setCurrentLevel(0);
     setSelectedOpt(null);
     setIsLocked(false);
@@ -369,7 +416,7 @@ export default function TruthConquestGamePage() {
               {/* Level Indicator */}
               <div className="flex items-center gap-2">
                 <span className="px-3.5 py-1.5 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/40 font-mono font-black text-xs shadow-inner">
-                  CÂU {currentLevel + 1} / {MILLIONAIRE_QUESTIONS.length}
+                  CÂU {currentLevel + 1} / {gameQuestions.length}
                 </span>
                 {curQuestion.is_safe_milestone && (
                   <span className="text-[11px] font-serif text-amber-400 font-bold px-2 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/30">
@@ -583,8 +630,8 @@ export default function TruthConquestGamePage() {
 
               {/* 10 Ladder Levels */}
               <div className="space-y-1.5">
-                {MILLIONAIRE_QUESTIONS.slice().reverse().map((q, idx) => {
-                  const actualLevel = MILLIONAIRE_QUESTIONS.length - 1 - idx;
+                {gameQuestions.slice().reverse().map((q, idx) => {
+                  const actualLevel = gameQuestions.length - 1 - idx;
                   const isCurrent = actualLevel === currentLevel;
                   const isPassed = actualLevel < currentLevel;
 

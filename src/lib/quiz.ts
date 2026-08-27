@@ -139,8 +139,30 @@ export const BIBLICAL_AVATARS: BiblicalAvatar[] = [
 
 export async function fetchQuizQuestions(category?: string, limit: number = 50): Promise<QuizQuestion[]> {
   try {
-    let query = supabase.from('quiz_questions').select('*').limit(limit);
+    // 1. Try fetching from catechism_quiz_bank first
+    let bankQuery = supabase.from('catechism_quiz_bank').select('*').limit(limit);
     
+    if (category && category !== 'all' && category !== 'Tất cả') {
+      bankQuery = bankQuery.or(`subject.ilike.%${category}%,grade_level.ilike.%${category}%,difficulty.ilike.%${category}%`);
+    }
+    
+    const { data: bankData, error: bankError } = await bankQuery;
+    
+    if (!bankError && bankData && bankData.length > 0) {
+      return bankData.map((item: any) => ({
+        id: item.id.toString(),
+        category: item.subject || item.grade_level || 'Giáo Lý',
+        questionText: item.title || item.question,
+        options: Array.isArray(item.options) ? item.options : [],
+        correctAnswerIndex: typeof item.answer_index === 'number' ? item.answer_index : (item.correct_option || 0),
+        explanation: item.explanation || '',
+        scriptureRef: item.hint || item.bible_book || '',
+        difficulty: item.difficulty || 'Dễ'
+      }));
+    }
+
+    // 2. Fallback to quiz_questions if catechism_quiz_bank is empty
+    let query = supabase.from('quiz_questions').select('*').limit(limit);
     if (category && category !== 'all' && category !== 'Tất cả') {
       query = query.eq('category', category);
     }
@@ -152,12 +174,12 @@ export async function fetchQuizQuestions(category?: string, limit: number = 50):
       return data.map((item: any) => ({
         id: item.id.toString(),
         category: item.category || 'Giáo Lý',
-        questionText: item.question,
+        questionText: item.question || item.title,
         options: item.options || [],
         correctAnswerIndex: item.correct_option || 0,
         explanation: item.explanation || '',
         scriptureRef: item.scripture_ref || '',
-        difficulty: item.difficulty || 'Thường'
+        difficulty: item.difficulty || 'Dễ'
       }));
     }
   } catch (e) {
