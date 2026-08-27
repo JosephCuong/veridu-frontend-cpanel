@@ -25,7 +25,7 @@ const PARTS_MAP: Record<string, PartConfig> = {
     roman: '0',
     title: 'Lời Mở Đầu',
     subtitle: 'Đời Sống Con Người Là Nhận Biết & Yêu Mến Thiên Chúa',
-    range: 'CCC 1 - 25',
+    range: 'CCC 1 – 25',
     color: '#3b82f6',
     desc: 'Bản chất đức tin, mục đích của việc dạy giáo lý và bố cục Sách Giáo Lý.'
   },
@@ -35,7 +35,7 @@ const PARTS_MAP: Record<string, PartConfig> = {
     roman: 'I',
     title: 'Phần I: Tuyên Xưng Đức Tin',
     subtitle: 'Kinh Tin Kính Của Các Tông Đồ',
-    range: 'CCC 1 - 1065',
+    range: 'CCC 1 – 1065',
     color: '#f59e0b',
     desc: 'Mầu nhiệm Thiên Chúa Ba Ngôi, Sáng Tạo, Nhập Thể, Cứu Chuộc & Hội Thánh.'
   },
@@ -45,7 +45,7 @@ const PARTS_MAP: Record<string, PartConfig> = {
     roman: 'II',
     title: 'Phần II: Cử Hành Mầu Nhiệm Kitô Giáo',
     subtitle: 'Phụng Vụ Thánh & Bảy Bí Tích',
-    range: 'CCC 1066 - 1690',
+    range: 'CCC 1066 – 1690',
     color: '#f43f5e',
     desc: 'Nhiệm cục Bí tích, Phụng vụ Thánh Thể, 7 Bí Tích & Lễ nghi an táng.'
   },
@@ -55,7 +55,7 @@ const PARTS_MAP: Record<string, PartConfig> = {
     roman: 'III',
     title: 'Phần III: Đời Sống Trong Đức Kitô',
     subtitle: 'Luân Lý Kitô Giáo & Mười Điều Răn',
-    range: 'CCC 1691 - 2557',
+    range: 'CCC 1691 – 2557',
     color: '#10b981',
     desc: 'Phẩm giá con người, ơn gọi nên thánh, Tám Mối Phúc & Mười Điều Răn.'
   },
@@ -65,7 +65,7 @@ const PARTS_MAP: Record<string, PartConfig> = {
     roman: 'IV',
     title: 'Phần IV: Kinh Nguyện Kitô Giáo',
     subtitle: 'Kinh Lạy Cha & Đời Sống Cầu Nguyện',
-    range: 'CCC 2558 - 2865',
+    range: 'CCC 2558 – 2865',
     color: '#6366f1',
     desc: 'Ý nghĩa kinh nguyện, truyền thống cầu nguyện & 7 Lời Nguyện Kinh Lạy Cha.'
   }
@@ -103,13 +103,13 @@ export default async function CatechismPartPage({ params }: { params: { part: st
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col font-sans transition-colors duration-300 pb-24 pt-16 md:pt-20">
       
       {/* 1. COMPACT BREADCRUMB & HEADER */}
-      <div className="w-full border-b border-[var(--border-card)] bg-[var(--bg-card)]/50 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="w-full border-b border-[var(--border-card)] bg-[var(--bg-card)]/80 backdrop-blur-md sticky top-16 z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
           
           <div className="flex items-center gap-3">
             <Link
               href="/giao-ly"
-              className="p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs font-serif font-bold text-[var(--text-muted)] hover:text-amber-500 hover:border-amber-500/50 flex items-center gap-1 transition"
+              className="p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs font-serif font-bold text-[var(--text-muted)] hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-500/50 flex items-center gap-1 transition shadow-sm"
             >
               <ChevronLeft className="w-4 h-4" />
               <span>Trở về Giáo Lý</span>
@@ -119,12 +119,12 @@ export default async function CatechismPartPage({ params }: { params: { part: st
 
             <div className="text-xs font-serif">
               <span className="text-[var(--text-muted)]">Sách Giáo Lý Hội Thánh › </span>
-              <strong className="text-amber-500">{currentPart.title}</strong>
+              <strong className="text-amber-700 dark:text-amber-400">{currentPart.title}</strong>
             </div>
           </div>
 
           {/* Quick Part Switcher Tabs */}
-          <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
             {Object.values(PARTS_MAP).map(p => (
               <Link
                 key={p.slug}
@@ -143,12 +143,12 @@ export default async function CatechismPartPage({ params }: { params: { part: st
         </div>
       </div>
 
-      {/* 2. DEDICATED PART HERO */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-6 w-full">
-        <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-stone-900/90 to-[var(--bg-card)] border border-amber-500/30 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+      {/* 2. DEDICATED PART HERO (ADAPTIVE LIGHT / DARK CONTRAST) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 w-full">
+        <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-amber-500/[0.08] via-amber-500/[0.03] to-[var(--bg-card)] dark:from-stone-900/90 dark:to-[var(--bg-card)] border border-amber-500/30 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden backdrop-blur-xl">
           <div className="space-y-2 relative z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 font-serif font-bold text-xs">
-              <BookOpen className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-300 font-serif font-bold text-xs">
+              <BookOpen className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span>{currentPart.range} • {count} Điều Khoản Khảo Cứu</span>
             </div>
             <h1 className="font-serif font-black text-2xl sm:text-4xl text-[var(--text-main)]">
@@ -162,9 +162,9 @@ export default async function CatechismPartPage({ params }: { params: { part: st
           <div className="flex items-center gap-3 relative z-10 flex-shrink-0">
             <Link
               href="/giao-ly/the-lat"
-              className="px-4 py-2.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500/50 text-xs font-serif font-bold text-amber-500 flex items-center gap-1.5 transition"
+              className="px-4 py-2.5 rounded-2xl bg-[var(--bg-card)] border border-amber-500/30 hover:border-amber-500 text-xs font-serif font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5 transition shadow-sm"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
               <span>Thẻ Lật Ghi Nhớ</span>
             </Link>
 
@@ -179,7 +179,7 @@ export default async function CatechismPartPage({ params }: { params: { part: st
         </div>
       </div>
 
-      {/* 3. DEDICATED FULL-TEXT READER CLIENT (2 COLUMNS & MULTI-MODES) */}
+      {/* 3. DEDICATED FULL-TEXT READER CLIENT */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <CatechismReaderClient 
           paragraphs={paragraphs} 

@@ -264,10 +264,32 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
           {/* Left Column: Sorted Table of Contents (4/12) */}
           {!isFocusMode && (
             <aside className="lg:col-span-4 space-y-3 lg:sticky lg:top-28 max-h-[75vh] overflow-y-auto pr-1 custom-scrollbar">
+              
+              {/* Search Bar in Sidebar */}
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-amber-500" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Tìm kiếm trong phần này..."
+                  className="w-full pl-8 pr-7 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] focus:border-amber-500 text-xs font-serif outline-none"
+                />
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--text-muted)] hover:text-amber-500"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+
               <div className="text-xs font-serif font-bold text-[var(--text-muted)] uppercase tracking-wider px-2 flex items-center justify-between">
                 <span>Mục Lục ({sortedAndFiltered.length} điều)</span>
                 <span>Thứ tự: Tăng dần</span>
               </div>
+
 
               <div className="space-y-2">
                 {sortedAndFiltered.map((p, idx) => {
