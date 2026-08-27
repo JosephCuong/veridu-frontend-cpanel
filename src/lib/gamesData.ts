@@ -44,7 +44,7 @@ export interface MapStage {
   explanation: string;
   reward_xp: number;
   reward_manna: number;
-  x_percent: number; // For 2D Map coordinate
+  x_percent: number;
   y_percent: number;
 }
 
@@ -91,14 +91,14 @@ export const ARCADE_GAMES: GameItem[] = [
   {
     id: 'game_2',
     slug: 'trieu-phu-duc-tin',
-    title: 'Ai Là Triệu Phú Đức Tin',
-    subtitle: 'Đấu Trường 15 Câu Hỏi & Chinh Phục Ngai Vàng Tri Thức',
+    title: 'Chinh Phục Chân Lý',
+    subtitle: 'Đấu Trường 10 Nấc Thang Đức Tin & Tri Thức Công Giáo',
     cover_image: '/images/games/millionaire_faith.jpg',
     badge: 'Đấu Trường Đố Vui',
     category: 'Giáo Lý & Phụng Vụ',
     estimated_time: '5-10 phút',
     target_age: 'Mọi lứa tuổi',
-    description: 'Chinh phục 15 nấc thang tri thức đức tin với 4 quyền trợ giúp phụng vụ đặc biệt. Vượt qua 3 mốc an toàn để đạt danh hiệu Tiến Sĩ Hội Thánh Nhí.',
+    description: 'Chinh phục 10 nấc thang tri thức đức tin với đồng hồ đếm ngược 30 giây kịch tính và 4 quyền trợ giúp phụng vụ. Vượt qua các mốc an toàn để đạt danh hiệu Tiến Sĩ Hội Thánh.',
     reward_xp: 1000,
     reward_manna: 500,
     play_url: '/game/trieu-phu-duc-tin'
