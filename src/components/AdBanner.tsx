@@ -12,6 +12,7 @@ interface AdBannerProps {
   customTitle?: string;
   customSubtitle?: string;
   customLink?: string;
+  hideHeader?: boolean;
 }
 
 export default function AdBanner({
@@ -21,7 +22,8 @@ export default function AdBanner({
   className = '',
   customTitle,
   customSubtitle,
-  customLink = '/thu-vien'
+  customLink = '/thu-vien',
+  hideHeader = false
 }: AdBannerProps) {
   const clientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || 'ca-pub-5209827375568934';
   const [adLoaded, setAdLoaded] = useState(false);
@@ -39,17 +41,19 @@ export default function AdBanner({
 
   return (
     <div className={`w-full overflow-hidden rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] p-4 shadow-md text-center transition-all ${className}`}>
-      {/* Header Label */}
-      <div className="flex items-center justify-between text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider mb-2 border-b border-[var(--border-card)]/60 pb-1.5">
-        <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold">
-          <Sparkles className="w-3 h-3" />
-          <span>Không Gian Mục Vụ &amp; Tài Trợ</span>
-        </span>
-        <span className="opacity-60">QUẢNG CÁO</span>
-      </div>
+      {/* Subtle Header Label without harsh "QUẢNG CÁO" text */}
+      {!hideHeader && (
+        <div className="flex items-center justify-between text-[10px] font-serif text-[var(--text-muted)] tracking-wide mb-2 border-b border-[var(--border-card)]/60 pb-1.5">
+          <span className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-bold">
+            <Sparkles className="w-3 h-3 text-amber-500" />
+            <span>Không Gian Mục Vụ &amp; Đồng Hành</span>
+          </span>
+          <span className="text-[9px] opacity-40 font-mono">VERIDU</span>
+        </div>
+      )}
 
       {/* Google AdSense ins tag */}
-      <div className="relative min-h-[100px] flex items-center justify-center">
+      <div className="relative min-h-[90px] flex items-center justify-center">
         <ins
           className="adsbygoogle"
           style={{ display: 'block', minWidth: '250px', minHeight: '90px', width: '100%' }}

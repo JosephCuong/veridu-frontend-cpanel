@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   BibleBook, BibleVerse, ChapterCommentary, BibleTranslation 
 } from '@/lib/bible';
-import { fetchBibleChapter } from '@/lib/api';
+import { fetchBibleChapter, fetchBibleMetadata } from '@/lib/api';
 import { BIBLE_LOCATIONS, BibleLocation } from '@/components/BibleMap';
 import { supabase } from '@/lib/supabaseClient';
 import AdBanner from '@/components/AdBanner';
@@ -13,7 +13,7 @@ import {
   Columns, MessageSquareText, Headphones, 
   X, Heart, Shield, Compass, PlayCircle, Settings2, BookOpen, Search, Menu, 
   MapPin, LayoutGrid, Type, ExternalLink, Scroll, Sparkles, Award, ArrowRight,
-  PanelLeftClose, PanelLeftOpen, Bookmark, Check
+  PanelLeftClose, PanelLeftOpen, Bookmark, Check, BookMarked, Gamepad2, Layers
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -32,6 +32,15 @@ interface MultiTranslationVerse {
   translationSlug: string;
   translationName: string;
   verseText: string;
+}
+
+interface RelatedArticle {
+  id: number | string;
+  title: string;
+  slug: string;
+  category: string;
+  featured_image?: string;
+  created_at?: string;
 }
 
 export default function BibleReader({
@@ -64,6 +73,10 @@ export default function BibleReader({
   const [isStudyPaneOpen, setIsStudyPaneOpen] = useState(false);
   const [activeStudyTab, setActiveStudyTab] = useState<'commentary' | 'parallel' | 'map' | 'video'>('commentary');
 
+  // Related Articles in Right Sidebar
+  const [relatedArticles, setRelatedArticles] = useState<RelatedArticle[]>([]);
+  const [isLoadingArticles, setIsLoadingArticles] = useState(true);
+
   // Mobile Drawers
   const [showMobileNavDrawer, setShowMobileNavDrawer] = useState(false);
 
@@ -77,18 +90,21 @@ export default function BibleReader({
   // Dropdowns & Read Modes
   const [isChapterMenuOpen, setIsChapterMenuOpen] = useState(false);
   const [readMode, setReadMode] = useState<'single' | 'parallel'>('single');
-  const [secondTranslationSlug, setSecondTranslationSlug] = useState<string>(
+  const [parallelLayoutMode, setParallelLayoutMode] = useState<'side-by-side' | 'stacked'>('side-by-side');
+  
+  // Parallel Translation Selection (supports 1 or more secondary translations)
+  const [selectedSecondaryTranslations, setSelectedSecondaryTranslations] = useState<string[]>([
     translations.length > 1 ? (translations.find(t => t.slug !== selectedTranslation.slug)?.slug || translations[1].slug) : translations[0].slug
-  );
-  const [secondVerses, setSecondVerses] = useState<BibleVerse[]>([]);
-  const [isFetchingSecond, setIsFetchingSecond] = useState(false);
+  ]);
+  const [parallelVersesMap, setParallelVersesMap] = useState<Record<string, BibleVerse[]>>({});
+  const [isFetchingParallel, setIsFetchingParallel] = useState(false);
 
   // Search Filter in Left Navigation
   const [bookSearch, setBookSearch] = useState('');
 
-  // ⏱️ Auto-collapse Left Sidebar after 3.5 seconds to expand reading area and reveal right column
+  // ⏱️ Auto-collapse Left Sidebar after 3.5 seconds
   useEffect(() => {
-    if (userToggledNav) return; // User explicitly chose a state
+    if (userToggledNav) return;
 
     const timer = setTimeout(() => {
       if (!isHoveringNav) {
@@ -99,27 +115,86 @@ export default function BibleReader({
     return () => clearTimeout(timer);
   }, [initialBookSlug, initialChapter, userToggledNav, isHoveringNav]);
 
-  // Fetch parallel verses when readMode === 'parallel'
+  // Fetch Related Library Articles for Right Sidebar
   useEffect(() => {
-    if (readMode === 'parallel') {
-      let isMounted = true;
-      setIsFetchingSecond(true);
-      fetchBibleChapter(secondTranslationSlug, selectedBook.slug, currentChapter)
-        .then(data => {
-          if (isMounted) {
-            setSecondVerses(data?.verses || []);
-            setIsFetchingSecond(false);
+    let isMounted = true;
+    setIsLoadingArticles(true);
+
+    const fetchRelated = async () => {
+      try {
+        const bookKeyword = selectedBook.nameVi.replace(/^(Sách|Thư|Tin Mừng|Sấm ngôn)\s+/i, '').trim();
+        
+        // Search in Supabase posts for relevant tags/titles
+        const { data } = await supabase
+          .from('posts')
+          .select('id, title, slug, category, featured_image, created_at')
+          .eq('status', 'published')
+          .or(`title.ilike.%${bookKeyword}%,category.ilike.%Kinh Thánh%,category.ilike.%Thần Học%`)
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        if (isMounted) {
+          if (data && data.length > 0) {
+            setRelatedArticles(data);
+          } else {
+            // Fallback to recent articles
+            const { data: fallbackData } = await supabase
+              .from('posts')
+              .select('id, title, slug, category, featured_image, created_at')
+              .eq('status', 'published')
+              .order('created_at', { ascending: false })
+              .limit(3);
+            if (fallbackData) setRelatedArticles(fallbackData);
           }
-        })
-        .catch(() => {
-          if (isMounted) setIsFetchingSecond(false);
-        });
+          setIsLoadingArticles(false);
+        }
+      } catch (e) {
+        if (isMounted) setIsLoadingArticles(false);
+      }
+    };
+
+    fetchRelated();
+    return () => { isMounted = false; };
+  }, [selectedBook.slug, selectedBook.nameVi]);
+
+  // Fetch Parallel Verses whenever readMode is parallel or secondary translations change
+  useEffect(() => {
+    if (readMode === 'parallel' && selectedSecondaryTranslations.length > 0) {
+      let isMounted = true;
+      setIsFetchingParallel(true);
+
+      Promise.all(
+        selectedSecondaryTranslations.map(slug => 
+          fetchBibleChapter(slug, selectedBook.slug, currentChapter)
+            .then(res => ({ slug, verses: res?.verses || [] }))
+            .catch(() => ({ slug, verses: [] }))
+        )
+      ).then(results => {
+        if (isMounted) {
+          const map: Record<string, BibleVerse[]> = {};
+          results.forEach(r => {
+            map[r.slug] = r.verses;
+          });
+          setParallelVersesMap(map);
+          setIsFetchingParallel(false);
+        }
+      });
+
       return () => { isMounted = false; };
     }
-  }, [readMode, secondTranslationSlug, selectedBook.slug, currentChapter]);
+  }, [readMode, selectedSecondaryTranslations, selectedBook.slug, currentChapter]);
+
+  // Auto-switch layout: if 1 secondary translation -> default 'side-by-side', if 2+ -> default 'stacked'
+  useEffect(() => {
+    if (selectedSecondaryTranslations.length > 1) {
+      setParallelLayoutMode('stacked');
+    } else {
+      setParallelLayoutMode('side-by-side');
+    }
+  }, [selectedSecondaryTranslations.length]);
 
   // Smart Detection of Holy Land Locations in Chapter
-  const detectedLocations = React.useMemo(() => {
+  const detectedLocations = useMemo(() => {
     if (!initialVerses || initialVerses.length === 0) return [];
     const fullText = initialVerses.map(v => v.content).join(' ');
     return BIBLE_LOCATIONS.filter(loc => {
@@ -192,7 +267,6 @@ export default function BibleReader({
 
   const handleNav = (slug: string, chapter: number, trans: string) => {
     setSelectedVerseNumber(null);
-    // Auto collapse on selecting book/chapter
     setIsNavDocked(true);
     router.push(`/kinh-thanh/${slug}/${chapter}?t=${trans}`);
   };
@@ -223,7 +297,7 @@ export default function BibleReader({
     <div className="w-full relative bg-[var(--bg-main)] text-[var(--text-main)] min-h-[85vh] font-sans pb-16">
       
       {/* ========================================================================= */}
-      {/* 🌟 3-COLUMN FLEXIBLE WORKSPACE (COL 1 NAV - COL 2 READING - COL 3 STUDY) */}
+      {/* 🌟 3-COLUMN FLEXIBLE WORKSPACE (COL 1 NAV - COL 2 READING - COL 3 SIDEBAR) */}
       {/* ========================================================================= */}
       <div className="grid grid-cols-12 gap-4 xl:gap-6 items-start">
 
@@ -394,7 +468,7 @@ export default function BibleReader({
 
 
         {/* ----------------------------------------------------------------------- */}
-        {/* 📜 CỘT 2: KHÔNG GIAN ĐỌC KINH THÁNH CHÍNH (EXPANDED TO OCCUPY 8/12)      */}
+        {/* 📜 CỘT 2: KHÔNG GIAN ĐỌC KINH THÁNH CHÍNH (8/12 KHI CỘT TRÁI THU GỌN)    */}
         {/* ----------------------------------------------------------------------- */}
         <main className={`col-span-12 ${
           showExpandedNav ? 'xl:col-span-6' : 'xl:col-span-8'
@@ -461,13 +535,13 @@ export default function BibleReader({
                 </div>
               </div>
 
-              {/* Right: Integrated Compact Action Buttons for Study Pane */}
+              {/* Right: Integrated Compact Action Buttons */}
               <div className="flex items-center gap-1.5 text-xs">
                 
                 {/* 🔀 Song Song Button */}
                 <button
                   onClick={() => setReadMode(readMode === 'single' ? 'parallel' : 'single')}
-                  title="Bật/Tắt Đọc Song Song 2 bản dịch cuộn đồng bộ"
+                  title="Bật/Tắt Đọc Song Song các bản dịch"
                   className={`px-2.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1 border text-[11px] sm:text-xs cursor-pointer ${
                     readMode === 'parallel'
                       ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md font-black'
@@ -562,37 +636,94 @@ export default function BibleReader({
               </div>
             )}
 
-            {/* READING PANE BODY CONTENT */}
+            {/* ════════════════════════════════════════════════════════════════
+                READING PANE BODY CONTENT
+               ════════════════════════════════════════════════════════════════ */}
             <div className="p-6 sm:p-10 md:p-12 max-w-4xl mx-auto min-h-[70vh] flex flex-col justify-start">
               
               {/* Header Title */}
-              <div className="text-center mb-10 border-b border-[var(--border-card)] pb-6">
+              <div className="text-center mb-8 border-b border-[var(--border-card)] pb-6">
                 <h1 className="text-3xl sm:text-4xl md:text-5xl font-black font-serif tracking-tight mb-2">
                   {selectedBook.nameVi}
                 </h1>
                 <h2 className="text-lg sm:text-xl text-amber-600 dark:text-amber-400 font-serif italic">Chương {currentChapter}</h2>
-                <div className="mt-2 text-xs text-[var(--text-muted)]">
-                  Bản dịch: <span className="font-bold text-[var(--text-main)]">{selectedTranslation.name.replace(/^Bản dịch\s+/i, '')}</span>
+                <div className="mt-2 text-xs text-[var(--text-muted)] font-serif">
+                  Bản dịch chính: <span className="font-bold text-[var(--text-main)]">{selectedTranslation.name.replace(/^Bản dịch\s+/i, '')}</span>
                 </div>
               </div>
 
-              {/* PARALLEL MODE TRANSLATION SELECTOR BANNER */}
+              {/* 🔀 PARALLEL MODE TRANSLATION CONTROL BAR & LAYOUT SWITCHER */}
               {readMode === 'parallel' && (
-                <div className="mb-6 p-3 bg-[var(--bg-main)] border border-amber-500/30 rounded-2xl flex items-center justify-between gap-3 text-xs font-bold animate-in fade-in">
-                  <span className="text-amber-800 dark:text-amber-400 flex items-center gap-1.5">
-                    <Columns className="w-4 h-4 text-amber-500" />
-                    <span>Đọc Song Song: {selectedTranslation.name} &</span>
-                  </span>
+                <div className="mb-8 p-4 bg-[var(--bg-main)] border border-amber-500/30 rounded-3xl space-y-3 animate-in fade-in shadow-inner">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    
+                    {/* Left: Secondary Translations Selector */}
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+                      <span className="text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                        <Columns className="w-4 h-4 text-amber-500" />
+                        <span>Đối Chiếu Với:</span>
+                      </span>
 
-                  <select
-                    value={secondTranslationSlug}
-                    onChange={(e) => setSecondTranslationSlug(e.target.value)}
-                    className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-xl px-3 py-1.5 text-xs font-bold focus:outline-none cursor-pointer"
-                  >
-                    {translations.map((t) => (
-                      <option key={t.slug} value={t.slug}>{t.name}</option>
-                    ))}
-                  </select>
+                      {translations.filter(t => t.slug !== selectedTranslation.slug).map(t => {
+                        const isChecked = selectedSecondaryTranslations.includes(t.slug);
+                        return (
+                          <button
+                            key={t.slug}
+                            type="button"
+                            onClick={() => {
+                              if (isChecked) {
+                                if (selectedSecondaryTranslations.length > 1) {
+                                  setSelectedSecondaryTranslations(prev => prev.filter(s => s !== t.slug));
+                                }
+                              } else {
+                                setSelectedSecondaryTranslations(prev => [...prev, t.slug]);
+                              }
+                            }}
+                            className={`px-3 py-1.5 rounded-xl border text-xs font-serif transition-all cursor-pointer flex items-center gap-1 ${
+                              isChecked
+                                ? 'bg-amber-500 text-slate-950 border-amber-500 font-bold shadow-xs'
+                                : 'bg-[var(--bg-card)] border-[var(--border-card)] text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                            }`}
+                          >
+                            <span>{t.name.replace(/^Bản dịch\s+/i, '')}</span>
+                            {isChecked && <Check className="w-3 h-3" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Right: Layout Mode Toggle (2 Cột Đối Chiếu vs Xếp Dòng Dưới) */}
+                    <div className="flex items-center gap-1 bg-[var(--bg-card)] border border-[var(--border-card)] p-1 rounded-2xl">
+                      <button
+                        type="button"
+                        onClick={() => setParallelLayoutMode('side-by-side')}
+                        className={`px-3 py-1 rounded-xl text-xs font-serif font-bold transition flex items-center gap-1 cursor-pointer ${
+                          parallelLayoutMode === 'side-by-side'
+                            ? 'bg-amber-500 text-slate-950 shadow-sm'
+                            : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                        }`}
+                        title="Chia 2 cột song song cạnh nhau"
+                      >
+                        <Columns className="w-3.5 h-3.5" />
+                        <span>2 Cột Đối Chiếu</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setParallelLayoutMode('stacked')}
+                        className={`px-3 py-1 rounded-xl text-xs font-serif font-bold transition flex items-center gap-1 cursor-pointer ${
+                          parallelLayoutMode === 'stacked'
+                            ? 'bg-amber-500 text-slate-950 shadow-sm'
+                            : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                        }`}
+                        title="Xếp dòng các bản dịch bên dưới mỗi câu"
+                      >
+                        <Layers className="w-3.5 h-3.5" />
+                        <span>Xếp Dòng Dưới</span>
+                      </button>
+                    </div>
+
+                  </div>
                 </div>
               )}
 
@@ -608,7 +739,6 @@ export default function BibleReader({
                 >
                   {initialVerses.map((verse) => {
                     const isSelected = String(selectedVerseNumber) === String(verse.verse);
-                    const sv = secondVerses.find(v => String(v.verse) === String(verse.verse));
 
                     return (
                       <div key={verse.id} className="group/verse relative">
@@ -618,34 +748,103 @@ export default function BibleReader({
                           </h3>
                         )}
 
-                        <div 
-                          onClick={() => handleVerseClick(String(verse.verse))}
-                          title="Nhấp để xem đối chiếu tất cả bản dịch của câu này ở Cột 3"
-                          className={`flex gap-3 items-start p-3 -mx-3 rounded-2xl transition-all cursor-pointer ${
-                            isSelected 
-                              ? 'bg-amber-500/15 border border-amber-500/40 shadow-inner' 
-                              : 'hover:bg-[var(--bg-main)]/60'
-                          }`}
-                        >
-                          <sup className="text-xs font-bold text-amber-600 dark:text-amber-400 select-none shrink-0 mt-1 font-sans">
-                            {verse.verse}
-                          </sup>
+                        {/* ── CASE 1: PARALLEL MODE - SIDE-BY-SIDE 2 COLUMNS ── */}
+                        {readMode === 'parallel' && parallelLayoutMode === 'side-by-side' && selectedSecondaryTranslations.length === 1 ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 -mx-3 rounded-2xl border-b border-[var(--border-card)]/40 hover:bg-[var(--bg-main)]/50 transition">
+                            
+                            {/* Left Column: Primary Translation */}
+                            <div 
+                              onClick={() => handleVerseClick(String(verse.verse))}
+                              className="flex gap-2.5 items-start cursor-pointer"
+                            >
+                              <sup className="text-xs font-bold text-amber-600 dark:text-amber-400 select-none shrink-0 mt-1 font-sans">
+                                {verse.verse}
+                              </sup>
+                              <div className="flex-1 space-y-1">
+                                <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider block font-sans opacity-70">
+                                  {selectedTranslation.name.replace(/^Bản dịch\s+/i, '')}
+                                </span>
+                                <p className="text-[var(--text-main)] leading-relaxed">{verse.content}</p>
+                              </div>
+                            </div>
 
-                          <div className="flex-1 space-y-2">
-                            <p className="text-[var(--text-main)] leading-relaxed">
+                            {/* Right Column: Secondary Translation */}
+                            <div className="flex gap-2.5 items-start border-l border-[var(--border-card)]/60 pl-4">
+                              {(() => {
+                                const secSlug = selectedSecondaryTranslations[0];
+                                const secVerse = (parallelVersesMap[secSlug] || []).find(v => String(v.verse) === String(verse.verse));
+                                const secTransName = translations.find(t => t.slug === secSlug)?.name || 'Bản dịch 2';
+                                return (
+                                  <div className="flex-1 space-y-1">
+                                    <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider block font-sans opacity-70">
+                                      {secTransName.replace(/^Bản dịch\s+/i, '')}
+                                    </span>
+                                    <p className="text-[var(--text-muted)] leading-relaxed italic">
+                                      {secVerse ? secVerse.content : '...'}
+                                    </p>
+                                  </div>
+                                );
+                              })()}
+                            </div>
+
+                          </div>
+                        ) : readMode === 'parallel' ? (
+                          /* ── CASE 2: PARALLEL MODE - STACKED ROWS ── */
+                          <div 
+                            onClick={() => handleVerseClick(String(verse.verse))}
+                            className={`p-3.5 -mx-3 rounded-2xl transition-all cursor-pointer border-b border-[var(--border-card)]/40 ${
+                              isSelected ? 'bg-amber-500/10 border-amber-500/40 shadow-inner' : 'hover:bg-[var(--bg-main)]/60'
+                            }`}
+                          >
+                            <div className="flex gap-3 items-start">
+                              <sup className="text-xs font-bold text-amber-600 dark:text-amber-400 select-none shrink-0 mt-1 font-sans">
+                                {verse.verse}
+                              </sup>
+                              <div className="flex-1 space-y-3">
+                                <div>
+                                  <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider block font-sans mb-0.5">
+                                    {selectedTranslation.name}:
+                                  </span>
+                                  <p className="text-[var(--text-main)] leading-relaxed">{verse.content}</p>
+                                </div>
+
+                                {selectedSecondaryTranslations.map(secSlug => {
+                                  const secVerse = (parallelVersesMap[secSlug] || []).find(v => String(v.verse) === String(verse.verse));
+                                  const secTransName = translations.find(t => t.slug === secSlug)?.name || secSlug;
+                                  return (
+                                    <div key={secSlug} className="pl-3 border-l-2 border-indigo-500/40 text-[0.92em] space-y-0.5">
+                                      <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider block font-sans">
+                                        {secTransName}:
+                                      </span>
+                                      <p className="text-[var(--text-muted)] italic leading-relaxed">
+                                        {secVerse ? secVerse.content : '...'}
+                                      </p>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          /* ── CASE 3: STANDARD SINGLE TRANSLATION READING ── */
+                          <div 
+                            onClick={() => handleVerseClick(String(verse.verse))}
+                            title="Nhấp để xem đối chiếu tất cả bản dịch của câu này ở Cột 3"
+                            className={`flex gap-3 items-start p-3 -mx-3 rounded-2xl transition-all cursor-pointer ${
+                              isSelected 
+                                ? 'bg-amber-500/15 border border-amber-500/40 shadow-inner' 
+                                : 'hover:bg-[var(--bg-main)]/60'
+                            }`}
+                          >
+                            <sup className="text-xs font-bold text-amber-600 dark:text-amber-400 select-none shrink-0 mt-1 font-sans">
+                              {verse.verse}
+                            </sup>
+                            <p className="text-[var(--text-main)] leading-relaxed flex-1">
                               {verse.content}
                             </p>
-
-                            {readMode === 'parallel' && sv && (
-                              <div className="pt-2 border-t border-[var(--border-card)]/50 text-[var(--text-muted)] text-[0.92em] italic">
-                                <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider block not-italic mb-1 font-sans">
-                                  {translations.find(t => t.slug === secondTranslationSlug)?.name}:
-                                </span>
-                                <p>{sv.content}</p>
-                              </div>
-                            )}
                           </div>
-                        </div>
+                        )}
+
                       </div>
                     );
                   })}
@@ -697,13 +896,13 @@ export default function BibleReader({
 
 
         {/* ----------------------------------------------------------------------- */}
-        {/* 🔬 CỘT 3: CỘT PHẢI (STUDY PANE & COMPANION SIDEBAR)                     */}
+        {/* 🔬 CỘT 3: CỘT PHẢI TINH GỌN (BÀI VIẾT LIÊN QUAN + QUẢNG CÁO + LỐI TẮT)   */}
         {/* ----------------------------------------------------------------------- */}
         <aside className={`col-span-12 ${
           showExpandedNav ? 'xl:col-span-3' : 'xl:col-span-3'
         } space-y-5 transition-all duration-300 lg:sticky lg:top-28`}>
           
-          {/* STATE A: ACTIVE DEEP STUDY PANE */}
+          {/* STATE A: ACTIVE DEEP STUDY PANE (KHI BẤM XEM CHÚ GIẢI / ĐỐI CHIẾU / ĐỊA DANH) */}
           {isStudyPaneOpen ? (
             <div className="bg-[var(--bg-card)] border border-amber-500/40 rounded-3xl p-5 shadow-2xl backdrop-blur-xl animate-in fade-in">
               {/* Header & Close Button */}
@@ -946,100 +1145,131 @@ export default function BibleReader({
               </div>
             </div>
           ) : (
-            /* STATE B: COMPANION STUDY SIDEBAR (DEFAULT STATE WHEN RIGHT PANE IS CLOSED) */
+            /* ════════════════════════════════════════════════════════════════
+                STATE B: REFINED COMPANION SIDEBAR (3 ESSENTIAL BLOCKS)
+               ════════════════════════════════════════════════════════════════ */
             <div className="space-y-5">
               
-              {/* Quick Tools Trigger Card */}
-              <div className="p-5 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-sm space-y-3">
-                <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
-                  <span>Công Cụ Khảo Cứu Nhanh</span>
-                </h4>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => openToolTab('commentary')}
-                    className="p-3 rounded-2xl bg-[var(--bg-main)] hover:bg-amber-500/15 border border-[var(--border-card)] hover:border-amber-500/40 text-left transition group cursor-pointer"
-                  >
-                    <MessageSquareText className="w-4 h-4 text-amber-500 mb-1" />
-                    <span className="font-serif font-bold text-xs block text-[var(--text-main)] group-hover:text-amber-600 dark:group-hover:text-amber-400">Chú Giải</span>
-                    <span className="text-[10px] text-[var(--text-muted)] font-serif">Theo chương</span>
-                  </button>
-
-                  <button
-                    onClick={() => openToolTab('parallel')}
-                    className="p-3 rounded-2xl bg-[var(--bg-main)] hover:bg-amber-500/15 border border-[var(--border-card)] hover:border-amber-500/40 text-left transition group cursor-pointer"
-                  >
-                    <Columns className="w-4 h-4 text-amber-500 mb-1" />
-                    <span className="font-serif font-bold text-xs block text-[var(--text-main)] group-hover:text-amber-600 dark:group-hover:text-amber-400">Đối Chiếu</span>
-                    <span className="text-[10px] text-[var(--text-muted)] font-serif">Đa bản dịch</span>
-                  </button>
-
-                  <button
-                    onClick={() => openToolTab('map')}
-                    className="p-3 rounded-2xl bg-[var(--bg-main)] hover:bg-emerald-500/15 border border-[var(--border-card)] hover:border-emerald-500/40 text-left transition group cursor-pointer"
-                  >
-                    <MapPin className="w-4 h-4 text-emerald-500 mb-1" />
-                    <span className="font-serif font-bold text-xs block text-[var(--text-main)] group-hover:text-emerald-600 dark:group-hover:text-emerald-400">Địa Danh</span>
-                    <span className="text-[10px] text-[var(--text-muted)] font-serif">Bản đồ 3D</span>
-                  </button>
-
-                  <button
-                    onClick={() => openToolTab('video')}
-                    className="p-3 rounded-2xl bg-[var(--bg-main)] hover:bg-rose-500/15 border border-[var(--border-card)] hover:border-rose-500/40 text-left transition group cursor-pointer"
-                  >
-                    <PlayCircle className="w-4 h-4 text-rose-500 mb-1" />
-                    <span className="font-serif font-bold text-xs block text-[var(--text-main)] group-hover:text-rose-600 dark:group-hover:text-rose-400">Video</span>
-                    <span className="text-[10px] text-[var(--text-muted)] font-serif">Bối cảnh</span>
-                  </button>
+              {/* KHỐI 1: BÀI VIẾT KHẢO CỨU & SUY NIỆM LIÊN QUAN */}
+              <div className="p-5 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-sm space-y-3.5">
+                <div className="flex items-center justify-between border-b border-[var(--border-card)]/60 pb-2">
+                  <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-2">
+                    <BookMarked className="w-4 h-4 text-amber-500" />
+                    <span>Bài Viết &amp; Khảo Cứu Liên Quan</span>
+                  </h4>
+                  <Link href="/thu-vien" className="text-[10px] font-serif text-[var(--text-muted)] hover:text-amber-500 transition-colors">
+                    Xem tất cả ›
+                  </Link>
                 </div>
+
+                {isLoadingArticles ? (
+                  <div className="space-y-2.5 py-2 animate-pulse">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="h-14 rounded-2xl bg-[var(--bg-main)]" />
+                    ))}
+                  </div>
+                ) : relatedArticles.length > 0 ? (
+                  <div className="space-y-2.5">
+                    {relatedArticles.map((art) => (
+                      <Link
+                        key={art.id}
+                        href={`/thu-vien/${art.slug}`}
+                        className="group flex items-center gap-3 p-2.5 rounded-2xl bg-[var(--bg-main)]/60 hover:bg-amber-500/10 border border-[var(--border-card)] hover:border-amber-500/40 transition-all"
+                      >
+                        {art.featured_image ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img 
+                            src={art.featured_image} 
+                            alt={art.title} 
+                            className="w-12 h-12 rounded-xl object-cover shrink-0 border border-[var(--border-card)]" 
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+                            <BookOpen className="w-5 h-5" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[9px] font-mono font-bold text-amber-600 dark:text-amber-400 uppercase block truncate">
+                            {art.category || 'Khảo Cứu'}
+                          </span>
+                          <h5 className="font-serif font-bold text-xs text-[var(--text-main)] group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors line-clamp-2 leading-snug">
+                            {art.title}
+                          </h5>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-[var(--text-muted)] font-serif italic py-2">
+                    Chưa có bài viết liên kết trực tiếp.
+                  </p>
+                )}
               </div>
 
-              {/* Free Advertisement / Google AdSense Sidebar Box */}
+              {/* KHỐI 2: KHÔNG GIAN MỤC VỤ & GOOGLE ADSENSE TỰ NHIÊN */}
               <AdBanner
                 slotId="kinh-thanh-sidebar"
                 format="rectangle"
-                customTitle="Tủ Sách & Bản Đồ 3D Kinh Thánh"
-                customSubtitle="Khám phá toàn bộ bối cảnh địa lý và văn hóa thời Cựu Ước & Tân Ước cùng VERIDU."
-                customLink="/ban-do"
+                customTitle="Tủ Sách Điện Tử & Học Liệu VERIDU"
+                customSubtitle="Khám phá hàng trăm đầu sách Thần học, Giáo luật và Slide giáo án PDF miễn phí."
+                customLink="/thu-vien/sach"
               />
 
-              {/* Shortcuts to 3D Map & Quiz */}
+              {/* KHỐI 3: CỔNG KẾT NỐI HỆ THỐNG TINH GỌN (SÁCH TRANH, QUIZ, WEBGAME) */}
               <div className="p-5 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-sm space-y-3">
                 <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-2">
-                  <Award className="w-4 h-4 text-amber-500" />
-                  <span>Trải Nghiệm Tương Tác</span>
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <span>Khám Phá Hệ Thống VERIDU</span>
                 </h4>
 
                 <div className="space-y-2">
+                  {/* Sách Tranh */}
                   <Link
-                    href="/ban-do"
-                    className="flex items-center gap-3 p-3 rounded-2xl bg-[var(--bg-main)] hover:bg-emerald-500/10 border border-[var(--border-card)] hover:border-emerald-500/40 transition group"
+                    href="/sach-tranh"
+                    className="flex items-center gap-3 p-3 rounded-2xl bg-[var(--bg-main)] hover:bg-amber-500/10 border border-[var(--border-card)] hover:border-amber-500/40 transition group"
                   >
-                    <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                      <MapPin className="w-4 h-4" />
+                    <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                      <BookOpen className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h5 className="font-serif font-bold text-xs text-[var(--text-main)] group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                        Bản Đồ Thánh Địa 3D
+                      <h5 className="font-serif font-bold text-xs text-[var(--text-main)] group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                        Sách Tranh Kinh Thánh
                       </h5>
-                      <p className="text-[10px] text-[var(--text-muted)] font-serif truncate">Khám phá vị trí địa lý Kinh Thánh</p>
+                      <p className="text-[10px] text-[var(--text-muted)] font-serif truncate">Minh họa sống động cho thiếu nhi & gia đình</p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-[var(--text-muted)] group-hover:translate-x-1 transition-transform" />
                   </Link>
 
+                  {/* Đấu Trường Quiz */}
                   <Link
                     href="/quiz"
                     className="flex items-center gap-3 p-3 rounded-2xl bg-[var(--bg-main)] hover:bg-amber-500/10 border border-[var(--border-card)] hover:border-amber-500/40 transition group"
                   >
-                    <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                    <div className="w-8 h-8 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-600 dark:text-rose-400">
                       <Award className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h5 className="font-serif font-bold text-xs text-[var(--text-main)] group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                      <h5 className="font-serif font-bold text-xs text-[var(--text-main)] group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
                         Đấu Trường Quiz Kinh Thánh
                       </h5>
-                      <p className="text-[10px] text-[var(--text-muted)] font-serif truncate">Trắc nghiệm tri thức Lời Chúa</p>
+                      <p className="text-[10px] text-[var(--text-muted)] font-serif truncate">Trắc nghiệm kiến thức thời gian thực</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-[var(--text-muted)] group-hover:translate-x-1 transition-transform" />
+                  </Link>
+
+                  {/* Game Hành Trình Đất Hứa */}
+                  <Link
+                    href="/game"
+                    className="flex items-center gap-3 p-3 rounded-2xl bg-[var(--bg-main)] hover:bg-emerald-500/10 border border-[var(--border-card)] hover:border-emerald-500/40 transition group"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                      <Gamepad2 className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h5 className="font-serif font-bold text-xs text-[var(--text-main)] group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                        WebGame Giáo Dục Đức Tin
+                      </h5>
+                      <p className="text-[10px] text-[var(--text-muted)] font-serif truncate">Hành Trình Về Đất Hứa &amp; Triệu Phú Đức Tin</p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-[var(--text-muted)] group-hover:translate-x-1 transition-transform" />
                   </Link>
