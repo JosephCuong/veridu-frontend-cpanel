@@ -7,9 +7,9 @@ import { usePathname } from 'next/navigation';
 import { getStoredUser, logout, UserProfile } from '@/lib/auth';
 import { 
   Flame, Moon, Sun, Menu, X, User, LogOut, LogIn, ChevronDown, 
-  BookOpen, MapPin, Clock, Users, FileText, Library, Award, Shield, Cross, Sparkles
+  BookOpen, MapPin, Clock, Users, FileText, Library, Award, Shield, Cross, Sparkles,
+  Zap, Droplets, Settings, Gamepad2
 } from 'lucide-react';
-
 
 export default function LiturgicalHeader() {
   const pathname = usePathname();
@@ -18,7 +18,7 @@ export default function LiturgicalHeader() {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  // Dropdown states for Desktop
+  // Dropdown states for Desktop Nav menus
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -26,12 +26,23 @@ export default function LiturgicalHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mobileExpandedGroup, setMobileExpandedGroup] = useState<string | null>(null);
 
-  // Auth state
+  // Auth & Profile Menu state
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setUser(getStoredUser());
+
+    // Live update when EXP / Mana / Streak changes
+    const handleUserUpdate = (e: any) => {
+      if (e.detail) {
+        setUser(e.detail);
+      } else {
+        setUser(getStoredUser());
+      }
+    };
+    window.addEventListener('veridu_user_updated', handleUserUpdate);
 
     // Sync dark mode from DOM
     const isDark = document.documentElement.classList.contains('dark');
@@ -41,26 +52,21 @@ export default function LiturgicalHeader() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
 
-      // Detect if scrolled past top boundary
       if (currentScrollY > 20) {
         setIsScrolled(true);
       } else {
         setIsScrolled(false);
       }
 
-      // Smart Reveal: Hide on scroll down, show on scroll up
       if (currentScrollY > 100) {
         if (currentScrollY > lastScrollY && currentScrollY - lastScrollY > 5) {
-          // Scrolling down -> hide header
           setIsVisible(false);
           setIsUserMenuOpen(false);
           setOpenDropdown(null);
         } else if (lastScrollY - currentScrollY > 5) {
-          // Scrolling up -> show header
           setIsVisible(true);
         }
       } else {
-        // Near top -> always visible
         setIsVisible(true);
       }
 
@@ -68,12 +74,42 @@ export default function LiturgicalHeader() {
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('veridu_user_updated', handleUserUpdate);
+    };
   }, [lastScrollY]);
 
-  // Close mobile drawer on route change
+  // Click-Outside & Escape key listener to auto-dismiss User Profile Menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsUserMenuOpen(false);
+        setOpenDropdown(null);
+      }
+    };
+
+    if (isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isUserMenuOpen]);
+
+  // Close mobile drawer and dropdowns on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
+    setIsUserMenuOpen(false);
     setOpenDropdown(null);
   }, [pathname]);
 
@@ -102,31 +138,39 @@ export default function LiturgicalHeader() {
     }, 180);
   };
 
-  // Determine Logo src:
-  // - On Hero banner (scrollY <= 20) on homepage: background is dark -> use light logo
-  // - On Dark Mode: use light logo
-  // - On Light Mode & Scrolled down: use dark logo
+  // Determine Logo src
   const isHomepageAtTop = pathname === '/' && !isScrolled;
   const logoSrc = (isDarkMode || isHomepageAtTop) 
     ? '/images/veridu_logo_light.png' 
     : '/images/veridu_logo_dark.png';
+
+  // Calculate Title & EXP
+  const currentExp = user?.points || 0;
+  const currentMana = user?.manna !== undefined ? user?.manna : 100;
+  const currentTitle = (user as any)?.current_title || (
+    currentExp >= 10000 ? 'Tông Đồ Ánh Sáng' :
+    currentExp >= 5000 ? 'Học Giả VERIDU' :
+    currentExp >= 3000 ? 'Hiệp Sĩ Phúc Âm' :
+    currentExp >= 1500 ? 'Chiến Binh Đức Tin' :
+    currentExp >= 500 ? 'Môn Đệ' : 'Tân Tòng'
+  );
 
   // Hide global header in dedicated document reader or storybook reader
   if (pathname?.startsWith('/thu-vien/doc/') || (pathname !== '/sach-tranh' && pathname?.startsWith('/sach-tranh/'))) {
     return null;
   }
 
-
   return (
-    <header 
-      className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 transform ${
+    <header
+      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       } ${
-        isScrolled 
-          ? 'backdrop-blur-2xl bg-[var(--header-bg)]/90 border-b border-[var(--border-card)] shadow-xl' 
-          : (pathname === '/' ? 'bg-transparent text-white' : 'backdrop-blur-xl bg-[var(--header-bg)]/80 border-b border-[var(--border-card)]')
+        isScrolled
+          ? 'bg-[var(--bg-card)]/90 backdrop-blur-xl border-b border-[var(--border-card)] shadow-lg'
+          : 'bg-transparent border-b border-[var(--border-card)]/30 backdrop-blur-sm'
       }`}
     >
+      
       {/* ========================================================
           DESKTOP 2-TIER HEADER (Hidden on Mobile < 768px)
       ======================================================== */}
@@ -158,51 +202,156 @@ export default function LiturgicalHeader() {
             </Link>
           </div>
 
-          {/* Right: Streak & Auth Controls */}
-          <div className="flex-1 flex items-center justify-end gap-3 shrink-0">
+          {/* Right: Streak, EXP, Mana & Auth Controls */}
+          <div className="flex-1 flex items-center justify-end gap-2.5 shrink-0">
             {user ? (
-              <div className="flex items-center gap-3">
-                {/* Streaks Widget */}
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-800 dark:text-amber-400 font-bold text-xs shadow-sm">
+              <div className="flex items-center gap-2">
+                
+                {/* 1. Streaks Widget */}
+                <div 
+                  title={`Chuỗi hoạt động: ${user.streak || 1} ngày liên tiếp`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-800 dark:text-amber-400 font-bold text-xs shadow-xs"
+                >
                   <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500 animate-pulse" />
                   <span>{user.streak || 1} Ngày</span>
                 </div>
+
+                {/* 2. Điểm EXP Đức Tin */}
+                <div 
+                  title={`Điểm Đức Tin: ${currentExp} EXP`}
+                  className="hidden lg:flex items-center gap-1 px-2.5 py-1.5 bg-amber-500/10 border border-amber-500/25 rounded-full text-amber-700 dark:text-amber-300 text-xs font-serif font-bold shadow-xs"
+                >
+                  <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
+                  <span>{currentExp} EXP</span>
+                </div>
+
+                {/* 3. Điểm Mana */}
+                <div 
+                  title={`Năng lượng Manna: ${currentMana} Mana`}
+                  className="hidden lg:flex items-center gap-1 px-2.5 py-1.5 bg-indigo-500/10 border border-indigo-500/25 rounded-full text-indigo-700 dark:text-indigo-300 text-xs font-serif font-bold shadow-xs"
+                >
+                  <Droplets className="w-3 h-3 text-indigo-500 fill-indigo-500" />
+                  <span>{currentMana}</span>
+                </div>
                 
-                {/* User Dropdown */}
-                <div className="relative">
+                {/* 4. User Dropdown Menu with Click-Outside Auto-Dismiss */}
+                <div className="relative" ref={userMenuRef}>
                   <button
+                    type="button"
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-amber-500/40 transition-all text-xs font-bold text-[var(--text-main)] shadow-sm"
+                    className="flex items-center gap-2 p-1.5 pr-3 rounded-full bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-amber-500/40 transition-all text-xs font-bold text-[var(--text-main)] shadow-sm cursor-pointer"
                   >
-                    <div className="relative w-6 h-6 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center font-serif text-xs font-black overflow-hidden">
+                    <div className="relative w-6 h-6 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center font-serif text-xs font-black overflow-hidden border border-amber-500/30">
                       {user.avatar ? (
                         <Image src={user.avatar} alt="Avatar" fill className="object-cover" sizes="24px" />
                       ) : (
                         user.christianName ? user.christianName[0] : 'G'
                       )}
                     </div>
-                    <span className="hidden lg:inline">{user.christianName} {user.displayName}</span>
+                    <span className="hidden sm:inline font-serif font-bold truncate max-w-[100px]">
+                      {user.christianName} {user.displayName}
+                    </span>
+                    <ChevronDown className={`w-3 h-3 text-[var(--text-muted)] transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180 text-amber-500' : ''}`} />
                   </button>
 
                   {isUserMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl shadow-2xl p-2 space-y-1 z-50">
-                      <div className="px-3 py-2 border-b border-[var(--border-card)] text-[11px] space-y-0.5">
-                        <div className="font-bold text-[var(--text-main)]">{user.christianName} {user.displayName}</div>
-                        <div className="text-amber-500">{user.parish || 'Giáo xứ'}</div>
-                      </div>
+                    <>
+                      {/* Transparent Backdrop */}
+                      <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)} />
 
-                      <Link href="/ho-so" className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-[var(--text-main)] hover:bg-amber-500/10 hover:text-amber-500">
-                        <User className="w-4 h-4" /> Hồ Sơ Cá Nhân
-                      </Link>
-                      <button 
-                        onClick={logout}
-                        className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-red-500 hover:bg-red-500/10"
-                      >
-                        <LogOut className="w-4 h-4" /> Đăng Xuất
-                      </button>
-                    </div>
+                      <div className="absolute right-0 top-full mt-2 w-72 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl shadow-2xl p-3.5 space-y-3 z-50 animate-in zoom-in-95 duration-150 backdrop-blur-2xl">
+                        
+                        {/* User Header Info Card */}
+                        <div className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 space-y-2">
+                          <div className="flex items-center gap-2.5">
+                            <div className="relative w-9 h-9 rounded-2xl bg-amber-500/20 text-amber-600 dark:text-amber-400 font-serif font-black text-sm flex items-center justify-center border border-amber-500/30 overflow-hidden shrink-0">
+                              {user.avatar ? (
+                                <Image src={user.avatar} alt="Avatar" fill className="object-cover" sizes="36px" />
+                              ) : (
+                                '✝'
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-serif font-bold text-xs text-[var(--text-main)] truncate">
+                                {user.christianName} {user.displayName}
+                              </div>
+                              <div className="text-[10px] text-amber-600 dark:text-amber-400 font-serif font-bold truncate flex items-center gap-1">
+                                <Sparkles className="w-3 h-3 text-amber-500" />
+                                <span>{currentTitle}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-amber-500/20 text-[11px] font-serif">
+                            <div className="flex items-center gap-1 text-[var(--text-main)]">
+                              <Zap className="w-3.5 h-3.5 text-amber-500" />
+                              <span>{currentExp} EXP</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-[var(--text-main)]">
+                              <Droplets className="w-3.5 h-3.5 text-indigo-500" />
+                              <span>{currentMana} Mana</span>
+                            </div>
+                          </div>
+
+                          {user.parish && (
+                            <div className="text-[10px] text-[var(--text-muted)] font-serif truncate pt-0.5 border-t border-amber-500/10">
+                              {user.parish} {user.diocese ? `• ${user.diocese}` : ''}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Menu Navigation Links */}
+                        <div className="space-y-1 text-xs font-serif">
+                          <Link 
+                            href="/ho-so" 
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-[var(--text-main)] hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400 transition-colors group"
+                          >
+                            <User className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
+                            <span>Hồ Sơ Cá Nhân &amp; Tiến Trình</span>
+                          </Link>
+
+                          {user.role === 'Quản Trị Viên' && (
+                            <Link 
+                              href="/ho-so" 
+                              onClick={() => setIsUserMenuOpen(false)}
+                              className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 transition-colors group"
+                            >
+                              <FileText className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
+                              <span>Quản Lý Bài Viết (Admin)</span>
+                            </Link>
+                          )}
+
+                          <Link 
+                            href="/cai-dat" 
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-[var(--text-main)] hover:bg-[var(--bg-main)] transition-colors group"
+                          >
+                            <Settings className="w-4 h-4 text-[var(--text-muted)] group-hover:scale-110 transition-transform" />
+                            <span>Cài Đặt Tài Khoản</span>
+                          </Link>
+                        </div>
+
+                        {/* Logout Button */}
+                        <div className="pt-2 border-t border-[var(--border-card)]">
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              setIsUserMenuOpen(false);
+                              logout();
+                            }}
+                            className="w-full text-left flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-serif font-bold text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                          >
+                            <LogOut className="w-4 h-4" />
+                            <span>Đăng Xuất</span>
+                          </button>
+                        </div>
+
+                      </div>
+                    </>
                   )}
                 </div>
+
               </div>
             ) : (
               <Link
@@ -218,7 +367,7 @@ export default function LiturgicalHeader() {
             <button 
               onClick={toggleTheme}
               aria-label="Chuyển đổi giao diện Sáng / Tối"
-              className="p-2 rounded-full bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-amber-500 hover:border-amber-500/40 transition-all shadow-sm"
+              className="p-2 rounded-full bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-amber-500 hover:border-amber-500/40 transition-all shadow-sm cursor-pointer"
               title={isDarkMode ? 'Chuyển sang Chế độ Sáng' : 'Chuyển sang Chế độ Tối'}
             >
               {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-500" />}
@@ -228,8 +377,8 @@ export default function LiturgicalHeader() {
         </div>
 
         {/* TIER 2: HORIZONTAL NAVIGATION BAR WITH DROPDOWNS */}
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 h-11 flex items-center justify-center">
-          <nav className="flex items-center gap-8 lg:gap-12 text-xs font-bold tracking-wide uppercase">
+        <div className="max-w-7xl mx-auto px-6 h-12 flex items-center justify-center">
+          <nav className="flex items-center gap-8 text-xs uppercase font-serif font-bold tracking-wider text-[var(--text-muted)]">
             
             {/* 1. KINH THÁNH (DROPDOWN) */}
             <div 
@@ -240,7 +389,9 @@ export default function LiturgicalHeader() {
               <Link 
                 href="/kinh-thanh" 
                 className={`flex items-center gap-1.5 py-1 text-[var(--text-main)] hover:text-amber-500 transition-colors ${
-                  pathname.startsWith('/kinh-thanh') || pathname.startsWith('/ban-do') || pathname.startsWith('/lich-su') || pathname.startsWith('/nhan-vat') ? 'text-amber-500 font-black' : ''
+                  pathname.startsWith('/kinh-thanh') || pathname === '/ban-do' || pathname === '/lich-su' || pathname === '/nhan-vat' 
+                    ? 'text-amber-500 font-black' 
+                    : ''
                 }`}
               >
                 <span>Kinh Thánh</span>
@@ -254,8 +405,8 @@ export default function LiturgicalHeader() {
                       <BookOpen className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-bold text-xs text-[var(--text-main)] group-hover:text-amber-500">Sách</div>
-                      <div className="text-[10px] text-[var(--text-muted)] lowercase">Đọc trọn bộ 73 Sách Thánh</div>
+                      <div className="font-bold text-xs text-[var(--text-main)] group-hover:text-amber-500">Sách Kinh Thánh</div>
+                      <div className="text-[10px] text-[var(--text-muted)] lowercase">73 Sách Cựu &amp; Tân Ước</div>
                     </div>
                   </Link>
 
@@ -264,8 +415,8 @@ export default function LiturgicalHeader() {
                       <MapPin className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-bold text-xs text-[var(--text-main)] group-hover:text-emerald-500">Bản Đồ</div>
-                      <div className="text-[10px] text-[var(--text-muted)] lowercase">Khảo cổ 3D Thánh Địa</div>
+                      <div className="font-bold text-xs text-[var(--text-main)] group-hover:text-emerald-500">Bản Đồ 3D</div>
+                      <div className="text-[10px] text-[var(--text-muted)] lowercase">Địa danh &amp; vùng đất Thánh</div>
                     </div>
                   </Link>
 
@@ -275,7 +426,7 @@ export default function LiturgicalHeader() {
                     </div>
                     <div>
                       <div className="font-bold text-xs text-[var(--text-main)] group-hover:text-purple-500">Dòng Thời Gian</div>
-                      <div className="text-[10px] text-[var(--text-muted)] lowercase">Lịch sử Cứu Độ 4000 năm</div>
+                      <div className="text-[10px] text-[var(--text-muted)] lowercase">Lịch sử cứu độ qua các thời kỳ</div>
                     </div>
                   </Link>
 
@@ -285,7 +436,7 @@ export default function LiturgicalHeader() {
                     </div>
                     <div>
                       <div className="font-bold text-xs text-[var(--text-main)] group-hover:text-indigo-500">Nhân Vật</div>
-                      <div className="text-[10px] text-[var(--text-muted)] lowercase">Tổ phụ, Ngôn sứ & Tông đồ</div>
+                      <div className="text-[10px] text-[var(--text-muted)] lowercase">Gia phả &amp; tiểu sử Thánh</div>
                     </div>
                   </Link>
                 </div>
@@ -326,7 +477,7 @@ export default function LiturgicalHeader() {
                     </div>
                     <div>
                       <div className="font-bold text-xs text-[var(--text-main)] group-hover:text-amber-500">Bài Viết</div>
-                      <div className="text-[10px] text-[var(--text-muted)] lowercase">Suy niệm & thần học</div>
+                      <div className="text-[10px] text-[var(--text-muted)] lowercase">Suy niệm &amp; thần học</div>
                     </div>
                   </Link>
 
@@ -346,7 +497,7 @@ export default function LiturgicalHeader() {
                     </div>
                     <div>
                       <div className="font-bold text-xs text-[var(--text-main)] group-hover:text-rose-500">Tài Liệu</div>
-                      <div className="text-[10px] text-[var(--text-muted)] lowercase">Giáo án & văn kiện PDF/Word</div>
+                      <div className="text-[10px] text-[var(--text-muted)] lowercase">Giáo án &amp; văn kiện PDF/Word</div>
                     </div>
                   </Link>
                 </div>
@@ -373,7 +524,6 @@ export default function LiturgicalHeader() {
               Sách Tranh
             </Link>
 
-
             {/* 6. ĐẤU TRƯỜNG */}
             <Link 
               href="/quiz" 
@@ -394,7 +544,6 @@ export default function LiturgicalHeader() {
               Game
             </Link>
 
-
           </nav>
         </div>
 
@@ -409,7 +558,7 @@ export default function LiturgicalHeader() {
         <button 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Mở menu"
-          className="p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-amber-500 shadow-sm"
+          className="p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-main)] hover:text-amber-500 shadow-sm cursor-pointer"
         >
           {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
@@ -433,7 +582,7 @@ export default function LiturgicalHeader() {
           <button 
             onClick={toggleTheme}
             aria-label="Đổi giao diện Sáng / Tối"
-            className="p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-main)] shadow-sm"
+            className="p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-main)] shadow-sm cursor-pointer"
           >
             {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-500" />}
           </button>
@@ -465,7 +614,7 @@ export default function LiturgicalHeader() {
           <div className="space-y-1">
             <button 
               onClick={() => setMobileExpandedGroup(mobileExpandedGroup === 'kinh-thanh' ? null : 'kinh-thanh')}
-              className="w-full py-2.5 flex items-center justify-between text-sm font-bold text-[var(--text-main)]"
+              className="w-full py-2.5 flex items-center justify-between text-sm font-bold text-[var(--text-main)] cursor-pointer"
             >
               <span className="flex items-center gap-2.5">
                 <BookOpen className="w-4 h-4 text-amber-500" /> Kinh Thánh
@@ -500,7 +649,7 @@ export default function LiturgicalHeader() {
           <div className="space-y-1">
             <button 
               onClick={() => setMobileExpandedGroup(mobileExpandedGroup === 'thu-vien' ? null : 'thu-vien')}
-              className="w-full py-2.5 flex items-center justify-between text-sm font-bold text-[var(--text-main)]"
+              className="w-full py-2.5 flex items-center justify-between text-sm font-bold text-[var(--text-main)] cursor-pointer"
             >
               <span className="flex items-center gap-2.5">
                 <Library className="w-4 h-4 text-indigo-500" /> Thư Viện
@@ -540,19 +689,26 @@ export default function LiturgicalHeader() {
 
           {/* 7. CỔNG GAME GIÁO LÝ */}
           <Link href="/game" className="block py-2.5 text-sm font-bold text-amber-600 dark:text-amber-400 hover:text-amber-500 flex items-center gap-2.5">
-            <Award className="w-4 h-4 text-amber-500" /> Cổng Game Giáo Lý
+            <Gamepad2 className="w-4 h-4 text-amber-500" /> Cổng Game Giáo Lý
           </Link>
-
 
           {/* User Section in Drawer */}
           <div className="pt-4 border-t border-[var(--border-card)] space-y-2">
             {user ? (
               <div className="space-y-2">
-                <div className="text-xs font-bold text-amber-500 flex items-center gap-2">
-                  <Flame className="w-4 h-4 fill-amber-500" /> Chuỗi học tập: {user.streak || 1} Ngày
+                <div className="flex items-center gap-2 text-xs font-bold text-amber-600 dark:text-amber-400">
+                  <Flame className="w-4 h-4 fill-amber-500 text-amber-500" />
+                  <span>Chuỗi: {user.streak || 1} Ngày</span>
+                  <span>•</span>
+                  <Zap className="w-3.5 h-3.5 text-amber-500" />
+                  <span>{currentExp} EXP</span>
                 </div>
-                <Link href="/ho-so" className="block py-2 text-xs font-bold text-[var(--text-main)]">Hồ Sơ Cá Nhân ({user.christianName} {user.displayName})</Link>
-                <button onClick={logout} className="w-full text-left py-2 text-xs font-bold text-red-500">Đăng Xuất</button>
+                <Link href="/ho-so" className="block py-2 text-xs font-bold text-[var(--text-main)]">
+                  Hồ Sơ Cá Nhân ({user.christianName} {user.displayName})
+                </Link>
+                <button type="button" onClick={logout} className="w-full text-left py-2 text-xs font-bold text-red-500 cursor-pointer">
+                  Đăng Xuất
+                </button>
               </div>
             ) : (
               <Link href="/dang-nhap" className="w-full py-3 rounded-2xl bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2">
