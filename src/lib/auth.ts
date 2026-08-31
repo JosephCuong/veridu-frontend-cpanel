@@ -23,6 +23,9 @@ export interface UserProfile {
   streak: number;
   points?: number;
   manna?: number;
+  level?: number;
+  selected_title?: string;
+  unlocked_titles?: string[];
   badges?: string[];
   createdAt?: string;
   quizHistory?: QuizAttempt[];
@@ -38,7 +41,6 @@ export function syncDailyStreak(user: UserProfile): UserProfile {
   let currentStreak = user.streak || 1;
 
   if (!lastActiveDate) {
-    // First time tracking or reset
     currentStreak = Math.max(currentStreak, 1);
     localStorage.setItem(lastActiveKey, today);
   } else if (lastActiveDate !== today) {
@@ -48,18 +50,20 @@ export function syncDailyStreak(user: UserProfile): UserProfile {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays === 1) {
-      // Consecutive active day: increment streak
       currentStreak += 1;
     } else if (diffDays > 1) {
-      // Inactive for more than 1 day: reset streak to 1
       currentStreak = 1;
     }
     localStorage.setItem(lastActiveKey, today);
   }
 
-  const updatedUser = { ...user, streak: currentStreak };
+  const updatedUser: UserProfile = { 
+    ...user, 
+    streak: currentStreak,
+    points: Math.max(100, user.points !== undefined ? user.points : 100),
+    manna: Math.max(0, user.manna !== undefined ? user.manna : 100)
+  };
 
-  // Sync to Supabase in background if user.id is valid
   if (user.id && typeof user.id === 'string' && user.id.includes('-')) {
     import('./supabaseClient').then(async ({ supabase }) => {
       try {
@@ -83,7 +87,6 @@ export function getStoredUser(): UserProfile | null {
       const decoded = data.includes('%') ? decodeURIComponent(data) : data;
       const parsed: UserProfile = JSON.parse(decoded);
       
-      // Auto-sanitize legacy UTF-8 text
       if (parsed.diocese && parsed.diocese.includes('?')) parsed.diocese = 'Giáo Phận Sài Gòn';
       if (parsed.parish && parsed.parish.includes('?')) parsed.parish = 'Tân Định';
 
@@ -109,12 +112,32 @@ export function getAuthToken(): string | null {
   return Cookies.get('veridu_token') || localStorage.getItem('veridu_token') || null;
 }
 
-export function saveAuthSession(token: string, user: UserProfile, remember: boolean = true) {
+export function saveAuthSession(tokenOrUser: string | UserProfile, userOrRemember?: UserProfile | boolean, remember: boolean = true) {
   if (typeof window !== 'undefined') {
+    let token = 'veridu_active_session';
+    let user: UserProfile;
+    let isRemember = true;
+
+    if (typeof tokenOrUser === 'string') {
+      token = tokenOrUser;
+      user = userOrRemember as UserProfile;
+      isRemember = remember;
+    } else {
+      user = tokenOrUser;
+      token = getAuthToken() || 'veridu_active_session';
+      isRemember = typeof userOrRemember === 'boolean' ? userOrRemember : true;
+    }
+
+    if (!user) return;
+
+    // Ensure 100 EXP and 100 Mana minimum
+    if (user.points === undefined || user.points < 100) user.points = 100;
+    if (user.manna === undefined) user.manna = 100;
+
     const jsonString = JSON.stringify(user);
     const encodedUser = encodeURIComponent(jsonString);
 
-    if (remember) {
+    if (isRemember) {
       Cookies.set('veridu_token', token, { expires: 30, path: '/' });
       Cookies.set('veridu_user', encodedUser, { expires: 30, path: '/' });
     } else {
@@ -129,15 +152,12 @@ export function saveAuthSession(token: string, user: UserProfile, remember: bool
 
 export function logout() {
   if (typeof window !== 'undefined') {
-    // Clear cookies
     Cookies.remove('veridu_token', { path: '/' });
     Cookies.remove('veridu_user', { path: '/' });
     
-    // Clear local storage
     localStorage.removeItem('veridu_token');
     localStorage.removeItem('veridu_user_profile');
 
-    // Sign out from Supabase Auth Server in background
     import('./supabaseClient').then(async ({ supabase }) => {
       try {
         await supabase.auth.signOut();
@@ -148,7 +168,6 @@ export function logout() {
   }
 }
 
-// 🏆 Quiz Practice History Helpers (Max 10 items)
 export function getStoredQuizHistory(): QuizAttempt[] {
   if (typeof window === 'undefined') return [];
   try {
@@ -187,12 +206,12 @@ export function addFaithPoints(points: number, mannaOrReason?: number | string, 
     diocese: '',
     role: 'Học Viên',
     streak: 1,
-    points: 0,
+    points: 100,
     manna: 100,
     badges: ['tan_tong']
   };
 
-  const newPoints = Math.max(0, (current.points || 0) + points);
+  const newPoints = Math.max(100, (current.points || 100) + points);
   const mannaDelta = typeof mannaOrReason === 'number' ? mannaOrReason : 0;
   const newManna = Math.max(0, (current.manna !== undefined ? current.manna : 100) + mannaDelta);
 
@@ -206,15 +225,12 @@ export function addFaithPoints(points: number, mannaOrReason?: number | string, 
     points: newPoints,
     manna: newManna,
     badges: existingBadges,
-    ...(newTitle ? { current_title: newTitle } : {})
+    selected_title: newTitle || current.selected_title || (current as any).current_title || 'NGƯỜI TÌM HIỂU'
   };
 
   saveAuthSession(getAuthToken() || 'guest_token', updated, true);
-
-  // Dispatch live window event so all UI components update immediately
   window.dispatchEvent(new CustomEvent('veridu_user_updated', { detail: updated }));
 
-  // Background update to Supabase (both profiles & game_profiles)
   if (current.id && typeof current.id === 'string' && current.id.includes('-')) {
     import('./supabaseClient').then(async ({ supabase }) => {
       try {
@@ -222,7 +238,7 @@ export function addFaithPoints(points: number, mannaOrReason?: number | string, 
           points: newPoints,
           manna: newManna,
           badges: existingBadges,
-          current_title: newTitle || (current as any).current_title || 'Tân Tòng',
+          selected_title: updated.selected_title,
           updated_at: new Date().toISOString()
         }).eq('id', current.id);
 
@@ -233,7 +249,7 @@ export function addFaithPoints(points: number, mannaOrReason?: number | string, 
           total_xp: newPoints,
           manna: newManna,
           badges: existingBadges,
-          current_title: newTitle || (current as any).current_title || 'Tân Tòng',
+          current_title: updated.selected_title,
           updated_at: new Date().toISOString()
         });
       } catch (err) {}
@@ -242,4 +258,3 @@ export function addFaithPoints(points: number, mannaOrReason?: number | string, 
 
   return updated;
 }
-

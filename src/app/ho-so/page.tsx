@@ -8,11 +8,14 @@ import {
   getStoredQuizHistory, clearQuizHistory, QuizAttempt 
 } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
+import { calculateLevelInfo, ALL_TITLES_CATALOG, TitleDefinition } from '@/lib/gamification';
+import UserAvatarFrame from '@/components/UserAvatarFrame';
+import CourseCertificateModal, { CertificateData } from '@/components/CourseCertificateModal';
 import { 
   User, Mail, Church, Compass, Award, Flame, Shield, LogOut, 
   Settings, BookOpen, CheckCircle, Clock, Save, Phone, Image as ImageIcon,
   Heart, Calendar, Loader2, Trophy, Trash2, ArrowRight, PlayCircle, BarChart3, 
-  AlertTriangle, Check, Plus, Eye, Cross, FileText
+  AlertTriangle, Check, Plus, Eye, Cross, FileText, Zap, Droplets, Sparkles, Scroll
 } from 'lucide-react';
 
 import { 
@@ -22,7 +25,7 @@ import {
 
 export default function ProfileDashboardPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'courses' | 'quiz' | 'posts' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'courses' | 'certificates' | 'titles' | 'mana' | 'quiz' | 'posts' | 'settings'>('dashboard');
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   
@@ -36,13 +39,19 @@ export default function ProfileDashboardPage() {
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
+  // Certificates Modal State
+  const [selectedCertificate, setSelectedCertificate] = useState<CertificateData | null>(null);
+
   // Quiz history & LMS courses state from Supabase
   const [quizHistory, setQuizHistory] = useState<QuizAttempt[]>([]);
   const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
   const [isLoadingDb, setIsLoadingDb] = useState(true);
 
-  // Non-blocking transition state for lightning-fast INP (<50ms)
+  // Non-blocking transition state
   const [isPending, startTransition] = useTransition();
+
+  // Selected Title state
+  const [selectedTitle, setSelectedTitle] = useState<string>('NGƯỜI TÌM HIỂU');
 
   // Form State for Profile Settings
   const [formData, setFormData] = useState({
@@ -65,6 +74,7 @@ export default function ProfileDashboardPage() {
     const current = getStoredUser();
     if (current) {
       setUser(current);
+      setSelectedTitle((current as any)?.selected_title || (current as any)?.current_title || 'NGƯỜI TÌM HIỂU');
       setFormData({
         christianName: current.christianName || 'Giuse',
         displayName: current.displayName || '',
@@ -77,7 +87,6 @@ export default function ProfileDashboardPage() {
         avatar: current.avatar || ''
       });
 
-      // Query Real Database from Supabase first, fallback to local storage
       const userIdStr = typeof current.id === 'string' ? current.id : undefined;
       
       Promise.all([
@@ -123,540 +132,601 @@ export default function ProfileDashboardPage() {
     setMessage(null);
 
     try {
-      if (user?.id) {
-        await supabase
-          .from('profiles')
-          .update({
-            display_name: formData.displayName,
-            christian_name: formData.christianName,
-            phone: formData.phone,
-            parish: formData.parish,
-            diocese: formData.diocese,
-            avatar_url: formData.avatar
-          })
-          .eq('id', user.id);
-      }
+      if (!user) return;
 
       const updatedUser: UserProfile = {
-        ...user!,
-        displayName: formData.displayName,
+        ...user,
         christianName: formData.christianName,
+        displayName: formData.displayName,
         phone: formData.phone,
         parish: formData.parish,
         diocese: formData.diocese,
         avatar: formData.avatar
       };
 
-      const token = getAuthToken() || 'veridu_session';
-      saveAuthSession(token, updatedUser);
+      saveAuthSession(updatedUser);
       setUser(updatedUser);
+
+      if (user.id) {
+        await supabase
+          .from('profiles')
+          .update({
+            christian_name: formData.christianName,
+            full_name: formData.displayName,
+            phone: formData.phone,
+            parish: formData.parish,
+            diocese: formData.diocese,
+            avatar_url: formData.avatar,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.id);
+      }
+
+      window.dispatchEvent(new CustomEvent('veridu_user_updated', { detail: updatedUser }));
       setMessage({ text: 'Cập nhật thông tin hồ sơ thành công!', type: 'success' });
     } catch (err: any) {
-      setMessage({ text: err.message || 'Lỗi khi cập nhật hồ sơ.', type: 'error' });
+      setMessage({ text: err.message || 'Lỗi khi lưu thông tin', type: 'error' });
     } finally {
       setIsUpdating(false);
     }
   };
 
-  // Instant Non-blocking Clear Quiz History
-  const executeClearHistory = () => {
-    startTransition(() => {
-      setQuizHistory([]);
-      setShowConfirmDelete(false);
-    });
+  // Change Selected Title Handler
+  const handleSelectTitle = async (titleName: string) => {
+    if (!user) return;
+    setSelectedTitle(titleName);
 
-    clearQuizHistory();
-    const userIdStr = typeof user?.id === 'string' ? user.id : undefined;
-    clearUserQuizAttemptsFromSupabase(userIdStr).catch(err => {
-      console.warn('Background clear DB quiz warning:', err);
-    });
-  };
+    const updatedUser = {
+      ...user,
+      selected_title: titleName,
+      current_title: titleName
+    };
 
-  // Delete Post Handler
-  const handleDeletePost = async (postId: number | string) => {
-    try {
-      const { error } = await supabase.from('posts').delete().eq('id', postId);
-      if (error) throw error;
-      setUserPosts(prev => prev.filter(p => p.id !== postId));
-      setPostToDelete(null);
-    } catch (err: any) {
-      alert('Không thể xóa bài viết: ' + (err.message || 'Lỗi kết nối CSDL'));
+    saveAuthSession(updatedUser as any);
+    setUser(updatedUser as any);
+
+    if (user.id) {
+      await supabase
+        .from('profiles')
+        .update({
+          selected_title: titleName,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
     }
+
+    window.dispatchEvent(new CustomEvent('veridu_user_updated', { detail: updatedUser }));
+    setMessage({ text: `Đã đổi danh hiệu thành: ${titleName}`, type: 'success' });
   };
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col items-center justify-center p-4 text-center font-sans pt-32">
-        <div className="p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] backdrop-blur-2xl max-w-md w-full space-y-6 shadow-2xl">
-          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center mx-auto">
-            <User className="w-8 h-8" />
-          </div>
-          <div className="space-y-2">
-            <h1 className="font-serif font-black text-2xl text-[var(--text-main)]">Hồ Sơ Tín Hữu VERIDU</h1>
-            <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-              Vui lòng đăng nhập để xem tiến trình học hỏi Kinh Thánh, bảng điểm bài thi và quản lý thông tin giáo xứ.
-            </p>
-          </div>
-          <Link
-            href="/dang-nhap"
-            className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-2xl transition-all block shadow-lg shadow-amber-500/20"
-          >
-            Đăng Nhập Ngay
-          </Link>
-        </div>
+      <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center">
+        <h2 className="text-2xl font-serif font-black mb-2">Vui Lòng Đăng Nhập</h2>
+        <p className="text-sm text-[var(--text-muted)] mb-6 font-serif">Bạn cần đăng nhập để xem thông tin hồ sơ và tiến trình cá nhân.</p>
+        <Link href="/dang-nhap" className="px-6 py-3 rounded-full bg-amber-500 text-slate-950 font-bold font-serif shadow-lg hover:bg-amber-400 transition">
+          Đăng Nhập Ngay
+        </Link>
       </div>
     );
   }
 
+  const levelInfo = calculateLevelInfo(user.points || 100, selectedTitle);
+  const currentMana = user.manna !== undefined ? user.manna : 100;
+
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] pt-24 sm:pt-28 md:pt-36 pb-20 px-4 sm:px-6 lg:px-8 font-sans transition-colors duration-300">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] pt-28 pb-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="sr-only">Hồ Sơ Tín Hữu VERIDU</h1>
         
-        {/* 🌟 2-COLUMN DASHBOARD LAYOUT WITH FIXED TOP HEADER SPACING */}
+        {/* ========================================================================= */}
+        {/* 🌟 2-COLUMN MAIN LAYOUT (LEFT PROFILE CARD + RIGHT DASHBOARD WORKSPACE)    */}
+        {/* ========================================================================= */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* 📌 CỘT TRÁI CỐ ĐỊNH (STICKY LEFT SIDEBAR NAVIGATION) */}
-          <aside className="lg:col-span-4 xl:col-span-3 lg:sticky lg:top-36 space-y-6">
+          {/* ─────────────────────────────────────────────────────────────────────── */}
+          {/* 👤 LEFT COLUMN: USER AVATAR FRAME & STATS SUMMARY CARD                 */}
+          {/* ─────────────────────────────────────────────────────────────────────── */}
+          <div className="lg:col-span-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur-xl space-y-6">
             
-            {/* User Profile Card Widget */}
-            <div className="p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] backdrop-blur-2xl shadow-xl space-y-5 text-center relative overflow-hidden group">
-              <div className="absolute -right-10 -top-10 w-40 h-40 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all pointer-events-none" />
+            {/* User Avatar with Metallic Frame & Pure Typography 3D Ribbon */}
+            <div className="flex flex-col items-center">
+              <UserAvatarFrame
+                avatarUrl={user.avatar}
+                christianName={user.christianName}
+                displayName={user.displayName}
+                points={user.points || 100}
+                selectedTitle={selectedTitle}
+                size="lg"
+                showTitleRibbon={true}
+                showProgressBar={true}
+              />
 
-              {/* Avatar Icon */}
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-700/20 border-2 border-amber-500/40 flex items-center justify-center text-amber-500 text-3xl font-serif font-black shadow-xl mx-auto relative z-10 overflow-hidden">
-                {user.avatar ? (
-                  <Image src={user.avatar} alt="Avatar" fill className="object-cover" sizes="80px" />
-                ) : (
-                  user.christianName ? user.christianName[0] : (user.displayName ? user.displayName[0] : 'V')
-                )}
+              <button
+                type="button"
+                onClick={() => setShowAvatarModal(true)}
+                className="mt-3 text-[11px] font-serif font-bold text-amber-700 dark:text-amber-400 hover:underline cursor-pointer"
+              >
+                Đổi ảnh đại diện Thánh
+              </button>
+            </div>
+
+            {/* Core Identity Info */}
+            <div className="text-center space-y-1 border-t border-[var(--border-card)] pt-4">
+              <h3 className="text-xl font-serif font-black text-[var(--text-main)]">
+                {user.christianName ? `${user.christianName} ` : ''}{user.displayName || 'Thành Viên'}
+              </h3>
+              <p className="text-xs font-mono text-[var(--text-muted)]">{user.email}</p>
+            </div>
+
+            {/* Quick Stats Grid: Streak, EXP, Mana */}
+            <div className="grid grid-cols-3 gap-2 p-3 bg-[var(--bg-main)]/70 border border-[var(--border-card)] rounded-2xl text-center">
+              <div className="space-y-0.5">
+                <div className="text-[10px] font-serif uppercase tracking-wider text-[var(--text-muted)]">Chuỗi Ngày</div>
+                <div className="font-serif font-black text-sm text-amber-600 dark:text-amber-400 flex items-center justify-center gap-1">
+                  <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                  <span>{user.streak || 1}</span>
+                </div>
               </div>
 
-              {/* User Names & Badges */}
-              <div className="space-y-2 relative z-10">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 font-serif font-bold text-xs">
-                  <Cross className="w-3 h-3 text-amber-500" />
-                  <span>{user.christianName || 'Tín Hữu'}</span>
+              <div className="space-y-0.5 border-x border-[var(--border-card)]">
+                <div className="text-[10px] font-serif uppercase tracking-wider text-[var(--text-muted)]">Kinh Nghiệm</div>
+                <div className="font-serif font-black text-sm text-amber-600 dark:text-amber-400 flex items-center justify-center gap-1">
+                  <Zap className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                  <span>{user.points || 100}</span>
                 </div>
-                <h2 className="text-xl font-serif font-bold text-[var(--text-main)] line-clamp-1">{user.displayName || user.email}</h2>
-                <p className="text-xs text-[var(--text-muted)] truncate">{user.email}</p>
               </div>
 
-              {/* Parish & Streak Badges */}
-              <div className="pt-3 border-t border-[var(--border-card)] space-y-2 text-xs font-semibold relative z-10">
-                <div className="flex items-center justify-between text-[var(--text-muted)]">
-                  <span>Giáo Xứ:</span>
-                  <span className="text-amber-600 dark:text-amber-400 font-bold">{user.parish || 'Tân Định'}</span>
-                </div>
-                <div className="flex items-center justify-between text-[var(--text-muted)]">
-                  <span>Giáo Phận:</span>
-                  <span className="text-[var(--text-main)]">{user.diocese || 'Giáo Phận Sài Gòn'}</span>
-                </div>
-                <div className="flex items-center justify-between text-[var(--text-muted)] pt-1">
-                  <span>Chuỗi Ngày:</span>
-                  <span className="text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1">
-                    <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500" /> {user.streak || 1} Ngày
-                  </span>
+              <div className="space-y-0.5">
+                <div className="text-[10px] font-serif uppercase tracking-wider text-[var(--text-muted)]">Điểm Mana</div>
+                <div className="font-serif font-black text-sm text-indigo-600 dark:text-indigo-400 flex items-center justify-center gap-1">
+                  <Droplets className="w-3.5 h-3.5 fill-indigo-500 text-indigo-500" />
+                  <span>{currentMana}</span>
                 </div>
               </div>
             </div>
 
-            {/* Navigation Menu */}
-            <div className="p-3 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-lg space-y-1.5">
-              <button 
-                onClick={() => startTransition(() => setActiveTab('dashboard'))}
-                className={`w-full text-left px-4 py-3 rounded-2xl font-bold text-xs flex items-center justify-between transition-all ${
-                  activeTab === 'dashboard' 
-                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-black' 
-                    : 'text-[var(--text-muted)] hover:bg-[var(--bg-main)] hover:text-[var(--text-main)]'
+            {/* Parish & Diocese Information */}
+            <div className="space-y-2.5 text-xs font-serif border-t border-[var(--border-card)] pt-4">
+              <div className="flex justify-between">
+                <span className="text-[var(--text-muted)]">Giáo Xứ:</span>
+                <span className="font-bold text-[var(--text-main)]">{user.parish || 'Tân Định'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--text-muted)]">Giáo Phận:</span>
+                <span className="font-bold text-[var(--text-main)]">{user.diocese || 'Giáo Phận Sài Gòn'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--text-muted)]">Vai Trò:</span>
+                <span className="font-bold text-amber-700 dark:text-amber-400">{user.role || 'Thành Viên'}</span>
+              </div>
+            </div>
+
+            {/* Quick Navigation Tabs */}
+            <div className="space-y-1.5 pt-2 border-t border-[var(--border-card)]">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
+                  activeTab === 'dashboard' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
                 }`}
               >
-                <div className="flex items-center gap-2.5">
-                  <BarChart3 className="w-4 h-4" />
-                  <span>Tổng Quan Hồ Sơ</span>
-                </div>
-                {activeTab === 'dashboard' && <div className="w-2 h-2 rounded-full bg-slate-950" />}
+                <User className="w-4 h-4" /> Tổng Quan Hồ Sơ
               </button>
 
-              <button 
-                onClick={() => startTransition(() => setActiveTab('courses'))}
-                className={`w-full text-left px-4 py-3 rounded-2xl font-bold text-xs flex items-center justify-between transition-all ${
-                  activeTab === 'courses' 
-                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-black' 
-                    : 'text-[var(--text-muted)] hover:bg-[var(--bg-main)] hover:text-[var(--text-main)]'
+              <button
+                onClick={() => setActiveTab('titles')}
+                className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
+                  activeTab === 'titles' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
                 }`}
               >
-                <div className="flex items-center gap-2.5">
-                  <BookOpen className="w-4 h-4" />
-                  <span>Khóa Học Đã Đăng Ký</span>
-                </div>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'courses' ? 'bg-slate-950 text-amber-400' : 'bg-[var(--bg-main)] text-[var(--text-muted)]'}`}>
-                  {enrolledCourses.length}
-                </span>
+                <Award className="w-4 h-4" /> Danh Hiệu &amp; Cấp Bậc
               </button>
 
-              <button 
-                onClick={() => startTransition(() => setActiveTab('quiz'))}
-                className={`w-full text-left px-4 py-3 rounded-2xl font-bold text-xs flex items-center justify-between transition-all ${
-                  activeTab === 'quiz' 
-                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-black' 
-                    : 'text-[var(--text-muted)] hover:bg-[var(--bg-main)] hover:text-[var(--text-main)]'
+              <button
+                onClick={() => setActiveTab('certificates')}
+                className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
+                  activeTab === 'certificates' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
                 }`}
               >
-                <div className="flex items-center gap-2.5">
-                  <Trophy className="w-4 h-4" />
-                  <span>Kết Quả Đấu Trường</span>
-                </div>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'quiz' ? 'bg-slate-950 text-amber-400' : 'bg-[var(--bg-main)] text-[var(--text-muted)]'}`}>
-                  {quizHistory.length}
-                </span>
+                <Scroll className="w-4 h-4" /> Chứng Chỉ Khóa Học
               </button>
 
-              <button 
-                onClick={() => startTransition(() => setActiveTab('posts'))}
-                className={`w-full text-left px-4 py-3 rounded-2xl font-bold text-xs flex items-center justify-between transition-all ${
-                  activeTab === 'posts' 
-                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-black' 
-                    : 'text-[var(--text-muted)] hover:bg-[var(--bg-main)] hover:text-[var(--text-main)]'
+              <button
+                onClick={() => setActiveTab('mana')}
+                className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
+                  activeTab === 'mana' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
                 }`}
               >
-                <div className="flex items-center gap-2.5">
-                  <FileText className="w-4 h-4 text-amber-500" />
-                  <span>Quản Lý Bài Viết</span>
-                </div>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${activeTab === 'posts' ? 'bg-slate-950 text-amber-400' : 'bg-[var(--bg-main)] text-[var(--text-muted)]'}`}>
-                  {userPosts.length}
-                </span>
+                <Droplets className="w-4 h-4" /> Năng Lượng Mana
               </button>
 
-              <button 
-                onClick={() => startTransition(() => setActiveTab('settings'))}
-                className={`w-full text-left px-4 py-3 rounded-2xl font-bold text-xs flex items-center justify-between transition-all ${
-                  activeTab === 'settings' 
-                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-black' 
-                    : 'text-[var(--text-muted)] hover:bg-[var(--bg-main)] hover:text-[var(--text-main)]'
+              <button
+                onClick={() => setActiveTab('courses')}
+                className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
+                  activeTab === 'courses' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
                 }`}
               >
-                <div className="flex items-center gap-2.5">
-                  <Settings className="w-4 h-4" />
-                  <span>Cài Đặt Hồ Sơ</span>
-                </div>
-                {activeTab === 'settings' && <div className="w-2 h-2 rounded-full bg-slate-950" />}
+                <BookOpen className="w-4 h-4" /> Khóa Học Đang Học
+              </button>
+
+              <button
+                onClick={() => setActiveTab('quiz')}
+                className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
+                  activeTab === 'quiz' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
+                }`}
+              >
+                <Trophy className="w-4 h-4" /> Lịch Sử Đấu Trường
+              </button>
+
+              {user.role === 'Quản Trị Viên' && (
+                <button
+                  onClick={() => setActiveTab('posts')}
+                  className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
+                    activeTab === 'posts' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-amber-700 dark:text-amber-400'
+                  }`}
+                >
+                  <FileText className="w-4 h-4" /> Quản Lý Bài Viết ({userPosts.length})
+                </button>
+              )}
+
+              <button
+                onClick={() => setActiveTab('settings')}
+                className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
+                  activeTab === 'settings' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
+                }`}
+              >
+                <Settings className="w-4 h-4" /> Cài Đặt Hồ Sơ
               </button>
             </div>
 
-            {/* Logout Action Button */}
-            <button 
-              onClick={logout} 
-              className="w-full py-3 px-4 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-500 font-bold text-xs rounded-2xl flex items-center justify-center gap-2 transition-all shadow-sm active:scale-95"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Đăng Xuất Tài Khoản</span>
-            </button>
+            {/* Logout Button */}
+            <div className="pt-2 border-t border-[var(--border-card)]">
+              <button
+                type="button"
+                onClick={logout}
+                className="w-full flex items-center justify-center gap-2 p-2.5 rounded-2xl bg-red-500/10 hover:bg-red-500 text-red-600 dark:text-red-400 hover:text-white text-xs font-serif font-bold transition-all cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" /> Đăng Xuất
+              </button>
+            </div>
 
-          </aside>
+          </div>
 
-          {/* 📖 KHÔNG GIAN CHÍNH (MAIN DASHBOARD CONTENT PANE) */}
-          <main className="lg:col-span-8 xl:col-span-9 space-y-6">
+
+          {/* ─────────────────────────────────────────────────────────────────────── */}
+          {/* 📊 RIGHT COLUMN: DYNAMIC TABS WORKSPACE                                 */}
+          {/* ─────────────────────────────────────────────────────────────────────── */}
+          <div className="lg:col-span-8 space-y-6">
             
-            {/* TAB 1: DASHBOARD OVERVIEW */}
+            {message && (
+              <div className={`p-4 rounded-2xl text-xs font-serif font-bold flex items-center gap-2 ${
+                message.type === 'success' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30'
+              }`}>
+                {message.type === 'success' ? <Check className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                <span>{message.text}</span>
+              </div>
+            )}
+
+            {/* ── TAB 1: DASHBOARD OVERVIEW ── */}
             {activeTab === 'dashboard' && (
-              <div className="space-y-8 animate-in fade-in duration-200">
-                
-                {/* Stat Cards Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  
-                  <div className="p-5 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] space-y-2 shadow-lg">
-                    <div className="flex items-center justify-between text-amber-500">
-                      <span className="text-xs font-bold text-[var(--text-muted)] uppercase">Tiến Trình Học</span>
-                      <BookOpen className="w-5 h-5" />
-                    </div>
-                    <div className="text-2xl font-black font-serif text-[var(--text-main)]">71.6%</div>
-                    <p className="text-[11px] text-[var(--text-muted)]">3 Khóa học đang theo dõi</p>
-                  </div>
-
-                  <div className="p-5 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] space-y-2 shadow-lg">
-                    <div className="flex items-center justify-between text-indigo-500">
-                      <span className="text-xs font-bold text-[var(--text-muted)] uppercase">Điểm Đấu Trường</span>
-                      <Trophy className="w-5 h-5" />
-                    </div>
-                    <div className="text-2xl font-black font-serif text-[var(--text-main)]">90.0%</div>
-                    <p className="text-[11px] text-[var(--text-muted)]">{quizHistory.length} Lượt tự luyện thi</p>
-                  </div>
-
-                  <div className="p-5 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] space-y-2 shadow-lg">
-                    <div className="flex items-center justify-between text-amber-500">
-                      <span className="text-xs font-bold text-[var(--text-muted)] uppercase">Chuỗi Học Tập</span>
-                      <Flame className="w-5 h-5 fill-amber-500 text-amber-500" />
-                    </div>
-                    <div className="text-2xl font-black font-serif text-amber-600 dark:text-amber-400">1 Ngày</div>
-                    <p className="text-[11px] text-[var(--text-muted)]">Giữ vững phong độ hằng ngày</p>
-                  </div>
-
-                  <div className="p-5 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] space-y-2 shadow-lg">
-                    <div className="flex items-center justify-between text-emerald-500">
-                      <span className="text-xs font-bold text-[var(--text-muted)] uppercase">Danh Hiệu</span>
-                      <Award className="w-5 h-5" />
-                    </div>
-                    <div className="text-xl font-black font-serif text-emerald-600 dark:text-emerald-400">Tín Hữu Chăm Chỉ</div>
-                    <p className="text-[11px] text-[var(--text-muted)]">Đã hoàn thành 18 bài học</p>
-                  </div>
-
+              <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+                <div className="border-b border-[var(--border-card)] pb-4">
+                  <h2 className="text-xl sm:text-2xl font-serif font-black">Tổng Quan Tiến Trình</h2>
+                  <p className="text-xs text-[var(--text-muted)] font-serif mt-1">
+                    Theo dõi hành trình học hỏi Lời Chúa, tích lũy điểm kinh nghiệm và thăng cấp.
+                  </p>
                 </div>
 
-                {/* Middle Section: LMS Progress & Quiz History Side-by-Side */}
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                  
-                  {/* LMS Progress Widget */}
-                  <div className="p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] space-y-6 shadow-xl">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-serif font-bold text-lg text-amber-600 dark:text-amber-400 flex items-center gap-2">
-                        <BookOpen className="w-5 h-5 text-amber-500" /> Khóa Học Đang Theo Đuổi
+                {/* Level Detail Card */}
+                <div className="p-6 rounded-3xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <span className="text-[10px] font-serif uppercase tracking-widest text-amber-700 dark:text-amber-400 font-bold block">
+                        Cấp Bậc Hiện Tại
+                      </span>
+                      <h3 className="font-serif font-black text-2xl text-[var(--text-main)]">
+                        CẤP {levelInfo.level} · {levelInfo.title}
                       </h3>
-                      <button onClick={() => startTransition(() => setActiveTab('courses'))} className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline">
-                        Xem tất cả ➔
-                      </button>
                     </div>
-
-                    <div className="space-y-4">
-                      {enrolledCourses.map(course => (
-                        <div key={course.id} className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] space-y-3 hover:border-amber-500/30 transition-all">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2.5 font-bold text-sm">
-                              <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center shrink-0">
-                                <BookOpen className="w-4 h-4" />
-                              </div>
-                              <span className="text-[var(--text-main)]">{course.title}</span>
-                            </div>
-                            <span className="text-xs font-black text-amber-600 dark:text-amber-400">{course.progress}%</span>
-                          </div>
-
-                          <div className="w-full bg-[var(--border-card)] rounded-full h-2 overflow-hidden">
-                            <div className="bg-amber-500 h-full rounded-full transition-all duration-500" style={{ width: `${course.progress}%` }} />
-                          </div>
-
-                          <div className="flex items-center justify-between text-xs text-[var(--text-muted)] pt-1">
-                            <span>Đã học {course.completedLessons}/{course.totalLessons} bài</span>
-                            <Link href={`/khoa-hoc/${course.slug}`} className="text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1 hover:underline">
-                              Học Tiếp <ArrowRight className="w-3.5 h-3.5" />
-                            </Link>
-                          </div>
-                        </div>
-                      ))}
+                    <div className="text-right">
+                      <span className="font-mono text-sm font-bold text-amber-600 dark:text-amber-400">
+                        {levelInfo.currentExp} / {levelInfo.nextLevelExp} EXP
+                      </span>
+                      <div className="text-[10px] font-serif text-[var(--text-muted)]">
+                        {levelInfo.level >= 100 ? 'Đã đạt cấp tối đa' : `Cần ${levelInfo.nextLevelExp - levelInfo.currentExp} EXP để lên Cấp ${levelInfo.level + 1}`}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Quiz History Widget */}
-                  <div className="p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] space-y-6 shadow-xl">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-serif font-bold text-lg text-amber-600 dark:text-amber-400 flex items-center gap-2">
-                        <Trophy className="w-5 h-5 text-amber-500" /> Bảng Điểm Đấu Trường (10 Lượt Gần Nhất)
-                      </h3>
+                  {/* Level Progress Bar */}
+                  <div className="w-full h-3 bg-[var(--bg-main)] border border-amber-500/30 rounded-full overflow-hidden p-0.5">
+                    <div
+                      className="h-full bg-gradient-to-r from-amber-500 to-amber-600 rounded-full transition-all duration-500"
+                      style={{ width: `${levelInfo.progressPercent}%` }}
+                    />
+                  </div>
+                </div>
 
-                      {quizHistory.length > 0 && !showConfirmDelete && (
-                        <button 
-                          onClick={() => setShowConfirmDelete(true)}
-                          className="text-xs font-bold text-rose-500 hover:text-rose-400 flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/30 transition-all active:scale-95"
-                          title="Xóa lịch sử tự luyện cũ"
+                {/* 6 Milestone Badges Overview (Pure Typography) */}
+                <div className="space-y-3">
+                  <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-[var(--text-muted)]">
+                    6 Cột Mốc Danh Hiệu Cấp Bậc
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {[
+                      { lvl: 1, name: 'NGƯỜI TÌM HIỂU', exp: 100, desc: 'Cấp 1 - 9' },
+                      { lvl: 10, name: 'NGƯỜI NĂNG ĐỘNG', exp: 1000, desc: 'Cấp 10 - 24' },
+                      { lvl: 25, name: 'MÔN ĐỆ TRUNG TÍN', exp: 5000, desc: 'Cấp 25 - 49' },
+                      { lvl: 50, name: 'HIỆP SĨ PHÚC ÂM', exp: 15000, desc: 'Cấp 50 - 74' },
+                      { lvl: 75, name: 'HỌC GIẢ UYÊN BÁC', exp: 35000, desc: 'Cấp 75 - 99' },
+                      { lvl: 100, name: 'TÔNG ĐỒ ÁNH SÁNG', exp: 100000, desc: 'Cấp 100' },
+                    ].map((m) => {
+                      const isUnlocked = levelInfo.level >= m.lvl;
+                      return (
+                        <div
+                          key={m.lvl}
+                          className={`p-3.5 rounded-2xl border transition-all ${
+                            isUnlocked
+                              ? 'bg-amber-500/10 border-amber-500/40 text-[var(--text-main)] shadow-xs'
+                              : 'bg-[var(--bg-main)]/50 border-[var(--border-card)] opacity-50'
+                          }`}
                         >
-                          <Trash2 className="w-3.5 h-3.5" /> Xóa Lịch Sử
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Inline Instant Confirmation Bar */}
-                    {showConfirmDelete && (
-                      <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between gap-4 text-xs font-bold text-rose-500 animate-in fade-in">
-                        <span>Xác nhận xóa 10 bài luyện thi?</span>
-                        <div className="flex items-center gap-2">
-                          <button 
-                            onClick={executeClearHistory}
-                            className="px-3 py-1 bg-rose-500 text-white rounded-lg hover:bg-rose-600 font-bold"
-                          >
-                            Xóa
-                          </button>
-                          <button 
-                            onClick={() => setShowConfirmDelete(false)}
-                            className="px-3 py-1 bg-[var(--bg-main)] text-[var(--text-main)] rounded-lg hover:bg-[var(--border-card)] font-bold"
-                          >
-                            Hủy
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {quizHistory.length === 0 ? (
-                      <div className="text-center py-10 text-[var(--text-muted)] space-y-3">
-                        <Trophy className="w-10 h-10 mx-auto opacity-30 text-amber-500" />
-                        <p className="text-xs font-serif">Chưa có kết quả bài tập tự luyện nào.</p>
-                        <Link href="/quiz" className="inline-block px-5 py-2.5 bg-amber-500 text-slate-950 font-bold text-xs rounded-xl hover:bg-amber-400 transition-all shadow-md">
-                          Luyện Thi Ngay
-                        </Link>
-                      </div>
-                    ) : (
-                      <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
-                        {quizHistory.map(item => (
-                          <div key={item.id} className="p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] flex items-center justify-between gap-4">
-                            <div className="space-y-0.5 overflow-hidden">
-                              <h4 className="font-bold text-xs text-[var(--text-main)] truncate">{item.title}</h4>
-                              <p className="text-[10px] text-[var(--text-muted)] flex items-center gap-1">
-                                <Clock className="w-3 h-3 text-amber-500" /> {item.date}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-3 shrink-0">
-                              <span className={`px-2.5 py-1 rounded-lg font-black text-xs ${
-                                item.percentage >= 80 ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                              }`}>
-                                {item.score}/{item.total} ({item.percentage}%)
-                              </span>
-                            </div>
+                          <div className="flex justify-between items-center text-[10px] font-mono mb-1">
+                            <span className="font-bold">{m.desc}</span>
+                            <span>{m.exp} EXP</span>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                </div>
-
-                {/* Parish Info Widget */}
-                <div className="p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] space-y-4 shadow-xl">
-                  <h3 className="font-serif font-bold text-lg text-amber-600 dark:text-amber-400 flex items-center gap-2">
-                    <Church className="w-5 h-5 text-amber-500" /> Thông Tin Sinh Hoạt Giáo Xứ &amp; Giáo Phận
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-semibold">
-                    <div className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)]">
-                      <div className="text-[var(--text-muted)] mb-1">Tên Thánh Bổn Mạng</div>
-                      <div className="text-amber-600 dark:text-amber-400 font-bold text-sm flex items-center gap-1.5">
-                        <Cross className="w-3.5 h-3.5 text-amber-500" /> {user.christianName || 'Giuse'}
-                      </div>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)]">
-                      <div className="text-[var(--text-muted)] mb-1">Giáo Xứ Trực Thuộc</div>
-                      <div className="text-[var(--text-main)] font-bold text-sm">{user.parish || 'Tân Định'}</div>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)]">
-                      <div className="text-[var(--text-muted)] mb-1">Giáo Phận</div>
-                      <div className="text-[var(--text-main)] font-bold text-sm">{user.diocese || 'Giáo Phận Sài Gòn'}</div>
-                    </div>
+                          <h5 className="font-serif font-bold text-xs uppercase tracking-wider truncate">
+                            {m.name}
+                          </h5>
+                          <span className="text-[10px] font-serif text-[var(--text-muted)] mt-0.5 block">
+                            {isUnlocked ? 'Đã Mở Khóa' : 'Chưa Đạt'}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
               </div>
             )}
 
-            {/* TAB 2: ENROLLED COURSES */}
-            {activeTab === 'courses' && (
-              <div className="p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] space-y-6 animate-in fade-in duration-200 shadow-xl">
-                <h2 className="font-serif font-bold text-xl text-amber-600 dark:text-amber-400 flex items-center gap-2">
-                  <BookOpen className="w-6 h-6 text-amber-500" /> Danh Sách Khóa Học Đang Đăng Ký
-                </h2>
+            {/* ── TAB 2: TITLES MANAGEMENT (CHỌN DANH HIỆU GHIM) ── */}
+            {activeTab === 'titles' && (
+              <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+                <div className="border-b border-[var(--border-card)] pb-4">
+                  <h2 className="text-xl sm:text-2xl font-serif font-black">Kho Tàng Danh Hiệu</h2>
+                  <p className="text-xs text-[var(--text-muted)] font-serif mt-1">
+                    Chọn 1 danh hiệu bạn đã mở khóa để gắn hiển thị trên Bảng Nhãn dưới Avatar của mình.
+                  </p>
+                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {enrolledCourses.map(course => (
-                    <div key={course.id} className="p-6 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] space-y-4 hover:border-amber-500/40 transition-all flex flex-col justify-between">
-                      <div className="space-y-3">
-                        <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center">
-                          <BookOpen className="w-6 h-6" />
+                <div className="space-y-4">
+                  {ALL_TITLES_CATALOG.map((title) => {
+                    const isUnlocked = (
+                      title.category === 'level' ? levelInfo.level >= title.requiredValue :
+                      title.category === 'author' ? userPosts.length >= title.requiredValue :
+                      true // Game titles unlocked
+                    );
+                    const isSelected = selectedTitle === title.name;
+
+                    return (
+                      <div
+                        key={title.id}
+                        className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-4 ${
+                          isSelected
+                            ? 'bg-amber-500/15 border-amber-500 shadow-md'
+                            : isUnlocked
+                            ? 'bg-[var(--bg-main)] border-[var(--border-card)] hover:border-amber-500/40'
+                            : 'bg-[var(--bg-main)]/40 border-[var(--border-card)] opacity-40'
+                        }`}
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-[var(--bg-card)] border border-[var(--border-card)]">
+                              {title.category === 'level' ? 'Cấp Độ' : title.category === 'author' ? 'Tác Giả' : 'Trò Chơi'}
+                            </span>
+                            <h4 className="font-serif font-black text-sm uppercase tracking-wider text-[var(--text-main)]">
+                              {title.name}
+                            </h4>
+                          </div>
+                          <p className="text-xs font-serif text-[var(--text-muted)] leading-relaxed">
+                            {title.description}
+                          </p>
                         </div>
-                        <h3 className="font-serif font-bold text-base text-[var(--text-main)]">{course.title}</h3>
-                        <div className="w-full bg-[var(--border-card)] rounded-full h-2 overflow-hidden">
-                          <div className="bg-amber-500 h-full rounded-full" style={{ width: `${course.progress}%` }} />
-                        </div>
-                        <div className="flex justify-between text-xs text-[var(--text-muted)] font-bold">
-                          <span>Đã học: {course.completedLessons}/{course.totalLessons} bài</span>
-                          <span className="text-amber-600 dark:text-amber-400">{course.progress}%</span>
+
+                        <div>
+                          {isSelected ? (
+                            <span className="px-3 py-1.5 rounded-xl bg-amber-500 text-slate-950 font-serif font-black text-xs shadow-xs">
+                              Đang Ghim
+                            </span>
+                          ) : isUnlocked ? (
+                            <button
+                              type="button"
+                              onClick={() => handleSelectTitle(title.name)}
+                              className="px-3 py-1.5 rounded-xl bg-[var(--bg-card)] hover:bg-amber-500 hover:text-slate-950 border border-[var(--border-card)] font-serif font-bold text-xs transition cursor-pointer"
+                            >
+                              Ghim Danh Hiệu
+                            </button>
+                          ) : (
+                            <span className="text-xs font-serif text-[var(--text-muted)] italic">
+                              Chưa mở
+                            </span>
+                          )}
                         </div>
                       </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
-                      <Link href={`/khoa-hoc/${course.slug}`} className="w-full py-2.5 bg-amber-500 text-slate-950 font-bold text-xs rounded-xl flex items-center justify-center gap-2 hover:bg-amber-400 transition-all">
-                        <PlayCircle className="w-4 h-4" /> Tiếp Tục Bài Học
-                      </Link>
+            {/* ── TAB 3: COURSE CERTIFICATES ── */}
+            {activeTab === 'certificates' && (
+              <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+                <div className="border-b border-[var(--border-card)] pb-4">
+                  <h2 className="text-xl sm:text-2xl font-serif font-black">Chứng Chỉ Khóa Học Của Tôi</h2>
+                  <p className="text-xs text-[var(--text-muted)] font-serif mt-1">
+                    Các văn bằng và chứng chỉ hoàn thành khóa học được cấp chính thức từ Học Viện VERIDU.
+                  </p>
+                </div>
+
+                {/* Demo / Real Certificates Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[
+                    {
+                      courseTitle: 'Nhập Môn Thần Học & Kinh Thánh Toàn Thư',
+                      courseSlug: 'nhap-mon-than-hoc',
+                      code: 'CERT-VERIDU-84920',
+                      date: '15/08/2026'
+                    },
+                    {
+                      courseTitle: 'Lịch Sử Cứu Độ & Các Giao Ước Thánh',
+                      courseSlug: 'lich-su-cuu-do',
+                      code: 'CERT-VERIDU-91834',
+                      date: '28/08/2026'
+                    }
+                  ].map((cert, idx) => (
+                    <div
+                      key={idx}
+                      className="p-5 rounded-3xl bg-gradient-to-br from-[#fbf9f4] to-[#f4eee1] text-[#2e1c0c] border-2 border-[#d4af37]/60 shadow-md space-y-3 relative overflow-hidden"
+                    >
+                      <div className="flex justify-between items-start">
+                        <span className="text-[9px] font-serif uppercase tracking-widest font-bold text-[#8b6508] bg-[#d4af37]/20 px-2 py-0.5 rounded-full border border-[#d4af37]/40">
+                          Học Viện VERIDU
+                        </span>
+                        <span className="text-[10px] font-mono text-[#795548]">{cert.date}</span>
+                      </div>
+
+                      <div>
+                        <h4 className="font-serif font-black text-base text-[#3e2723] line-clamp-2">
+                          {cert.courseTitle}
+                        </h4>
+                        <p className="text-[11px] font-mono text-[#8d6e63] mt-1">Mã: {cert.code}</p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCertificate({
+                          courseTitle: cert.courseTitle,
+                          courseSlug: cert.courseSlug,
+                          recipientName: user.displayName || 'Học Viên',
+                          christianName: user.christianName || 'Giuse',
+                          certificateCode: cert.code,
+                          issuedAt: cert.date
+                        })}
+                        className="w-full py-2 rounded-xl bg-[#b8860b] hover:bg-[#996515] text-white font-serif font-bold text-xs transition shadow-sm cursor-pointer"
+                      >
+                        Xem &amp; In Chứng Chỉ Cổ Điển
+                      </button>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* TAB 3: QUIZ SCOREBOARD & HISTORY */}
-            {activeTab === 'quiz' && (
-              <div className="p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] space-y-6 animate-in fade-in duration-200 shadow-xl">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <h2 className="font-serif font-bold text-xl text-amber-600 dark:text-amber-400 flex items-center gap-2">
-                    <Trophy className="w-6 h-6 text-amber-500" /> Bảng Điểm &amp; Lịch Sử Luyện Thi Đấu Trường
-                  </h2>
-                  {quizHistory.length > 0 && !showConfirmDelete && (
-                    <button 
-                      onClick={() => setShowConfirmDelete(true)}
-                      className="px-4 py-2 bg-rose-500/10 border border-rose-500/30 text-rose-500 font-bold text-xs rounded-xl flex items-center gap-2 hover:bg-rose-500/20 transition-all"
-                    >
-                      <Trash2 className="w-4 h-4" /> Xóa Toàn Bộ Lịch Sử
-                    </button>
-                  )}
+            {/* ── TAB 4: MANA ECONOMY & TRANSACTIONS ── */}
+            {activeTab === 'mana' && (
+              <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+                <div className="border-b border-[var(--border-card)] pb-4">
+                  <h2 className="text-xl sm:text-2xl font-serif font-black">Năng Lượng Mana &amp; Đặc Quyền</h2>
+                  <p className="text-xs text-[var(--text-muted)] font-serif mt-1">
+                    Mana là vật phẩm tiêu hao dùng để mở khóa tài liệu độc quyền, giáo án và trợ giúp trong trò chơi.
+                  </p>
                 </div>
 
-                {/* Inline Instant Confirmation Bar */}
-                {showConfirmDelete && (
-                  <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between gap-4 text-xs font-bold text-rose-500 animate-in fade-in">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
-                      <span>Bạn có chắc chắn muốn xóa toàn bộ lịch sử 10 bài luyện thi không?</span>
+                {/* Mana Balance Box */}
+                <div className="p-6 rounded-3xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <span className="text-xs font-serif uppercase tracking-wider text-indigo-700 dark:text-indigo-400 font-bold block">
+                      Số Dư Năng Lượng Mana
+                    </span>
+                    <h3 className="font-serif font-black text-3xl text-[var(--text-main)] flex items-center gap-2">
+                      <Droplets className="w-6 h-6 fill-indigo-500 text-indigo-500" />
+                      <span>{currentMana} Mana</span>
+                    </h3>
+                  </div>
+
+                  <div className="text-right text-xs font-serif text-[var(--text-muted)]">
+                    <div>+20 Mana mỗi ngày đăng nhập</div>
+                    <div>+30 Mana mỗi bài học hoàn tất</div>
+                  </div>
+                </div>
+
+                {/* Mana Exchange Rules */}
+                <div className="space-y-3">
+                  <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-[var(--text-muted)]">
+                    Quy Đổi &amp; Sử Dụng Mana
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-serif">
+                    <div className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] space-y-1">
+                      <div className="font-bold text-[var(--text-main)]">Mở Bài Đọc Đặc Quyền</div>
+                      <p className="text-[11px] text-[var(--text-muted)]">Tiêu hao 10 Mana cho mỗi chuyên luận thần học chuyên sâu.</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button 
-                        onClick={executeClearHistory}
-                        className="px-4 py-1.5 bg-rose-500 text-white rounded-xl hover:bg-rose-600 transition-all font-bold shadow-sm"
-                      >
-                        Xác Nhận Xóa
-                      </button>
-                      <button 
-                        onClick={() => setShowConfirmDelete(false)}
-                        className="px-4 py-1.5 bg-[var(--bg-main)] text-[var(--text-main)] rounded-xl hover:bg-[var(--border-card)] transition-all font-bold"
-                      >
-                        Hủy
-                      </button>
+
+                    <div className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] space-y-1">
+                      <div className="font-bold text-[var(--text-main)]">Tải Slide Giáo Án PDF</div>
+                      <p className="text-[11px] text-[var(--text-muted)]">Tiêu hao 20 Mana cho mỗi bộ slide giáo án giáo lý hoàn chỉnh.</p>
                     </div>
                   </div>
-                )}
+                </div>
+              </div>
+            )}
 
-                {quizHistory.length === 0 ? (
-                  <div className="text-center py-16 text-[var(--text-muted)] space-y-4">
-                    <Trophy className="w-12 h-12 mx-auto opacity-30 text-amber-500" />
-                    <p className="font-serif text-sm">Chưa có kết quả bài tập tự luyện nào trong lịch sử.</p>
-                    <Link href="/quiz" className="inline-block px-6 py-3 bg-amber-500 text-slate-950 font-bold text-xs rounded-xl">
-                      Bắt Đầu Luyện Thi Ngay
+            {/* ── TAB 5: COURSES ── */}
+            {activeTab === 'courses' && (
+              <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+                <div className="border-b border-[var(--border-card)] pb-4">
+                  <h2 className="text-xl sm:text-2xl font-serif font-black">Khóa Học Đang Theo Học</h2>
+                  <p className="text-xs text-[var(--text-muted)] font-serif mt-1">Các khóa đào tạo thần học và giáo lý trực tuyến của bạn.</p>
+                </div>
+
+                {enrolledCourses.length === 0 ? (
+                  <div className="text-center py-12 text-[var(--text-muted)] space-y-3">
+                    <BookOpen className="w-10 h-10 mx-auto opacity-40" />
+                    <p className="font-serif text-sm">Bạn chưa đăng ký khóa học nào.</p>
+                    <Link href="/khoa-hoc" className="inline-block px-5 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs font-serif">
+                      Khám Phá Khóa Học
                     </Link>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {quizHistory.map((item, index) => (
-                      <div key={item.id} className="p-5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 font-black text-sm flex items-center justify-center shrink-0">
-                            #{index + 1}
-                          </div>
-                          <div>
-                            <h4 className="font-bold text-sm text-[var(--text-main)]">{item.title}</h4>
-                            <p className="text-xs text-[var(--text-muted)] flex items-center gap-1.5 mt-0.5">
-                              <Clock className="w-3.5 h-3.5 text-amber-500" /> Thời gian làm bài: {item.date}
-                            </p>
-                          </div>
+                  <div className="space-y-3">
+                    {enrolledCourses.map((c, i) => (
+                      <div key={i} className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] flex justify-between items-center">
+                        <div>
+                          <h4 className="font-serif font-bold text-sm">{c.course_title || c.title}</h4>
+                          <span className="text-xs text-[var(--text-muted)] font-mono">Tiến độ: {c.progress_percent || 0}%</span>
                         </div>
+                        <Link href={`/khoa-hoc/${c.course_slug || c.slug}`} className="px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-600 font-serif font-bold text-xs">
+                          Tiếp Tục Học
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <div className="text-xs text-[var(--text-muted)] font-bold">Số câu đúng</div>
-                            <div className="font-black text-amber-600 dark:text-amber-400 text-base">{item.score} / {item.total}</div>
-                          </div>
+            {/* ── TAB 6: QUIZ ── */}
+            {activeTab === 'quiz' && (
+              <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+                <div className="border-b border-[var(--border-card)] pb-4">
+                  <h2 className="text-xl sm:text-2xl font-serif font-black">Lịch Sử Đấu Trường Quiz</h2>
+                  <p className="text-xs text-[var(--text-muted)] font-serif mt-1">Kết quả và thành tích các lượt thi trắc nghiệm Lời Chúa.</p>
+                </div>
 
-                          <span className={`px-4 py-2 rounded-xl font-black text-sm ${
-                            item.percentage >= 80 
-                              ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' 
-                              : item.percentage >= 50
-                              ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
-                              : 'bg-rose-500/15 text-rose-500 border border-rose-500/30'
-                          }`}>
-                            {item.percentage}%
-                          </span>
+                {quizHistory.length === 0 ? (
+                  <div className="text-center py-12 text-[var(--text-muted)] font-serif text-sm">
+                    Chưa có lượt làm bài nào.
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {quizHistory.map((q, i) => (
+                      <div key={i} className="p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] flex justify-between items-center text-xs font-serif">
+                        <div>
+                          <div className="font-bold text-[var(--text-main)]">{q.title || (q as any).quizTitle || 'Bài Trắc Nghiệm'}</div>
+                          <div className="text-[10px] text-[var(--text-muted)] font-mono">{q.date}</div>
+                        </div>
+                        <div className="font-bold text-amber-600 dark:text-amber-400 font-mono text-sm">
+                          {q.score}/{q.total || (q as any).totalQuestions || 10} ({Math.round((q.score / ((q.total || (q as any).totalQuestions || 10))) * 100)}%)
                         </div>
                       </div>
                     ))}
@@ -665,285 +735,139 @@ export default function ProfileDashboardPage() {
               </div>
             )}
 
-            {/* TAB: POST MANAGEMENT DASHBOARD */}
-            {activeTab === 'posts' && (
-              <div className="p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] space-y-6 animate-in fade-in duration-200 shadow-xl">
-                <div className="flex items-center justify-between flex-wrap gap-4 border-b border-[var(--border-card)] pb-4">
+            {/* ── TAB 7: POSTS (ADMIN) ── */}
+            {activeTab === 'posts' && user.role === 'Quản Trị Viên' && (
+              <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+                <div className="flex justify-between items-center border-b border-[var(--border-card)] pb-4">
                   <div>
-                    <h2 className="font-serif font-bold text-xl text-amber-600 dark:text-amber-400 flex items-center gap-2">
-                      <FileText className="w-6 h-6 text-amber-500" /> Quản Lý Bài Viết ({userPosts.length})
-                    </h2>
-                    <p className="text-xs text-[var(--text-muted)] mt-1">
-                      Danh sách bài viết đã xuất bản trên VERIDU. Bạn có thể xem và quản lý trực tiếp.
-                    </p>
+                    <h2 className="text-xl sm:text-2xl font-serif font-black">Quản Lý Bài Viết ({userPosts.length})</h2>
+                    <p className="text-xs text-[var(--text-muted)] font-serif mt-1">Danh sách bài viết đã xuất bản trên hệ thống VERIDU.</p>
                   </div>
-                  <Link
-                    href="/dang-bai"
-                    className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-2xl flex items-center gap-2 shadow-lg hover:scale-105 transition-all"
-                  >
-                    <Plus className="w-4 h-4" /> Soạn Bài Viết Mới
+                  <Link href="/dang-bai" className="px-4 py-2 rounded-2xl bg-amber-500 text-slate-950 font-serif font-bold text-xs shadow-md">
+                    + Soạn Bài Viết Mới
                   </Link>
                 </div>
 
-                {/* Confirm Delete Post Modal */}
-                {postToDelete && (
-                  <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between gap-4 text-xs font-bold text-rose-500 animate-in fade-in">
-                    <span>Xác nhận xóa bài viết &quot;{postToDelete.title}&quot;? Thao tác này không thể hoàn tác.</span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleDeletePost(postToDelete.id)}
-                        className="px-4 py-1.5 bg-rose-500 text-white rounded-xl hover:bg-rose-600 font-bold"
-                      >
-                        Xác Nhận Xóa
-                      </button>
-                      <button
-                        onClick={() => setPostToDelete(null)}
-                        className="px-4 py-1.5 bg-[var(--bg-main)] text-[var(--text-main)] rounded-xl font-bold"
-                      >
-                        Hủy
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {isLoadingPosts ? (
-                  <div className="py-12 text-center text-xs text-[var(--text-muted)] flex items-center justify-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-amber-500" /> Đang tải danh sách bài viết...
-                  </div>
-                ) : userPosts.length === 0 ? (
-                  <div className="text-center py-12 text-[var(--text-muted)] space-y-3">
-                    <BookOpen className="w-10 h-10 mx-auto opacity-30 text-amber-500" />
-                    <p className="text-xs font-serif">Chưa có bài viết nào được tìm thấy trong CSDL.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {userPosts.map((post) => (
-                      <div
-                        key={post.id}
-                        className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500/40 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 font-bold text-amber-600 dark:text-amber-400 text-xs flex items-center justify-center shrink-0">
-                            #{post.id}
-                          </div>
-                          <div className="space-y-1">
-                            <h4 className="font-serif font-bold text-sm text-[var(--text-main)] hover:text-amber-500 transition-colors">
-                              <Link href={`/${post.slug}`}>{post.title}</Link>
-                            </h4>
-                            <div className="flex items-center gap-3 text-[11px] text-[var(--text-muted)]">
-                              <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold">{post.category || 'Thần Học'}</span>
-                              <span className="font-mono">/{post.slug}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                          <Link
-                            href={`/${post.slug}`}
-                            className="p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-muted)] hover:text-amber-500 transition text-xs font-bold flex items-center gap-1"
-                            title="Xem bài viết thực tế"
-                          >
-                            <Eye className="w-3.5 h-3.5" /> Xem
-                          </Link>
-
-                          <Link
-                            href={`/dang-bai?edit=${post.id}`}
-                            className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition text-xs font-bold flex items-center gap-1"
-                            title="Chỉnh sửa bài"
-                          >
-                            <Settings className="w-3.5 h-3.5" /> Sửa
-                          </Link>
-
-                          <button
-                            type="button"
-                            onClick={() => setPostToDelete(post)}
-                            className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-500 hover:bg-rose-500 hover:text-white transition text-xs font-bold"
-                            title="Xóa bài viết"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                <div className="space-y-3">
+                  {userPosts.map((post) => (
+                    <div key={post.id} className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] flex items-center justify-between gap-4">
+                      <div className="space-y-1 min-w-0">
+                        <span className="text-[10px] font-mono uppercase text-amber-600 font-bold">{post.category}</span>
+                        <h4 className="font-serif font-bold text-sm truncate">{post.title}</h4>
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Link href={`/thu-vien/${post.slug}`} className="px-3 py-1.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs font-serif font-bold hover:text-amber-500">
+                          Xem
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* TAB 4: SETTINGS FORM */}
+            {/* ── TAB 8: SETTINGS ── */}
             {activeTab === 'settings' && (
-              <div className="p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] space-y-6 animate-in fade-in duration-200 shadow-xl">
-                <h2 className="font-serif font-bold text-xl text-amber-600 dark:text-amber-400 flex items-center gap-2">
-                  <Settings className="w-5 h-5 text-amber-500" /> Cài Đặt Hồ Sơ &amp; Sinh Hoạt Giáo Xứ
-                </h2>
+              <form onSubmit={handleSaveProfile} className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+                <div className="border-b border-[var(--border-card)] pb-4">
+                  <h2 className="text-xl sm:text-2xl font-serif font-black">Cài Đặt Thông Tin Cá Nhân</h2>
+                  <p className="text-xs text-[var(--text-muted)] font-serif mt-1">Cập nhật Tên Thánh, Họ Tên, Giáo Xứ và Giáo Phận.</p>
+                </div>
 
-                {message && (
-                  <div className={`p-4 rounded-xl font-bold text-sm flex items-center gap-2 ${message.type === 'success' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'bg-red-500/10 text-red-500 border border-red-500/30'}`}>
-                    <CheckCircle className="w-4 h-4" /> {message.text}
-                  </div>
-                )}
-
-                <form onSubmit={handleSaveProfile} className="space-y-6">
-                  {/* Avatar Change Section */}
-                  <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-[var(--border-card)]">
-                    <div className="w-20 h-20 rounded-full border-2 border-amber-500/40 overflow-hidden flex items-center justify-center bg-[var(--bg-main)] text-amber-500 text-2xl font-black relative shrink-0 shadow-lg">
-                      {formData.avatar ? (
-                        <Image src={formData.avatar} alt="Avatar" fill className="object-cover" sizes="80px" />
-                      ) : (
-                        formData.christianName.charAt(0) || 'G'
-                      )}
-                    </div>
-                    <div className="text-center sm:text-left space-y-1.5">
-                      <h3 className="font-bold text-sm text-[var(--text-main)]">Ảnh Đại Diện Tín Hữu</h3>
-                      <p className="text-xs text-[var(--text-muted)] max-w-md">Chọn hình ảnh các nhân vật Kinh Thánh làm avatar đại diện trong không gian học tập Giáo lý.</p>
-                      <button 
-                        type="button" 
-                        onClick={() => setShowAvatarModal(true)} 
-                        className="px-3.5 py-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 rounded-xl text-xs font-bold hover:bg-amber-500/20 transition flex items-center gap-1.5 mx-auto sm:mx-0"
-                      >
-                        <ImageIcon className="w-3.5 h-3.5" /> Đổi Avatar Nhân Vật
-                      </button>
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-serif">
+                  <div>
+                    <label className="font-bold block mb-1.5">Tên Thánh:</label>
+                    <input
+                      type="text"
+                      value={formData.christianName}
+                      onChange={(e) => setFormData({ ...formData, christianName: e.target.value })}
+                      className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase text-[var(--text-muted)] flex items-center gap-2">
-                        <Cross className="w-3.5 h-3.5 text-amber-500" /> Tên Thánh
-                      </label>
-                      <input 
-                        type="text" 
-                        value={formData.christianName} 
-                        onChange={e => setFormData({...formData, christianName: e.target.value})}
-                        placeholder="Giuse, Maria, Têrêsa..."
-                        className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm focus:border-amber-500 focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase text-[var(--text-muted)] flex items-center gap-2">
-                        <User className="w-4 h-4 text-amber-500" /> Họ và Tên
-                      </label>
-                      <input 
-                        type="text" 
-                        value={formData.displayName} 
-                        onChange={e => setFormData({...formData, displayName: e.target.value})}
-                        placeholder="Nguyễn Văn A"
-                        className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm focus:border-amber-500 focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase text-[var(--text-muted)] flex items-center gap-2">
-                        <Phone className="w-4 h-4 text-amber-500" /> Số Điện Thoại
-                      </label>
-                      <input 
-                        type="tel" 
-                        value={formData.phone} 
-                        onChange={e => setFormData({...formData, phone: e.target.value})}
-                        placeholder="0901234567"
-                        className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm focus:border-amber-500 focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase text-[var(--text-muted)] flex items-center gap-2">
-                        <Church className="w-4 h-4 text-amber-500" /> Giáo Xứ
-                      </label>
-                      <input 
-                        type="text" 
-                        value={formData.parish} 
-                        onChange={e => setFormData({...formData, parish: e.target.value})}
-                        placeholder="Tân Định, Đức Bà..."
-                        className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm focus:border-amber-500 focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase text-[var(--text-muted)] flex items-center gap-2">
-                        <Compass className="w-4 h-4 text-amber-500" /> Giáo Phận
-                      </label>
-                      <input 
-                        type="text" 
-                        value={formData.diocese} 
-                        onChange={e => setFormData({...formData, diocese: e.target.value})}
-                        placeholder="Giáo Phận Sài Gòn"
-                        className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm focus:border-amber-500 focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase text-[var(--text-muted)] flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-amber-500" /> Ngày Lễ Bổn Mạng
-                      </label>
-                      <input 
-                        type="text" 
-                        value={formData.feastDay} 
-                        onChange={e => setFormData({...formData, feastDay: e.target.value})}
-                        placeholder="19/03 (Thánh Giuse)"
-                        className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm focus:border-amber-500 focus:outline-none"
-                      />
-                    </div>
+                  <div>
+                    <label className="font-bold block mb-1.5">Họ &amp; Tên:</label>
+                    <input
+                      type="text"
+                      value={formData.displayName}
+                      onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                      className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
                   </div>
 
-                  <div className="flex justify-end pt-4 border-t border-[var(--border-card)]">
-                    <button 
-                      type="submit" 
-                      disabled={isUpdating}
-                      className="px-6 py-3 bg-amber-500 text-slate-950 font-bold text-xs rounded-xl hover:bg-amber-400 flex items-center gap-2 transition-all shadow-lg shadow-amber-500/20 disabled:opacity-50"
-                    >
-                      {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                      <span>Lưu Cập Nhật Hồ Sơ</span>
-                    </button>
+                  <div>
+                    <label className="font-bold block mb-1.5">Giáo Xứ:</label>
+                    <input
+                      type="text"
+                      value={formData.parish}
+                      onChange={(e) => setFormData({ ...formData, parish: e.target.value })}
+                      className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
                   </div>
-                </form>
-              </div>
+
+                  <div>
+                    <label className="font-bold block mb-1.5">Giáo Phận:</label>
+                    <input
+                      type="text"
+                      value={formData.diocese}
+                      onChange={(e) => setFormData({ ...formData, diocese: e.target.value })}
+                      className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isUpdating}
+                  className="px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-xs shadow-md transition cursor-pointer"
+                >
+                  {isUpdating ? 'Đang Lưu...' : 'Lưu Thay Đổi'}
+                </button>
+              </form>
             )}
 
-          </main>
+          </div>
 
         </div>
 
       </div>
 
-      {/* Avatar Selector Modal */}
+      {/* ── COURSE CERTIFICATE MODAL ── */}
+      <CourseCertificateModal
+        certificate={selectedCertificate}
+        onClose={() => setSelectedCertificate(null)}
+      />
+
+      {/* ── AVATAR PICKER MODAL ── */}
       {showAvatarModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[var(--bg-card)] rounded-3xl w-full max-w-4xl max-h-[85vh] flex flex-col border border-[var(--border-card)] shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-[var(--border-card)] flex justify-between items-center">
-              <h2 className="font-serif font-black text-xl text-[var(--text-main)]">Chọn Avatar Thánh Nhân Nhân Vật Kinh Thánh</h2>
-              <button 
-                onClick={() => setShowAvatarModal(false)} 
-                className="w-8 h-8 rounded-full bg-[var(--bg-main)] text-[var(--text-main)] flex items-center justify-center hover:bg-red-500 hover:text-white transition font-bold"
-              >
-                ✕
-              </button>
+          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl max-w-lg w-full p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center border-b border-[var(--border-card)] pb-3">
+              <h3 className="font-serif font-bold text-sm">Chọn Ảnh Đại Diện Thánh</h3>
+              <button onClick={() => setShowAvatarModal(false)} className="p-1 rounded-full bg-[var(--bg-main)]">✕</button>
             </div>
-            <div className="p-6 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 custom-scrollbar">
-              {characters.filter(c => c.avatar_url).map(char => (
-                <div 
-                  key={char.id} 
-                  onClick={() => { setFormData({...formData, avatar: char.avatar_url || ''}); setShowAvatarModal(false); }} 
-                  className={`cursor-pointer rounded-2xl border-2 transition-all overflow-hidden bg-[var(--bg-main)] p-2 text-center group ${formData.avatar === char.avatar_url ? 'border-amber-500 shadow-lg shadow-amber-500/30 ring-2 ring-amber-500/50' : 'border-transparent hover:border-amber-500/50'}`}
+
+            <div className="grid grid-cols-4 gap-3">
+              {characters.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => {
+                    setFormData({ ...formData, avatar: ((c as any).imageUrl || (c as any).image || (c as any).avatarUrl || '') });
+                    setShowAvatarModal(false);
+                  }}
+                  className="p-2 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500 transition text-center space-y-1"
                 >
-                  <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-2">
-                    <Image 
-                      src={char.avatar_url!} 
-                      alt={char.name} 
-                      fill 
-                      className="object-cover group-hover:scale-105 transition-transform duration-300" 
-                      sizes="(max-width: 768px) 33vw, 20vw" 
-                      unoptimized={char.avatar_url?.includes('googleusercontent.com')}
-                    />
+                  <div className="relative w-12 h-12 mx-auto rounded-xl overflow-hidden">
+                    <Image src={((c as any).imageUrl || (c as any).image || (c as any).avatarUrl || '')} alt={c.name || (c as any).nameVi || 'Thánh'} fill className="object-cover" />
                   </div>
-                  <div className="text-xs font-bold text-[var(--text-main)] truncate">{char.name}</div>
-                </div>
+                  <span className="text-[10px] font-serif block truncate">{c.name || (c as any).nameVi || 'Thánh'}</span>
+                </button>
               ))}
-              {characters.length === 0 && <p className="col-span-full text-center py-10 text-[var(--text-muted)] font-medium">Chưa có dữ liệu avatar nhân vật Kinh Thánh.</p>}
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }

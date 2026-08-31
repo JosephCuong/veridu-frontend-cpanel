@@ -5,10 +5,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { getStoredUser, logout, UserProfile } from '@/lib/auth';
+import { calculateLevelInfo } from '@/lib/gamification';
 import { 
   Flame, Moon, Sun, Menu, X, User, LogOut, LogIn, ChevronDown, 
   BookOpen, MapPin, Clock, Users, FileText, Library, Award, Shield, Cross, Sparkles,
-  Zap, Droplets, Settings, Gamepad2
+  Zap, Droplets, Settings, Gamepad2, Scroll
 } from 'lucide-react';
 
 export default function LiturgicalHeader() {
@@ -144,16 +145,9 @@ export default function LiturgicalHeader() {
     ? '/images/veridu_logo_light.png' 
     : '/images/veridu_logo_dark.png';
 
-  // Calculate Title & EXP
-  const currentExp = user?.points || 0;
+  // Gamification Level & Title (No Icons, Pure Typography)
+  const levelInfo = calculateLevelInfo(user?.points || 100, (user as any)?.selected_title || (user as any)?.current_title);
   const currentMana = user?.manna !== undefined ? user?.manna : 100;
-  const currentTitle = (user as any)?.current_title || (
-    currentExp >= 10000 ? 'Tông Đồ Ánh Sáng' :
-    currentExp >= 5000 ? 'Học Giả VERIDU' :
-    currentExp >= 3000 ? 'Hiệp Sĩ Phúc Âm' :
-    currentExp >= 1500 ? 'Chiến Binh Đức Tin' :
-    currentExp >= 500 ? 'Môn Đệ' : 'Tân Tòng'
-  );
 
   // Hide global header in dedicated document reader or storybook reader
   if (pathname?.startsWith('/thu-vien/doc/') || (pathname !== '/sach-tranh' && pathname?.startsWith('/sach-tranh/'))) {
@@ -179,7 +173,7 @@ export default function LiturgicalHeader() {
         {/* TIER 1: CENTERED LOGO & UTILITY ACTIONS */}
         <div className="max-w-7xl mx-auto px-6 lg:px-12 h-16 flex items-center justify-between relative border-b border-[var(--border-card)]/40">
           
-          {/* Left: Balanced spacer / slogan */}
+          {/* Left: Balanced slogan */}
           <div className="flex-1 flex items-center">
             <span className="font-serif text-[10px] tracking-[0.25em] uppercase font-bold text-amber-500/80 hidden lg:inline">
               VIA · VITA · VERITAS
@@ -202,32 +196,33 @@ export default function LiturgicalHeader() {
             </Link>
           </div>
 
-          {/* Right: Streak, EXP, Mana & Auth Controls */}
+          {/* Right: Streak, Level, EXP, Mana & Auth Controls */}
           <div className="flex-1 flex items-center justify-end gap-2.5 shrink-0">
             {user ? (
               <div className="flex items-center gap-2">
                 
                 {/* 1. Streaks Widget */}
                 <div 
-                  title={`Chuỗi hoạt động: ${user.streak || 1} ngày liên tiếp`}
+                  title={`Chuỗi hoạt động: ${user.streak || 1} ngày`}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-800 dark:text-amber-400 font-bold text-xs shadow-xs"
                 >
                   <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500 animate-pulse" />
                   <span>{user.streak || 1} Ngày</span>
                 </div>
 
-                {/* 2. Điểm EXP Đức Tin */}
+                {/* 2. Cấp Độ & Điểm EXP Đức Tin (Pure Typography) */}
                 <div 
-                  title={`Điểm Đức Tin: ${currentExp} EXP`}
-                  className="hidden lg:flex items-center gap-1 px-2.5 py-1.5 bg-amber-500/10 border border-amber-500/25 rounded-full text-amber-700 dark:text-amber-300 text-xs font-serif font-bold shadow-xs"
+                  title={`Cấp ${levelInfo.level} · ${levelInfo.currentExp} EXP`}
+                  className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/25 rounded-full text-amber-700 dark:text-amber-300 text-xs font-serif font-bold shadow-xs"
                 >
-                  <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
-                  <span>{currentExp} EXP</span>
+                  <span className="font-mono font-black text-amber-600 dark:text-amber-400">CẤP {levelInfo.level}</span>
+                  <span className="opacity-40">•</span>
+                  <span>{levelInfo.currentExp} EXP</span>
                 </div>
 
                 {/* 3. Điểm Mana */}
                 <div 
-                  title={`Năng lượng Manna: ${currentMana} Mana`}
+                  title={`Năng lượng Mana: ${currentMana}`}
                   className="hidden lg:flex items-center gap-1 px-2.5 py-1.5 bg-indigo-500/10 border border-indigo-500/25 rounded-full text-indigo-700 dark:text-indigo-300 text-xs font-serif font-bold shadow-xs"
                 >
                   <Droplets className="w-3 h-3 text-indigo-500 fill-indigo-500" />
@@ -261,7 +256,7 @@ export default function LiturgicalHeader() {
 
                       <div className="absolute right-0 top-full mt-2 w-72 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl shadow-2xl p-3.5 space-y-3 z-50 animate-in zoom-in-95 duration-150 backdrop-blur-2xl">
                         
-                        {/* User Header Info Card */}
+                        {/* User Header Info Card (Pure Typography Ribbon) */}
                         <div className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 space-y-2">
                           <div className="flex items-center gap-2.5">
                             <div className="relative w-9 h-9 rounded-2xl bg-amber-500/20 text-amber-600 dark:text-amber-400 font-serif font-black text-sm flex items-center justify-center border border-amber-500/30 overflow-hidden shrink-0">
@@ -275,9 +270,8 @@ export default function LiturgicalHeader() {
                               <div className="font-serif font-bold text-xs text-[var(--text-main)] truncate">
                                 {user.christianName} {user.displayName}
                               </div>
-                              <div className="text-[10px] text-amber-600 dark:text-amber-400 font-serif font-bold truncate flex items-center gap-1">
-                                <Sparkles className="w-3 h-3 text-amber-500" />
-                                <span>{currentTitle}</span>
+                              <div className="text-[10px] text-amber-700 dark:text-amber-400 font-serif font-black uppercase tracking-wider truncate">
+                                CẤP {levelInfo.level} · {levelInfo.title}
                               </div>
                             </div>
                           </div>
@@ -285,7 +279,7 @@ export default function LiturgicalHeader() {
                           <div className="grid grid-cols-2 gap-2 pt-2 border-t border-amber-500/20 text-[11px] font-serif">
                             <div className="flex items-center gap-1 text-[var(--text-main)]">
                               <Zap className="w-3.5 h-3.5 text-amber-500" />
-                              <span>{currentExp} EXP</span>
+                              <span>{levelInfo.currentExp} EXP</span>
                             </div>
                             <div className="flex items-center gap-1 text-[var(--text-main)]">
                               <Droplets className="w-3.5 h-3.5 text-indigo-500" />
@@ -700,8 +694,7 @@ export default function LiturgicalHeader() {
                   <Flame className="w-4 h-4 fill-amber-500 text-amber-500" />
                   <span>Chuỗi: {user.streak || 1} Ngày</span>
                   <span>•</span>
-                  <Zap className="w-3.5 h-3.5 text-amber-500" />
-                  <span>{currentExp} EXP</span>
+                  <span>CẤP {levelInfo.level}</span>
                 </div>
                 <Link href="/ho-so" className="block py-2 text-xs font-bold text-[var(--text-main)]">
                   Hồ Sơ Cá Nhân ({user.christianName} {user.displayName})
