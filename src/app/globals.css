@@ -344,3 +344,30 @@ html.dark .glass-panel {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+
+/* 🚀 PERFORMANCE ACCELERATION & 60FPS SMOOTH RENDERING */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* GPU Acceleration for Sticky Headers and Sliding Elements */
+header,
+aside,
+.sticky,
+.fixed {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Content Visibility Optimization for below-the-fold blocks */
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 500px;
+}
