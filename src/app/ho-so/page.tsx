@@ -10,7 +10,13 @@ import {
 import { supabase } from '@/lib/supabaseClient';
 import { calculateLevelInfo, ALL_TITLES_CATALOG, TitleDefinition } from '@/lib/gamification';
 import UserAvatarFrame from '@/components/UserAvatarFrame';
-import CourseCertificateModal, { CertificateData } from '@/components/CourseCertificateModal';
+import dynamic from 'next/dynamic';
+import type { CertificateData } from '@/components/CourseCertificateModal';
+
+const CourseCertificateModal = dynamic(() => import('@/components/CourseCertificateModal'), {
+  ssr: false,
+  loading: () => null
+});
 import { 
   User, Mail, Church, Compass, Award, Flame, Shield, LogOut, 
   Settings, BookOpen, CheckCircle, Clock, Save, Phone, Image as ImageIcon,

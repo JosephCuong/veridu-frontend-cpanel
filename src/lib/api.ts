@@ -3,6 +3,54 @@ import { supabase } from './supabaseClient';
 import { formatImageUrl } from './htmlProcessor';
 export { supabase };
 
+// In-Memory Cache Layer with TTL and Safe Execution to prevent timeout bottlenecks
+interface CacheEntry<T> {
+  data: T;
+  expiresAt: number;
+}
+
+const apiCache = new Map<string, CacheEntry<any>>();
+
+export function getFromCache<T>(key: string): T | null {
+  const entry = apiCache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    apiCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+export function setToCache<T>(key: string, data: T, ttlSeconds: number = 300): void {
+  if (!data) return;
+  if (apiCache.size > 500) {
+    const firstKey = apiCache.keys().next().value;
+    if (firstKey) apiCache.delete(firstKey);
+  }
+  apiCache.set(key, { data, expiresAt: Date.now() + ttlSeconds * 1000 });
+}
+
+export async function cachedFetch<T>(
+  key: string,
+  fetchFn: () => Promise<T>,
+  ttlSeconds: number = 300
+): Promise<T> {
+  const cached = getFromCache<T>(key);
+  if (cached !== null) return cached;
+
+  try {
+    const result = await fetchFn();
+    if (result !== null && result !== undefined) {
+      setToCache(key, result, ttlSeconds);
+    }
+    return result;
+  } catch (err) {
+    console.warn(`cachedFetch failed for [${key}]:`, err);
+    throw err;
+  }
+}
+
+
 
 export interface Article {
   id: number | string;
@@ -653,6 +701,7 @@ export async function fetchMapLocationBySlug(slug: string): Promise<MapLocation 
 
 // ─── Bible Reader Metadata ────────────────────────────────────────────────────
 export async function fetchBibleMetadata() {
+  return cachedFetch('bible_metadata_all', async () => {
   try {
     const [booksRes, transRes] = await Promise.all([
       supabase
@@ -685,6 +734,7 @@ export async function fetchBibleMetadata() {
     console.error('fetchBibleMetadata error:', err);
     return { books: [], translations: [] };
   }
+  }, 1800); // 30 minutes cache
 }
 
 export function parseVerseSortKey(verseStr: string | number): { num: number; sub: string } {
