@@ -93,6 +93,57 @@ export default function ProfileDashboardPage() {
         avatar: current.avatar || ''
       });
 
+      // Live fetch from Supabase to guarantee exact up-to-date points, manna, role, and title
+      if (current.id && (typeof current.id === 'string' && current.id.includes('-') || current.email)) {
+        (async () => {
+          try {
+            let query = supabase.from('profiles').select('*');
+            if (typeof current.id === 'string' && current.id.includes('-')) {
+              query = query.eq('id', current.id);
+            } else {
+              query = query.eq('email', current.email);
+            }
+            const { data: dbProfile } = await query.maybeSingle();
+
+            if (dbProfile) {
+              const liveUser: UserProfile = {
+                ...current,
+                id: dbProfile.id || current.id,
+                displayName: dbProfile.display_name || dbProfile.full_name || current.displayName,
+                christianName: dbProfile.christian_name || current.christianName,
+                parish: dbProfile.parish || current.parish,
+                diocese: dbProfile.diocese || current.diocese,
+                phone: dbProfile.phone || current.phone,
+                role: dbProfile.role === 'admin' ? 'Quản Trị Viên' : (dbProfile.role || current.role),
+                points: dbProfile.points !== undefined && dbProfile.points !== null ? dbProfile.points : current.points,
+                manna: dbProfile.manna !== undefined && dbProfile.manna !== null ? dbProfile.manna : current.manna,
+                avatar: dbProfile.avatar_url || current.avatar,
+                selected_title: dbProfile.current_title || (current as any).selected_title || 'NGƯỜI TÌM HIỂU',
+                badges: dbProfile.badges || current.badges || ['tan_tong']
+              };
+
+              setUser(liveUser);
+              setSelectedTitle(liveUser.selected_title || 'NGƯỜI TÌM HIỂU');
+              setFormData(prev => ({
+                ...prev,
+                displayName: liveUser.displayName,
+                christianName: liveUser.christianName,
+                parish: liveUser.parish,
+                diocese: liveUser.diocese,
+                phone: liveUser.phone || '',
+                avatar: liveUser.avatar || '',
+                bio: dbProfile.bio || prev.bio
+              }));
+
+              saveAuthSession(liveUser);
+              window.dispatchEvent(new CustomEvent('veridu_user_updated', { detail: liveUser }));
+            }
+          } catch (err) {
+            console.warn('Live profile sync error:', err);
+          }
+        })();
+      }
+
       const userIdStr = typeof current.id === 'string' ? current.id : undefined;
       
       Promise.all([

@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { saveAuthSession } from '@/lib/auth';
+import { saveAuthSession, UserProfile } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
 import { LogIn, Lock, Mail, ArrowRight, ShieldCheck, CheckCircle, Loader2 } from 'lucide-react';
 
@@ -38,35 +38,43 @@ function LoginFormContent() {
       } else {
         setSuccessMsg('Đăng nhập thành công! Đang chuyển hướng...');
 
-        // Query real verified role from Supabase profiles table
-        let userRole = 'Học Viên';
-        if (data.user?.user_metadata?.role === 'admin') {
-          userRole = 'Quản Trị Viên';
-        } else if (data.user?.id) {
+        // Query full verified profile from Supabase profiles table
+        let dbProfile: any = null;
+        if (data.user?.id) {
           try {
-            const { data: dbProfile } = await supabase
+            const { data: profileData } = await supabase
               .from('profiles')
-              .select('role, display_name, christian_name, parish, diocese')
+              .select('*')
               .eq('id', data.user.id)
               .maybeSingle();
 
-            if (dbProfile?.role) {
-              userRole = dbProfile.role;
+            if (profileData) {
+              dbProfile = profileData;
             }
           } catch (e) {
-            console.warn('Profile role fetch warning:', e);
+            console.warn('Profile fetch error:', e);
           }
         }
 
-        const userProfile: any = {
+        const roleName = (dbProfile?.role === 'admin' || data.user?.user_metadata?.role === 'admin')
+          ? 'Quản Trị Viên'
+          : (dbProfile?.role || 'Học Viên');
+
+        const userProfile: UserProfile = {
           id: data.user?.id || '1',
+          username: dbProfile?.email?.split('@')[0] || data.user?.email?.split('@')[0] || username,
           email: data.user?.email || email,
-          displayName: data.user?.user_metadata?.display_name || data.user?.user_metadata?.full_name || username,
-          christianName: data.user?.user_metadata?.christian_name || '',
-          parish: data.user?.user_metadata?.parish || '',
-          diocese: data.user?.user_metadata?.diocese || 'Giáo Phận Sài Gòn',
-          role: userRole,
-          streak: 1
+          displayName: dbProfile?.display_name || dbProfile?.full_name || data.user?.user_metadata?.display_name || 'Thành Viên VERIDU',
+          christianName: dbProfile?.christian_name || data.user?.user_metadata?.christian_name || 'Giuse',
+          parish: dbProfile?.parish || data.user?.user_metadata?.parish || 'Tân Định',
+          diocese: dbProfile?.diocese || data.user?.user_metadata?.diocese || 'Giáo Phận Sài Gòn',
+          role: roleName,
+          streak: dbProfile?.streak || 1,
+          points: dbProfile?.points !== undefined && dbProfile?.points !== null ? dbProfile.points : 100,
+          manna: dbProfile?.manna !== undefined && dbProfile?.manna !== null ? dbProfile.manna : 100,
+          avatar: dbProfile?.avatar_url || '',
+          selected_title: dbProfile?.current_title || 'NGƯỜI TÌM HIỂU',
+          badges: dbProfile?.badges || ['tan_tong']
         };
 
         saveAuthSession(data.session?.access_token || 'sb_session_active', userProfile, rememberMe);
@@ -149,23 +157,22 @@ function LoginFormContent() {
               </div>
             </div>
 
-            <div className="flex items-center space-x-2 pt-1">
-              <input
-                type="checkbox"
-                id="rememberMe"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="rounded border-[var(--border-card)] text-amber-500 focus:ring-amber-500 bg-[var(--bg-main)] cursor-pointer"
-              />
-              <label htmlFor="rememberMe" className="text-xs text-[var(--text-muted)] cursor-pointer select-none font-serif">
-                Ghi nhớ đăng nhập trên thiết bị này (30 ngày)
+            <div className="flex items-center justify-between text-xs font-serif">
+              <label className="flex items-center space-x-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="rounded border-[var(--border-card)] text-amber-600 focus:ring-amber-500"
+                />
+                <span className="text-[var(--text-muted)]">Ghi nhớ đăng nhập</span>
               </label>
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-black text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-xl shadow-amber-500/20 transition-all hover:scale-[1.02] disabled:opacity-50 cursor-pointer"
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-serif font-bold text-sm shadow-xl shadow-amber-600/20 transition-all flex items-center justify-center space-x-2 disabled:opacity-50 active:scale-[0.98]"
             >
               {isLoading ? (
                 <>
@@ -174,23 +181,23 @@ function LoginFormContent() {
                 </>
               ) : (
                 <>
-                  <span>Đăng Nhập Ngay</span>
+                  <span>Vào Hệ Thống</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
           </form>
 
-          <div className="text-center pt-4 border-t border-[var(--border-card)]">
-            <p className="text-xs text-[var(--text-muted)] font-serif">
-              Chưa có tài khoản đức tin?{' '}
-              <Link 
-                href={`/dang-ky${redirectTarget !== '/ho-so' ? `?redirect=${encodeURIComponent(redirectTarget)}` : ''}`} 
-                className="text-amber-600 dark:text-amber-400 hover:underline font-bold"
-              >
-                Đăng ký miễn phí
+          <div className="pt-4 text-center border-t border-[var(--border-card)] text-xs text-[var(--text-muted)] font-serif space-y-2">
+            <div>
+              Chưa có tài khoản học tập?{' '}
+              <Link href="/dang-ky" className="font-bold text-amber-600 dark:text-amber-400 hover:underline">
+                Đăng ký thành viên
               </Link>
-            </p>
+            </div>
+            <Link href="/" className="block text-[11px] hover:text-[var(--text-main)] transition">
+              ← Quay lại trang chủ VERIDU
+            </Link>
           </div>
 
         </div>
@@ -201,7 +208,7 @@ function LoginFormContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center"><Loader2 className="w-8 h-8 text-amber-500 animate-spin" /></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-amber-500" /></div>}>
       <LoginFormContent />
     </Suspense>
   );

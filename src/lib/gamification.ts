@@ -74,7 +74,9 @@ export function calculateLevelInfo(totalExp: number = 100, customTitle?: string)
     minExp,
     nextLevelExp,
     progressPercent,
-    title: customTitle || milestoneTitle,
+    title: (customTitle && !['Tân Tòng', 'tan_tong', 'Tân tòng', 'Học Viên', 'hoc_vien'].includes(customTitle.trim()))
+      ? customTitle
+      : milestoneTitle,
     tierColor
   };
 }
