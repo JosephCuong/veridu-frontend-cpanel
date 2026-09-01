@@ -33,7 +33,41 @@ export default function LiturgicalHeader() {
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setUser(getStoredUser());
+    const currentUser = getStoredUser();
+    setUser(currentUser);
+
+    // Background live sync with Supabase profiles to guarantee exact points & mana
+    if (currentUser?.id && (typeof currentUser.id === 'string' && currentUser.id.includes('-') || currentUser.email)) {
+      import('@/lib/supabaseClient').then(async ({ supabase }) => {
+        try {
+          let query = supabase.from('profiles').select('*');
+          if (typeof currentUser.id === 'string' && currentUser.id.includes('-')) {
+            query = query.eq('id', currentUser.id);
+          } else {
+            query = query.eq('email', currentUser.email);
+          }
+          const { data: dbProfile } = await query.maybeSingle();
+
+          if (dbProfile) {
+            const liveUser: UserProfile = {
+              ...currentUser,
+              displayName: dbProfile.display_name || dbProfile.full_name || currentUser.displayName,
+              christianName: dbProfile.christian_name || currentUser.christianName,
+              parish: dbProfile.parish || currentUser.parish,
+              diocese: dbProfile.diocese || currentUser.diocese,
+              role: dbProfile.role === 'admin' ? 'Quản Trị Viên' : (dbProfile.role || currentUser.role),
+              points: dbProfile.points !== undefined && dbProfile.points !== null ? dbProfile.points : currentUser.points,
+              manna: dbProfile.manna !== undefined && dbProfile.manna !== null ? dbProfile.manna : currentUser.manna,
+              avatar: dbProfile.avatar_url || currentUser.avatar,
+              selected_title: dbProfile.current_title || (currentUser as any).selected_title || 'NGƯỜI TÌM HIỂU'
+            };
+            setUser(liveUser);
+          }
+        } catch (err) {
+          console.warn('Header live sync error:', err);
+        }
+      });
+    }
 
     // Live update when EXP / Mana / Streak changes
     const handleUserUpdate = (e: any) => {
@@ -196,57 +230,45 @@ export default function LiturgicalHeader() {
             </Link>
           </div>
 
-          {/* Right: Streak, Level, EXP, Mana & Auth Controls */}
+          {/* Right: Streamlined Streak & Unified User Pill */}
           <div className="flex-1 flex items-center justify-end gap-2.5 shrink-0">
             {user ? (
               <div className="flex items-center gap-2">
                 
-                {/* 1. Streaks Widget */}
+                {/* 1. Subtle Streaks Widget */}
                 <div 
-                  title={`Chuỗi hoạt động: ${user.streak || 1} ngày`}
+                  title={`Chuỗi học tập liên tục: ${user.streak || 1} ngày`}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-800 dark:text-amber-400 font-bold text-xs shadow-xs"
                 >
                   <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500 animate-pulse" />
                   <span>{user.streak || 1} Ngày</span>
                 </div>
-
-                {/* 2. Cấp Độ & Điểm EXP Đức Tin (Pure Typography) */}
-                <div 
-                  title={`Cấp ${levelInfo.level} · ${levelInfo.currentExp} EXP`}
-                  className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/25 rounded-full text-amber-700 dark:text-amber-300 text-xs font-serif font-bold shadow-xs"
-                >
-                  <span className="font-mono font-black text-amber-600 dark:text-amber-400">CẤP {levelInfo.level}</span>
-                  <span className="opacity-40">•</span>
-                  <span>{levelInfo.currentExp} EXP</span>
-                </div>
-
-                {/* 3. Điểm Mana */}
-                <div 
-                  title={`Năng lượng Mana: ${currentMana}`}
-                  className="hidden lg:flex items-center gap-1 px-2.5 py-1.5 bg-indigo-500/10 border border-indigo-500/25 rounded-full text-indigo-700 dark:text-indigo-300 text-xs font-serif font-bold shadow-xs"
-                >
-                  <Droplets className="w-3 h-3 text-indigo-500 fill-indigo-500" />
-                  <span>{currentMana}</span>
-                </div>
                 
-                {/* 4. User Dropdown Menu with Click-Outside Auto-Dismiss */}
+                {/* 2. Unified Streamlined User Pill (Avatar + Name + Level) */}
                 <div className="relative" ref={userMenuRef}>
                   <button
                     type="button"
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center gap-2 p-1.5 pr-3 rounded-full bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-amber-500/40 transition-all text-xs font-bold text-[var(--text-main)] shadow-sm cursor-pointer"
+                    className="flex items-center gap-2 p-1 pl-1.5 pr-3 rounded-full bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-amber-500/40 transition-all text-xs font-bold text-[var(--text-main)] shadow-xs hover:shadow-md cursor-pointer group"
                   >
-                    <div className="relative w-6 h-6 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center font-serif text-xs font-black overflow-hidden border border-amber-500/30">
+                    <div className="relative w-7 h-7 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center font-serif text-xs font-black overflow-hidden border border-amber-500/30">
                       {user.avatar ? (
-                        <Image src={user.avatar} alt="Avatar" fill className="object-cover" sizes="24px" />
+                        <Image src={user.avatar} alt="Avatar" fill className="object-cover" sizes="28px" />
                       ) : (
-                        user.christianName ? user.christianName[0] : 'G'
+                        user.christianName ? user.christianName[0] : '✝'
                       )}
                     </div>
-                    <span className="hidden sm:inline font-serif font-bold truncate max-w-[100px]">
-                      {user.christianName} {user.displayName}
-                    </span>
-                    <ChevronDown className={`w-3 h-3 text-[var(--text-muted)] transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180 text-amber-500' : ''}`} />
+
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="hidden sm:inline font-serif font-bold truncate max-w-[110px]">
+                        {user.christianName ? `${user.christianName} ` : ''}{user.displayName}
+                      </span>
+                      <span className="px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-700 dark:text-amber-400 font-mono font-black text-[10px] uppercase">
+                        CẤP {levelInfo.level}
+                      </span>
+                    </div>
+
+                    <ChevronDown className={`w-3 h-3 text-[var(--text-muted)] transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180 text-amber-500' : 'group-hover:text-amber-500'}`} />
                   </button>
 
                   {isUserMenuOpen && (
@@ -299,17 +321,17 @@ export default function LiturgicalHeader() {
                           <Link 
                             href="/ho-so" 
                             onClick={() => setIsUserMenuOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-[var(--text-main)] hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400 transition-colors group"
+                            className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-[var(--text-main)] hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400 transition-colors group"
                           >
                             <User className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
-                            <span>Hồ Sơ Cá Nhân &amp; Tiến Trình</span>
+                            <span>Hồ Sơ Cá Nhân &amp; Kho Danh Hiệu</span>
                           </Link>
 
                           {user.role === 'Quản Trị Viên' && (
                             <Link 
                               href="/ho-so" 
                               onClick={() => setIsUserMenuOpen(false)}
-                              className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 transition-colors group"
+                              className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 transition-colors group"
                             >
                               <FileText className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
                               <span>Quản Lý Bài Viết (Admin)</span>
@@ -317,12 +339,12 @@ export default function LiturgicalHeader() {
                           )}
 
                           <Link 
-                            href="/cai-dat" 
+                            href="/ho-so" 
                             onClick={() => setIsUserMenuOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-[var(--text-main)] hover:bg-[var(--bg-main)] transition-colors group"
+                            className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-[var(--text-main)] hover:bg-[var(--bg-main)] transition-colors group"
                           >
                             <Settings className="w-4 h-4 text-[var(--text-muted)] group-hover:scale-110 transition-transform" />
-                            <span>Cài Đặt Tài Khoản</span>
+                            <span>Cài Đặt Thông Tin &amp; Avatar</span>
                           </Link>
                         </div>
 
