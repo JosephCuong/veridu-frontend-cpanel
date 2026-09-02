@@ -444,6 +444,9 @@ export function normalizeAndSyncHtml(
     .replace(/<script[\s\S]*?<\/script>/gi, (m) => m.includes('mermaid') ? m : '')
     .replace(/<div\s+class=["'][^"']*toc[^"']*["'][\s\S]*?<\/div>/gi, '');
 
+  // 🌟 Automatically transform all Scripture Quotes & Poetry Blocks to Sacred Scripture Callouts
+  cleanHtml = transformScriptureQuotesInHtml(cleanHtml);
+
   return cleanHtml.trim();
 }
 
@@ -545,32 +548,28 @@ function resolveBibleLink(ref: string): { slug: string; chapter: number } | null
 export function transformScriptureQuotesInHtml(html: string): string {
   if (!html || typeof html !== 'string') return '';
 
-  // Regex matching standalone scripture quotation paragraphs:
-  // e.g. <p>"Ngài phải nổi bật lên, còn tôi phải lu mờ đi." (Ga 3:30)</p>
-  // or <p>“...” (Ga 3:30)</p>
-  const scriptureParaRegex = /<p[^>]*>\s*["“]([^"”]+)["”]\s*\((?:x\.\s*)?([1-4]?\s*[A-Za-zÀ-ỹ]+(?:\s+[A-Za-zÀ-ỹ]+)?\s+\d+(?:[.,:]\s*\d+(?:-\d+)?)?)\)\s*<\/p>/gi;
+  // 1. Transform poetry blocks & verse divs:
+  // e.g. <div class="poetry-block"><div class="poetry-verse">"Ngài phải nổi bật lên, còn tôi phải lu mờ đi." (Ga 3:30)</div></div>
+  const poetryBlockRegex = /<div[^>]*class=["'][^"']*poetry-(?:block|verse)[^"']*["'][^>]*>(?:[\s\S]*?<div[^>]*class=["'][^"']*poetry-verse[^"']*["'][^>]*>)?\s*["“]([^"”]+)["”]\s*\((?:x\.\s*)?([1-4]?\s*[A-Za-zÀ-ỹ]+(?:\s+[A-Za-zÀ-ỹ]+)?\s+\d+(?:[.,:]\s*\d+(?:-\d+)?)?)\)\s*(?:<\/div>)?\s*<\/div>/gi;
 
-  return html.replace(scriptureParaRegex, (match, quoteText, refText) => {
+  let processed = html.replace(poetryBlockRegex, (match, quoteText, refText) => {
     const trimmedQuote = quoteText.trim();
     const trimmedRef = refText.trim();
     const linkInfo = resolveBibleLink(trimmedRef);
-
-    const bibleLink = linkInfo 
-      ? `/kinh-thanh/${linkInfo.slug}/${linkInfo.chapter}`
-      : `/kinh-thanh`;
+    const bibleLink = linkInfo ? `/kinh-thanh/${linkInfo.slug}/${linkInfo.chapter}` : `/kinh-thanh`;
 
     return `
 <div class="veridu-scripture-quote my-8 p-6 sm:p-7 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-l-4 border-amber-500 shadow-lg backdrop-blur-sm relative overflow-hidden not-prose">
-  <div class="flex items-start gap-3.5">
-    <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5 border border-amber-500/30">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+  <div class="flex items-start gap-4">
+    <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5 border border-amber-500/30">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
     </div>
     <div class="space-y-2.5 flex-1">
       <blockquote class="font-serif italic text-lg sm:text-xl text-amber-950 dark:text-amber-100 leading-relaxed m-0 p-0 border-0 bg-transparent">
         “${trimmedQuote}”
       </blockquote>
       <div class="flex items-center gap-2 pt-1">
-        <a href="${bibleLink}" target="_blank" title="Tra cứu Lời Chúa trong Kinh Thánh" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-900 dark:text-amber-300 font-mono text-xs font-bold border border-amber-500/30 transition-all shadow-xs group">
+        <a href="${bibleLink}" target="_blank" title="Tra cứu Lời Chúa trong Kinh Thánh VERIDU" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-900 dark:text-amber-300 font-mono text-xs font-bold border border-amber-500/30 transition-all shadow-xs group">
           <span>${trimmedRef}</span>
           <span class="text-[10px] text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform">↗</span>
         </a>
@@ -579,4 +578,37 @@ export function transformScriptureQuotesInHtml(html: string): string {
   </div>
 </div>`;
   });
+
+  // 2. Transform standalone paragraph / blockquote scripture quotes:
+  // e.g. <p>"Ngài phải nổi bật lên, còn tôi phải lu mờ đi." (Ga 3:30)</p>
+  const scriptureParaRegex = /<(?:p|blockquote)[^>]*>\s*["“]([^"”]+)["”]\s*\((?:x\.\s*)?([1-4]?\s*[A-Za-zÀ-ỹ]+(?:\s+[A-Za-zÀ-ỹ]+)?\s+\d+(?:[.,:]\s*\d+(?:-\d+)?)?)\)\s*<\/(?:p|blockquote)>/gi;
+
+  processed = processed.replace(scriptureParaRegex, (match, quoteText, refText) => {
+    const trimmedQuote = quoteText.trim();
+    const trimmedRef = refText.trim();
+    const linkInfo = resolveBibleLink(trimmedRef);
+    const bibleLink = linkInfo ? `/kinh-thanh/${linkInfo.slug}/${linkInfo.chapter}` : `/kinh-thanh`;
+
+    return `
+<div class="veridu-scripture-quote my-8 p-6 sm:p-7 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-l-4 border-amber-500 shadow-lg backdrop-blur-sm relative overflow-hidden not-prose">
+  <div class="flex items-start gap-4">
+    <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5 border border-amber-500/30">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+    </div>
+    <div class="space-y-2.5 flex-1">
+      <blockquote class="font-serif italic text-lg sm:text-xl text-amber-950 dark:text-amber-100 leading-relaxed m-0 p-0 border-0 bg-transparent">
+        “${trimmedQuote}”
+      </blockquote>
+      <div class="flex items-center gap-2 pt-1">
+        <a href="${bibleLink}" target="_blank" title="Tra cứu Lời Chúa trong Kinh Thánh VERIDU" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-900 dark:text-amber-300 font-mono text-xs font-bold border border-amber-500/30 transition-all shadow-xs group">
+          <span>${trimmedRef}</span>
+          <span class="text-[10px] text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform">↗</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>`;
+  });
+
+  return processed;
 }
