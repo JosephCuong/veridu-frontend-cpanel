@@ -92,7 +92,6 @@ html.dark .prose-veridu-sanitized a[href*="#fn"] {
   margin-bottom: 1rem !important;
 }
 
-
 .prose-veridu-sanitized [style*="color: #8B0000"],
 .prose-veridu-sanitized [style*="color:#8B0000"],
 .prose-veridu-sanitized [style*="color: #722F37"],
@@ -373,48 +372,378 @@ aside,
 }
 
 
-/* 📖 SACRED SCRIPTURE CALLOUT STYLING */
-.veridu-scripture-quote {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.veridu-scripture-quote:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.15);
-}
-
-
 /* ═══════════════════════════════════════════════════════════════════════════
-   📖 CATHOLIC SCRIPTURE & ACADEMIC ARTICLE DESIGN BLOCKS
+   🏛️ 8 CATHOLIC STAINED-GLASS EDITORIAL DESIGN BLOCKS (VERIDU SYSTEM)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* 1. Sacred Scripture Callout */
+/* ─── 1. KHỐI LỜI CHÚA SOI ĐƯỜNG (SACRED SCRIPTURE CALLOUT) ──────────────── */
+.sacred-scripture,
 .veridu-scripture-quote {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.veridu-scripture-quote:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 28px -6px rgba(245, 158, 11, 0.18);
+  margin: 2rem 0;
+  padding: 1.5rem 1.75rem;
+  border-radius: 1.25rem;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.04) 60%, transparent 100%);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-left: 4px solid #f59e0b;
+  box-shadow: 0 8px 24px -4px rgba(245, 158, 11, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 2. Legacy Poetry Block & Verse (Thơ & Lời Kinh Phụng Vụ) */
-.poetry-block {
-  margin: 2rem 0;
-  padding: 1.5rem 2rem;
-  background: linear-gradient(to right, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.04), transparent);
-  border-left: 4px solid #f59e0b;
-  border-radius: 1rem;
-  box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.05);
+.sacred-scripture:hover,
+.veridu-scripture-quote:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px -4px rgba(245, 158, 11, 0.20);
 }
-.poetry-verse {
-  font-family: var(--font-lora, serif);
+
+.sacred-scripture blockquote,
+.veridu-scripture-quote blockquote {
+  font-family: var(--font-lora), Georgia, serif;
   font-style: italic;
   font-size: 1.15rem;
   line-height: 1.8;
   color: var(--text-main);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
-/* 3. Inline Scripture Verse & Bible Paragraphs */
+/* ─── 2. KHỐI THƠ & LỜI NGUYỆN KÍNH (POETRY & PRAYER BLOCKS) ─────────────── */
+.poetry-block {
+  margin: 2rem 0;
+  padding: 1.5rem 2rem;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.10) 0%, rgba(245, 158, 11, 0.03) 60%, transparent 100%);
+  border-left: 4px solid #f59e0b;
+  border-top: 1px solid rgba(245, 158, 11, 0.15);
+  border-right: 1px solid rgba(245, 158, 11, 0.15);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.15);
+  border-radius: 1.25rem;
+  box-shadow: 0 6px 20px -3px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.poetry-verse {
+  font-family: var(--font-lora), Georgia, serif;
+  font-style: italic;
+  font-size: 1.15rem;
+  line-height: 1.85;
+  color: var(--text-main);
+  text-align: left;
+}
+
+.prayer-block {
+  margin: 2.25rem 0;
+  padding: 1.75rem 2rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(168, 85, 247, 0.05) 50%, transparent 100%);
+  border: 1px solid rgba(99, 102, 241, 0.30);
+  border-left: 4px solid #6366f1;
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 30px -5px rgba(99, 102, 241, 0.15);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  position: relative;
+  overflow: hidden;
+}
+
+.prayer-block p {
+  font-family: var(--font-lora), Georgia, serif;
+  font-style: italic;
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: var(--text-main);
+}
+
+.prayer-amen {
+  font-family: var(--font-lora), Georgia, serif;
+  font-weight: 800;
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #d97706;
+  text-align: right;
+  font-size: 0.95rem;
+  margin-top: 0.75rem;
+}
+
+html.dark .prayer-amen {
+  color: #fbbf24;
+}
+
+/* ─── 3. BẢN TÓM TẮT NGHIÊN CỨU THẦN HỌC (ABSTRACT RESEARCH CARD) ────────── */
+.abstract-research {
+  margin: 2rem 0;
+  padding: 1.75rem 2rem;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.28);
+  border-radius: 1.5rem;
+  font-size: 1rem;
+  line-height: 1.75;
+  box-shadow: 0 12px 32px -6px rgba(99, 102, 241, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  position: relative;
+}
+
+html.dark .abstract-research {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow: 0 12px 32px -6px rgba(0, 0, 0, 0.35);
+}
+
+.abstract-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(99, 102, 241, 0.20);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  font-family: var(--font-lora), Georgia, serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.8rem;
+  color: #4f46e5;
+}
+
+html.dark .abstract-header {
+  color: #818cf8;
+}
+
+.abstract-badge {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  background: rgba(99, 102, 241, 0.18);
+  color: #4338ca;
+  letter-spacing: 0.05em;
+}
+
+html.dark .abstract-badge {
+  background: rgba(99, 102, 241, 0.30);
+  color: #a5b4fc;
+}
+
+/* ─── 4. BẢNG DANH MỤC BẰNG CHỨNG THÁNH KINH (SCRIPTURE META & CLAIMS) ──── */
+.scripture-meta {
+  margin: 2.5rem 0;
+  padding: 1.75rem 2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
+}
+
+.scripture-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background: var(--bg-main);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  margin-bottom: 0.65rem;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+@media (min-width: 640px) {
+  .scripture-item {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+}
+
+.scripture-item:hover {
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.scripture-claim {
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--text-main);
+}
+
+.scripture-refs {
+  font-family: var(--font-mono, monospace);
+  color: #d97706;
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: -0.01em;
+}
+
+html.dark .scripture-refs {
+  color: #fbbf24;
+}
+
+/* ─── 5. THUẬT NGỮ GIÁO LÝ & THẦN HỌC (THEOLOGICAL DICTIONARY & TERM) ──── */
+.dictionary-meta {
+  margin: 2.5rem 0;
+  padding: 1.75rem 2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
+}
+
+.veridu-term {
+  display: inline-block;
+  font-weight: 700;
+  color: #b45309;
+  text-decoration: underline dotted 2px #d97706;
+  text-underline-offset: 3px;
+  cursor: help;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.3rem;
+  background: rgba(245, 158, 11, 0.10);
+  transition: all 0.2s ease;
+}
+
+html.dark .veridu-term {
+  color: #fbbf24;
+  text-decoration-color: #fbbf24;
+  background: rgba(245, 158, 11, 0.15);
+}
+
+.veridu-term:hover {
+  background: rgba(245, 158, 11, 0.22);
+  transform: translateY(-1px);
+}
+
+/* ─── 6. HÌNH ẢNH PHỤNG VỤ KÈM CHÚ THÍCH & LIGHTBOX ─────────────────────── */
+.veridu-image-block {
+  margin: 2.5rem auto;
+  text-align: center;
+  max-width: 100%;
+}
+
+.veridu-image-block img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 1.5rem;
+  box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.20);
+  border: 1px solid var(--border-card);
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+  cursor: zoom-in;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+}
+
+.veridu-image-block img:hover {
+  transform: scale(1.015);
+  box-shadow: 0 24px 44px -8px rgba(0, 0, 0, 0.28);
+}
+
+.veridu-image-block figcaption,
+figcaption {
+  margin-top: 0.85rem;
+  font-family: var(--font-lora), Georgia, serif;
+  font-style: italic;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
+/* ─── 7. KHUNG VIDEO & ÂM THANH NHÚNG (RESPONSIVE EMBED 16:9) ───────────── */
+.veridu-embed-video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 1.5rem;
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  border: 1px solid var(--border-card);
+  margin: 2.25rem 0;
+  background-color: #000000;
+  position: relative;
+  z-index: 10;
+}
+
+.veridu-embed-video iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.veridu-embed-audio {
+  width: 100%;
+  margin: 2rem 0;
+  padding: 1.25rem 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+}
+
+.veridu-embed-audio audio {
+  width: 100%;
+  border-radius: 9999px;
+}
+
+/* ─── 8. HỘP LƯU Ý & CẢNH BÁO GIÁO LÝ (CATECHETICAL CALLOUT - 4 LEVELS) ──── */
+.catechetical-callout {
+  margin: 1.75rem 0;
+  padding: 1.25rem 1.5rem;
+  border-radius: 0 1.25rem 1.25rem 0;
+  border-left: 4px solid;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 6px 20px -3px rgba(0, 0, 0, 0.06);
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+.catechetical-callout:hover {
+  transform: translateX(2px);
+}
+
+/* Level 1: Lưu Ý Thần Học (Note - Blue) */
+.callout-note {
+  border-left-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.10);
+  border-top: 1px solid rgba(59, 130, 246, 0.20);
+  border-right: 1px solid rgba(59, 130, 246, 0.20);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.20);
+}
+
+/* Level 2: Mẹo Suy Niệm Phụng Vụ (Tip - Emerald) */
+.callout-tip {
+  border-left-color: #10b981;
+  background: rgba(16, 185, 129, 0.10);
+  border-top: 1px solid rgba(16, 185, 129, 0.20);
+  border-right: 1px solid rgba(16, 185, 129, 0.20);
+  border-bottom: 1px solid rgba(16, 185, 129, 0.20);
+}
+
+/* Level 3: Quan Trọng: Tín Lý (Important - Amber) */
+.callout-important {
+  border-left-color: #f59e0b;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.14) 0%, rgba(245, 158, 11, 0.05) 100%);
+  border-top: 1px solid rgba(245, 158, 11, 0.25);
+  border-right: 1px solid rgba(245, 158, 11, 0.25);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+/* Level 4: Cảnh Báo Tín Lý (Warning - Red/Rose) */
+.callout-warning {
+  border-left-color: #ef4444;
+  background: rgba(239, 68, 68, 0.10);
+  border-top: 1px solid rgba(239, 68, 68, 0.20);
+  border-right: 1px solid rgba(239, 68, 68, 0.20);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.20);
+}
+
+/* ─── INLINE SCRIPTURE VERSE & BIBLE PARAGRAPHS ─────────────────────────── */
 .bible-paragraph {
   display: block;
   margin: 1.5rem 0;
@@ -423,61 +752,22 @@ aside,
   border-left: 3px solid #f59e0b;
   border-radius: 0 1rem 1rem 0;
 }
+
 .verse-span {
-  font-family: var(--font-lora, serif);
+  font-family: var(--font-lora), Georgia, serif;
   font-style: italic;
-  color: #b45309; /* amber-700 */
+  color: #b45309;
   font-weight: 600;
 }
-.dark .verse-span {
-  color: #fbbf24; /* amber-400 */
-}
 
-/* 4. Abstract Research Block (Tóm Tắt Nghiên Cứu Thần Học) */
-.abstract-research {
-  margin: 2rem 0;
-  padding: 1.5rem 1.75rem;
-  background: rgba(99, 102, 241, 0.08);
-  border: 1px solid rgba(99, 102, 241, 0.25);
-  border-radius: 1.25rem;
-  font-size: 0.95rem;
-  line-height: 1.75;
-  backdrop-filter: blur(8px);
-}
-
-/* 5. Scripture Meta & Item (Danh Mục Bằng Chứng Thánh Kinh) */
-.scripture-meta, .dictionary-meta {
-  margin: 2.5rem 0;
-  padding: 1.5rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
-  border-radius: 1.25rem;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
-}
-.scripture-item {
-  padding: 0.75rem 0;
-  border-bottom: 1px dashed var(--border-card);
-}
-.scripture-item:last-child {
-  border-bottom: none;
-}
-.scripture-claim {
-  font-weight: 700;
-  color: var(--text-main);
-}
-.scripture-refs {
-  font-family: var(--font-mono, monospace);
-  color: #d97706;
-  font-weight: 600;
-  margin-left: 0.5rem;
-}
-.dark .scripture-refs {
+html.dark .verse-span {
   color: #fbbf24;
 }
 
-/* 6. Footnotes (Chú Thích Cuối Trang) */
-.veridu-footnote, .veridu-footnotes {
-  font-size: 0.85rem;
+/* ─── FOOTNOTES (CHÚ THÍCH CUỐI TRANG) ──────────────────────────────────── */
+.veridu-footnote,
+.veridu-footnotes {
+  font-size: 0.875rem;
   color: var(--text-muted);
   border-top: 1px solid var(--border-card);
   padding-top: 1.5rem;

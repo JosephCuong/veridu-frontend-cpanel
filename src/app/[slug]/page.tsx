@@ -9,6 +9,10 @@ import ShareButtons from '@/components/ShareButtons';
 import TableOfContents from '@/components/TableOfContents';
 import AdminEditFloatingButton from '@/components/AdminEditFloatingButton';
 import { BookOpen, Heart, ArrowLeft, Cross, Calendar, Clock, User, Tag } from 'lucide-react';
+import { formatImageUrl } from '@/lib/htmlProcessor';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 const RESERVED_SLUGS = new Set([
   'admin', 'wp-admin', 'thu-vien', 'courses', 'khoa-hoc', 'doc-kinh-thanh', 
@@ -64,8 +68,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
   };
 }
-
-import { formatImageUrl } from '@/lib/htmlProcessor';
 
 const MetaDataRow = ({ article }: { article: any }) => (
   <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs font-semibold text-slate-700 dark:text-slate-300 mt-6">

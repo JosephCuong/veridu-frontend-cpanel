@@ -74,8 +74,13 @@ export async function POST(request: Request) {
     try {
       revalidatePath('/thu-vien');
       revalidatePath('/');
-      if (finalSlug) revalidatePath(`/${finalSlug}`);
-    } catch (e) {}
+      if (finalSlug) {
+        revalidatePath(`/${finalSlug}`);
+        revalidatePath(`/thu-vien/${finalSlug}`);
+      }
+    } catch (e) {
+      console.warn('Cache revalidation warning on create:', e);
+    }
 
     return NextResponse.json({ success: true, post: createdPost, slug: finalSlug });
   } catch (err: any) {

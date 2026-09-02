@@ -7,7 +7,11 @@ import { Metadata } from 'next';
 import VisualArticleRenderer from '@/components/VisualArticleRenderer';
 import ShareButtons from '@/components/ShareButtons';
 import TableOfContents from '@/components/TableOfContents';
+import AdminEditFloatingButton from '@/components/AdminEditFloatingButton';
 import { BookOpen, Heart, ArrowLeft, Cross, Calendar, Clock, User, Tag, Sparkles } from 'lucide-react';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // ─── GENERATE METADATA FROM SITESEO ──────────────────────────────────────────
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -249,6 +253,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
       </div>
 
       <ShareButtons url={articleUrl} title={cleanTitle} />
+      <AdminEditFloatingButton articleId={article.id} />
     </div>
   );
 }
