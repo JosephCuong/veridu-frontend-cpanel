@@ -237,8 +237,9 @@ function normalizeText(text: string): string {
 }
 
 export function determineArticleType(category?: string, dbArticleType?: string, contentHtml?: string): string {
-  if (dbArticleType && ['interactive', 'magazine', 'wide', 'meditation', 'theological', 'standard'].includes(dbArticleType)) {
-    return dbArticleType;
+  // Explicit interactive format
+  if (dbArticleType === 'interactive') {
+    return 'interactive';
   }
 
   // Auto-detect interactive full-page HTML documents by content signature
@@ -253,24 +254,18 @@ export function determineArticleType(category?: string, dbArticleType?: string, 
     }
   }
 
-  if (!category) return 'standard';
-  const norm = normalizeText(category);
-  if (
-    norm.includes('tuong tac') ||
-    norm.includes('interactive') ||
-    norm.includes('html 3d')
-  ) {
-    return 'interactive';
+  if (category) {
+    const norm = normalizeText(category);
+    if (
+      norm.includes('tuong tac') ||
+      norm.includes('interactive') ||
+      norm.includes('html 3d')
+    ) {
+      return 'interactive';
+    }
   }
-  if (norm.includes('suy niem')) {
-    return 'meditation';
-  }
-  if (norm.includes('tap chi') || norm.includes('phong su') || norm.includes('magazine') || norm.includes('wide')) {
-    return 'magazine';
-  }
-  if (norm.includes('than hoc') || norm.includes('theological')) {
-    return 'theological';
-  }
+
+  // All other layouts map to standard rich editorial format
   return 'standard';
 }
 

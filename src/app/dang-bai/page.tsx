@@ -76,7 +76,7 @@ function DangBaiContent() {
   const [slug, setSlug] = useState('');
   const [excerpt, setExcerpt] = useState('');
   const [category, setCategory] = useState('Thần Học');
-  const [articleType, setArticleType] = useState('theological');
+  const [articleType, setArticleType] = useState('standard');
   const [featuredImage, setFeaturedImage] = useState('');
   const [contentHtml, setContentHtml] = useState('');
   const [blocks, setBlocks] = useState<VeriduBlock[]>([]);
@@ -655,11 +655,8 @@ function DangBaiContent() {
                       onChange={(e) => setArticleType(e.target.value)}
                       className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] font-bold text-[var(--text-main)] outline-none focus:border-amber-500"
                     >
-                      <option value="theological">Thần Học / Nghiên Cứu (Nền Kính Phụng Vụ)</option>
-                      <option value="meditation">Suy Niệm / Chiêm Niệm (Ấm áp, Trầm lắng)</option>
-                      <option value="wide">Tạp Chí / Wide Magazine (Trang rộng)</option>
-                      <option value="standard">Tiêu Chuẩn (Standard)</option>
-                      <option value="interactive">3D Tương Tác / Complete Takeover (Toàn Màn Hình)</option>
+                      <option value="standard">📖 Bài Viết Cơ Bản (Trích Dẫn Kinh Thánh, Media &amp; Mục Lục)</option>
+                      <option value="interactive">🚀 Bài Viết Tương Tác (HTML/JS 3D Sandbox Toàn Màn Hình)</option>
                     </select>
                   </div>
 
