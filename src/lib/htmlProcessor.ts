@@ -446,3 +446,137 @@ export function normalizeAndSyncHtml(
 
   return cleanHtml.trim();
 }
+
+
+// ─── SMART SCRIPTURE QUOTE AUTO-DETECTOR & TRANSFORMER ────────────────────────
+const BIBLE_BOOK_MAP: Record<string, string> = {
+  'st': 'st', 'sang the': 'st',
+  'xh': 'xh', 'xuat hanh': 'xh',
+  'lv': 'lv', 'le vi': 'lv',
+  'ds': 'ds', 'dan so': 'ds',
+  'dnl': 'dnl', 'de nhi luat': 'dnl',
+  'gs': 'gs', 'gie-su': 'gs',
+  'tp': 'tp', 'thu lanh': 'tp',
+  'rt': 'rt', 'rut': 'rt',
+  '1sm': '1sm', '1 sm': '1sm',
+  '2sm': '2sm', '2 sm': '2sm',
+  '1v': '1v', '1 v': '1v',
+  '2v': '2v', '2 v': '2v',
+  '1sb': '1sb', '1 sb': '1sb',
+  '2sb': '2sb', '2 sb': '2sb',
+  'ez': 'ez', 'et-ra': 'ez',
+  'nh': 'nh', 'ne-khe-mi-a': 'nh',
+  'tb': 'tb', 'to-bi-a': 'tb',
+  'gdt': 'gdt', 'Giu-di-tha': 'gdt',
+  'et': 'et', 'Et-te': 'et',
+  '1mcb': '1mcb', '1 mcb': '1mcb',
+  '2mcb': '2mcb', '2 mcb': '2mcb',
+  'g': 'g', 'giop': 'g',
+  'tv': 'tv', 'thanh vinh': 'tv',
+  'cn': 'cn', 'cham ngon': 'cn',
+  'gl': 'gl', 'giang vien': 'gl',
+  'dc': 'dc', 'diem ca': 'dc',
+  'kn': 'kn', 'khon ngoan': 'kn',
+  'hc': 'hc', 'huan ca': 'hc',
+  'is': 'is', 'i-sai-a': 'is',
+  'gr': 'gr', 'gie-re-mi-a': 'gr',
+  'tc': 'tc', 'ca thuong': 'tc',
+  'br': 'br', 'ba-ruc': 'br',
+  'ezk': 'ezk', 'e-de-ki-en': 'ezk',
+  'dn': 'dn', 'da-ni-en': 'dn',
+  'hs': 'hs', 'ho-se': 'hs',
+  'ge': 'ge', 'gio-en': 'ge',
+  'am': 'am', 'a-mot': 'am',
+  'ob': 'ob', 'o-va-di-a': 'ob',
+  'gn': 'gn', 'gio-na': 'gn',
+  'mi': 'mi', 'mi-kha': 'mi',
+  'nhm': 'nhm', 'na-khum': 'nhm',
+  'hc_ha': 'hc_ha', 'kha-ba-cuc': 'hc_ha',
+  'xp': 'xp', 'xo-pho-ni-a': 'xp',
+  'khg': 'khg', 'khat-gai': 'khg',
+  'zk': 'zk', 'da-ca-ri-a': 'zk',
+  'ml': 'ml', 'ma-la-khi': 'ml',
+  // Tan Uoc
+  'mt': 'mt', 'mat-theu': 'mt', 'mattheu': 'mt',
+  'mc': 'mc', 'mac-co': 'mc', 'macco': 'mc',
+  'lc': 'lc', 'lu-ca': 'lc', 'luca': 'lc',
+  'ga': 'ga', 'gioan': 'ga', 'gio-an': 'ga',
+  'cv': 'cv', 'cong vu': 'cv',
+  'rm': 'rm', 'ro-ma': 'rm',
+  '1cr': '1cr', '1 cr': '1cr',
+  '2cr': '2cr', '2 cr': '2cr',
+  'gl_nt': 'gl_nt', 'ga-lat': 'gl_nt',
+  'ep': 'ep', 'e-phe-so': 'ep',
+  'pl': 'pl', 'phi-lip-phe': 'pl',
+  'cl': 'cl', 'co-lo-se': 'cl',
+  '1ts': '1ts', '1 ts': '1ts',
+  '2ts': '2ts', '2 ts': '2ts',
+  '1tm': '1tm', '1 tm': '1tm',
+  '2tm': '2tm', '2 tm': '2tm',
+  'tt': 'tt', 'ti-to': 'tt',
+  'prm': 'prm', 'phi-le-mon': 'prm',
+  'dt': 'dt', 'do thai': 'dt', 'hip-ri': 'dt',
+  'gc': 'gc', 'gia-co-be': 'gc',
+  '1pr': '1pr', '1 pr': '1pr',
+  '2pr': '2pr', '2 pr': '2pr',
+  '1ga': '1ga', '1 ga': '1ga',
+  '2ga': '2ga', '2 ga': '2ga',
+  '3ga': '3ga', '3 ga': '3ga',
+  'gd': 'gd', 'giu-da': 'gd',
+  'kh': 'kh', 'khai huyen': 'kh'
+};
+
+function resolveBibleLink(ref: string): { slug: string; chapter: number } | null {
+  if (!ref) return null;
+  const clean = ref.replace(/[()]/g, '').trim();
+  const match = clean.match(/^([1-4]?\s*[A-Za-zÀ-ỹ]+)\s+(\d+)(?:[.,:]\s*\d+.*)?$/);
+  if (!match) return null;
+
+  const bookName = match[1].toLowerCase().replace(/\s+/g, ' ').trim();
+  const chapter = parseInt(match[2], 10);
+  const slug = BIBLE_BOOK_MAP[bookName] || BIBLE_BOOK_MAP[bookName.replace(/\s+/g, '')];
+
+  if (slug && !isNaN(chapter)) {
+    return { slug, chapter };
+  }
+  return null;
+}
+
+export function transformScriptureQuotesInHtml(html: string): string {
+  if (!html || typeof html !== 'string') return '';
+
+  // Regex matching standalone scripture quotation paragraphs:
+  // e.g. <p>"Ngài phải nổi bật lên, còn tôi phải lu mờ đi." (Ga 3:30)</p>
+  // or <p>“...” (Ga 3:30)</p>
+  const scriptureParaRegex = /<p[^>]*>\s*["“]([^"”]+)["”]\s*\((?:x\.\s*)?([1-4]?\s*[A-Za-zÀ-ỹ]+(?:\s+[A-Za-zÀ-ỹ]+)?\s+\d+(?:[.,:]\s*\d+(?:-\d+)?)?)\)\s*<\/p>/gi;
+
+  return html.replace(scriptureParaRegex, (match, quoteText, refText) => {
+    const trimmedQuote = quoteText.trim();
+    const trimmedRef = refText.trim();
+    const linkInfo = resolveBibleLink(trimmedRef);
+
+    const bibleLink = linkInfo 
+      ? `/kinh-thanh/${linkInfo.slug}/${linkInfo.chapter}`
+      : `/kinh-thanh`;
+
+    return `
+<div class="veridu-scripture-quote my-8 p-6 sm:p-7 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-l-4 border-amber-500 shadow-lg backdrop-blur-sm relative overflow-hidden not-prose">
+  <div class="flex items-start gap-3.5">
+    <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5 border border-amber-500/30">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+    </div>
+    <div class="space-y-2.5 flex-1">
+      <blockquote class="font-serif italic text-lg sm:text-xl text-amber-950 dark:text-amber-100 leading-relaxed m-0 p-0 border-0 bg-transparent">
+        “${trimmedQuote}”
+      </blockquote>
+      <div class="flex items-center gap-2 pt-1">
+        <a href="${bibleLink}" target="_blank" title="Tra cứu Lời Chúa trong Kinh Thánh" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-900 dark:text-amber-300 font-mono text-xs font-bold border border-amber-500/30 transition-all shadow-xs group">
+          <span>${trimmedRef}</span>
+          <span class="text-[10px] text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform">↗</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>`;
+  });
+}

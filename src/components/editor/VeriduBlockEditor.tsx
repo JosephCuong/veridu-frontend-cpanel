@@ -111,10 +111,29 @@ export function compileBlocksToHtml(blocks: VeriduBlock[]): string {
         if (!embedUrl) return '';
         return `<div class="w-full aspect-video rounded-2xl shadow-2xl overflow-hidden border border-[var(--border-card)] my-6 bg-black relative z-10"><iframe src="${embedUrl}" class="w-full h-full border-none rounded-2xl" allowfullscreen></iframe></div>`;
       }
-      case 'pullquote': {
-        const text = block.quoteText || '';
-        const author = block.quoteAuthor ? ` (${block.quoteAuthor})` : '';
-        return `<aside class="veridu-pull-quote my-6 p-6 bg-amber-500/10 border-l-4 border-amber-500 rounded-r-2xl italic font-serif text-lg text-[var(--text-main)] shadow-lg">"${text}"${author}</aside>`;
+      case 'pullquote':
+      case 'scripture': {
+        const text = block.quoteText || block.content || '';
+        const author = block.quoteAuthor || '';
+        return `
+<div class="veridu-scripture-quote my-8 p-6 sm:p-7 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-l-4 border-amber-500 shadow-lg backdrop-blur-sm relative overflow-hidden not-prose">
+  <div class="flex items-start gap-3.5">
+    <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5 border border-amber-500/30">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+    </div>
+    <div class="space-y-2.5 flex-1">
+      <blockquote class="font-serif italic text-lg sm:text-xl text-amber-950 dark:text-amber-100 leading-relaxed m-0 p-0 border-0 bg-transparent">
+        “${text}”
+      </blockquote>
+      ${author ? `
+      <div class="flex items-center gap-2 pt-1">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-900 dark:text-amber-300 font-mono text-xs font-bold border border-amber-500/30 shadow-xs">
+          ${author}
+        </span>
+      </div>` : ''}
+    </div>
+  </div>
+</div>`;
       }
       case 'alert': {
         const atype = block.alertType || 'note';
@@ -463,10 +482,41 @@ export default function VeriduBlockEditor({ blocks, onChange, onSelectBlock }: V
                 </div>
               )}
 
-              {block.type === 'pullquote' && (
-                <div className="space-y-3">
-                  <textarea value={block.quoteText || ''} onChange={(e) => updateBlock(block.id, { quoteText: e.target.value })} rows={3} placeholder="Trích dẫn Kinh Thánh Công giáo..." className="w-full p-4 rounded-xl bg-amber-500/10 border-l-4 border-amber-500 font-serif italic text-base outline-none" />
-                  <input type="text" value={block.quoteAuthor || ''} onChange={(e) => updateBlock(block.id, { quoteAuthor: e.target.value })} placeholder="Nguồn trích dẫn (Lumen Gentium, 66)..." className="w-full p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs outline-none" />
+              {(block.type === 'pullquote' || block.type === 'scripture') && (
+                <div className="space-y-4 p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                      <BookOpen className="w-3.5 h-3.5" /> Lời Chúa Trích Dẫn:
+                    </label>
+                    <textarea 
+                      value={block.quoteText || block.content || ''} 
+                      onChange={(e) => updateBlock(block.id, { quoteText: e.target.value, content: e.target.value })} 
+                      rows={3} 
+                      placeholder="Nhập câu Kinh Thánh, ví dụ: Ngài phải nổi bật lên, còn tôi phải lu mờ đi..." 
+                      className="w-full p-3.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] font-serif italic text-base text-[var(--text-main)] outline-none focus:border-amber-500 leading-relaxed" 
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-[var(--text-muted)] flex items-center gap-1.5">
+                      <span>Tọa Độ Trích Dẫn (Sách Chương:Câu):</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      value={block.quoteAuthor || ''} 
+                      onChange={(e) => updateBlock(block.id, { quoteAuthor: e.target.value })} 
+                      placeholder="Ví dụ: Ga 3:30 hoặc Mt 11:14 hoặc Tv 23:1..." 
+                      className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] font-mono text-xs text-amber-600 dark:text-amber-400 font-bold outline-none focus:border-amber-500" 
+                    />
+                  </div>
+
+                  {/* Live Mini Preview in Editor */}
+                  {(block.quoteText || block.content) && (
+                    <div className="p-3.5 rounded-xl bg-amber-500/10 border-l-4 border-amber-500 text-xs font-serif italic">
+                      “{block.quoteText || block.content}”
+                      {block.quoteAuthor && <span className="block not-italic font-mono font-bold text-[10px] text-amber-600 mt-1">({block.quoteAuthor})</span>}
+                    </div>
+                  )}
                 </div>
               )}
 

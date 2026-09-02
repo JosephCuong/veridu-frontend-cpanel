@@ -371,3 +371,14 @@ aside,
   content-visibility: auto;
   contain-intrinsic-size: 1px 500px;
 }
+
+
+/* 📖 SACRED SCRIPTURE CALLOUT STYLING */
+.veridu-scripture-quote {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.veridu-scripture-quote:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.15);
+}
