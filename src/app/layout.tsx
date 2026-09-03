@@ -155,7 +155,7 @@ export default function RootLayout({
         {/* Theme Initializer Script */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localStorage.getItem('veridu-theme');if(e==='dark'){c.add('dark')}else{c.add('light')}}catch(e){}}();`,
+            __html: `!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localStorage.getItem('veridu-theme');if(e==='light'){c.add('light')}else{c.add('dark')}}catch(e){}}();`,
           }}
         />
       </head>
