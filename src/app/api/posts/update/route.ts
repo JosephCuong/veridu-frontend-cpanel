@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
+import { createClient } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
 import { formatImageUrl } from '@/lib/htmlProcessor';
 
@@ -19,6 +20,21 @@ function slugifyVietnamese(str: string): string {
 
 export async function POST(request: Request) {
   try {
+    const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
+    const token = (authHeader && authHeader.startsWith('Bearer ')) 
+      ? authHeader.substring(7).trim() 
+      : null;
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://cljglzhuwdniynfkzkxc.supabase.co';
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNsamdsemh1d2RuaXluZmt6a3hjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4MTUwMjMsImV4cCI6MjEwMTM5MTAyM30.vcZhNT-2NVkggDWCIlGGhqR9az30ASbAGOUly5-zAZI';
+
+    // Create authenticated client if JWT is provided, otherwise use default client
+    const dbClient = token
+      ? createClient(supabaseUrl, supabaseAnonKey, {
+          global: { headers: { Authorization: `Bearer ${token}` } }
+        })
+      : supabase;
+
     const body = await request.json();
     const { id, title, slug, excerpt, category, article_type, featured_image, content, status } = body;
 
@@ -33,7 +49,7 @@ export async function POST(request: Request) {
     const numericId = Number(id);
 
     // 1. Fetch existing post to inspect prior status & slug
-    const { data: existingPost, error: fetchError } = await supabase
+    const { data: existingPost, error: fetchError } = await dbClient
       .from('posts')
       .select('id, slug, status')
       .eq('id', numericId)
@@ -65,9 +81,9 @@ export async function POST(request: Request) {
 
     let updatedPost: any = null;
 
-    // 4. Tier 1: Try Postgres RPC (SECURITY DEFINER - Bypasses RLS completely)
+    // 4. Tier 1: Try Postgres RPC (SECURITY INVOKER)
     try {
-      const { data: rpcData, error: rpcError } = await supabase.rpc('update_post_content', {
+      const { data: rpcData, error: rpcError } = await dbClient.rpc('update_post_content', {
         p_id: numericId,
         p_title: cleanTitle,
         p_slug: finalSlug,
@@ -90,7 +106,7 @@ export async function POST(request: Request) {
 
     // 5. Tier 2: Direct update fallback if RPC didn't return data
     if (!updatedPost) {
-      const { data: updateData, error: updateError } = await supabase
+      const { data: updateData, error: updateError } = await dbClient
         .from('posts')
         .update({
           title: cleanTitle,
@@ -120,7 +136,7 @@ export async function POST(request: Request) {
     if (!updatedPost) {
       console.error('Post update failed: 0 rows affected in Supabase for ID:', numericId);
       return NextResponse.json({ 
-        error: 'Cơ sở dữ liệu Supabase không ghi nhận thay đổi nào cho bài viết #' + numericId + '. Vui lòng thử lại.' 
+        error: 'Cơ sở dữ liệu Supabase không ghi nhận thay đổi nào cho bài viết #' + numericId + '. Vui lòng kiểm tra quyền đăng nhập.' 
       }, { status: 500 });
     }
 
