@@ -16,6 +16,7 @@ export interface UserProfile {
   phone?: string;
   avatar?: string;
   displayName: string;
+  fullName?: string;
   christianName: string;
   parish: string;
   diocese: string;

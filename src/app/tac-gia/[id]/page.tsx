@@ -21,12 +21,12 @@ export const revalidate = 3600;
 export async function generateMetadata({ params }: { params: { id: string } }) {
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, display_name, christian_name, role, specialty, bio')
+    .select('full_name, christian_name, role, specialty, bio')
     .eq('id', params.id)
     .single();
 
   if (!profile) return { title: 'Tác Giả VERIDU' };
-  const name = profile.christian_name ? `${profile.christian_name} ${profile.display_name || profile.full_name}` : (profile.display_name || profile.full_name);
+  const name = profile.christian_name ? `${profile.christian_name} ${profile.full_name}` : (profile.full_name || 'Tác Giả');
   return {
     title: `${name} — Tác Giả & Học Giả | VERIDU`,
     description: profile.bio || `Hồ sơ tác giả ${name} trên Mạng lưới Giáo lý & Thần học VERIDU.`
@@ -61,7 +61,7 @@ export default async function AuthorProfilePage({ params }: { params: { id: stri
     .eq('status', 'published')
     .order('created_at', { ascending: false });
 
-  const authorName = profile.christian_name ? `${profile.christian_name} ${profile.display_name || profile.full_name}` : (profile.display_name || profile.full_name);
+  const authorName = profile.christian_name ? `${profile.christian_name} ${profile.full_name}` : (profile.full_name || 'Tác Giả');
 
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col font-sans transition-colors duration-300 pb-24 pt-16 md:pt-20">

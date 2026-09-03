@@ -122,7 +122,8 @@ function ProfileDashboardContent() {
               const liveUser: UserProfile = {
                 ...current,
                 id: dbProfile.id || current.id,
-                displayName: dbProfile.display_name || dbProfile.full_name || current.displayName,
+                displayName: dbProfile.full_name || current.fullName || current.displayName || 'Thành Viên',
+                fullName: dbProfile.full_name || current.fullName || current.displayName || 'Thành Viên',
                 christianName: dbProfile.christian_name || current.christianName,
                 parish: dbProfile.parish || current.parish,
                 diocese: dbProfile.diocese || current.diocese,
@@ -208,6 +209,7 @@ function ProfileDashboardContent() {
         ...user,
         christianName: formData.christianName,
         displayName: formData.displayName,
+        fullName: formData.displayName,
         phone: formData.phone,
         parish: formData.parish,
         diocese: formData.diocese,
@@ -868,6 +870,7 @@ function ProfileDashboardContent() {
                       type="text"
                       value={formData.displayName}
                       onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                      placeholder="VD: VERIDU hoặc Nguyễn Văn A"
                       className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>

@@ -76,7 +76,7 @@ export async function verifyApiAuth(
     try {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role, display_name')
+        .select('role, full_name')
         .eq('id', userId)
         .maybeSingle();
 
@@ -109,7 +109,7 @@ export async function verifyApiAuth(
         id: userId,
         email: userEmail,
         role: userRole,
-        displayName: authData.user.user_metadata?.display_name || userEmail
+        displayName: authData.user.user_metadata?.full_name || authData.user.user_metadata?.display_name || userEmail
       }
     };
   } catch (err: any) {

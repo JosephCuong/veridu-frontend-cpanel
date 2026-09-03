@@ -269,7 +269,7 @@ export default function AuthorsLandingPage() {
                 <div className="flex items-start gap-4">
                   <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 font-serif font-black text-lg overflow-hidden relative shadow-inner">
                     {author.avatar_url ? (
-                      <Image src={author.avatar_url} alt={author.display_name || author.full_name} fill className="object-cover" />
+                      <Image src={author.avatar_url} alt={author.full_name || 'Tác Giả'} fill className="object-cover" />
                     ) : (
                       <span>{(author.christian_name || author.full_name || 'V')[0]}</span>
                     )}
@@ -278,7 +278,7 @@ export default function AuthorsLandingPage() {
                   <div className="space-y-1 flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <h3 className="font-serif font-bold text-base text-[var(--text-main)] group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-                        {author.christian_name ? `${author.christian_name} ${author.display_name || author.full_name}` : (author.display_name || author.full_name)}
+                        {author.christian_name ? `${author.christian_name} ${author.full_name}` : (author.full_name || 'Tác Giả')}
                       </h3>
                       {author.is_verified_author && (
                         <span title="Tác giả được xác thực">

@@ -50,6 +50,7 @@ export default function RegisterPage() {
           username: email.split('@')[0],
           email: email,
           displayName: displayName || email,
+          fullName: displayName || email,
           christianName: christianName,
           parish: parish,
           diocese: diocese,

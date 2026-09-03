@@ -52,7 +52,8 @@ export default function LiturgicalHeader() {
           if (dbProfile) {
             const liveUser: UserProfile = {
               ...currentUser,
-              displayName: dbProfile.display_name || dbProfile.full_name || currentUser.displayName,
+              displayName: dbProfile.full_name || currentUser.displayName,
+              fullName: dbProfile.full_name || currentUser.displayName,
               christianName: dbProfile.christian_name || currentUser.christianName,
               parish: dbProfile.parish || currentUser.parish,
               diocese: dbProfile.diocese || currentUser.diocese,
