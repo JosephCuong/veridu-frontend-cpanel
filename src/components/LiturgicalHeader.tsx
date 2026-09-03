@@ -30,7 +30,8 @@ export default function LiturgicalHeader() {
   // Auth & Profile Menu state
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const userMenuRef = useRef<HTMLDivElement>(null);
+  const desktopUserMenuRef = useRef<HTMLDivElement>(null);
+  const tabletUserMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const currentUser = getStoredUser();
@@ -118,9 +119,14 @@ export default function LiturgicalHeader() {
   // Click-Outside & Escape key listener to auto-dismiss User Profile Menu
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-        setIsUserMenuOpen(false);
+      const target = event.target as Node;
+      if (
+        (desktopUserMenuRef.current && desktopUserMenuRef.current.contains(target)) ||
+        (tabletUserMenuRef.current && tabletUserMenuRef.current.contains(target))
+      ) {
+        return;
       }
+      setIsUserMenuOpen(false);
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -188,103 +194,61 @@ export default function LiturgicalHeader() {
     return null;
   }
 
-  // Common User Menu Popover Card (Glassmorphic)
+  // Ultra-Sleek Streamlined User Menu Popover Card (Glassmorphic)
   const renderUserMenuDropdown = () => {
     if (!isUserMenuOpen || !user) return null;
     return (
-      <>
-        {/* Transparent Backdrop */}
-        <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)} />
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className="absolute right-0 top-full mt-2 w-48 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl shadow-2xl p-1.5 space-y-0.5 z-50 animate-in zoom-in-95 duration-150 backdrop-blur-2xl select-none"
+      >
+        {/* 1. Hồ Sơ */}
+        <Link 
+          href="/ho-so" 
+          onClick={() => setIsUserMenuOpen(false)}
+          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-[var(--text-main)] hover:bg-amber-500/10 hover:text-amber-500 transition-colors group cursor-pointer"
+        >
+          <User className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
+          <span>Hồ Sơ</span>
+        </Link>
 
-        <div className="absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-24px)] bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl shadow-2xl p-3.5 space-y-3 z-50 animate-in zoom-in-95 duration-150 backdrop-blur-2xl">
-          
-          {/* User Header Info Card */}
-          <div className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 space-y-2">
-            <div className="flex items-center gap-2.5">
-              <div className="relative w-9 h-9 rounded-2xl bg-amber-500/20 text-amber-600 dark:text-amber-400 font-serif font-black text-sm flex items-center justify-center border border-amber-500/30 overflow-hidden shrink-0">
-                {user.avatar ? (
-                  <Image src={user.avatar} alt="Avatar" fill className="object-cover" sizes="36px" />
-                ) : (
-                  '✝'
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-serif font-bold text-xs text-[var(--text-main)] truncate">
-                  {user.christianName} {user.displayName}
-                </div>
-                <div className="text-[10px] text-amber-700 dark:text-amber-400 font-serif font-black uppercase tracking-wider truncate">
-                  CẤP {levelInfo.level} · {levelInfo.title}
-                </div>
-              </div>
-            </div>
+        {/* 2. Cài Đặt */}
+        <Link 
+          href="/cai-dat" 
+          onClick={() => setIsUserMenuOpen(false)}
+          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-[var(--text-main)] hover:bg-amber-500/10 hover:text-amber-500 transition-colors group cursor-pointer"
+        >
+          <Settings className="w-4 h-4 text-indigo-500 group-hover:scale-110 transition-transform" />
+          <span>Cài Đặt</span>
+        </Link>
 
-            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-amber-500/20 text-[11px] font-serif">
-              <div className="flex items-center gap-1 text-[var(--text-main)]">
-                <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                <span className="truncate">{levelInfo.currentExp} EXP</span>
-              </div>
-              <div className="flex items-center gap-1 text-[var(--text-main)]">
-                <Droplets className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                <span className="truncate">{currentMana} Mana</span>
-              </div>
-            </div>
+        {/* 3. Đăng Bài (Admin) */}
+        {user.role === 'Quản Trị Viên' && (
+          <Link 
+            href="/dang-bai" 
+            onClick={() => setIsUserMenuOpen(false)}
+            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors group cursor-pointer"
+          >
+            <FileText className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
+            <span>Đăng Bài</span>
+          </Link>
+        )}
 
-            {user.parish && (
-              <div className="text-[10px] text-[var(--text-muted)] font-serif truncate pt-0.5 border-t border-amber-500/10">
-                {user.parish} {user.diocese ? `• ${user.diocese}` : ''}
-              </div>
-            )}
-          </div>
-
-          {/* Menu Navigation Links */}
-          <div className="space-y-1 text-xs font-serif">
-            <Link 
-              href="/ho-so" 
-              onClick={() => setIsUserMenuOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-[var(--text-main)] hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400 transition-colors group"
-            >
-              <User className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
-              <span>Hồ Sơ Cá Nhân &amp; Kho Danh Hiệu</span>
-            </Link>
-
-            {user.role === 'Quản Trị Viên' && (
-              <Link 
-                href="/dang-bai" 
-                onClick={() => setIsUserMenuOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 transition-colors group"
-              >
-                <FileText className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
-                <span>Studio Đăng Bài (Admin)</span>
-              </Link>
-            )}
-
-            <Link 
-              href="/ho-so" 
-              onClick={() => setIsUserMenuOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-[var(--text-main)] hover:bg-[var(--bg-main)] transition-colors group"
-            >
-              <Settings className="w-4 h-4 text-[var(--text-muted)] group-hover:scale-110 transition-transform" />
-              <span>Cài Đặt Thông Tin &amp; Avatar</span>
-            </Link>
-          </div>
-
-          {/* Logout Button */}
-          <div className="pt-2 border-t border-[var(--border-card)]">
-            <button 
-              type="button"
-              onClick={() => {
-                setIsUserMenuOpen(false);
-                logout();
-              }}
-              className="w-full text-left flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-serif font-bold text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Đăng Xuất</span>
-            </button>
-          </div>
-
+        {/* 4. Đăng Xuất */}
+        <div className="pt-1 border-t border-[var(--border-card)] my-0.5">
+          <button 
+            type="button"
+            onClick={() => {
+              setIsUserMenuOpen(false);
+              logout();
+            }}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Đăng Xuất</span>
+          </button>
         </div>
-      </>
+      </div>
     );
   };
 
@@ -345,7 +309,7 @@ export default function LiturgicalHeader() {
                 </div>
                 
                 {/* Full Desktop User Pill */}
-                <div className="relative" ref={userMenuRef}>
+                <div className="relative" ref={desktopUserMenuRef}>
                   <button
                     type="button"
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -772,7 +736,7 @@ export default function LiturgicalHeader() {
 
           {/* Compact User Pill (No truncated text on tablet!) */}
           {user ? (
-            <div className="relative" ref={userMenuRef}>
+            <div className="relative" ref={tabletUserMenuRef}>
               <button
                 type="button"
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -1012,19 +976,22 @@ export default function LiturgicalHeader() {
           </Link>
 
           {/* User Links in Drawer */}
-          <div className="pt-4 border-t border-[var(--border-card)] space-y-2">
+          <div className="pt-4 border-t border-[var(--border-card)] space-y-1">
             {user ? (
-              <div className="space-y-2">
-                <Link href="/ho-so" className="block py-2 text-xs font-bold text-[var(--text-main)] hover:text-amber-500">
-                  Hồ Sơ Cá Nhân &amp; Kho Danh Hiệu
+              <div className="space-y-1">
+                <Link href="/ho-so" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-xs font-bold text-[var(--text-main)] hover:text-amber-500">
+                  <User className="w-4 h-4 text-amber-500" /> Hồ Sơ
+                </Link>
+                <Link href="/cai-dat" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-xs font-bold text-[var(--text-main)] hover:text-amber-500">
+                  <Settings className="w-4 h-4 text-indigo-500" /> Cài Đặt
                 </Link>
                 {user.role === 'Quản Trị Viên' && (
-                  <Link href="/dang-bai" className="block py-2 text-xs font-bold text-amber-600 dark:text-amber-400 hover:text-amber-500">
-                    Studio Đăng Bài (Admin)
+                  <Link href="/dang-bai" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-xs font-bold text-amber-600 dark:text-amber-400 hover:text-amber-500">
+                    <FileText className="w-4 h-4 text-amber-500" /> Đăng Bài
                   </Link>
                 )}
-                <button type="button" onClick={logout} className="w-full text-left py-2 text-xs font-bold text-red-500 cursor-pointer">
-                  Đăng Xuất
+                <button type="button" onClick={() => { setIsMobileMenuOpen(false); logout(); }} className="w-full text-left flex items-center gap-2 py-2 text-xs font-bold text-red-500 cursor-pointer">
+                  <LogOut className="w-4 h-4" /> Đăng Xuất
                 </button>
               </div>
             ) : (

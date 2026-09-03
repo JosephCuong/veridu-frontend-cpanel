@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useTransition } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { 
   getStoredUser, logout, saveAuthSession, getAuthToken, UserProfile, 
@@ -29,9 +30,21 @@ import {
   fetchUserCourseProgressFromSupabase, fetchCharacters, Character 
 } from '@/lib/api';
 
-export default function ProfileDashboardPage() {
+function ProfileDashboardContent() {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'courses' | 'certificates' | 'titles' | 'mana' | 'quiz' | 'posts' | 'settings'>('dashboard');
+  const searchParams = useSearchParams();
+  const tabQuery = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'courses' | 'certificates' | 'titles' | 'mana' | 'quiz' | 'posts' | 'settings'>(
+    (tabQuery && ['dashboard', 'courses', 'certificates', 'titles', 'mana', 'quiz', 'posts', 'settings'].includes(tabQuery))
+      ? (tabQuery as any)
+      : 'dashboard'
+  );
+
+  useEffect(() => {
+    if (tabQuery && ['dashboard', 'courses', 'certificates', 'titles', 'mana', 'quiz', 'posts', 'settings'].includes(tabQuery)) {
+      setActiveTab(tabQuery as any);
+    }
+  }, [tabQuery]);
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   
@@ -204,8 +217,8 @@ export default function ProfileDashboardPage() {
       saveAuthSession(updatedUser);
       setUser(updatedUser);
 
-      if (user.id) {
-        await supabase
+      if (user.id || user.email) {
+        let updateQuery = supabase
           .from('profiles')
           .update({
             christian_name: formData.christianName,
@@ -215,8 +228,15 @@ export default function ProfileDashboardPage() {
             diocese: formData.diocese,
             avatar_url: formData.avatar,
             updated_at: new Date().toISOString()
-          })
-          .eq('id', user.id);
+          });
+        if (typeof user.id === 'string' && user.id.includes('-')) {
+          updateQuery = updateQuery.eq('id', user.id);
+        } else if (user.email) {
+          updateQuery = updateQuery.eq('email', user.email);
+        } else {
+          updateQuery = updateQuery.eq('id', user.id);
+        }
+        await updateQuery;
       }
 
       window.dispatchEvent(new CustomEvent('veridu_user_updated', { detail: updatedUser }));
@@ -926,5 +946,21 @@ export default function ProfileDashboardPage() {
       )}
 
     </div>
+  );
+}
+
+
+export default function ProfileDashboardPage() {
+  return (
+    <React.Suspense fallback={
+      <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center p-4">
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs font-serif text-[var(--text-muted)]">Đang tải hồ sơ...</p>
+        </div>
+      </div>
+    }>
+      <ProfileDashboardContent />
+    </React.Suspense>
   );
 }
