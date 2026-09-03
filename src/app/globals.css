@@ -764,12 +764,203 @@ html.dark .verse-span {
   color: #fbbf24;
 }
 
-/* ─── FOOTNOTES (CHÚ THÍCH CUỐI TRANG) ──────────────────────────────────── */
-.veridu-footnote,
+/* ─── 9. FOOTNOTES & SCHOLARLY CITATIONS (CHÚ THÍCH & TÀI LIỆU THAM KHẢO) ─── */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Ensure footnote targets don't hide under fixed header */
+[id^="fn-"], 
+[id^="fnref-"], 
+[id^="fn_"], 
+[id^="fn:"], 
+[id^="fn"], 
+[id^="fnref"], 
+.footnote-item, 
+.footnotes-section, 
+section.footnotes, 
+#chu-thich, 
+#footnotes {
+  scroll-margin-top: 110px;
+}
+
+/* In-text Footnote Reference Superscript Badge */
+.footnote-ref,
+sup:has(a[href*="#fn"]),
+a.footnote-ref,
+.prose-veridu-sanitized a[href*="#fn"] {
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  text-decoration: none !important;
+  display: inline-block;
+  vertical-align: super;
+  font-size: 0.75rem;
+  line-height: 1;
+  padding: 0.1rem 0.35rem;
+  margin: 0 0.15rem;
+  border-radius: 0.375rem;
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+html.dark .footnote-ref,
+html.dark sup:has(a[href*="#fn"]),
+html.dark a.footnote-ref,
+html.dark .prose-veridu-sanitized a[href*="#fn"] {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24 !important;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.footnote-ref:hover,
+sup:has(a[href*="#fn"]):hover,
+a.footnote-ref:hover,
+.prose-veridu-sanitized a[href*="#fn"]:hover {
+  background: rgba(245, 158, 11, 0.3);
+  transform: translateY(-2px) scale(1.1);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+}
+
+/* Footnotes Container at Article Footer */
+.footnotes-section,
+section.footnotes,
 .veridu-footnotes {
+  margin-top: 3.5rem;
+  padding-top: 2rem;
+  border-top: 2px dashed rgba(245, 158, 11, 0.3);
+  font-size: 0.9375rem;
+  color: var(--text-main);
+}
+
+.footnotes-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-serif);
+  font-weight: 800;
   font-size: 0.875rem;
-  color: var(--text-muted);
-  border-top: 1px solid var(--border-card);
-  padding-top: 1.5rem;
-  margin-top: 3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #b45309;
+  margin-bottom: 1.25rem;
+}
+
+html.dark .footnotes-header {
+  color: #fbbf24;
+}
+
+.footnotes-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.footnote-item,
+section.footnotes li {
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  transition: all 0.3s ease;
+  line-height: 1.6;
+}
+
+.footnote-item:hover,
+section.footnotes li:hover {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.04);
+}
+
+.footnote-num {
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  color: #d97706;
+  margin-right: 0.5rem;
+}
+
+html.dark .footnote-num {
+  color: #fbbf24;
+}
+
+/* Backref Icon Link (↩) */
+.footnote-backref,
+.footnote-back,
+a[href*="#fnref"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.5rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.375rem;
+  background: rgba(245, 158, 11, 0.15);
+  color: #b45309 !important;
+  font-weight: bold;
+  text-decoration: none !important;
+  font-size: 0.8125rem;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  cursor: pointer;
+}
+
+html.dark .footnote-backref,
+html.dark .footnote-back,
+html.dark a[href*="#fnref"] {
+  color: #fbbf24 !important;
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.footnote-backref:hover,
+.footnote-back:hover,
+a[href*="#fnref"]:hover {
+  transform: scale(1.15);
+  background: rgba(245, 158, 11, 0.35);
+}
+
+/* Target Pulsing Glow when jumping to anchor */
+.footnote-item:target,
+section.footnotes li:target,
+[id^="fn-"]:target,
+[id^="fn"]:target {
+  animation: footnote-target-glow 2.5s ease-out;
+}
+
+[id^="fnref-"]:target,
+[id^="fnref"]:target {
+  animation: footnote-ref-glow 2s ease-out;
+}
+
+@keyframes footnote-target-glow {
+  0% {
+    background-color: rgba(245, 158, 11, 0.28);
+    border-color: #f59e0b;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+    transform: translateX(4px);
+  }
+  60% {
+    background-color: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.6);
+  }
+  100% {
+    background-color: var(--bg-card);
+    border-color: var(--border-card);
+    transform: translateX(0);
+  }
+}
+
+@keyframes footnote-ref-glow {
+  0% {
+    background-color: rgba(245, 158, 11, 0.5);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
 }

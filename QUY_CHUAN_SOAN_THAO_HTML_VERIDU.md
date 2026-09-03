@@ -268,6 +268,55 @@
 
 ---
 
+
+---
+
+### 9. Khối Chú Thích & Tài Liệu Tham Khảo (Footnotes & Citations)
+*Dành cho bài khảo cứu, thần học, chú giải Kinh Thánh hoặc trích dẫn các tài liệu Giáo phụ, Công đồng. Hệ thống hỗ trợ liên kết hai chiều mượt mà kèm hiệu ứng phát sáng vàng hổ phách khi cuộn tới.*
+
+#### A. Thẻ Chú Thích Trên Thân Bài (In-Text Reference)
+*Chèn ngay sau từ ngữ hoặc câu văn cần chú thích:*
+```html
+...đây là giáo lý trọng yếu<sup class="footnote-ref"><a href="#fn-1" id="fnref-1" title="Xem chú thích 1">[1]</a></sup> của Hội Thánh...
+```
+
+#### B. Khối Danh Mục Chú Thích Cuối Bài Viết (Footnotes Section)
+*Đặt ở cuối cùng của bài viết (trước phần kết hoặc dưới bài đọc):*
+```html
+<div class="footnotes-section not-prose" id="chu-thich">
+  <div class="footnotes-header">
+    <span>📜</span> CHÚ THÍCH &amp; TÀI LIỆU THAM KHẢO
+  </div>
+  <ol class="footnotes-list">
+    <li id="fn-1" class="footnote-item">
+      <span class="footnote-num">[1]</span>
+      <span class="footnote-text">Thánh Tôma Aquinô, <em>Summa Theologiae</em>, I, q. 2, a. 3.</span>
+      <a href="#fnref-1" class="footnote-backref" title="Quay lại đoạn văn">↩</a>
+    </li>
+    <li id="fn-2" class="footnote-item">
+      <span class="footnote-num">[2]</span>
+      <span class="footnote-text">Giáo lý Hội Thánh Công Giáo (GLHTCG), số 464.</span>
+      <a href="#fnref-2" class="footnote-backref" title="Quay lại đoạn văn">↩</a>
+    </li>
+  </ol>
+</div>
+```
+
+#### C. Hỗ trợ định dạng Footnotes xuất từ Word / Markdown / Pandoc
+*Hệ thống VERIDU tự động tương thích và tạo kiểu đẹp cho cú pháp Markdown chuẩn:*
+```html
+<section class="footnotes" id="footnotes">
+  <ol>
+    <li id="fn1">Nội dung chú thích... <a href="#fnref1" class="footnote-back">↩</a></li>
+  </ol>
+</section>
+```
+
+#### ✨ Trải Nghiệm Người Dùng (UX):
+1. **Cuộn mượt mà**: Khi người đọc bấm vào số `[1]`, trình duyệt trượt êm ái xuống đúng chú thích `fn-1` ở chân bài (tự động căn lề `110px` để không bị Header che khuất).
+2. **Hiệu ứng Highlight Vàng Hổ Phách**: Thẻ chú thích mục tiêu sẽ tự động nhấp nháy phát sáng viền vàng kim trong 2.5 giây giúp người đọc nhận biết ngay lập tức.
+3. **Quay lại tức thì**: Bấm vào biểu tượng `↩` ở cuối chú thích để nhảy mượt mà về đúng câu văn đang đọc dở!
+
 ## 📑 3. QUY TẮC TYPOGRAPHY & ĐỊNH DẠNG VĂN BẢN THƯỜNG
 
 | Thẻ HTML | Mục Đích | Cách Hiển Thị Trên VERIDU |

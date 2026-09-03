@@ -282,6 +282,7 @@ function DangBaiContent() {
       if (/scripture-meta/i.test(rawText)) features.push('Bằng Chứng Kinh Thánh');
       if (/dictionary-meta/i.test(rawText)) features.push('Thuật Ngữ Tín Lý');
       if (/catechetical-callout/i.test(rawText)) features.push('Hộp Lưu Ý Giáo Lý');
+      if (/footnotes-section|footnote-ref|footnote-item|<sup/i.test(rawText)) features.push('Chú Thích Chân Trang');
       if (/<img/i.test(rawText)) features.push('Hình Ảnh');
       if (/<iframe|<video/i.test(rawText)) features.push('Media Nhúng');
       setDetectedFeatures(features);
