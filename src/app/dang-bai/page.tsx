@@ -48,6 +48,7 @@ import {
   Share2
 } from 'lucide-react';
 import { getStoredUser, UserProfile } from '@/lib/auth';
+import { supabase } from '@/lib/supabaseClient';
 import { 
   extractTitleFromHtml, 
   extractExcerptFromHtml, 
@@ -126,6 +127,17 @@ function DangBaiContent() {
 
   // UI Studio Controls: 'visual' (Live Visual Canvas WYSIWYG) | 'code' (HTML Code Editor) | 'preview' (Reader View)
   const [activeTab, setActiveTab] = useState<'visual' | 'code' | 'preview'>('visual');
+  // Seamless Bi-directional Sync between Visual Canvas and Code Editor
+  const switchTab = (newTab: 'visual' | 'code' | 'preview') => {
+    if (activeTab === 'visual' && visualCanvasRef.current) {
+      const currentCanvasHtml = visualCanvasRef.current.innerHTML;
+      setContentHtml(currentCanvasHtml);
+    } else if (activeTab === 'code' && visualCanvasRef.current) {
+      visualCanvasRef.current.innerHTML = contentHtml;
+    }
+    setActiveTab(newTab);
+  };
+
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<'settings' | 'blocks' | 'tools'>('settings');
   const [canvasDevice, setCanvasDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
@@ -356,9 +368,12 @@ function DangBaiContent() {
       return;
     }
 
-    // Get current HTML from canvas if in visual mode
+    // Get current HTML from canvas with strict priority
     let finalHtml = contentHtml;
     if (activeTab === 'visual' && visualCanvasRef.current) {
+      finalHtml = visualCanvasRef.current.innerHTML;
+      setContentHtml(finalHtml);
+    } else if (!finalHtml.trim() && visualCanvasRef.current?.innerHTML) {
       finalHtml = visualCanvasRef.current.innerHTML;
       setContentHtml(finalHtml);
     }
@@ -398,9 +413,20 @@ function DangBaiContent() {
         payload.author_id = user?.id || 'eef94645-01fb-471f-9b10-cdd3fea35143';
       }
 
+      let authToken: string | undefined;
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        authToken = sessionData?.session?.access_token;
+      } catch (e) {}
+
+      const reqHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (authToken) {
+        reqHeaders['Authorization'] = `Bearer ${authToken}`;
+      }
+
       const res = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: reqHeaders,
         body: JSON.stringify(payload)
       });
 
@@ -512,7 +538,7 @@ function DangBaiContent() {
         <div className="flex items-center gap-1 bg-[var(--bg-main)] p-1 rounded-2xl border border-[var(--border-card)]">
           <button
             type="button"
-            onClick={() => setActiveTab('visual')}
+            onClick={() => switchTab('visual')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'visual' 
                 ? 'bg-amber-500 text-slate-950 shadow-md font-black' 
@@ -526,7 +552,7 @@ function DangBaiContent() {
 
           <button
             type="button"
-            onClick={() => setActiveTab('code')}
+            onClick={() => switchTab('code')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'code' 
                 ? 'bg-amber-500 text-slate-950 shadow-md font-black' 
@@ -540,7 +566,7 @@ function DangBaiContent() {
 
           <button
             type="button"
-            onClick={() => setActiveTab('preview')}
+            onClick={() => switchTab('preview')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'preview' 
                 ? 'bg-amber-500 text-slate-950 shadow-md font-black' 

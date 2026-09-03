@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (fetchError || !existingPost) {
-      return NextResponse.json({ error: 'Không tìm thấy bài viết trong CSDL.' }, { status: 404 });
+      return NextResponse.json({ error: 'Không tìm thấy bài viết trong CSDL Supabase.' }, { status: 404 });
     }
 
     // 2. Safe slug computation
@@ -57,33 +57,76 @@ export async function POST(request: Request) {
       ? 'published' 
       : (status || existingPost.status || 'published');
 
-    // 4. Update Supabase record
-    const { data, error } = await supabase
-      .from('posts')
-      .update({
-        title: title.trim(),
-        slug: finalSlug,
-        excerpt: excerpt ? excerpt.trim() : '',
-        category: category || 'Thần Học',
-        article_type: article_type || 'theological',
-        featured_image: formatImageUrl(featured_image),
-        content,
-        status: targetStatus,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', numericId)
-      .select();
+    const formattedImage = formatImageUrl(featured_image);
+    const cleanExcerpt = excerpt ? excerpt.trim() : '';
+    const cleanTitle = title.trim();
+    const postCategory = category || 'Thần Học';
+    const postArticleType = article_type || 'theological';
 
-    if (error) {
-      console.error('Supabase update post error:', error);
-      return NextResponse.json({ error: error.message || 'Lỗi khi cập nhật bài viết' }, { status: 500 });
+    let updatedPost: any = null;
+
+    // 4. Tier 1: Try Postgres RPC (SECURITY DEFINER - Bypasses RLS completely)
+    try {
+      const { data: rpcData, error: rpcError } = await supabase.rpc('update_post_content', {
+        p_id: numericId,
+        p_title: cleanTitle,
+        p_slug: finalSlug,
+        p_excerpt: cleanExcerpt,
+        p_category: postCategory,
+        p_article_type: postArticleType,
+        p_featured_image: formattedImage,
+        p_content: content,
+        p_status: targetStatus
+      });
+
+      if (!rpcError && rpcData && rpcData.length > 0) {
+        updatedPost = rpcData[0];
+      } else if (rpcError) {
+        console.warn('RPC update_post_content error, falling back to direct update:', rpcError.message);
+      }
+    } catch (rpcEx) {
+      console.warn('RPC exception, falling back:', rpcEx);
     }
 
-    const updatedPost = (data && data.length > 0) ? data[0] : null;
+    // 5. Tier 2: Direct update fallback if RPC didn't return data
+    if (!updatedPost) {
+      const { data: updateData, error: updateError } = await supabase
+        .from('posts')
+        .update({
+          title: cleanTitle,
+          slug: finalSlug,
+          excerpt: cleanExcerpt,
+          category: postCategory,
+          article_type: postArticleType,
+          featured_image: formattedImage,
+          content,
+          status: targetStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', numericId)
+        .select();
 
-    // 5. Complete ISR Cache Invalidation for all related paths
+      if (updateError) {
+        console.error('Supabase update post error:', updateError);
+        return NextResponse.json({ error: updateError.message || 'Lỗi khi cập nhật bài viết' }, { status: 500 });
+      }
+
+      if (updateData && updateData.length > 0) {
+        updatedPost = updateData[0];
+      }
+    }
+
+    // 6. Strict confirmation check
+    if (!updatedPost) {
+      console.error('Post update failed: 0 rows affected in Supabase for ID:', numericId);
+      return NextResponse.json({ 
+        error: 'Cơ sở dữ liệu Supabase không ghi nhận thay đổi nào cho bài viết #' + numericId + '. Vui lòng thử lại.' 
+      }, { status: 500 });
+    }
+
+    // 7. Complete ISR Cache Invalidation for all related paths
     try {
-      revalidatePath('/');
+      revalidatePath('/', 'layout');
       revalidatePath('/thu-vien');
       revalidatePath(`/${finalSlug}`);
       revalidatePath(`/thu-vien/${finalSlug}`);
