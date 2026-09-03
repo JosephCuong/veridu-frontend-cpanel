@@ -12,7 +12,7 @@ import { BookOpen, Heart, ArrowLeft, Cross, Calendar, Clock, User, Tag } from 'l
 import { formatImageUrl } from '@/lib/htmlProcessor';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 3600; // 1-hour Edge CDN caching with on-demand revalidation
 
 const RESERVED_SLUGS = new Set([
   'admin', 'wp-admin', 'thu-vien', 'courses', 'khoa-hoc', 'doc-kinh-thanh', 
@@ -43,7 +43,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: seo.title || defaultTitle,
     description: seo.description || defaultDesc,
+    alternates: {
+      canonical: `https://www.thapgia.com/${resolvedParams.slug}`,
+    },
     openGraph: {
+      url: `https://www.thapgia.com/${resolvedParams.slug}`,
+      siteName: 'VERIDU',
       title: seo.og_title || seo.title || defaultTitle,
       description: seo.og_description || seo.description || defaultDesc,
       images: [
@@ -131,11 +136,73 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
   // Domain for share buttons (Short SEO URL)
   const articleUrl = `https://www.thapgia.com/${resolvedParams.slug}`;
   const cleanTitle = titleText.replace(/<[^>]+>/g, '');
+  const defaultDesc = article.excerpt ? article.excerpt.replace(/<[^>]+>/g, '').substring(0, 160) : 'Khám phá thư viện tài liệu Công giáo trên VERIDU.';
+  const defaultImage = article.thumbnail || article.featured_image || 'https://www.thapgia.com/default-og-image.jpg';
+
+  // Structured Data (JSON-LD) for Article & Breadcrumb
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Article",
+        "@id": `${articleUrl}#article`,
+        "isPartOf": { "@id": "https://www.thapgia.com/#website" },
+        "headline": cleanTitle,
+        "description": (article.excerpt || defaultDesc).replace(/<[^>]+>/g, '').substring(0, 200),
+        "image": [coverImage || defaultImage],
+        "datePublished": article.created_at || new Date().toISOString(),
+        "dateModified": article.updated_at || article.created_at || new Date().toISOString(),
+        "author": {
+          "@type": "Person",
+          "name": article.author || "Ban Biên Tập VERIDU"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "@id": "https://www.thapgia.com/#organization",
+          "name": "VERIDU",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://www.thapgia.com/favicon.ico"
+          }
+        },
+        "mainEntityOfPage": articleUrl
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${articleUrl}#breadcrumb`,
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Trang Chủ",
+            "item": "https://www.thapgia.com"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Thư Viện",
+            "item": "https://www.thapgia.com/thu-vien"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": cleanTitle,
+            "item": articleUrl
+          }
+        ]
+      }
+    ]
+  };
+
 
   // 1. TEMPLATE BÀI TƯƠNG TÁC (HTML/JS Sandbox Fullscreen)
   if (articleType === 'interactive') {
     return (
       <main className="fixed inset-0 w-screen h-[100dvh] z-[9999] bg-slate-950 overflow-hidden">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+        />
         <style>{`
           header, footer, button[aria-label="Trở về đầu trang"] { display: none !important; }
           body { background-color: #020617 !important; overflow: hidden !important; }
@@ -169,6 +236,10 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
   // 2. TEMPLATE BÀI TỰ ĐỘNG / TĨNH
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] transition-colors duration-300 pb-20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
       <HeroBanner imageUrl={coverImage} />
 
       <div className={`max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative z-20 ${coverImage ? '-mt-24' : 'pt-24 sm:pt-28 md:pt-36'}`}>

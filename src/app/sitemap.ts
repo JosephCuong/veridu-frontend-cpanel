@@ -216,6 +216,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
     }
 
+    // 7. Dynamic Catholic Bible Books (73 Sách Kinh Thánh)
+    const { data: bibleBooks } = await supabase
+      .from('bible_books')
+      .select('code, name, chapters_count')
+      .order('order_index', { ascending: true });
+
+    if (bibleBooks) {
+      bibleBooks.forEach((b) => {
+        const bookSlug = b.code.toLowerCase();
+        dynamicRoutes.push({
+          url: `${baseUrl}/kinh-thanh/${bookSlug}/1`,
+          lastModified: new Date(),
+          changeFrequency: 'monthly',
+          priority: 0.85,
+        });
+      });
+    }
+
   } catch (error) {
     console.error('Error generating dynamic sitemap:', error);
   }

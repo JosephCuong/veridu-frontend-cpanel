@@ -11,7 +11,7 @@ import AdminEditFloatingButton from '@/components/AdminEditFloatingButton';
 import { BookOpen, Heart, ArrowLeft, Cross, Calendar, Clock, User, Tag, Sparkles } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 3600; // 1-hour Edge CDN caching with on-demand revalidation
 
 // ─── GENERATE METADATA FROM SITESEO ──────────────────────────────────────────
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -31,7 +31,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: seo.title || defaultTitle,
     description: seo.description || defaultDesc,
+    alternates: {
+      canonical: `https://www.thapgia.com/${resolvedParams.slug}`,
+    },
     openGraph: {
+      url: `https://www.thapgia.com/${resolvedParams.slug}`,
+      siteName: 'VERIDU',
       title: seo.og_title || seo.title || defaultTitle,
       description: seo.og_description || seo.description || defaultDesc,
       images: [
@@ -126,6 +131,64 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
   const coverImage = article.featured_image || article.thumbnail;
   const articleUrl = `https://www.thapgia.com/thu-vien/${resolvedParams.slug}`;
   const cleanTitle = titleText.replace(/<[^>]+>/g, '');
+  const defaultDesc = article.excerpt ? article.excerpt.replace(/<[^>]+>/g, '').substring(0, 160) : 'Khám phá thư viện tài liệu Công giáo trên VERIDU.';
+  const defaultImage = article.thumbnail || article.featured_image || 'https://www.thapgia.com/default-og-image.jpg';
+
+  // Structured Data (JSON-LD) for Article & Breadcrumb
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Article",
+        "@id": `${articleUrl}#article`,
+        "isPartOf": { "@id": "https://www.thapgia.com/#website" },
+        "headline": cleanTitle,
+        "description": (article.excerpt || defaultDesc).replace(/<[^>]+>/g, '').substring(0, 200),
+        "image": [coverImage || defaultImage],
+        "datePublished": article.created_at || new Date().toISOString(),
+        "dateModified": article.updated_at || article.created_at || new Date().toISOString(),
+        "author": {
+          "@type": "Person",
+          "name": article.author || "Ban Biên Tập VERIDU"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "@id": "https://www.thapgia.com/#organization",
+          "name": "VERIDU",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://www.thapgia.com/favicon.ico"
+          }
+        },
+        "mainEntityOfPage": articleUrl
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${articleUrl}#breadcrumb`,
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Trang Chủ",
+            "item": "https://www.thapgia.com"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Thư Viện",
+            "item": "https://www.thapgia.com/thu-vien"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": cleanTitle,
+            "item": articleUrl
+          }
+        ]
+      }
+    ]
+  };
+
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 1. ĐỊNH DẠNG BÀI VIẾT TƯƠNG TÁC (Interactive Fullscreen Sandbox Takeover)
