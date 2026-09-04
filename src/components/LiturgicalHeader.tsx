@@ -9,7 +9,7 @@ import { calculateLevelInfo } from '@/lib/gamification';
 import { 
   Flame, Moon, Sun, Menu, X, User, LogOut, LogIn, ChevronDown, 
   BookOpen, MapPin, Clock, Users, FileText, Library, Award, Shield, Cross, Sparkles,
-  Zap, Droplets, Settings, Gamepad2, Scroll, MoreHorizontal
+  Zap, Droplets, Settings, Gamepad2, Scroll, MoreHorizontal, Feather, ClipboardList, Scale, PenTool
 } from 'lucide-react';
 
 export default function LiturgicalHeader() {
@@ -501,7 +501,80 @@ export default function LiturgicalHeader() {
               Giáo Lý
             </Link>
 
-            {/* 5. SÁCH TRANH */}
+            {/* 5. ĐÓNG GÓP */}
+            <div 
+              className="relative py-2"
+              onMouseEnter={() => handleMouseEnter('dong-gop')}
+              onMouseLeave={handleMouseLeave}
+            >
+              <Link 
+                href="/dong-gop" 
+                className={`flex items-center gap-1.5 py-1 text-slate-200 hover:text-amber-400 transition-colors drop-shadow-xs ${
+                  pathname === '/dong-gop' || pathname === '/noi-dung-can-thiet' || pathname === '/huong-dan-viet-bai' || pathname === '/dieu-khoan-tac-gia' || pathname === '/dang-bai'
+                    ? 'text-amber-400 font-black border-b-2 border-amber-400 pb-0.5' 
+                    : ''
+                }`}
+              >
+                <span>Đóng Góp</span>
+                <ChevronDown className="w-3.5 h-3.5 text-amber-400/80 transition-transform group-hover:rotate-180" />
+              </Link>
+
+              {openDropdown === 'dong-gop' && (
+                <div className="absolute top-full left-1/2 -translate-x-1/2 w-64 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl p-2 space-y-1 z-50 backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-200">
+                  <Link href="/dong-gop" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-amber-500/15 group transition-colors">
+                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
+                      <Feather className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs text-slate-100 group-hover:text-amber-400">Sứ Mạng Đóng Góp</div>
+                      <div className="text-[10px] text-slate-400 lowercase">Tham gia đội ngũ tác giả</div>
+                    </div>
+                  </Link>
+
+                  <Link href="/noi-dung-can-thiet" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-emerald-500/15 group transition-colors">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+                      <ClipboardList className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs text-slate-100 group-hover:text-emerald-400">Đề Tài Cần Nghiên Cứu</div>
+                      <div className="text-[10px] text-slate-400 lowercase">Danh mục chủ đề ưu tiên</div>
+                    </div>
+                  </Link>
+
+                  <Link href="/huong-dan-viet-bai" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-indigo-500/15 group transition-colors">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-500/30">
+                      <BookOpen className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">Quy Chuẩn Soạn Thảo</div>
+                      <div className="text-[10px] text-slate-400 lowercase">Quy cách &amp; mẫu khối HTML</div>
+                    </div>
+                  </Link>
+
+                  <Link href="/dieu-khoan-tac-gia" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-rose-500/15 group transition-colors">
+                    <div className="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/30">
+                      <Scale className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs text-slate-100 group-hover:text-rose-400">Điều Khoản Tác Giả</div>
+                      <div className="text-[10px] text-slate-400 lowercase">Bản quyền &amp; trách nhiệm</div>
+                    </div>
+                  </Link>
+
+                  <Link href="/dang-bai" className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 group transition-colors">
+                    <div className="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center shrink-0">
+                      <PenTool className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs text-amber-400 group-hover:text-amber-300">Phòng Soạn Thảo</div>
+                      <div className="text-[10px] text-slate-400 lowercase">Trực quan &amp; mã HTML</div>
+                    </div>
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* 6. SÁCH TRANH */}
             <Link 
               href="/sach-tranh" 
               className={`py-1 text-slate-200 hover:text-amber-400 transition-colors drop-shadow-xs ${
@@ -654,7 +727,51 @@ export default function LiturgicalHeader() {
             Giáo Lý
           </Link>
 
-          {/* 5. ON LAPTOP (>= 1024px): SHOW ALL DIRECT LINKS */}
+          {/* 5. ĐÓNG GÓP */}
+          <div 
+            className="relative py-2"
+            onMouseEnter={() => handleMouseEnter('dong-gop-tab')}
+            onMouseLeave={handleMouseLeave}
+          >
+            <Link 
+              href="/dong-gop" 
+              className={`flex items-center gap-1 py-1 text-slate-200 hover:text-amber-400 transition-colors ${
+                pathname === '/dong-gop' || pathname === '/noi-dung-can-thiet' || pathname === '/huong-dan-viet-bai' || pathname === '/dieu-khoan-tac-gia' || pathname === '/dang-bai'
+                  ? 'text-amber-400 font-black' 
+                  : ''
+              }`}
+            >
+              <span>Đóng Góp</span>
+              <ChevronDown className="w-3 h-3 text-amber-400/80 transition-transform group-hover:rotate-180" />
+            </Link>
+
+            {openDropdown === 'dong-gop-tab' && (
+              <div className="absolute top-full left-0 w-56 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl p-2 space-y-1 z-50 backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-200">
+                <Link href="/dong-gop" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-amber-500/15 group transition-colors">
+                  <Feather className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span className="font-bold text-xs text-slate-100 group-hover:text-amber-400">Sứ Mạng Đóng Góp</span>
+                </Link>
+                <Link href="/noi-dung-can-thiet" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-emerald-500/15 group transition-colors">
+                  <ClipboardList className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span className="font-bold text-xs text-slate-100 group-hover:text-emerald-400">Đề Tài Nghiên Cứu</span>
+                </Link>
+                <Link href="/huong-dan-viet-bai" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-indigo-500/15 group transition-colors">
+                  <BookOpen className="w-4 h-4 text-indigo-400 shrink-0" />
+                  <span className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">Quy Chuẩn Soạn Thảo</span>
+                </Link>
+                <Link href="/dieu-khoan-tac-gia" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-rose-500/15 group transition-colors">
+                  <Scale className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span className="font-bold text-xs text-slate-100 group-hover:text-rose-400">Điều Khoản Tác Giả</span>
+                </Link>
+                <Link href="/dang-bai" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 group transition-colors border border-amber-500/20">
+                  <PenTool className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span className="font-bold text-xs font-black">Phòng Soạn Thảo</span>
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* 6. ON LAPTOP (>= 1024px): SHOW ALL DIRECT LINKS */}
           <Link 
             href="/sach-tranh" 
             className={`hidden lg:inline py-1 text-slate-200 hover:text-amber-400 transition-colors ${
@@ -957,11 +1074,44 @@ export default function LiturgicalHeader() {
           </div>
 
           {/* 4. GIÁO LÝ */}
-          <Link href="/giao-ly" className="block py-2.5 text-sm font-bold text-slate-200 hover:text-amber-400 flex items-center gap-2.5">
+          <Link href="/giao-ly" onClick={() => setIsMobileMenuOpen(false)} className="block py-2.5 text-sm font-bold text-slate-200 hover:text-amber-400 flex items-center gap-2.5">
             <Cross className="w-4 h-4 text-rose-400" /> Giáo Lý
           </Link>
 
-          {/* 5. SÁCH TRANH THIẾU NHI */}
+          {/* 5. ĐÓNG GÓP GROUP */}
+          <div className="space-y-1">
+            <button 
+              onClick={() => setMobileExpandedGroup(mobileExpandedGroup === 'dong-gop' ? null : 'dong-gop')}
+              className="w-full py-2.5 flex items-center justify-between text-sm font-bold text-slate-200 cursor-pointer"
+            >
+              <span className="flex items-center gap-2.5">
+                <Feather className="w-4 h-4 text-amber-400" /> Đóng Góp
+              </span>
+              <ChevronDown className={`w-4 h-4 text-amber-400 transition-transform ${mobileExpandedGroup === 'dong-gop' ? 'rotate-180' : ''}`} />
+            </button>
+
+            {mobileExpandedGroup === 'dong-gop' && (
+              <div className="pl-6 space-y-2 py-2 border-l-2 border-amber-500/30 ml-2">
+                <Link href="/dong-gop" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-amber-400">
+                  <Feather className="w-3.5 h-3.5 text-amber-400" /> Sứ Mạng Đóng Góp
+                </Link>
+                <Link href="/noi-dung-can-thiet" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-emerald-400">
+                  <ClipboardList className="w-3.5 h-3.5 text-emerald-400" /> Đề Tài Cần Nghiên Cứu
+                </Link>
+                <Link href="/huong-dan-viet-bai" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-indigo-400">
+                  <BookOpen className="w-3.5 h-3.5 text-indigo-400" /> Quy Chuẩn Soạn Thảo
+                </Link>
+                <Link href="/dieu-khoan-tac-gia" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-rose-400">
+                  <Scale className="w-3.5 h-3.5 text-rose-400" /> Điều Khoản Tác Giả
+                </Link>
+                <Link href="/dang-bai" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-amber-400 font-bold hover:text-amber-300">
+                  <PenTool className="w-3.5 h-3.5 text-amber-400" /> Phòng Soạn Thảo
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* 6. SÁCH TRANH THIẾU NHI */}
           <Link href="/sach-tranh" className="block py-2.5 text-sm font-bold text-amber-400 hover:text-amber-300 flex items-center gap-2.5">
             <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" /> Sách Tranh Thiếu Nhi
           </Link>

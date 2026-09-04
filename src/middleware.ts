@@ -57,19 +57,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`/kinh-thanh/${subPath}`, request.url), { status: 301 });
   }
 
-  // 301 Redirects for Author Community English URLs -> Vietnamese URLs
-  if (cleanPath === '/contribute') {
-    return NextResponse.redirect(new URL('/dong-gop', request.url), { status: 301 });
-  }
-  if (cleanPath === '/needed') {
-    return NextResponse.redirect(new URL('/noi-dung-can-thiet', request.url), { status: 301 });
-  }
-  if (cleanPath === '/style-guide' || cleanPath === '/style_guide') {
-    return NextResponse.redirect(new URL('/huong-dan-viet-bai', request.url), { status: 301 });
-  }
-  if (cleanPath === '/legal-terms' || cleanPath === '/legal_terms') {
-    return NextResponse.redirect(new URL('/dieu-khoan-tac-gia', request.url), { status: 301 });
-  }
 
   // Preserve dedicated library subpages like /thu-vien/sach/*, /thu-vien/tai-lieu/*, and /thu-vien/doc/*
   if (
