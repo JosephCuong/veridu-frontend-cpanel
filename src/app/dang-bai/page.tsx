@@ -179,7 +179,7 @@ function DangBaiContent() {
           setSlug(p.slug || '');
           setExcerpt(p.excerpt || '');
           setCategory(p.category || 'Thần Học');
-          setArticleType(p.article_type || 'standard');
+          setArticleType(p.article_type === 'interactive' ? 'interactive' : 'standard');
           setFeaturedImage(p.featured_image || '');
           const html = p.content || '';
           setContentHtml(html);
@@ -297,6 +297,22 @@ function DangBaiContent() {
       if (/footnotes-section|footnote-ref|footnote-item|<sup/i.test(rawText)) features.push('Chú Thích Chân Trang');
       if (/<img/i.test(rawText)) features.push('Hình Ảnh');
       if (/<iframe|<video/i.test(rawText)) features.push('Media Nhúng');
+
+      // Detect 3D Interactive application vs Standard article
+      const is3DInteractive = 
+        /<canvas[\s>]/i.test(rawText) ||
+        /three\.js|three\.min\.js|babylon|webgl/i.test(rawText) ||
+        (rawText.toLowerCase().includes('requestanimationframe') && rawText.toLowerCase().includes('<script')) ||
+        /tuong-tac|3d|interactive/i.test(file.name);
+
+      if (is3DInteractive) {
+        features.push('🚀 Ứng dụng Tương Tác 3D');
+        setArticleType('interactive');
+        setCategory('Bài Tương Tác HTML 3D');
+      } else {
+        setArticleType('standard');
+      }
+
       setDetectedFeatures(features);
 
       // 1. Auto-extract Title

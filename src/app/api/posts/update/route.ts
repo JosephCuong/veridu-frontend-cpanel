@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     const cleanExcerpt = excerpt ? excerpt.trim() : '';
     const cleanTitle = title.trim();
     const postCategory = category || 'Thần Học';
-    const postArticleType = article_type || 'theological';
+    const postArticleType = (article_type === 'interactive') ? 'interactive' : 'standard';
 
     let updatedPost: any = null;
 

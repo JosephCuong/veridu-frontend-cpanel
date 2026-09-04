@@ -46,6 +46,8 @@ export async function POST(request: Request) {
       ? author_id
       : DEFAULT_AUTHOR_ID;
 
+    const normalizedArticleType = (article_type === 'interactive') ? 'interactive' : 'standard';
+
     const { data, error } = await supabase
       .from('posts')
       .insert([
@@ -54,7 +56,7 @@ export async function POST(request: Request) {
           slug: finalSlug,
           excerpt: excerpt ? excerpt.trim() : '',
           category: category || 'Thần Học',
-          article_type: article_type || 'theological',
+          article_type: normalizedArticleType,
           featured_image: formatImageUrl(featured_image),
           content,
           status: status || 'published',

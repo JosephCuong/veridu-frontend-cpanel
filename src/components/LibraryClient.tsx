@@ -47,10 +47,8 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
 
   const articleTypes = [
     { id: 'all', label: 'Tất cả định dạng', icon: Layers },
-    { id: 'standard', label: 'Bài viết Tiêu chuẩn', icon: FileText },
-    { id: 'meditation', label: 'Suy Niệm Lời Chúa', icon: Heart },
-    { id: 'theological', label: 'Nghiên Cứu Thần Học', icon: Cross },
-    { id: 'interactive', label: 'Tương Tác Giáo Lý', icon: Gamepad2 }
+    { id: 'standard', label: '📖 Bài Viết Tiêu Chuẩn', icon: FileText },
+    { id: 'interactive', label: '🚀 Tương Tác 3D', icon: Gamepad2 }
   ];
 
   // Filter & Sort logic
