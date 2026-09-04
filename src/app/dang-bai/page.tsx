@@ -45,7 +45,8 @@ import {
   Heart,
   ListChecks,
   Bookmark,
-  Share2
+  Share2,
+  Compass
 } from 'lucide-react';
 import { getStoredUser, UserProfile } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
@@ -608,6 +609,28 @@ function DangBaiContent() {
             <BookOpen className="w-3.5 h-3.5 text-amber-500 group-hover:text-slate-950" />
             <span className="font-serif">📖 Sổ Tay Khối Chuẩn</span>
           </button>
+
+          {/* Quick Link to Style Guide */}
+          <Link
+            href="/huong-dan-viet-bai"
+            target="_blank"
+            className="px-3 py-1.5 bg-[var(--bg-main)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 font-bold rounded-2xl text-xs border border-[var(--border-card)] hidden xl:flex items-center gap-1.5 transition"
+            title="Xem Sổ Tay Quy Chuẩn Viết Bài & Tôn Chỉ Giáo Lý CCC"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-amber-500" />
+            <span>Quy Chuẩn</span>
+          </Link>
+
+          {/* Quick Link to Needed Content */}
+          <Link
+            href="/noi-dung-can-thiet"
+            target="_blank"
+            className="px-3 py-1.5 bg-[var(--bg-main)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 font-bold rounded-2xl text-xs border border-[var(--border-card)] hidden 2xl:flex items-center gap-1.5 transition"
+            title="Xem Danh Mục Đề Tài Nghiên Cứu Đang Cần Viết"
+          >
+            <Compass className="w-3.5 h-3.5 text-amber-500" />
+            <span>Đề Tài Cần</span>
+          </Link>
 
           {/* Quick Upload .HTML Button */}
           <button

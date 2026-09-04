@@ -220,6 +220,24 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/dong-gop" className="text-[var(--text-muted)] hover:text-amber-500 transition-colors flex items-center gap-2 group">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 group-hover:scale-125 transition-transform"></span>
+                  <span>Đóng Góp Bài Viết</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/noi-dung-can-thiet" className="text-[var(--text-muted)] hover:text-amber-500 transition-colors flex items-center gap-2 group">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 group-hover:scale-125 transition-transform"></span>
+                  <span>Đề Tài Cần Nghiên Cứu</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/huong-dan-viet-bai" className="text-[var(--text-muted)] hover:text-amber-500 transition-colors flex items-center gap-2 group">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 group-hover:scale-125 transition-transform"></span>
+                  <span>Quy Chuẩn Soạn Thảo</span>
+                </Link>
+              </li>
+              <li>
                 <Link href="/dang-bai" className="text-[var(--text-muted)] hover:text-amber-500 transition-colors flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 group-hover:scale-125 transition-transform"></span>
                   <span>Đăng Tải Bài Viết</span>
@@ -324,6 +342,12 @@ export default function Footer() {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-6 font-semibold text-[11px]">
+            <Link href="/dong-gop" className="hover:text-amber-500 transition-colors">
+              Cộng Tác Tác Giả
+            </Link>
+            <Link href="/dieu-khoan-tac-gia" className="hover:text-amber-500 transition-colors">
+              Điều Khoản Tác Giả
+            </Link>
             <Link href="/dieu-khoan-su-dung" className="hover:text-amber-500 transition-colors">
               Điều Khoản Sử Dụng
             </Link>
