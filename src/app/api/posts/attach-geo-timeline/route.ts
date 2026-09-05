@@ -58,10 +58,27 @@ export async function POST(request: Request) {
     // ─────────────────────────────────────────────────────────────
     // 1. XỬ LÝ ĐỊA DANH (MAP LOCATIONS) VỚI SMART MERGE
     // ─────────────────────────────────────────────────────────────
-    for (const loc of locations as LocationPayload[]) {
-      if (!loc.name || typeof loc.latitude !== 'number' || typeof loc.longitude !== 'number') {
+    for (const rawLoc of locations as any[]) {
+      const locName = rawLoc.name || rawLoc.title;
+      const lat = typeof rawLoc.latitude === 'number' ? rawLoc.latitude : Number(rawLoc.lat);
+      const lng = typeof rawLoc.longitude === 'number' ? rawLoc.longitude : Number(rawLoc.lng ?? rawLoc.lon);
+
+      if (!locName || isNaN(lat) || isNaN(lng)) {
         continue;
       }
+
+      const biblicalRefs = Array.isArray(rawLoc.biblical_references) 
+        ? rawLoc.biblical_references 
+        : Array.isArray(rawLoc.bible_references) 
+          ? rawLoc.bible_references 
+          : rawLoc.scripture_or_history 
+            ? [rawLoc.scripture_or_history] 
+            : [];
+
+      const description = rawLoc.description || rawLoc.summary || '';
+      const ancientName = rawLoc.ancient_name || rawLoc.name_original || '';
+      const historicalPeriod = rawLoc.historical_period || rawLoc.period || rawLoc.era || '';
+      const archEvidence = rawLoc.archaeological_evidence || rawLoc.archaeology || '';
 
       // Tìm xem địa danh đã tồn tại chưa:
       // Tiêu chí 1: Trùng tọa độ trong bán kính ~1.5km (sai số 0.015 độ)
@@ -73,11 +90,11 @@ export async function POST(request: Request) {
       let matchedLoc = null;
       if (existingList && existingList.length > 0) {
         matchedLoc = existingList.find((dbItem: any) => {
-          const latDiff = Math.abs(Number(dbItem.latitude) - loc.latitude);
-          const lngDiff = Math.abs(Number(dbItem.longitude) - loc.longitude);
-          const isCoordClose = latDiff < 0.015 && lngDiff < 0.015;
-          const isSlugMatch = dbItem.slug === loc.id;
-          const isNameMatch = dbItem.name && dbItem.name.toLowerCase().includes(loc.name.toLowerCase().split(' ')[0]);
+          const latDiff = Math.abs(Number(dbItem.latitude) - lat);
+          const lngDiff = Math.abs(Number(dbItem.longitude) - lng);
+          const isCoordClose = latDiff < 0.02 && lngDiff < 0.02;
+          const isSlugMatch = rawLoc.id && dbItem.slug === rawLoc.id;
+          const isNameMatch = dbItem.name && dbItem.name.toLowerCase().includes(locName.toLowerCase().split(' ')[0]);
           return isCoordClose || isSlugMatch || (isNameMatch && latDiff < 0.05 && lngDiff < 0.05);
         });
       }
@@ -90,20 +107,19 @@ export async function POST(request: Request) {
         }
 
         const currentRefs: string[] = Array.isArray(matchedLoc.bible_references) ? matchedLoc.bible_references : [];
-        const newRefs = loc.biblical_references || [];
-        const mergedRefs = Array.from(new Set([...currentRefs, ...newRefs]));
+        const mergedRefs = Array.from(new Set([...currentRefs, ...biblicalRefs]));
 
         const updatePayload: any = {
           article_slugs: currentSlugs,
           bible_references: mergedRefs,
         };
 
-        if (loc.ancient_name && !matchedLoc.ancient_name) updatePayload.ancient_name = loc.ancient_name;
-        if (loc.historical_period && !matchedLoc.historical_period) updatePayload.historical_period = loc.historical_period;
-        if (loc.archaeological_evidence) {
+        if (ancientName && !matchedLoc.ancient_name) updatePayload.ancient_name = ancientName;
+        if (historicalPeriod && !matchedLoc.historical_period) updatePayload.historical_period = historicalPeriod;
+        if (archEvidence) {
           updatePayload.archaeological_evidence = matchedLoc.archaeological_evidence 
-            ? `${matchedLoc.archaeological_evidence} | ${loc.archaeological_evidence}`
-            : loc.archaeological_evidence;
+            ? `${matchedLoc.archaeological_evidence} | ${archEvidence}`
+            : archEvidence;
         }
 
         await supabase
@@ -115,21 +131,21 @@ export async function POST(request: Request) {
       } else {
         // CREATE NEW LOCATION
         const insertPayload: any = {
-          slug: loc.id || `loc-${Date.now()}`,
-          name: loc.name,
-          ancient_name: loc.ancient_name || '',
-          latitude: loc.latitude,
-          longitude: loc.longitude,
-          bible_references: loc.biblical_references || [],
-          historical_period: loc.historical_period || '',
-          archaeological_evidence: loc.archaeological_evidence || '',
-          description: loc.description || '',
-          summary: loc.description || '',
+          slug: rawLoc.id || rawLoc.slug || `loc-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          name: locName,
+          ancient_name: ancientName,
+          latitude: lat,
+          longitude: lng,
+          bible_references: biblicalRefs,
+          historical_period: historicalPeriod,
+          archaeological_evidence: archEvidence,
+          description: description,
+          summary: description,
           article_slugs: [article_slug],
           importance_level: 2,
-          region: 'Thánh Địa (Holy Land)',
-          testament: loc.latitude < 30 ? 'cuu-uoc' : 'tan-uoc',
-          era: loc.historical_period || 'Kinh Thánh'
+          region: rawLoc.region || 'Thánh Địa (Holy Land)',
+          testament: rawLoc.testament || (lat < 30 ? 'cuu-uoc' : 'tan-uoc'),
+          era: historicalPeriod || 'Kinh Thánh'
         };
 
         const { data: newLoc } = await supabase
@@ -138,22 +154,38 @@ export async function POST(request: Request) {
           .select()
           .maybeSingle();
 
-        processedLocations.push({ id: newLoc?.id || 'new', action: 'created', name: loc.name });
+        processedLocations.push({ id: newLoc?.id || 'new', action: 'created', name: locName });
       }
     }
 
     // ─────────────────────────────────────────────────────────────
     // 2. XỬ LÝ DÒNG THỜI GIAN (TIMELINE EVENTS)
     // ─────────────────────────────────────────────────────────────
-    for (const evt of timeline_events as TimelinePayload[]) {
-      if (!evt.event_title || typeof evt.year_bce_ce !== 'number') {
+    for (const rawEvt of timeline_events as any[]) {
+      const title = rawEvt.event_title || rawEvt.title;
+      const year = typeof rawEvt.year_bce_ce === 'number' 
+        ? rawEvt.year_bce_ce 
+        : typeof rawEvt.order_year === 'number' 
+          ? rawEvt.order_year 
+          : typeof rawEvt.year === 'number' 
+            ? rawEvt.year 
+            : undefined;
+
+      if (!title || typeof year !== 'number' || isNaN(year)) {
         continue;
       }
 
-      const eraInfo = determineEraAndCategory(evt.year_bce_ce);
-      const eventSlug = evt.id || `evt-${Date.now()}-${Math.abs(evt.year_bce_ce)}`;
+      const eraInfo = determineEraAndCategory(year);
+      const eraName = rawEvt.era_name || rawEvt.period || eraInfo.era_name;
+      const eventSlug = rawEvt.id || rawEvt.slug || `evt-${Math.abs(year)}-${title.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 30)}`;
 
-      // Kiểm tra xem sự kiện của bài viết này đã có chưa
+      const displayDate = rawEvt.display_date || rawEvt.year_label || (year < 0 ? `${Math.abs(year)} TCN` : `${year} SCN`);
+      const biblicalAnchor = rawEvt.biblical_anchor || rawEvt.scripture || '';
+      const archAnchor = rawEvt.archaeological_anchor || rawEvt.archaeology || '';
+      const significance = rawEvt.significance || rawEvt.theology || rawEvt.summary || '';
+      const description = rawEvt.description || archAnchor || significance || '';
+
+      // Kiểm tra xem sự kiện đã có chưa (theo slug hoặc cùng bài viết + năm)
       const { data: existingEvt } = await supabase
         .from('timeline_events')
         .select('id, slug')
@@ -162,21 +194,21 @@ export async function POST(request: Request) {
 
       const timelinePayload: any = {
         slug: eventSlug,
-        order_year: evt.year_bce_ce,
-        year_label: evt.display_date || (evt.year_bce_ce < 0 ? `${Math.abs(evt.year_bce_ce)} TCN` : `${evt.year_bce_ce} SCN`),
-        title: evt.event_title,
-        subtitle: evt.biblical_anchor || '',
-        biblical_anchor: evt.biblical_anchor || '',
-        archaeological_anchor: evt.archaeological_anchor || '',
-        significance: evt.significance || '',
-        summary: evt.significance || evt.event_title,
-        description: evt.archaeological_anchor || '',
-        content: evt.significance || '',
-        theology: evt.significance || '',
+        order_year: year,
+        year_label: displayDate,
+        title: title,
+        subtitle: rawEvt.subtitle || biblicalAnchor || '',
+        biblical_anchor: biblicalAnchor,
+        archaeological_anchor: archAnchor,
+        significance: significance,
+        summary: significance || title,
+        description: description,
+        content: significance || description,
+        theology: rawEvt.theology || significance,
         article_slug: article_slug,
         era_id: eraInfo.era_id,
-        era_name: eraInfo.era_name,
-        category: eraInfo.category,
+        era_name: eraName,
+        category: rawEvt.category || eraInfo.category,
       };
 
       if (existingEvt) {
@@ -184,14 +216,14 @@ export async function POST(request: Request) {
           .from('timeline_events')
           .update(timelinePayload)
           .eq('id', existingEvt.id);
-        processedTimeline.push({ id: existingEvt.id, action: 'updated', title: evt.event_title });
+        processedTimeline.push({ id: existingEvt.id, action: 'updated', title });
       } else {
         const { data: newEvt } = await supabase
           .from('timeline_events')
           .insert(timelinePayload)
           .select()
           .maybeSingle();
-        processedTimeline.push({ id: newEvt?.id || 'new', action: 'created', title: evt.event_title });
+        processedTimeline.push({ id: newEvt?.id || 'new', action: 'created', title });
       }
     }
 

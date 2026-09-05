@@ -39,7 +39,7 @@ import {
   ChevronRight,
   Maximize2,
   Sliders,
-  Sparkles,
+  SlidersHorizontal,
   Code,
   Palette,
   Heart,
@@ -142,7 +142,7 @@ function DangBaiContent() {
     setActiveTab(newTab);
   };
 
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(Boolean(editId));
   const [sidebarTab, setSidebarTab] = useState<'settings' | 'blocks' | 'tools'>('settings');
   const [canvasDevice, setCanvasDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [analysisNotice, setAnalysisNotice] = useState<string | null>(null);
@@ -168,6 +168,8 @@ function DangBaiContent() {
   const [geoTimelineJson, setGeoTimelineJson] = useState('');
   const [geoTimelineStatus, setGeoTimelineStatus] = useState<{ valid: boolean; message: string } | null>(null);
   const jsonFileInputRef = useRef<HTMLInputElement>(null);
+  const locFileInputRef = useRef<HTMLInputElement>(null);
+  const timelineFileInputRef = useRef<HTMLInputElement>(null);
 
   // Check auth
   useEffect(() => {
@@ -259,80 +261,227 @@ function DangBaiContent() {
     }
   };
 
-  // Geo & Timeline Helpers
+  // Geo & Timeline Helpers - Smart Normalizer & Additive Merger
+  const smartNormalizeAndMergeGeoTimeline = (
+    newPayload: any,
+    currentJsonStr: string = '',
+    forceType?: 'locations' | 'timeline'
+  ): { normalizedJson: string; status: { valid: boolean; message: string } } => {
+    let existingLocs: any[] = [];
+    let existingEvts: any[] = [];
+
+    if (currentJsonStr && currentJsonStr.trim()) {
+      try {
+        const cur = JSON.parse(currentJsonStr);
+        if (Array.isArray(cur)) {
+          if (cur.some(i => i && (i.latitude !== undefined || i.lat !== undefined))) {
+            existingLocs = cur;
+          } else {
+            existingEvts = cur;
+          }
+        } else if (typeof cur === 'object' && cur !== null) {
+          if (Array.isArray(cur.locations)) existingLocs = cur.locations;
+          if (Array.isArray(cur.timeline_events)) existingEvts = cur.timeline_events;
+          else if (Array.isArray(cur.events)) existingEvts = cur.events;
+        }
+      } catch {}
+    }
+
+    let incomingLocs: any[] = [];
+    let incomingEvts: any[] = [];
+
+    let parsed = newPayload;
+    if (typeof newPayload === 'string') {
+      const trimmed = newPayload.trim();
+      if (!trimmed) {
+        return {
+          normalizedJson: '',
+          status: { valid: true, message: 'Dữ liệu trống.' }
+        };
+      }
+      try {
+        parsed = JSON.parse(trimmed);
+      } catch (err: any) {
+        // Attempt fixing accidental concatenation of two JSONs e.g. [...] \n [...]
+        const fixedStr = trimmed.replace(/\]\s*\[/g, '],[');
+        try {
+          const wrap = JSON.parse(`[${fixedStr}]`);
+          if (Array.isArray(wrap) && wrap.length >= 2) {
+            parsed = wrap;
+          }
+        } catch {
+          return {
+            normalizedJson: trimmed,
+            status: { valid: false, message: `Lỗi cú pháp JSON: ${err.message}` }
+          };
+        }
+      }
+    }
+
+    if (Array.isArray(parsed)) {
+      if (forceType === 'locations') {
+        incomingLocs = parsed;
+      } else if (forceType === 'timeline') {
+        incomingEvts = parsed;
+      } else if (parsed.length > 0 && Array.isArray(parsed[0])) {
+        for (const sub of parsed) {
+          if (Array.isArray(sub) && sub.length > 0) {
+            if (sub.some((i: any) => i && (i.latitude !== undefined || i.lat !== undefined))) {
+              incomingLocs.push(...sub);
+            } else {
+              incomingEvts.push(...sub);
+            }
+          }
+        }
+      } else {
+        const isLoc = parsed.some((i: any) => i && (i.latitude !== undefined || i.lat !== undefined));
+        const isEvt = parsed.some((i: any) => i && (i.year_bce_ce !== undefined || i.order_year !== undefined || i.event_title !== undefined || i.period !== undefined));
+        if (isLoc && !isEvt) {
+          incomingLocs = parsed;
+        } else if (isEvt) {
+          incomingEvts = parsed;
+        } else {
+          incomingLocs = parsed;
+        }
+      }
+    } else if (typeof parsed === 'object' && parsed !== null) {
+      if (Array.isArray(parsed.locations)) incomingLocs = parsed.locations;
+      if (Array.isArray(parsed.timeline_events)) incomingEvts = parsed.timeline_events;
+      else if (Array.isArray(parsed.events)) incomingEvts = parsed.events;
+    }
+
+    // Merge locations
+    const sourceLocs = incomingLocs.length > 0 ? incomingLocs : existingLocs;
+    const finalLocsMap = new Map<string, any>();
+    if (incomingLocs.length > 0 && existingLocs.length > 0) {
+      existingLocs.forEach(l => {
+        const key = (l.name || l.title || '').trim().toLowerCase();
+        if (key) finalLocsMap.set(key, l);
+      });
+    }
+    sourceLocs.forEach(raw => {
+      if (!raw) return;
+      const lat = Number(raw.latitude ?? raw.lat);
+      const lng = Number(raw.longitude ?? raw.lng ?? raw.lon);
+      if (isNaN(lat) || isNaN(lng)) return;
+      const name = (raw.name || raw.title || 'Địa danh').trim();
+      const normLoc = {
+        name,
+        latitude: lat,
+        longitude: lng,
+        description: raw.description || raw.summary || '',
+        scripture_or_history: raw.scripture_or_history || (Array.isArray(raw.biblical_references) ? raw.biblical_references.join(', ') : (raw.biblical_references || '')),
+        ancient_name: raw.ancient_name || raw.name_original || '',
+        historical_period: raw.historical_period || raw.period || raw.era || ''
+      };
+      finalLocsMap.set(name.toLowerCase(), normLoc);
+    });
+    const finalLocs = Array.from(finalLocsMap.values());
+
+    // Merge timeline events
+    const sourceEvts = incomingEvts.length > 0 ? incomingEvts : existingEvts;
+    const finalEvtsMap = new Map<string, any>();
+    if (incomingEvts.length > 0 && existingEvts.length > 0) {
+      existingEvts.forEach(e => {
+        const key = `${e.year_bce_ce ?? e.order_year}_${(e.event_title || e.title || '').trim().toLowerCase()}`;
+        finalEvtsMap.set(key, e);
+      });
+    }
+    sourceEvts.forEach(raw => {
+      if (!raw) return;
+      const yr = typeof raw.year_bce_ce === 'number' ? raw.year_bce_ce : typeof raw.order_year === 'number' ? raw.order_year : typeof raw.year === 'number' ? raw.year : 0;
+      const title = (raw.event_title || raw.title || 'Sự kiện').trim();
+      const normEvt = {
+        year_bce_ce: yr,
+        event_title: title,
+        period: raw.period || raw.era_name || '',
+        display_date: raw.display_date || raw.year_label || (yr < 0 ? `${Math.abs(yr)} TCN` : `${yr} SCN`),
+        description: raw.description || raw.archaeological_anchor || '',
+        significance: raw.significance || raw.theology || raw.summary || ''
+      };
+      const key = `${yr}_${title.toLowerCase()}`;
+      finalEvtsMap.set(key, normEvt);
+    });
+    const finalEvts = Array.from(finalEvtsMap.values()).sort((a, b) => a.year_bce_ce - b.year_bce_ce);
+
+    const mergedObj = {
+      locations: finalLocs,
+      timeline_events: finalEvts
+    };
+
+    const locCount = finalLocs.length;
+    const evtCount = finalEvts.length;
+
+    if (locCount === 0 && evtCount === 0) {
+      return {
+        normalizedJson: JSON.stringify(mergedObj, null, 2),
+        status: { valid: false, message: 'JSON không chứa dữ liệu tọa độ hoặc mốc thời gian nào hợp lệ.' }
+      };
+    }
+
+    return {
+      normalizedJson: JSON.stringify(mergedObj, null, 2),
+      status: { valid: true, message: `Hợp lệ: ${locCount} tọa độ địa danh • ${evtCount} mốc thời gian cứu độ.` }
+    };
+  };
+
   const validateGeoTimelineJson = (jsonStr: string) => {
     if (!jsonStr.trim()) {
       setGeoTimelineStatus(null);
       return null;
     }
-    try {
-      const parsed = JSON.parse(jsonStr);
-      let locCount = 0;
-      let evtCount = 0;
-      if (Array.isArray(parsed.locations)) {
-        locCount = parsed.locations.length;
-      }
-      const events = parsed.timeline_events || parsed.events || [];
-      if (Array.isArray(events)) {
-        evtCount = events.length;
-      }
-      if (locCount === 0 && evtCount === 0) {
-        setGeoTimelineStatus({ valid: false, message: 'JSON không chứa mảng "locations" hoặc "timeline_events" nào.' });
-        return null;
-      }
-      setGeoTimelineStatus({ valid: true, message: `Hợp lệ: ${locCount} địa danh, ${evtCount} mốc thời gian.` });
-      return parsed;
-    } catch (e: any) {
-      setGeoTimelineStatus({ valid: false, message: `Lỗi cú pháp JSON: ${e.message}` });
-      return null;
-    }
+    const res = smartNormalizeAndMergeGeoTimeline(jsonStr);
+    setGeoTimelineStatus(res.status);
+    return res.status.valid ? JSON.parse(res.normalizedJson) : null;
+  };
+
+  const handleUploadGeoFile = (e: React.ChangeEvent<HTMLInputElement>, forceType?: 'locations' | 'timeline') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      const res = smartNormalizeAndMergeGeoTimeline(content, geoTimelineJson, forceType);
+      setGeoTimelineJson(res.normalizedJson);
+      setGeoTimelineStatus(res.status);
+      setShowGeoTimelineSection(true);
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const handleClearGeoTimeline = () => {
+    setGeoTimelineJson('');
+    setGeoTimelineStatus(null);
   };
 
   const handleLoadSampleJson = () => {
     const sample = {
       locations: [
         {
-          name: "Núi Sinai",
+          name: "Núi Sinai (Horeb)",
           ancient_name: "Gebel Musa / Horeb",
-          region: "Bán đảo Sinai (Ai Cập)",
-          testament: "cuu-uoc",
-          latitude: 28.5394,
-          longitude: 33.9753,
-          historical_period: "Thời Xuất Hành (Thế kỷ 15 - 13 TCN)",
-          archaeological_evidence: "Tu viện Thánh Catarina, các bia ký Proto-Sinaitic",
-          bible_references: ["Xh 19:11", "Lv 25:1"],
-          summary: "Nơi Thiên Chúa ban bố Giao Ước Sinai và luật Năm Toàn Xá Yovel."
+          latitude: 28.5397,
+          longitude: 33.9750,
+          description: "Ngọn núi thánh nơi Thiên Chúa ban hành Thập Giới và ký kết Giao ước Sinai.",
+          scripture_or_history: "Xuất Hành 19–24; Đnl 5",
+          historical_period: "Thời Xuất Hành (Thế kỷ 15 - 13 TCN)"
         }
       ],
       timeline_events: [
         {
-          title: "Luật Năm Toàn Xá Yovel Tại Núi Sinai",
-          year_label: "c. 1440 TCN",
-          order_year: -1440,
-          era_name: "Thời Xuất Hành & Sa Mạc",
-          category: "cuu-uoc",
-          biblical_anchor: "Sách Lêvi chương 25 (Lv 25:1-55)",
-          archaeological_anchor: "Đối chiếu các sắc chỉ giải phóng nô lệ Cận Đông Cổ Đại",
-          significance: "Tuyên xưng quyền tối thượng của Thiên Chúa trên đất đai và trả tự do cho dân Chúa."
+          year_bce_ce: -1440,
+          event_title: "Ban hành Luật Năm Sa-bát và Năm Toàn Xá tại Núi Sinai",
+          period: "Thời kỳ Xuất Hành & Sa Mạc",
+          display_date: "k. 1440 TCN",
+          description: "Nơi Thiên Chúa ban bố luật Năm Toàn Xá Yovel và tái thiết công lý.",
+          significance: "Thiết lập nền tảng công lý kinh tế và giải phóng nô lệ Dân Chúa."
         }
       ]
     };
     const str = JSON.stringify(sample, null, 2);
     setGeoTimelineJson(str);
-    validateGeoTimelineJson(str);
-  };
-
-  const handleJsonFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const content = event.target?.result as string;
-      setGeoTimelineJson(content);
-      validateGeoTimelineJson(content);
-    };
-    reader.readAsText(file);
-    e.target.value = '';
+    setGeoTimelineStatus({ valid: true, message: 'Đã nạp mẫu JSON: 1 tọa độ địa danh • 1 mốc thời gian.' });
   };
 
   // 1-Click Catholic Block Insertion Handler
@@ -637,42 +786,51 @@ function DangBaiContent() {
       )}
 
       {/* 🌟 WYSIWYG STUDIO TOP NAVBAR */}
-      <header className="w-full bg-[var(--bg-card)] border-b border-[var(--border-card)] px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-md z-30 sticky top-16 sm:top-20">
+      <header className="w-full bg-[var(--bg-card)] border-b border-[var(--border-card)] px-3 sm:px-5 py-2 flex items-center justify-between gap-2 sm:gap-3 shadow-md z-30 sticky top-16 sm:top-20">
         
         {/* Left: Back, Sidebar Toggle & Post Title */}
-        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
           <button
             type="button"
             onClick={() => router.push('/thu-vien')}
-            className="p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-muted)] hover:text-amber-500 transition cursor-pointer shrink-0"
+            className="p-1.5 sm:p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-muted)] hover:text-amber-500 transition cursor-pointer shrink-0"
             title="Quay về Thư viện"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
+          {/* Dedicated Sidebar Toggle Button */}
           <button
             type="button"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="p-2 rounded-xl hover:bg-[var(--bg-main)] text-[var(--text-muted)] hover:text-amber-500 transition cursor-pointer hidden lg:flex items-center shrink-0"
-            title={sidebarCollapsed ? "Mở rộng thanh bên thiết lập" : "Thu gọn thanh bên thiết lập"}
+            className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+              !sidebarCollapsed
+                ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-sm'
+                : 'bg-[var(--bg-main)] border-[var(--border-card)] text-[var(--text-muted)] hover:text-amber-500 hover:border-amber-500/30'
+            }`}
+            title={sidebarCollapsed ? "Mở thanh thiết lập bài viết & bản đồ" : "Thu gọn thanh thiết lập"}
           >
-            {sidebarCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+            <Settings className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">{sidebarCollapsed ? "Thiết Lập Bài" : "Đóng Bảng"}</span>
+            {geoTimelineStatus?.valid && (
+              <span className="w-2 h-2 rounded-full bg-emerald-500" title="Đã có tọa độ & dòng thời gian" />
+            )}
           </button>
 
-          <div className="flex items-center gap-2.5 min-w-0">
-            <span className="p-2 rounded-xl bg-amber-500/10 text-amber-500 font-black border border-amber-500/20 shrink-0">
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="p-1.5 sm:p-2 rounded-xl bg-amber-500/10 text-amber-500 font-black border border-amber-500/20 shrink-0">
+              <BookOpen className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
             </span>
             <div className="min-w-0">
-              <h1 className="font-serif font-bold text-xs sm:text-sm md:text-base text-[var(--text-main)] flex items-center gap-2 truncate max-w-[180px] sm:max-w-xs md:max-w-md">
+              <h1 className="font-serif font-bold text-xs sm:text-sm text-[var(--text-main)] flex items-center gap-1.5 truncate max-w-[130px] sm:max-w-[200px] md:max-w-xs lg:max-w-md">
                 {title || 'Biên Tập Bài Viết VERIDU'}
                 {postId && (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
-                    ID #{postId}
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
+                    #{postId}
                   </span>
                 )}
               </h1>
-              <p className="text-[11px] text-[var(--text-muted)] truncate">
+              <p className="text-[10px] sm:text-[11px] text-[var(--text-muted)] truncate hidden md:block">
                 {activeTab === 'visual' ? '🎨 Soạn thảo trực quan (Live Canvas)' : activeTab === 'code' ? '💻 Mã nguồn HTML' : '👁️ Xem thử độc giả'}
               </p>
             </div>
@@ -680,11 +838,11 @@ function DangBaiContent() {
         </div>
 
         {/* Center: TAB TOGGLE (Live Visual ⟷ HTML Code ⟷ Preview) */}
-        <div className="flex items-center gap-1 bg-[var(--bg-main)] p-1 rounded-2xl border border-[var(--border-card)]">
+        <div className="flex items-center gap-1 bg-[var(--bg-main)] p-1 rounded-2xl border border-[var(--border-card)] shrink-0">
           <button
             type="button"
             onClick={() => switchTab('visual')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'visual' 
                 ? 'bg-amber-500 text-slate-950 shadow-md font-black' 
                 : 'text-[var(--text-muted)] hover:text-amber-500'
@@ -692,13 +850,13 @@ function DangBaiContent() {
             title="Chế độ Soạn Thảo Trực Quan (Live Visual Canvas WYSIWYG)"
           >
             <Edit3 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Trực Quan</span> (Canvas)
+            <span className="hidden sm:inline">Trực Quan</span>
           </button>
 
           <button
             type="button"
             onClick={() => switchTab('code')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'code' 
                 ? 'bg-amber-500 text-slate-950 shadow-md font-black' 
                 : 'text-[var(--text-muted)] hover:text-amber-500'
@@ -706,13 +864,13 @@ function DangBaiContent() {
             title="Chế độ Mã Nguồn (HTML Code Editor)"
           >
             <FileCode className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Mã Nguồn</span> (HTML)
+            <span className="hidden sm:inline">Mã Nguồn</span>
           </button>
 
           <button
             type="button"
             onClick={() => switchTab('preview')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'preview' 
                 ? 'bg-amber-500 text-slate-950 shadow-md font-black' 
                 : 'text-[var(--text-muted)] hover:text-amber-500'
@@ -720,74 +878,52 @@ function DangBaiContent() {
             title="Chế độ Xem Trước Độc Giả"
           >
             <Eye className="w-3.5 h-3.5" />
-            <span>Xem Trước</span>
+            <span className="hidden sm:inline">Xem Trước</span>
           </button>
         </div>
 
         {/* Right: Catholic Styleguide Modal Button + Save Button */}
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           
           {/* 📖 Sổ Tay Khối Chuẩn Công Giáo Modal Button */}
           <button
             type="button"
             onClick={() => setShowBlockModal(true)}
-            className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20 hover:from-amber-500 hover:to-amber-600 text-amber-900 dark:text-amber-300 hover:text-slate-950 font-bold rounded-2xl text-xs transition-all border border-amber-500/40 flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 group"
-            title="Mở Sổ Tay 8 Khối Chuẩn Công Giáo VERIDU (Xem mẫu và chèn nhanh 1-click)"
+            className="px-2.5 sm:px-3.5 py-1.5 bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20 hover:from-amber-500 hover:to-amber-600 text-amber-900 dark:text-amber-300 hover:text-slate-950 font-bold rounded-2xl text-xs transition-all border border-amber-500/40 flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 group"
+            title="Mở Sổ Tay 8 Khối Chuẩn Công Giáo VERIDU"
           >
             <BookOpen className="w-3.5 h-3.5 text-amber-500 group-hover:text-slate-950" />
-            <span className="font-serif">📖 Sổ Tay Khối Chuẩn</span>
+            <span className="font-serif hidden sm:inline">📖 Sổ Tay Khối Chuẩn</span>
+            <span className="font-serif sm:hidden">Khối Mẫu</span>
           </button>
-
-          {/* Quick Link to Style Guide */}
-          <Link
-            href="/huong-dan-viet-bai"
-            target="_blank"
-            className="px-3 py-1.5 bg-[var(--bg-main)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 font-bold rounded-2xl text-xs border border-[var(--border-card)] hidden xl:flex items-center gap-1.5 transition"
-            title="Xem Sổ Tay Quy Chuẩn Viết Bài & Tôn Chỉ Giáo Lý CCC"
-          >
-            <BookOpen className="w-3.5 h-3.5 text-amber-500" />
-            <span>Quy Chuẩn</span>
-          </Link>
-
-          {/* Quick Link to Needed Content */}
-          <Link
-            href="/noi-dung-can-thiet"
-            target="_blank"
-            className="px-3 py-1.5 bg-[var(--bg-main)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 font-bold rounded-2xl text-xs border border-[var(--border-card)] hidden 2xl:flex items-center gap-1.5 transition"
-            title="Xem Danh Mục Đề Tài Nghiên Cứu Đang Cần Viết"
-          >
-            <Compass className="w-3.5 h-3.5 text-amber-500" />
-            <span>Đề Tài Cần</span>
-          </Link>
 
           {/* Quick Upload .HTML Button */}
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="px-3 py-1.5 bg-indigo-600/15 hover:bg-indigo-600 text-indigo-700 dark:text-indigo-300 hover:text-white font-bold rounded-2xl text-xs transition-all border border-indigo-500/30 hidden md:flex items-center gap-1.5 cursor-pointer"
+            className="px-2.5 sm:px-3 py-1.5 bg-indigo-600/15 hover:bg-indigo-600 text-indigo-700 dark:text-indigo-300 hover:text-white font-bold rounded-2xl text-xs transition-all border border-indigo-500/30 hidden lg:flex items-center gap-1.5 cursor-pointer"
             title="Nạp tệp HTML để phân tích và chèn tự động"
           >
             <Upload className="w-3.5 h-3.5 text-indigo-500" />
             <span>Nạp HTML</span>
           </button>
 
-          {/* Resource Modal Button */}
-          <button
-            type="button"
-            onClick={() => setShowResourceModal(true)}
-            className="px-3 py-1.5 bg-[var(--bg-main)] hover:bg-indigo-500/10 text-[var(--text-muted)] hover:text-indigo-500 font-bold rounded-2xl text-xs border border-[var(--border-card)] hidden xl:flex items-center gap-1.5 transition"
-            title="Gửi tài liệu, sách, giáo án đa định dạng (.pdf, .docx, slide)"
+          {/* Quick Link to Style Guide */}
+          <Link
+            href="/huong-dan-viet-bai"
+            target="_blank"
+            className="p-1.5 sm:px-2.5 sm:py-1.5 bg-[var(--bg-main)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 font-bold rounded-xl text-xs border border-[var(--border-card)] hidden xl:flex items-center gap-1 transition"
+            title="Xem Sổ Tay Quy Chuẩn Viết Bài"
           >
-            <Upload className="w-3.5 h-3.5" />
-            <span>Gửi Giáo Án</span>
-          </button>
+            <span>Quy Chuẩn</span>
+          </Link>
 
           {/* Publish / Update Button */}
           <button
             type="button"
             onClick={() => handleSubmit()}
             disabled={isSubmitting}
-            className="px-4 sm:px-5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black rounded-2xl text-xs transition-all shadow-lg shadow-amber-500/25 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95 border border-amber-400/50"
+            className="px-3.5 sm:px-5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black rounded-2xl text-xs transition-all shadow-lg shadow-amber-500/25 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95 border border-amber-400/50 shrink-0"
           >
             {isSubmitting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             <span>{isSubmitting ? 'Đang Lưu...' : postId ? 'Lưu Thay Đổi' : 'Xuất Bản'}</span>
@@ -970,28 +1106,81 @@ function DangBaiContent() {
                           Đính kèm dữ liệu tọa độ địa lý (Leaflet) và các mốc lịch sử cứu độ (Salvation Timeline) cho bài viết. Dữ liệu sẽ hiển thị ngay dưới bài đọc và tự động đồng bộ vào Bản Đồ (/ban-do) và Dòng Thời Gian (/lich-su).
                         </p>
 
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={handleLoadSampleJson}
-                            className="flex-1 py-1.5 px-2 bg-amber-500/15 hover:bg-amber-500 text-amber-900 dark:text-amber-300 hover:text-slate-950 font-bold rounded-lg text-[10px] transition border border-amber-500/30 cursor-pointer text-center"
-                          >
-                            + Mẫu JSON
-                          </button>
+                        {/* Upload Actions Grid */}
+                        <div className="space-y-1.5">
+                          <div className="grid grid-cols-2 gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => locFileInputRef.current?.click()}
+                              className="py-1.5 px-2 bg-amber-500/15 hover:bg-amber-500 text-amber-900 dark:text-amber-300 hover:text-slate-950 font-bold rounded-lg text-[10px] transition border border-amber-500/40 cursor-pointer flex items-center justify-center gap-1 shadow-sm"
+                              title="Tải tệp JSON danh sách các tọa độ địa danh"
+                            >
+                              <MapPin className="w-3 h-3 text-amber-500" />
+                              <span>📍 Tải Tọa Độ</span>
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={() => jsonFileInputRef.current?.click()}
-                            className="flex-1 py-1.5 px-2 bg-indigo-500/15 hover:bg-indigo-500 text-indigo-700 dark:text-indigo-300 hover:text-white font-bold rounded-lg text-[10px] transition border border-indigo-500/30 cursor-pointer text-center"
-                          >
-                            📁 Nạp File .JSON
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => timelineFileInputRef.current?.click()}
+                              className="py-1.5 px-2 bg-indigo-500/15 hover:bg-indigo-500 text-indigo-700 dark:text-indigo-300 hover:text-white font-bold rounded-lg text-[10px] transition border border-indigo-500/40 cursor-pointer flex items-center justify-center gap-1 shadow-sm"
+                              title="Tải tệp JSON danh sách các mốc thời gian cứu độ"
+                            >
+                              <Clock className="w-3 h-3 text-indigo-500" />
+                              <span>⏳ Tải Thời Gian</span>
+                            </button>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 text-[10px]">
+                            <button
+                              type="button"
+                              onClick={() => jsonFileInputRef.current?.click()}
+                              className="flex-1 py-1 px-1.5 bg-[var(--bg-card)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 font-bold rounded-md transition border border-[var(--border-card)] cursor-pointer text-center"
+                              title="Nạp tệp JSON tổng hợp cả 2 mảng"
+                            >
+                              📁 Nạp Gộp
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={handleLoadSampleJson}
+                              className="flex-1 py-1 px-1.5 bg-[var(--bg-card)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 font-bold rounded-md transition border border-[var(--border-card)] cursor-pointer text-center"
+                              title="Nạp mẫu dữ liệu tham khảo"
+                            >
+                              + Mẫu JSON
+                            </button>
+
+                            {geoTimelineJson && (
+                              <button
+                                type="button"
+                                onClick={handleClearGeoTimeline}
+                                className="py-1 px-2 bg-rose-500/10 hover:bg-rose-500 text-rose-600 dark:text-rose-400 hover:text-white font-bold rounded-md transition border border-rose-500/30 cursor-pointer"
+                                title="Xóa toàn bộ dữ liệu tọa độ & dòng thời gian"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
                         </div>
 
+                        {/* Hidden file inputs for coordinates, timeline, and combined */}
+                        <input
+                          type="file"
+                          ref={locFileInputRef}
+                          onChange={(e) => handleUploadGeoFile(e, 'locations')}
+                          accept=".json"
+                          className="hidden"
+                        />
+                        <input
+                          type="file"
+                          ref={timelineFileInputRef}
+                          onChange={(e) => handleUploadGeoFile(e, 'timeline')}
+                          accept=".json"
+                          className="hidden"
+                        />
                         <input
                           type="file"
                           ref={jsonFileInputRef}
-                          onChange={handleJsonFileUpload}
+                          onChange={(e) => handleUploadGeoFile(e)}
                           accept=".json"
                           className="hidden"
                         />
@@ -1005,8 +1194,8 @@ function DangBaiContent() {
                               validateGeoTimelineJson(val);
                             }}
                             rows={8}
-                            placeholder="Dán mã JSON chứa mảng locations và timeline_events tại đây..."
-                            className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] font-mono text-[10px] text-amber-500 dark:text-amber-400 outline-none focus:border-amber-500 resize-y"
+                            placeholder="Dán mã JSON mảng tọa độ [ ... ] hoặc mốc thời gian [ ... ] tại đây (hệ thống tự chuẩn hóa)..."
+                            className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] font-mono text-[10px] text-amber-500 dark:text-amber-400 outline-none focus:border-amber-500 resize-y leading-relaxed"
                             spellCheck={false}
                           />
                         </div>
@@ -1037,7 +1226,7 @@ function DangBaiContent() {
               <div className="p-4 space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5" /> 8 Khối Chuẩn Công Giáo
+                    <BookOpen className="w-3.5 h-3.5" /> 8 Khối Chuẩn Công Giáo
                   </span>
                   <button
                     type="button"

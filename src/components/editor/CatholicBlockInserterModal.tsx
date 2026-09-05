@@ -15,7 +15,6 @@ import {
   Copy, 
   PlusCircle, 
   Search, 
-  Sparkles, 
   Info, 
   ShieldAlert, 
   Lightbulb, 
@@ -530,7 +529,7 @@ export default function CatholicBlockInserterModal({
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-slate-950/50">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shadow-inner text-amber-400">
-              <Sparkles className="w-5 h-5" />
+              <BookOpen className="w-5 h-5" />
             </div>
             <div>
               <h2 id="catholic-modal-title" className="text-lg sm:text-xl font-serif font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-100 to-white flex items-center gap-2">
