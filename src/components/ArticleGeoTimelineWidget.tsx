@@ -10,7 +10,6 @@ import {
   ExternalLink, 
   BookOpen, 
   Layers, 
-  Sparkles, 
   Search, 
   Calendar,
   ChevronRight,
@@ -64,9 +63,9 @@ function MiniMap({ locations }: { locations: MapLocation[] }) {
       });
       mapInstanceRef.current = map;
 
-      // OpenStreetMap Terrain / CartoDB Voyager tiles
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap contributors',
+      // Esri World Topo Map (Clean biblical topographical relief without watermarks)
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '&copy; Esri &mdash; National Geographic',
         maxZoom: 18,
       }).addTo(map);
 
@@ -233,10 +232,6 @@ export default function ArticleGeoTimelineWidget({
       {/* Widget Header & Navigation Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-3xl bg-gradient-to-r from-amber-500/10 via-[var(--bg-card)] to-indigo-500/5 border border-amber-500/30 shadow-md">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 text-[11px] font-serif font-bold uppercase tracking-wider">
-            <Sparkles className="w-3 h-3" />
-            <span>Tư Liệu Trực Quan Bổ Trợ</span>
-          </div>
           <h3 className="font-serif font-black text-lg sm:text-xl text-[var(--text-main)]">
             Không Gian Địa Lý &amp; Tiến Trình Lịch Sử Cứu Độ
           </h3>
