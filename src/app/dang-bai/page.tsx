@@ -46,10 +46,13 @@ import {
   ListChecks,
   Bookmark,
   Share2,
-  Compass
+  Compass,
+  MapPin,
+  Clock
 } from 'lucide-react';
 import { getStoredUser, UserProfile } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
+import { fetchArticleGeoAndTimeline } from '@/lib/api';
 import { 
   extractTitleFromHtml, 
   extractExcerptFromHtml, 
@@ -160,6 +163,12 @@ function DangBaiContent() {
   const visualCanvasRef = useRef<HTMLDivElement>(null);
   const isUpdatingDomFromState = useRef(false);
 
+  // Geo & Timeline Attachment State
+  const [showGeoTimelineSection, setShowGeoTimelineSection] = useState(false);
+  const [geoTimelineJson, setGeoTimelineJson] = useState('');
+  const [geoTimelineStatus, setGeoTimelineStatus] = useState<{ valid: boolean; message: string } | null>(null);
+  const jsonFileInputRef = useRef<HTMLInputElement>(null);
+
   // Check auth
   useEffect(() => {
     const u = getStoredUser();
@@ -189,6 +198,25 @@ function DangBaiContent() {
           // Sync into DOM if visual editor is mounted
           if (visualCanvasRef.current) {
             visualCanvasRef.current.innerHTML = html;
+          }
+
+          // Fetch existing attached geo & timeline if slug exists
+          if (p.slug) {
+            fetchArticleGeoAndTimeline(p.slug).then((res) => {
+              if (res && (res.locations.length > 0 || res.timelineEvents.length > 0)) {
+                const existingData = {
+                  locations: res.locations,
+                  timeline_events: res.timelineEvents
+                };
+                const jsonStr = JSON.stringify(existingData, null, 2);
+                setGeoTimelineJson(jsonStr);
+                setShowGeoTimelineSection(true);
+                setGeoTimelineStatus({ 
+                  valid: true, 
+                  message: `Đã nạp ${res.locations.length} địa danh và ${res.timelineEvents.length} mốc thời gian đã gắn với bài viết này.` 
+                });
+              }
+            }).catch(() => {});
           }
 
           setMessage({ type: 'success', text: `Đang chỉnh sửa bài viết #${p.id}: "${p.title}"` });
@@ -229,6 +257,82 @@ function DangBaiContent() {
     if (!slug || slug === slugifyVietnamese(title)) {
       setSlug(slugifyVietnamese(val));
     }
+  };
+
+  // Geo & Timeline Helpers
+  const validateGeoTimelineJson = (jsonStr: string) => {
+    if (!jsonStr.trim()) {
+      setGeoTimelineStatus(null);
+      return null;
+    }
+    try {
+      const parsed = JSON.parse(jsonStr);
+      let locCount = 0;
+      let evtCount = 0;
+      if (Array.isArray(parsed.locations)) {
+        locCount = parsed.locations.length;
+      }
+      const events = parsed.timeline_events || parsed.events || [];
+      if (Array.isArray(events)) {
+        evtCount = events.length;
+      }
+      if (locCount === 0 && evtCount === 0) {
+        setGeoTimelineStatus({ valid: false, message: 'JSON không chứa mảng "locations" hoặc "timeline_events" nào.' });
+        return null;
+      }
+      setGeoTimelineStatus({ valid: true, message: `Hợp lệ: ${locCount} địa danh, ${evtCount} mốc thời gian.` });
+      return parsed;
+    } catch (e: any) {
+      setGeoTimelineStatus({ valid: false, message: `Lỗi cú pháp JSON: ${e.message}` });
+      return null;
+    }
+  };
+
+  const handleLoadSampleJson = () => {
+    const sample = {
+      locations: [
+        {
+          name: "Núi Sinai",
+          ancient_name: "Gebel Musa / Horeb",
+          region: "Bán đảo Sinai (Ai Cập)",
+          testament: "cuu-uoc",
+          latitude: 28.5394,
+          longitude: 33.9753,
+          historical_period: "Thời Xuất Hành (Thế kỷ 15 - 13 TCN)",
+          archaeological_evidence: "Tu viện Thánh Catarina, các bia ký Proto-Sinaitic",
+          bible_references: ["Xh 19:11", "Lv 25:1"],
+          summary: "Nơi Thiên Chúa ban bố Giao Ước Sinai và luật Năm Toàn Xá Yovel."
+        }
+      ],
+      timeline_events: [
+        {
+          title: "Luật Năm Toàn Xá Yovel Tại Núi Sinai",
+          year_label: "c. 1440 TCN",
+          order_year: -1440,
+          era_name: "Thời Xuất Hành & Sa Mạc",
+          category: "cuu-uoc",
+          biblical_anchor: "Sách Lêvi chương 25 (Lv 25:1-55)",
+          archaeological_anchor: "Đối chiếu các sắc chỉ giải phóng nô lệ Cận Đông Cổ Đại",
+          significance: "Tuyên xưng quyền tối thượng của Thiên Chúa trên đất đai và trả tự do cho dân Chúa."
+        }
+      ]
+    };
+    const str = JSON.stringify(sample, null, 2);
+    setGeoTimelineJson(str);
+    validateGeoTimelineJson(str);
+  };
+
+  const handleJsonFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      setGeoTimelineJson(content);
+      validateGeoTimelineJson(content);
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   };
 
   // 1-Click Catholic Block Insertion Handler
@@ -452,6 +556,30 @@ function DangBaiContent() {
 
       const savedSlug = data.slug || data.post?.slug || finalSlug;
       setPublishedSlug(savedSlug);
+
+      // Attach Geo & Timeline data if provided
+      if (geoTimelineJson.trim()) {
+        try {
+          const parsed = JSON.parse(geoTimelineJson);
+          const locs = Array.isArray(parsed.locations) ? parsed.locations : [];
+          const evts = Array.isArray(parsed.timeline_events) ? parsed.timeline_events : Array.isArray(parsed.events) ? parsed.events : [];
+          
+          if (locs.length > 0 || evts.length > 0) {
+            await fetch('/api/posts/attach-geo-timeline', {
+              method: 'POST',
+              headers: reqHeaders,
+              body: JSON.stringify({
+                article_slug: savedSlug,
+                locations: locs,
+                timeline_events: evts
+              })
+            });
+          }
+        } catch (geoErr) {
+          console.error('Lỗi khi đính kèm dữ liệu bản đồ / dòng thời gian:', geoErr);
+        }
+      }
+
       setShowSuccessModal(true);
       setMessage({ 
         type: 'success', 
@@ -818,6 +946,87 @@ function DangBaiContent() {
                       placeholder="Tóm tắt ngắn gọn nội dung cốt lõi của bài viết để hiển thị trên thẻ bài và kết quả tìm kiếm..."
                       className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs outline-none focus:border-amber-500 resize-y"
                     />
+                  </div>
+
+                  {/* EXPANDABLE: BẢN ĐỒ & DÒNG THỜI GIAN BỔ TRỢ */}
+                  <div className="pt-2 border-t border-[var(--border-card)]">
+                    <button
+                      type="button"
+                      onClick={() => setShowGeoTimelineSection(!showGeoTimelineSection)}
+                      className="w-full py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 flex items-center justify-between text-xs font-bold text-amber-700 dark:text-amber-400 transition-all cursor-pointer"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-amber-500" />
+                        <span>📍 Bản Đồ &amp; ⏳ Dòng Thời Gian</span>
+                      </span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20">
+                        {showGeoTimelineSection ? '▲ Thu gọn' : '▼ Đính kèm (Tùy chọn)'}
+                      </span>
+                    </button>
+
+                    {showGeoTimelineSection && (
+                      <div className="mt-3 space-y-3 p-3 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] animate-fadeIn">
+                        <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+                          Đính kèm dữ liệu tọa độ địa lý (Leaflet) và các mốc lịch sử cứu độ (Salvation Timeline) cho bài viết. Dữ liệu sẽ hiển thị ngay dưới bài đọc và tự động đồng bộ vào Bản Đồ (/ban-do) và Dòng Thời Gian (/lich-su).
+                        </p>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={handleLoadSampleJson}
+                            className="flex-1 py-1.5 px-2 bg-amber-500/15 hover:bg-amber-500 text-amber-900 dark:text-amber-300 hover:text-slate-950 font-bold rounded-lg text-[10px] transition border border-amber-500/30 cursor-pointer text-center"
+                          >
+                            + Mẫu JSON
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => jsonFileInputRef.current?.click()}
+                            className="flex-1 py-1.5 px-2 bg-indigo-500/15 hover:bg-indigo-500 text-indigo-700 dark:text-indigo-300 hover:text-white font-bold rounded-lg text-[10px] transition border border-indigo-500/30 cursor-pointer text-center"
+                          >
+                            📁 Nạp File .JSON
+                          </button>
+                        </div>
+
+                        <input
+                          type="file"
+                          ref={jsonFileInputRef}
+                          onChange={handleJsonFileUpload}
+                          accept=".json"
+                          className="hidden"
+                        />
+
+                        <div>
+                          <textarea
+                            value={geoTimelineJson}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setGeoTimelineJson(val);
+                              validateGeoTimelineJson(val);
+                            }}
+                            rows={8}
+                            placeholder="Dán mã JSON chứa mảng locations và timeline_events tại đây..."
+                            className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] font-mono text-[10px] text-amber-500 dark:text-amber-400 outline-none focus:border-amber-500 resize-y"
+                            spellCheck={false}
+                          />
+                        </div>
+
+                        {geoTimelineStatus && (
+                          <div className={`p-2 rounded-lg text-[10px] font-semibold flex items-center gap-1.5 ${
+                            geoTimelineStatus.valid 
+                              ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' 
+                              : 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30'
+                          }`}>
+                            {geoTimelineStatus.valid ? (
+                              <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-500" />
+                            ) : (
+                              <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-500" />
+                            )}
+                            <span>{geoTimelineStatus.message}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

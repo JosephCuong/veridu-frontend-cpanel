@@ -1,0 +1,148 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VERIDU Multimodal Data Schemas",
+  "description": "Schemas for Leaflet GeoJSON, D3.js Timeline, and Podcast Dialogue Script",
+  "leaflet_coordinates_schema": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "latitude",
+        "longitude",
+        "biblical_references",
+        "historical_period",
+        "archaeological_evidence",
+        "description"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "ancient_name": {
+          "type": "string"
+        },
+        "latitude": {
+          "type": "number"
+        },
+        "longitude": {
+          "type": "number"
+        },
+        "biblical_references": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "historical_period": {
+          "type": "string"
+        },
+        "archaeological_evidence": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "d3_timeline_schema": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "required": [
+        "id",
+        "year_bce_ce",
+        "display_date",
+        "event_title",
+        "biblical_anchor",
+        "archaeological_anchor",
+        "significance"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "year_bce_ce": {
+          "type": "integer",
+          "description": "Negative for BCE, positive for CE"
+        },
+        "display_date": {
+          "type": "string"
+        },
+        "event_title": {
+          "type": "string"
+        },
+        "biblical_anchor": {
+          "type": "string"
+        },
+        "archaeological_anchor": {
+          "type": "string"
+        },
+        "significance": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "podcast_script_schema": {
+    "type": "object",
+    "required": [
+      "episode_title",
+      "hosts",
+      "dialogue",
+      "key_takeaways"
+    ],
+    "properties": {
+      "episode_title": {
+        "type": "string"
+      },
+      "hosts": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "name",
+            "role"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "dialogue": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "speaker",
+            "text"
+          ],
+          "properties": {
+            "speaker": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "key_takeaways": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

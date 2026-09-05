@@ -189,6 +189,9 @@ export interface TimelineEventData {
   locations?: TimelineEventEntity[];
   scriptures?: TimelineEventScripture[];
   article_slug?: string;
+  biblical_anchor?: string;
+  archaeological_anchor?: string;
+  significance?: string;
   created_at?: string;
   // Compatibility aliases
   timePeriod?: string;
@@ -212,6 +215,7 @@ export interface MapLocation {
   name: string;
   name_en?: string;
   name_original?: string;
+  ancient_name?: string;
   meaning?: string;
   region: string;
   testament: 'cuu-uoc' | 'tan-uoc' | 'ca-hai' | string;
@@ -225,6 +229,10 @@ export interface MapLocation {
   events?: string[];
   scriptures?: MapLocationScripture[];
   theology?: string;
+  historical_period?: string;
+  archaeological_evidence?: string;
+  bible_references?: string[];
+  article_slugs?: string[];
   created_at?: string;
 }
 
@@ -490,6 +498,9 @@ export async function fetchTimelineEvents(): Promise<TimelineEventData[]> {
       locations: t.locations || [],
       scriptures: t.scriptures || [],
       article_slug: t.article_slug || '',
+      biblical_anchor: t.biblical_anchor || '',
+      archaeological_anchor: t.archaeological_anchor || '',
+      significance: t.significance || '',
       created_at: t.created_at,
       // Compatibility aliases
       timePeriod: t.year_label,
@@ -532,6 +543,9 @@ export async function fetchTimelineEventBySlug(slug: string): Promise<TimelineEv
       locations: data.locations || [],
       scriptures: data.scriptures || [],
       article_slug: data.article_slug || '',
+      biblical_anchor: data.biblical_anchor || '',
+      archaeological_anchor: data.archaeological_anchor || '',
+      significance: data.significance || '',
       created_at: data.created_at,
       timePeriod: data.year_label,
       eraId: data.era_id,
@@ -649,6 +663,11 @@ export async function fetchMapLocations(): Promise<MapLocation[]> {
       events: item.events || [],
       scriptures: item.scriptures || [],
       theology: item.theology || '',
+      ancient_name: item.ancient_name || '',
+      historical_period: item.historical_period || '',
+      archaeological_evidence: item.archaeological_evidence || '',
+      bible_references: item.bible_references || [],
+      article_slugs: item.article_slugs || [],
       created_at: item.created_at
     }));
   } catch (error) {
@@ -686,11 +705,89 @@ export async function fetchMapLocationBySlug(slug: string): Promise<MapLocation 
       events: data.events || [],
       scriptures: data.scriptures || [],
       theology: data.theology || '',
+      ancient_name: data.ancient_name || '',
+      historical_period: data.historical_period || '',
+      archaeological_evidence: data.archaeological_evidence || '',
+      bible_references: data.bible_references || [],
+      article_slugs: data.article_slugs || [],
       created_at: data.created_at
     };
   } catch (error) {
     console.error(`Lỗi khi tải địa danh [${slug}] từ Supabase:`, error);
     return null;
+  }
+}
+
+// ─── Article Geo Locations & Timeline Fetcher ──────────────────
+export async function fetchArticleGeoAndTimeline(articleSlug: string): Promise<{
+  locations: MapLocation[];
+  timelineEvents: TimelineEventData[];
+}> {
+  try {
+    const [locRes, timelineRes] = await Promise.all([
+      supabase
+        .from('map_locations')
+        .select('*')
+        .contains('article_slugs', [articleSlug]),
+      supabase
+        .from('timeline_events')
+        .select('*')
+        .eq('article_slug', articleSlug)
+        .order('order_year', { ascending: true })
+    ]);
+
+    const locations: MapLocation[] = (locRes.data || []).map((item: any) => ({
+      id: item.id,
+      slug: item.slug || '',
+      name: item.name,
+      name_en: item.name_en || '',
+      name_original: item.ancient_name || item.name_original || '',
+      ancient_name: item.ancient_name || '',
+      meaning: item.meaning || '',
+      region: item.region || 'Thánh Địa (Holy Land)',
+      testament: item.testament || 'cuu-uoc',
+      era: item.historical_period || item.era || 'Kinh Thánh',
+      latitude: Number(item.latitude),
+      longitude: Number(item.longitude),
+      importance_level: item.importance_level || 1,
+      image_url: item.image_url || '',
+      summary: item.description || item.summary || '',
+      description: item.description || '',
+      events: item.events || [],
+      scriptures: item.scriptures || [],
+      bible_references: item.bible_references || [],
+      theology: item.theology || '',
+      historical_period: item.historical_period || '',
+      archaeological_evidence: item.archaeological_evidence || '',
+      article_slugs: item.article_slugs || [],
+      created_at: item.created_at
+    }));
+
+    const timelineEvents: TimelineEventData[] = (timelineRes.data || []).map((t: any) => ({
+      id: t.id,
+      slug: t.slug || `event-${t.id}`,
+      title: t.title,
+      subtitle: t.biblical_anchor || t.subtitle || '',
+      year_label: t.year_label,
+      order_year: Number(t.order_year),
+      era_id: t.era_id || 'era-1',
+      era_name: t.era_name || '',
+      category: t.category || 'cuu-uoc',
+      image_url: t.image_url || '',
+      summary: t.significance || t.summary || '',
+      content: t.significance || t.content || '',
+      theology: t.significance || t.theology || '',
+      biblical_anchor: t.biblical_anchor || '',
+      archaeological_anchor: t.archaeological_anchor || '',
+      significance: t.significance || '',
+      article_slug: t.article_slug || '',
+      created_at: t.created_at
+    }));
+
+    return { locations, timelineEvents };
+  } catch (error) {
+    console.error('Lỗi khi tải dữ liệu địa danh & dòng thời gian của bài viết:', error);
+    return { locations: [], timelineEvents: [] };
   }
 }
 

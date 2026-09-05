@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Khảo Luận Tương Tác: Khảo Cổ Học và Chức Tư Tế Sa-lem</title>
+  
+  <!-- Thư viện CDN chuẩn theo Cẩm nang VERIDU -->
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.3/cdn.min.js" defer></script>
+
+  <style>
+    body {
+      font-family: 'Lora', serif;
+      background-color: #020617;
+      color: #e2e8f0;
+      background-image: radial-gradient(circle at 80% 20%, rgba(245, 158, 11, 0.08), transparent 40%),
+                        radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.08), transparent 40%);
+    }
+    .font-sans-ui { font-family: 'Inter', sans-serif; }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+    .glass-card-hover:hover {
+      border-color: rgba(245, 158, 11, 0.5);
+      transform: translateY(-2px);
+      transition: all 0.3s ease;
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased flex flex-col justify-between">
+
+  <!-- Header / Hero Section -->
+  <header class="min-h-[50vh] flex flex-col items-center justify-center text-center p-6 border-b border-amber-500/20 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono font-bold tracking-widest uppercase mb-4">
+      <span>🏛️</span> VERIDU INTERACTIVE 3D EXPLORER
+    </div>
+    <h1 class="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 mb-4 max-w-4xl">
+      Cổ Thành Sa-lem & Vương Quyền Men-ki-xê-đê
+    </h1>
+    <p class="text-slate-300 italic max-w-2xl text-lg">
+      Hành trình khám phá khảo cổ học thực địa thời Đồ Đồng Giữa và chiều kích mầu nhiệm Thánh Thể qua bản đồ và dòng thời gian tương tác.
+    </p>
+  </header>
+
+  <!-- Interactive Hub (Alpine.js Application) -->
+  <main class="max-w-6xl mx-auto w-full p-6 md:p-10 space-y-10" x-data="{ currentTab: 'overview' }">
+
+    <!-- Tab Bar Controller -->
+    <div class="flex flex-wrap justify-center gap-3 font-sans-ui text-sm font-bold">
+      <button 
+        @click="currentTab = 'overview'" 
+        :class="currentTab === 'overview' ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20' : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'"
+        class="px-5 py-2.5 rounded-xl transition-all duration-300 flex items-center gap-2">
+        <span>📜</span> Khảo Cổ Sa-lem
+      </button>
+      <button 
+        @click="currentTab = 'timeline'" 
+        :class="currentTab === 'timeline' ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20' : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'"
+        class="px-5 py-2.5 rounded-xl transition-all duration-300 flex items-center gap-2">
+        <span>⏳</span> Dòng Thời Gian D3
+      </button>
+      <button 
+        @click="currentTab = 'podcast'" 
+        :class="currentTab === 'podcast' ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20' : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'"
+        class="px-5 py-2.5 rounded-xl transition-all duration-300 flex items-center gap-2">
+        <span>🎙️</span> Podcast Học Thuật
+      </button>
+    </div>
+
+    <!-- Tab 1: Khảo Cổ Học Sa-lem -->
+    <div x-show="currentTab === 'overview'" class="space-y-6" x-transition.opacity>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="glass-card p-6 rounded-2xl md:col-span-2 space-y-4">
+          <h2 class="text-2xl font-bold text-amber-400 border-l-4 border-amber-500 pl-3">Thung Lũng Sa-vê & Thành Sa-lem Cổ</h2>
+          <p class="text-slate-300 leading-relaxed text-sm md:text-base">
+            Cuộc khai quật quy mô lớn của các nhà khảo cổ học Israel tại Đồi Ophel và Thành Đa-vít đã phát hiện một pháo đài Canaanite kiên cố có từ thế kỷ 18 TCN bảo vệ nguồn nước duy nhất của thành phố: Suối Gihon.
+          </p>
+          <div class="grid grid-cols-2 gap-4 pt-2 font-sans-ui text-xs">
+            <div class="bg-slate-900/60 p-3 rounded-xl border border-white/5">
+              <span class="text-amber-400 font-bold block mb-1">Tọa độ GPS:</span>
+              <span class="text-slate-300">31.7767° B, 35.2345° Đ</span>
+            </div>
+            <div class="bg-slate-900/60 p-3 rounded-xl border border-white/5">
+              <span class="text-amber-400 font-bold block mb-1">Niên Đại:</span>
+              <span class="text-slate-300">k. 1800 TCN (Middle Bronze II)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl flex flex-col justify-between space-y-4">
+          <h3 class="text-lg font-bold text-amber-300 font-sans-ui">Hiện Vật & Bằng Chứng</h3>
+          <ul class="text-sm text-slate-300 space-y-2.5 font-sans-ui">
+            <li class="flex items-start gap-2">
+              <span class="text-amber-400">✓</span>
+              <span>Bức tường thành đá bazan Canaanite nguyên khối.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-amber-400">✓</span>
+              <span>Con dấu Bullae thời hoàng gia vương triều Đa-vít.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-amber-400">✓</span>
+              <span>Bản khắc Amarna Letters chứng nhận địa danh Sa-lem.</span>
+            </li>
+          </ul>
+          <div class="text-right">
+            <span class="text-[11px] font-mono text-amber-400/80">Số liệu khảo cổ: BAR-2024</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Dòng Thời Gian Niên Đại -->
+    <div x-show="currentTab === 'timeline'" class="glass-card p-8 rounded-3xl space-y-6" x-transition.opacity>
+      <h2 class="text-2xl font-bold text-amber-400 text-center">Tiến Trình Lịch Sử Mạc Khải: Từ Men-ki-xê-đê Đến Đức Kitô</h2>
+      <div class="space-y-6 font-sans-ui">
+        <div class="flex items-start gap-4 p-4 rounded-xl bg-slate-900/60 border-l-4 border-amber-500">
+          <span class="font-mono text-amber-400 font-bold w-24 shrink-0">1800 TCN</span>
+          <div>
+            <h4 class="font-bold text-white text-base">Men-ki-xê-đê dâng Bánh & Rượu cho Áp-ram</h4>
+            <p class="text-xs text-slate-300 mt-1">Thiết lập hình bóng tiên trưng chức tư tế vương giả và cội rễ của Hy lễ Tạ Ơn.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 p-4 rounded-xl bg-slate-900/60 border-l-4 border-indigo-500">
+          <span class="font-mono text-indigo-400 font-bold w-24 shrink-0">1000 TCN</span>
+          <div>
+            <h4 class="font-bold text-white text-base">Lời Sấm Tiên Tri Thánh Vịnh 110</h4>
+            <p class="text-xs text-slate-300 mt-1">Đức Chúa thề hứa: "Muôn thuở, Con là Thượng Tế theo phẩm trật Men-ki-xê-đê."</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 p-4 rounded-xl bg-slate-900/60 border-l-4 border-emerald-500">
+          <span class="font-mono text-emerald-400 font-bold w-24 shrink-0">30-33 SCN</span>
+          <div>
+            <h4 class="font-bold text-white text-base">Bữa Tiệc Ly & Hy Tế Thập Giá Của Chúa Giêsu</h4>
+            <p class="text-xs text-slate-300 mt-1">Đức Kitô hiện thực hóa trọn vẹn của lễ Bánh và Rượu thành Bí Tích Thánh Thể vĩnh cửu.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Kịch Bản Podcast Thảo Luận -->
+    <div x-show="currentTab === 'podcast'" class="glass-card p-8 rounded-3xl space-y-6" x-transition.opacity>
+      <div class="flex items-center justify-between border-b border-white/10 pb-4">
+        <div>
+          <h2 class="text-xl font-bold text-amber-400">Podcast: Men-ki-xê-đê Và Bí Tích Tạ Ơn</h2>
+          <p class="text-xs text-slate-400 font-sans-ui mt-1">Khách mời: Tiến sĩ Thần học Kinh Thánh & Dẫn chương trình VERIDU</p>
+        </div>
+        <span class="text-2xl">🎧</span>
+      </div>
+      <div class="space-y-4 text-sm leading-relaxed">
+        <div class="p-4 rounded-2xl bg-slate-900/80 border border-amber-500/20">
+          <span class="font-bold text-amber-400 block mb-1 font-sans-ui">🎙️ Host:</span>
+          <p class="text-slate-300">Thưa Cha, tại sao phân đoạn Men-ki-xê-đê chỉ có 3 câu mà lại là chìa khóa mở ra Thư Hip-ri và Kinh Nguyện Thánh Thể?</p>
+        </div>
+        <div class="p-4 rounded-2xl bg-slate-900/80 border border-indigo-500/20">
+          <span class="font-bold text-indigo-400 block mb-1 font-sans-ui">🎓 Scholar:</span>
+          <p class="text-slate-300">Bởi vì ngài là tư tế duy nhất không thuộc dòng dõi Lê-vi, không dâng của lễ sát tế thú vật, mà mang Bánh và Rượu ra chúc phúc. Đó chính là bức tranh mầu nhiệm được Đức Giêsu hoàn tất nơi Bàn Tiệc Ly!</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-center py-6 text-slate-500 text-xs border-t border-white/5 font-sans-ui">
+    <p>Nền tảng Nghiên Cứu Thần Học & Kinh Thánh VERIDU © 2026 — www.thapgia.com</p>
+  </footer>
+
+</body>
+</html>

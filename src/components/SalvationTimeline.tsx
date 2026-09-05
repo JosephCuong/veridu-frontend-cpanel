@@ -448,16 +448,18 @@ export default function SalvationTimeline() {
 
                     {/* Library Article if exists */}
                     {evt.article_slug && (
-                      <div className="space-y-1.5 p-3 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)]">
-                        <span className="font-bold text-[var(--text-muted)] uppercase tracking-wider text-[10px] flex items-center gap-1">
-                          <BookOpen className="w-3 h-3 text-indigo-400" /> Bài đọc chuyên sâu
+                      <div className="space-y-1.5 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30">
+                        <span className="font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider text-[10px] flex items-center gap-1">
+                          <BookOpen className="w-3 h-3 text-amber-500" /> Chuyên khảo nghiên cứu
                         </span>
                         <div>
                           <Link
                             href={`/${evt.article_slug}`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-600 dark:text-indigo-400 font-bold transition"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-900 dark:text-amber-100 hover:text-slate-950 font-bold text-xs transition-all shadow-sm"
                           >
-                            <span>Khám phá bài tương tác</span>
+                            <span>Đọc Chuyên Khảo</span>
                             <ArrowRight className="w-3 h-3" />
                           </Link>
                         </div>
@@ -465,6 +467,32 @@ export default function SalvationTimeline() {
                     )}
 
                   </div>
+
+                  {/* Anchors & Historical Verification (if available) */}
+                  {(evt.biblical_anchor || evt.archaeological_anchor) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[var(--border-card)]">
+                      {evt.biblical_anchor && (
+                        <div className="p-3 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-1">
+                          <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                            <BookOpen className="w-3 h-3 text-amber-500" /> Căn Cứ Kinh Thánh
+                          </span>
+                          <p className="font-serif text-xs text-[var(--text-main)]">
+                            {evt.biblical_anchor}
+                          </p>
+                        </div>
+                      )}
+                      {evt.archaeological_anchor && (
+                        <div className="p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 space-y-1">
+                          <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                            <Layers className="w-3 h-3 text-emerald-500" /> Căn Cứ Khảo Cổ / Lịch Sử
+                          </span>
+                          <p className="font-serif text-xs text-[var(--text-main)]">
+                            {evt.archaeological_anchor}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Scripture Quotes Block */}
                   {evt.scriptures && evt.scriptures.length > 0 && (
@@ -577,9 +605,11 @@ export default function SalvationTimeline() {
                         {item.article_slug && (
                           <Link
                             href={`/${item.article_slug}`}
-                            className="text-[11px] font-bold text-indigo-400 hover:underline flex items-center gap-1"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:text-amber-500 flex items-center gap-1 bg-amber-500/15 px-2.5 py-1 rounded-full border border-amber-500/30 transition-all hover:bg-amber-500 hover:text-slate-950"
                           >
-                            <span>Bài tương tác</span>
+                            <span>Đọc bài</span>
                             <ArrowRight className="w-3 h-3" />
                           </Link>
                         )}
@@ -689,6 +719,51 @@ export default function SalvationTimeline() {
                           <p className="font-serif italic text-xs sm:text-sm text-[var(--text-main)]">
                             {activeEvt.theology}
                           </p>
+                        </div>
+                      )}
+
+                      {/* Anchors in Horizontal View */}
+                      {(activeEvt.biblical_anchor || activeEvt.archaeological_anchor) && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {activeEvt.biblical_anchor && (
+                            <div className="p-3 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-1">
+                              <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                                <BookOpen className="w-3 h-3 text-amber-500" /> Căn Cứ Kinh Thánh
+                              </span>
+                              <p className="font-serif text-xs text-[var(--text-main)]">
+                                {activeEvt.biblical_anchor}
+                              </p>
+                            </div>
+                          )}
+                          {activeEvt.archaeological_anchor && (
+                            <div className="p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 space-y-1">
+                              <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                                <Layers className="w-3 h-3 text-emerald-500" /> Căn Cứ Khảo Cổ
+                              </span>
+                              <p className="font-serif text-xs text-[var(--text-main)]">
+                                {activeEvt.archaeological_anchor}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Attached Article in Horizontal View */}
+                      {activeEvt.article_slug && (
+                        <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <BookOpen className="w-4 h-4 text-amber-500" />
+                            <span className="text-xs font-bold text-[var(--text-main)]">Chuyên khảo nghiên cứu đính kèm</span>
+                          </div>
+                          <Link
+                            href={`/${activeEvt.article_slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 transition shadow-sm"
+                          >
+                            <span>Đọc Chuyên Khảo</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </Link>
                         </div>
                       )}
                     </div>

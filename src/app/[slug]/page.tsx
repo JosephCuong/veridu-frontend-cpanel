@@ -1,10 +1,11 @@
-import { getLibraryArticleBySlug } from '@/lib/api';
+import { getLibraryArticleBySlug, fetchArticleGeoAndTimeline } from '@/lib/api';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Metadata } from 'next';
 
 import VisualArticleRenderer from '@/components/VisualArticleRenderer';
+import ArticleGeoTimelineWidget from '@/components/ArticleGeoTimelineWidget';
 import ShareButtons from '@/components/ShareButtons';
 import TableOfContents from '@/components/TableOfContents';
 import AdminEditFloatingButton from '@/components/AdminEditFloatingButton';
@@ -120,7 +121,10 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
     notFound();
   }
 
-  const article = await getLibraryArticleBySlug(resolvedParams.slug);
+  const [article, geoTimeline] = await Promise.all([
+    getLibraryArticleBySlug(resolvedParams.slug),
+    fetchArticleGeoAndTimeline(resolvedParams.slug)
+  ]);
 
   if (!article) {
     notFound();
@@ -261,6 +265,15 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
               <div className="article-content relative z-10">
                 <VisualArticleRenderer contentHtml={htmlContent} />
               </div>
+
+              {/* In-Article Interactive Geo & Timeline Widget */}
+              {geoTimeline && (
+                <ArticleGeoTimelineWidget 
+                  locations={geoTimeline.locations} 
+                  timelineEvents={geoTimeline.timelineEvents} 
+                  articleTitle={cleanTitle} 
+                />
+              )}
               
               {/* Tags */}
               {(article as any).tags && (article as any).tags.length > 0 && (

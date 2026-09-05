@@ -233,11 +233,14 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
         popupAnchor: [0, -18],
       });
 
+      const hasArticles = loc.article_slugs && loc.article_slugs.length > 0;
       const popupHtml = `
-        <div style="font-family: serif; min-width: 180px; text-align: left; padding: 4px;">
+        <div style="font-family: serif; min-width: 190px; text-align: left; padding: 4px;">
           <strong style="font-size: 14px; color: #1e293b; display: block; font-weight: bold;">${loc.name}</strong>
+          ${loc.ancient_name ? `<span style="font-size: 11px; color: #78350f; display: block; font-style: italic;">Cổ danh: ${loc.ancient_name}</span>` : ''}
           <span style="font-size: 11px; color: #64748b; display: block; margin-top: 2px;">${loc.era}</span>
           ${loc.meaning ? `<span style="font-size: 11px; color: #d97706; font-style: italic; display: block; margin-top: 2px;">"${loc.meaning}"</span>` : ''}
+          ${hasArticles ? `<div style="margin-top: 4px; display: inline-block; background: #fef3c7; color: #92400e; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; border: 1px solid #fde68a;">📜 Có ${loc.article_slugs?.length} chuyên khảo nghiên cứu</div>` : ''}
           <div style="margin-top: 6px; font-size: 11px; font-weight: bold; color: #0284c7;">Nhấp để xem hồ sơ chi tiết &rarr;</div>
         </div>
       `;
@@ -536,6 +539,11 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
                     {selectedLocation.name_original}
                   </p>
                 )}
+                {selectedLocation.ancient_name && (
+                  <p className="font-serif text-xs text-amber-700 dark:text-amber-300">
+                    <strong className="font-sans font-bold">Cổ danh / Khảo cổ:</strong> {selectedLocation.ancient_name}
+                  </p>
+                )}
                 {selectedLocation.meaning && (
                   <p className="text-xs text-[var(--text-main)] pt-1">
                     <strong className="text-amber-500">Ý nghĩa danh xưng:</strong> {selectedLocation.meaning}
@@ -621,6 +629,58 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
                   <p className="font-serif italic text-xs sm:text-sm text-[var(--text-main)] leading-relaxed">
                     {selectedLocation.theology}
                   </p>
+                </div>
+              )}
+
+              {/* Archaeological Evidence */}
+              {selectedLocation.archaeological_evidence && (
+                <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400">
+                    <Layers className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Dấu Tích &amp; Bằng Chứng Khảo Cổ Học</span>
+                  </div>
+                  <p className="font-serif text-xs sm:text-sm text-[var(--text-main)] leading-relaxed">
+                    {selectedLocation.archaeological_evidence}
+                  </p>
+                </div>
+              )}
+
+              {/* Related Theological Articles & Monographs */}
+              {selectedLocation.article_slugs && selectedLocation.article_slugs.length > 0 && (
+                <div className="space-y-3 pt-3 border-t border-[var(--border-card)]">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-serif font-bold text-sm text-[var(--text-main)] flex items-center gap-1.5">
+                      <Scroll className="w-4 h-4 text-amber-500" />
+                      <span>Chuyên Khảo Nghiên Cứu Tại Đây ({selectedLocation.article_slugs.length})</span>
+                    </h4>
+                  </div>
+                  <div className="space-y-2">
+                    {selectedLocation.article_slugs.map((slug, idx) => (
+                      <Link
+                        key={idx}
+                        href={`/${slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group p-3 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-500/60 transition-all flex items-center justify-between gap-3"
+                      >
+                        <div className="flex items-start gap-2.5 min-w-0">
+                          <BookOpen className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+                          <div className="min-w-0">
+                            <span className="text-xs font-serif font-bold text-[var(--text-main)] group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors line-clamp-2">
+                              {slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                            </span>
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono block mt-0.5 truncate">
+                              /{slug}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex-shrink-0 flex items-center gap-1 text-[11px] font-bold text-amber-700 dark:text-amber-300 bg-amber-500/15 px-2.5 py-1 rounded-full border border-amber-500/30 group-hover:bg-amber-500 group-hover:text-slate-950 transition-all">
+                          <span>Đọc Bài</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               )}
 

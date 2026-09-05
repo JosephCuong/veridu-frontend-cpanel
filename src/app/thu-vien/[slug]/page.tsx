@@ -1,10 +1,11 @@
-import { getLibraryArticleBySlug, determineArticleType } from '@/lib/api';
+import { getLibraryArticleBySlug, determineArticleType, fetchArticleGeoAndTimeline } from '@/lib/api';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Metadata } from 'next';
 
 import VisualArticleRenderer from '@/components/VisualArticleRenderer';
+import ArticleGeoTimelineWidget from '@/components/ArticleGeoTimelineWidget';
 import ShareButtons from '@/components/ShareButtons';
 import TableOfContents from '@/components/TableOfContents';
 import AdminEditFloatingButton from '@/components/AdminEditFloatingButton';
@@ -114,7 +115,10 @@ const HeroBanner = ({ imageUrl }: { imageUrl?: string }) => {
 
 export default async function LibraryArticle({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = await params;
-  const article = await getLibraryArticleBySlug(resolvedParams.slug);
+  const [article, geoTimeline] = await Promise.all([
+    getLibraryArticleBySlug(resolvedParams.slug),
+    fetchArticleGeoAndTimeline(resolvedParams.slug)
+  ]);
 
   if (!article) {
     notFound();
@@ -280,6 +284,15 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
               <div className="article-content relative z-10 font-serif">
                 <VisualArticleRenderer contentHtml={htmlContent} />
               </div>
+
+              {/* In-Article Interactive Geo & Timeline Widget */}
+              {geoTimeline && (
+                <ArticleGeoTimelineWidget 
+                  locations={geoTimeline.locations} 
+                  timelineEvents={geoTimeline.timelineEvents} 
+                  articleTitle={cleanTitle} 
+                />
+              )}
 
               {/* Special Prayer Block (Lời Nguyện Kính) */}
               {prayerText && (
