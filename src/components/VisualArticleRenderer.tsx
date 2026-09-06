@@ -205,14 +205,19 @@ export default function VisualArticleRenderer({
 
       // Check if item already has a backref
       const existingBackref = item.querySelector('.footnote-backref, a[href*="#fnref"]');
-      if (!existingBackref) {
+      if (existingBackref) {
+        existingBackref.innerHTML = '&#x21A9;&#xFE0E;';
+        existingBackref.className = 'footnote-backref';
+        existingBackref.setAttribute('title', `Quay lại vị trí vừa đọc [${num}]`);
+        existingBackref.setAttribute('aria-label', `Quay lại vị trí vừa đọc [${num}]`);
+      } else {
         const backref = document.createElement('a');
         backref.href = `#fnref-${num}`;
         backref.className = 'footnote-backref';
         backref.setAttribute('role', 'button');
         backref.setAttribute('title', `Quay lại vị trí vừa đọc [${num}]`);
         backref.setAttribute('aria-label', `Quay lại vị trí vừa đọc [${num}]`);
-        backref.innerHTML = '<span class="footnote-backref-icon" aria-hidden="true">&#x21A9;&#xFE0E;</span><span class="footnote-backref-text">Quay lại</span>';
+        backref.innerHTML = '&#x21A9;&#xFE0E;';
         item.appendChild(document.createTextNode(' '));
         item.appendChild(backref);
       }

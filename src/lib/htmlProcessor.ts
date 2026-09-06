@@ -493,11 +493,16 @@ export function normalizeFootnotesInHtml(html: string): string {
   out = out.replace(
     /<p(\s+[^>]*?id=["'](?:fn|footnote)[-_:]?(\d+)["'][^>]*?)>([\s\S]*?)<\/p>/gi,
     (match, attrs, num, body) => {
-      if (body.includes('footnote-backref') || body.includes(`#fnref-${num}`)) {
-        return match;
+      // Strip any previous backref to prevent duplication or stale text
+      let cleanBody = body.replace(/<a\s+[^>]*class=["'][^"']*footnote-backref[^"']*["'][\s\S]*?<\/a>/gi, '').trim();
+      
+      // Cleanly style the leading [num] if present and not already wrapped
+      if (!cleanBody.includes('class="footnote-num"') && /^\s*\[\d+\]/.test(cleanBody)) {
+        cleanBody = cleanBody.replace(/^\s*\[(\d+)\]/, '<span class="footnote-num font-mono font-bold mr-2">[$1]</span>');
       }
-      const backref = `<a href="#fnref-${num}" class="footnote-backref" title="Quay lại vị trí vừa đọc [${num}]" aria-label="Quay lại vị trí vừa đọc [${num}]"><span class="footnote-backref-icon" aria-hidden="true">&#x21A9;&#xFE0E;</span><span class="footnote-backref-text">Quay lại</span></a>`;
-      return `<p${attrs}>${body} ${backref}</p>`;
+
+      const backref = `<a href="#fnref-${num}" class="footnote-backref" title="Quay lại vị trí vừa đọc [${num}]" aria-label="Quay lại vị trí vừa đọc [${num}]">&#x21A9;&#xFE0E;</a>`;
+      return `<p${attrs}>${cleanBody} ${backref}</p>`;
     }
   );
 
@@ -505,11 +510,15 @@ export function normalizeFootnotesInHtml(html: string): string {
   out = out.replace(
     /<li(\s+[^>]*?id=["'](?:fn|footnote)[-_:]?(\d+)["'][^>]*?)>([\s\S]*?)<\/li>/gi,
     (match, attrs, num, body) => {
-      if (body.includes('footnote-backref') || body.includes(`#fnref-${num}`)) {
-        return match;
+      // Strip any previous backref
+      let cleanBody = body.replace(/<a\s+[^>]*class=["'][^"']*footnote-backref[^"']*["'][\s\S]*?<\/a>/gi, '').trim();
+
+      if (!cleanBody.includes('class="footnote-num"') && /^\s*\[\d+\]/.test(cleanBody)) {
+        cleanBody = cleanBody.replace(/^\s*\[(\d+)\]/, '<span class="footnote-num font-mono font-bold mr-2">[$1]</span>');
       }
-      const backref = `<a href="#fnref-${num}" class="footnote-backref" title="Quay lại vị trí vừa đọc [${num}]" aria-label="Quay lại vị trí vừa đọc [${num}]"><span class="footnote-backref-icon" aria-hidden="true">&#x21A9;&#xFE0E;</span><span class="footnote-backref-text">Quay lại</span></a>`;
-      return `<li${attrs}>${body} ${backref}</li>`;
+
+      const backref = `<a href="#fnref-${num}" class="footnote-backref" title="Quay lại vị trí vừa đọc [${num}]" aria-label="Quay lại vị trí vừa đọc [${num}]">&#x21A9;&#xFE0E;</a>`;
+      return `<li${attrs}>${cleanBody} ${backref}</li>`;
     }
   );
 
