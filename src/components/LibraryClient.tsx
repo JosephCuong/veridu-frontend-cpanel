@@ -8,14 +8,11 @@ import {
   Search, 
   Filter, 
   Layers, 
-  Cross, 
-  FileText, 
-  Heart, 
-  Gamepad2, 
   BookOpen, 
   BookMarked,
   FileDown,
-  Sparkles,
+  Compass,
+  Gamepad2,
   X,
   Calendar,
   ChevronRight
@@ -29,7 +26,6 @@ interface LibraryClientProps {
 export default function LibraryClient({ initialArticles }: LibraryClientProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [activeType, setActiveType] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
 
   // Extract unique categories and count
@@ -45,12 +41,6 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
 
   const categories = useMemo(() => Object.keys(categoryStats), [categoryStats]);
 
-  const articleTypes = [
-    { id: 'all', label: 'Tất cả định dạng', icon: Layers },
-    { id: 'standard', label: '📖 Bài Viết Tiêu Chuẩn', icon: FileText },
-    { id: 'interactive', label: '🚀 Tương Tác 3D', icon: Gamepad2 }
-  ];
-
   // Filter & Sort logic
   const filteredArticles = useMemo(() => {
     return initialArticles
@@ -63,23 +53,21 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
           excerpt.toLowerCase().includes(searchQuery.toLowerCase());
 
         const matchesCat = activeCategory === 'all' || article.category === activeCategory;
-        const matchesType = activeType === 'all' || (article.article_type || 'standard') === activeType;
 
-        return matchesSearch && matchesCat && matchesType;
+        return matchesSearch && matchesCat;
       })
       .sort((a, b) => {
         const dateA = new Date(a.created_at || a.date || 0).getTime();
         const dateB = new Date(b.created_at || b.date || 0).getTime();
         return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
       });
-  }, [initialArticles, searchQuery, activeCategory, activeType, sortBy]);
+  }, [initialArticles, searchQuery, activeCategory, sortBy]);
 
-  const isFiltering = searchQuery !== '' || activeCategory !== 'all' || activeType !== 'all';
+  const isFiltering = searchQuery !== '' || activeCategory !== 'all';
 
   const handleResetFilters = () => {
     setSearchQuery('');
     setActiveCategory('all');
-    setActiveType('all');
   };
 
   return (
@@ -127,12 +115,12 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
         </div>
       </section>
 
-      {/* ── 2. TWO-COLUMN MAIN WORKSPACE (ARTICLES 70% + SIDEBAR 30%) ── */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+      {/* ── 2. TWO-COLUMN MAIN WORKSPACE (ARTICLES 75% + SIDEBAR 25%) ── */}
+      <main className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 pt-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-start">
           
-          {/* ══════════ LEFT COLUMN: ARTICLE FEED (8 / 12 COLS) ══════════ */}
-          <div className="lg:col-span-8 space-y-6">
+          {/* ══════════ LEFT COLUMN: ARTICLE FEED (9 / 12 COLS ON XL) ══════════ */}
+          <div className="lg:col-span-8 xl:col-span-9 space-y-6">
             
             {/* Action & Result Count Bar */}
             <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[var(--border-card)]">
@@ -169,15 +157,12 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
               </div>
             </div>
 
-            {/* Articles Grid (2 Columns on Medium/Large Screens) */}
+            {/* Articles Grid (3 Columns on Large Screens) */}
             {filteredArticles.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredArticles.map((article: any) => {
                   const titleText = typeof article.title === 'string' ? article.title : article.title?.rendered || 'Bài viết VERIDU';
                   const templateType = article.article_type || 'standard';
-                  const typeObj = articleTypes.find(t => t.id === templateType);
-                  const typeLabel = typeObj?.label || 'Bài viết';
-                  const TypeIcon = typeObj?.icon || FileText;
 
                   const imgSrc = formatImageUrl(article.thumbnail || article.featured_image);
                   const postDate = article.created_at || article.date;
@@ -199,7 +184,7 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
                               alt={titleText.replace(/<[^>]*>?/gm, '')} 
                               fill
                               className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
-                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                              sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
                             />
                           ) : (
                             <div className="w-full h-full bg-gradient-to-br from-amber-500/20 via-slate-900 to-indigo-900/40 flex flex-col items-center justify-center gap-2 p-4 text-center">
@@ -208,19 +193,14 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
                             </div>
                           )}
 
-                          {/* Top Badges Overlay */}
-                          <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none">
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-slate-950/80 px-2.5 py-1 rounded-full border border-amber-500/30 backdrop-blur-md shadow-md">
-                              <TypeIcon className="w-3 h-3 text-amber-400" />
-                              <span>{typeLabel}</span>
-                            </span>
-
-                            {article.category && (
-                              <span className="text-[10px] font-bold text-stone-200 bg-slate-950/80 px-2.5 py-1 rounded-full border border-slate-700 backdrop-blur-md shadow-md truncate max-w-[120px]">
+                          {/* Category Badge Overlay (Only show category, NO reading format badge) */}
+                          {article.category && (
+                            <div className="absolute top-3 left-3 pointer-events-none">
+                              <span className="inline-flex items-center text-[10px] font-serif font-bold text-amber-300 bg-slate-950/85 px-3 py-1 rounded-full border border-amber-500/30 backdrop-blur-md shadow-md">
                                 {article.category}
                               </span>
-                            )}
-                          </div>
+                            </div>
+                          )}
                         </Link>
 
                         {/* Article Information Body */}
@@ -254,17 +234,8 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
                           href={`/${article.slug}`}
                           className="w-full py-2.5 rounded-2xl bg-[var(--bg-main)] hover:bg-gradient-to-r hover:from-amber-500 hover:to-amber-600 hover:text-slate-950 text-[var(--text-main)] border border-[var(--border-card)] hover:border-amber-500 text-xs font-serif font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm group-hover:border-amber-500/40"
                         >
-                          {templateType === 'interactive' ? (
-                            <>
-                              <span>Mở Trải Nghiệm 3D</span>
-                              <Sparkles className="w-3.5 h-3.5 text-amber-500 group-hover:text-slate-950" />
-                            </>
-                          ) : (
-                            <>
-                              <span>Đọc Chi Tiết</span>
-                              <ArrowRight className="w-3.5 h-3.5 text-amber-500 group-hover:text-slate-950 transition-transform group-hover:translate-x-0.5" />
-                            </>
-                          )}
+                          <span>{templateType === 'interactive' ? 'Mở Trải Nghiệm 3D' : 'Đọc Chi Tiết'}</span>
+                          <ArrowRight className="w-3.5 h-3.5 text-amber-500 group-hover:text-slate-950 transition-transform group-hover:translate-x-0.5" />
                         </Link>
                       </div>
 
@@ -293,8 +264,8 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
 
           </div>
 
-          {/* ══════════ RIGHT COLUMN: STICKY SIDEBAR (4 / 12 COLS) ══════════ */}
-          <aside className="lg:col-span-4 space-y-6 lg:sticky lg:top-28">
+          {/* ══════════ RIGHT COLUMN: STICKY SIDEBAR (3 / 12 COLS ON XL) ══════════ */}
+          <aside className="lg:col-span-4 xl:col-span-3 space-y-6 lg:sticky lg:top-28">
             
             {/* 1. Instant Search Widget */}
             <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-5 sm:p-6 shadow-xl space-y-3">
@@ -377,40 +348,10 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
               </div>
             </div>
 
-            {/* 3. Format / Article Type Filter Widget */}
-            <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
-              <h3 className="font-serif font-bold text-sm text-[var(--text-main)] flex items-center gap-2">
-                <Layers className="w-4 h-4 text-amber-500" />
-                <span>Định Dạng Bài Đọc</span>
-              </h3>
-
-              <div className="space-y-1.5">
-                {articleTypes.map(type => {
-                  const Icon = type.icon;
-                  const isSelected = activeType === type.id;
-
-                  return (
-                    <button
-                      key={type.id}
-                      onClick={() => setActiveType(type.id)}
-                      className={`w-full px-3.5 py-2 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2 cursor-pointer ${
-                        isSelected
-                          ? 'bg-amber-500 text-slate-950 shadow-md font-black'
-                          : 'text-[var(--text-muted)] hover:bg-[var(--bg-main)] hover:text-[var(--text-main)]'
-                      }`}
-                    >
-                      <Icon className="w-3.5 h-3.5" />
-                      <span>{type.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 4. Quick Library Navigation Shortcuts */}
+            {/* 3. Quick Library Navigation Shortcuts */}
             <div className="bg-gradient-to-br from-amber-500/10 via-[var(--bg-card)] to-indigo-500/10 border border-amber-500/30 rounded-3xl p-5 sm:p-6 shadow-xl space-y-3">
               <h3 className="font-serif font-bold text-sm text-amber-500 flex items-center gap-2">
-                <Sparkles className="w-4 h-4" />
+                <Compass className="w-4 h-4 text-amber-500" />
                 <span>Kho Tàng Tài Liệu Mở Rộng</span>
               </h3>
               
