@@ -915,64 +915,96 @@ html.dark .footnote-num {
 /* Backref Icon Link (↩ Return to Reading Position) */
 .footnote-backref,
 .footnote-back,
-a[href*="#fnref"] {
+a[href*="#fnref"],
+.prose a.footnote-backref {
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
-  margin-left: 0.6rem;
-  width: 1.5rem;
-  height: 1.5rem;
+  gap: 0.35rem;
+  margin-left: 0.65rem;
+  padding: 0.2rem 0.65rem !important;
+  height: 1.65rem;
   border-radius: 9999px !important;
-  background: rgba(244, 63, 94, 0.08);
+  background: rgba(244, 63, 94, 0.1) !important;
   color: #e11d48 !important;
-  font-weight: bold;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-weight: 700 !important;
   text-decoration: none !important;
-  font-size: 0.875rem;
-  line-height: 1;
+  font-size: 0.8rem !important;
+  line-height: 1 !important;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(244, 63, 94, 0.35);
+  border: 1px solid rgba(244, 63, 94, 0.4) !important;
   cursor: pointer;
   vertical-align: middle;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(225, 29, 72, 0.1);
+}
+
+.footnote-backref .footnote-backref-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+  display: inline-block;
+}
+
+.footnote-backref .footnote-backref-text {
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
 }
 
 html.dark .footnote-backref,
 html.dark .footnote-back,
-html.dark a[href*="#fnref"] {
+html.dark a[href*="#fnref"],
+html.dark .prose a.footnote-backref {
   color: #fb7185 !important;
-  background: rgba(244, 63, 94, 0.12);
-  border-color: rgba(244, 63, 94, 0.45);
+  background: rgba(244, 63, 94, 0.15) !important;
+  border-color: rgba(244, 63, 94, 0.5) !important;
 }
 
 .footnote-backref:hover,
 .footnote-back:hover,
-a[href*="#fnref"]:hover {
-  transform: scale(1.18);
+a[href*="#fnref"]:hover,
+.prose a.footnote-backref:hover {
+  transform: translateY(-1px) scale(1.06);
   background: #e11d48 !important;
   color: #ffffff !important;
   border-color: #e11d48 !important;
-  box-shadow: 0 2px 8px rgba(225, 29, 72, 0.35);
+  box-shadow: 0 3px 10px rgba(225, 29, 72, 0.4);
 }
 
 html.dark .footnote-backref:hover,
 html.dark .footnote-back:hover,
-html.dark a[href*="#fnref"]:hover {
+html.dark a[href*="#fnref"]:hover,
+html.dark .prose a.footnote-backref:hover {
   background: #f43f5e !important;
   color: #0f172a !important;
   border-color: #f43f5e !important;
-  box-shadow: 0 2px 8px rgba(244, 63, 94, 0.45);
+  box-shadow: 0 3px 10px rgba(244, 63, 94, 0.5);
 }
 
 /* Target Pulsing Glow when jumping to anchor */
+p[id^="fn"],
+div[id^="fn"],
+li[id^="fn"],
+.footnote-item,
+section.footnotes li,
+.footnotes-section li {
+  scroll-margin-top: 120px;
+}
+
 .footnote-item:target,
 section.footnotes li:target,
+p[id^="fn"]:target,
+div[id^="fn"]:target,
 [id^="fn-"]:target,
-[id^="fn"]:target {
+[id^="fn"]:target,
+.footnote-target-glow-active {
   animation: footnote-target-glow 2.5s ease-out;
 }
 
 [id^="fnref-"]:target,
 [id^="fnref"]:target,
-.footnote-ref:target {
+.footnote-ref:target,
+.footnote-ref-glow-active {
   animation: footnote-ref-glow 2s ease-out;
 }
 
@@ -988,8 +1020,6 @@ section.footnotes li:target,
     border-color: rgba(244, 63, 94, 0.5);
   }
   100% {
-    background-color: var(--bg-card);
-    border-color: var(--border-card);
     transform: translateX(0);
   }
 }

@@ -156,20 +156,20 @@ export default function VisualArticleRenderer({
 
     // 5. Footnote Normalization & Bidirectional Return Links (Vòng đỏ & Nút quay lại ↩)
     const footnoteLinks = containerRef.current.querySelectorAll<HTMLAnchorElement>(
-      'a[href*="#fn-"], a[href*="#fn_"], a[href*="#fn:"], a[href*="#fn"], a.footnote-ref, sup a'
+      'a[href*="#fn"], a[href*="#footnote"], a.footnote-ref, sup.veridu-footnote a'
     );
     
     footnoteLinks.forEach((fnLink) => {
       const href = fnLink.getAttribute('href') || '';
-      if (!href.includes('#fn') && !fnLink.classList.contains('footnote-ref')) return;
-
-      fnLink.classList.add('footnote-ref');
+      if (!/#(?:fn|footnote)(?!ref)/i.test(href) && !fnLink.classList.contains('footnote-ref')) return;
 
       const rawText = fnLink.textContent || '';
-      const match = rawText.match(/\d+/) || href.match(/#fn[-_:]?(\d+)/);
+      const match = rawText.match(/\d+/) || href.match(/#(?:fn|footnote)[-_:]?(\d+)/i);
       const num = match ? match[1] || match[0] : '';
 
       if (num) {
+        fnLink.classList.add('footnote-ref');
+        fnLink.classList.remove('text-amber-600', 'text-amber-500', 'text-amber-400', 'dark:text-amber-400', 'hover:underline');
         // Strip square brackets: "[7]" -> "7"
         fnLink.textContent = num;
         fnLink.setAttribute('title', `Xem chú thích ${num}`);
@@ -182,33 +182,105 @@ export default function VisualArticleRenderer({
       }
     });
 
-    // Footnote definitions in footer (li[id^="fn"], .footnote-item, etc.)
+    // Footnote definitions in footer (p or li with id="fn...", or inside .footnotes-section, etc.)
     const footnoteItems = containerRef.current.querySelectorAll<HTMLElement>(
-      '.footnotes-section li, section.footnotes li, .footnote-item, [id^="fn-"], [id^="fn_"], [id^="fn:"]'
+      '[id^="fn"]:not([id^="fnref"]):not(a), [id^="footnote"]:not([id^="footnoteref"]):not(a), .footnotes-section p, .footnotes-section li, .veridu-footnotes p, .veridu-footnotes li, section.footnotes p, section.footnotes li, .footnote-item'
     );
 
     footnoteItems.forEach((item) => {
+      // Ignore headings or anchors
+      if (/^H[1-6]$/i.test(item.tagName) || item.tagName === 'A') return;
+
       const id = item.id || '';
-      const match = id.match(/fn[-_:]?(\d+)/);
-      const num = match ? match[1] : '';
+      const matchId = id.match(/(?:fn|footnote)[-_:]?(\d+)/i);
+      const matchText = (item.textContent || '').match(/^\s*\[?(\d+)\]?[\.\:\s]/);
+      const num = matchId ? matchId[1] : (matchText ? matchText[1] : '');
+
+      if (!num) return;
+
+      // Ensure item has an id so in-text link can jump here
+      if (!item.id) {
+        item.id = `fn${num}`;
+      }
 
       // Check if item already has a backref
       const existingBackref = item.querySelector('.footnote-backref, a[href*="#fnref"]');
-      if (!existingBackref && num) {
+      if (!existingBackref) {
         const backref = document.createElement('a');
         backref.href = `#fnref-${num}`;
         backref.className = 'footnote-backref';
-        backref.innerHTML = '&#x21A9;&#xFE0E;'; // ↩
+        backref.setAttribute('role', 'button');
         backref.setAttribute('title', `Quay lại vị trí vừa đọc [${num}]`);
         backref.setAttribute('aria-label', `Quay lại vị trí vừa đọc [${num}]`);
+        backref.innerHTML = '<span class="footnote-backref-icon" aria-hidden="true">&#x21A9;&#xFE0E;</span><span class="footnote-backref-text">Quay lại</span>';
+        item.appendChild(document.createTextNode(' '));
         item.appendChild(backref);
       }
     });
+
+    // 6. Smooth Scroll & Target Glow Click Handler
+    const handleContainerClick = (e: MouseEvent) => {
+      const link = (e.target as HTMLElement)?.closest('a');
+      if (!link) return;
+
+      const href = link.getAttribute('href') || '';
+
+      // A. In-text reference clicked -> smooth scroll to footnote definition
+      if (/#(?:fn|footnote)(?!ref)[-_:]?(\d+)/i.test(href) || link.classList.contains('footnote-ref')) {
+        const match = href.match(/#(?:fn|footnote)[-_:]?(\d+)/i);
+        const num = match ? match[1] : '';
+        if (num) {
+          const dest = document.getElementById(`fn${num}`)
+            || document.getElementById(`fn-${num}`)
+            || document.getElementById(`footnote-${num}`)
+            || document.getElementById(`footnote${num}`)
+            || containerRef.current?.querySelector(`[id="fn${num}"], [id="fn-${num}"]`);
+
+          if (dest) {
+            e.preventDefault();
+            if (!link.id) {
+              link.id = `fnref-${num}`;
+            }
+            dest.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            dest.classList.add('footnote-target-glow-active');
+            window.history.pushState(null, '', href);
+            setTimeout(() => {
+              dest.classList.remove('footnote-target-glow-active');
+            }, 2500);
+          }
+        }
+      }
+
+      // B. Footnote backref clicked (↩) -> smooth scroll back to in-text reference
+      if (/#fnref[-_:]?(\d+)/i.test(href) || link.classList.contains('footnote-backref')) {
+        const match = href.match(/#fnref[-_:]?(\d+)/i);
+        const num = match ? match[1] : '';
+        if (num) {
+          const dest = document.getElementById(`fnref-${num}`)
+            || document.getElementById(`fnref${num}`)
+            || containerRef.current?.querySelector(`a[href="#fn${num}"], a[href="#fn-${num}"]`);
+
+          if (dest) {
+            e.preventDefault();
+            dest.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            dest.classList.add('footnote-ref-glow-active');
+            window.history.pushState(null, '', `#fnref-${num}`);
+            setTimeout(() => {
+              dest.classList.remove('footnote-ref-glow-active');
+            }, 2500);
+          }
+        }
+      }
+    };
+
+    const containerEl = containerRef.current;
+    containerEl.addEventListener('click', handleContainerClick);
 
     return () => {
       images.forEach((img) => {
         img.removeEventListener('click', handleImageClick);
       });
+      containerEl.removeEventListener('click', handleContainerClick);
     };
   }, [safeHtml]);
 

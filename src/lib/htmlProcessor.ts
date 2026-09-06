@@ -295,8 +295,23 @@ function mapElementClasses(el: Element): void {
       }
       break;
     case 'a':
-      if (!el.classList.contains('text-amber-600')) {
-        el.classList.add('text-amber-600', 'dark:text-amber-400', 'font-bold', 'hover:underline', 'transition-colors');
+      {
+        const href = el.getAttribute('href') || '';
+        // Footnote in-text reference
+        if (/#(?:fn|footnote)(?!ref)/i.test(href) || el.classList.contains('footnote-ref')) {
+          el.classList.add('footnote-ref');
+          el.classList.remove('text-amber-600', 'text-amber-500', 'text-amber-400', 'dark:text-amber-400', 'hover:underline');
+          break;
+        }
+        // Footnote backref return button
+        if (/#fnref/i.test(href) || el.classList.contains('footnote-backref') || el.classList.contains('footnote-back')) {
+          el.classList.add('footnote-backref');
+          el.classList.remove('text-amber-600', 'text-amber-500', 'text-amber-400', 'dark:text-amber-400', 'hover:underline');
+          break;
+        }
+        if (!el.classList.contains('text-amber-600')) {
+          el.classList.add('text-amber-600', 'dark:text-amber-400', 'font-bold', 'hover:underline', 'transition-colors');
+        }
       }
       break;
     case 'ul':
@@ -447,7 +462,58 @@ export function normalizeAndSyncHtml(
   // 🌟 Automatically transform all Scripture Quotes & Poetry Blocks to Sacred Scripture Callouts
   cleanHtml = transformScriptureQuotesInHtml(cleanHtml);
 
+  // 🌟 Automatically transform and enhance Footnote In-text refs & Backref return links
+  cleanHtml = normalizeFootnotesInHtml(cleanHtml);
+
   return cleanHtml.trim();
+}
+
+/**
+ * Automatically normalizes footnote references in text and inserts return backrefs (↩)
+ * into footnote definitions in the article footer.
+ */
+export function normalizeFootnotesInHtml(html: string): string {
+  if (!html || typeof html !== 'string') return '';
+
+  // 1. Normalize in-text footnote links (e.g. <a href="#fn1">[1]</a>)
+  // Strips brackets: [1] -> 1, adds id="fnref-1" and class="footnote-ref"
+  let out = html.replace(
+    /<a\s+([^>]*?)href=["']#(?:fn|footnote)[-_:]?(\d+)["']([^>]*?)>([\s\S]*?)<\/a>/gi,
+    (match, pre, num, post, inner) => {
+      let attrs = `${pre} ${post}`.trim();
+      attrs = attrs.replace(/\bclass=["'][^"']*["']/gi, '');
+      if (!attrs.includes('id=')) {
+        attrs = `id="fnref-${num}" ` + attrs;
+      }
+      return `<a href="#fn${num}" ${attrs.trim()} class="footnote-ref" title="Xem chú thích ${num}" aria-label="Xem chú thích ${num}">${num}</a>`;
+    }
+  );
+
+  // 2. Footnote definitions in <p id="fn1">...</p>
+  out = out.replace(
+    /<p(\s+[^>]*?id=["'](?:fn|footnote)[-_:]?(\d+)["'][^>]*?)>([\s\S]*?)<\/p>/gi,
+    (match, attrs, num, body) => {
+      if (body.includes('footnote-backref') || body.includes(`#fnref-${num}`)) {
+        return match;
+      }
+      const backref = `<a href="#fnref-${num}" class="footnote-backref" title="Quay lại vị trí vừa đọc [${num}]" aria-label="Quay lại vị trí vừa đọc [${num}]"><span class="footnote-backref-icon" aria-hidden="true">&#x21A9;&#xFE0E;</span><span class="footnote-backref-text">Quay lại</span></a>`;
+      return `<p${attrs}>${body} ${backref}</p>`;
+    }
+  );
+
+  // 3. Footnote definitions in <li id="fn1">...</li> or <li id="fn-1">...</li>
+  out = out.replace(
+    /<li(\s+[^>]*?id=["'](?:fn|footnote)[-_:]?(\d+)["'][^>]*?)>([\s\S]*?)<\/li>/gi,
+    (match, attrs, num, body) => {
+      if (body.includes('footnote-backref') || body.includes(`#fnref-${num}`)) {
+        return match;
+      }
+      const backref = `<a href="#fnref-${num}" class="footnote-backref" title="Quay lại vị trí vừa đọc [${num}]" aria-label="Quay lại vị trí vừa đọc [${num}]"><span class="footnote-backref-icon" aria-hidden="true">&#x21A9;&#xFE0E;</span><span class="footnote-backref-text">Quay lại</span></a>`;
+      return `<li${attrs}>${body} ${backref}</li>`;
+    }
+  );
+
+  return out;
 }
 
 
