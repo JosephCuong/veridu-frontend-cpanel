@@ -397,7 +397,7 @@ export const CATHOLIC_BLOCK_TEMPLATES: CatholicBlockTemplate[] = [
     icon: <ListChecks className="w-5 h-5 text-indigo-400" />,
     badge: 'Học Thuật & Khảo Cứu',
     description: 'Khối chú thích chân bài viết với liên kết hai chiều: nhấp vào số [1] trên thân bài để cuộn xuống, và nhấp ↩ để nhảy lại đúng vị trí đoạn văn.',
-    guidance: 'Đặt ở cuối bài viết. Trên thân bài, chèn số mũ tương ứng: <sup class="footnote-ref"><a href="#fn-1" id="fnref-1">[1]</a></sup>.',
+    guidance: 'Đặt ở cuối bài viết. Trên thân bài, chèn số mũ tương ứng: <a href="#fn-1" id="fnref-1" class="footnote-ref">1</a>.',
     htmlSnippet: `<div class="footnotes-section not-prose my-12 pt-6 border-t-2 border-amber-500/30" id="chu-thich">
   <div class="footnotes-header flex items-center gap-2 mb-4 font-serif font-bold text-sm tracking-wider uppercase text-amber-600 dark:text-amber-400">
     <span class="text-base">📜</span> CHÚ THÍCH &amp; TÀI LIỆU THAM KHẢO
@@ -405,17 +405,17 @@ export const CATHOLIC_BLOCK_TEMPLATES: CatholicBlockTemplate[] = [
   <ol class="footnotes-list space-y-3 font-serif text-sm list-none p-0 m-0">
     <li id="fn-1" class="footnote-item p-3.5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] flex items-start justify-between gap-3">
       <div class="flex-1 leading-relaxed text-[var(--text-main)]">
-        <span class="footnote-num font-mono font-bold text-amber-600 dark:text-amber-400 mr-2">[1]</span>
+        <span class="footnote-num font-mono font-bold text-rose-600 dark:text-rose-400 mr-2">[1]</span>
         <span>Thánh Tôma Aquinô, <em>Summa Theologiae</em>, I, q. 2, a. 3 (Về Năm Con Đường Chứng Minh Sự Hữu Thiên Chúa).</span>
       </div>
-      <a href="#fnref-1" class="footnote-backref inline-flex items-center justify-center shrink-0 px-2 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 font-bold text-xs border border-amber-500/30 transition-all" title="Quay lại đoạn văn">↩</a>
+      <a href="#fnref-1" class="footnote-backref" title="Quay lại vị trí vừa đọc [1]">↩</a>
     </li>
     <li id="fn-2" class="footnote-item p-3.5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] flex items-start justify-between gap-3">
       <div class="flex-1 leading-relaxed text-[var(--text-main)]">
-        <span class="footnote-num font-mono font-bold text-amber-600 dark:text-amber-400 mr-2">[2]</span>
+        <span class="footnote-num font-mono font-bold text-rose-600 dark:text-rose-400 mr-2">[2]</span>
         <span>Giáo lý Hội Thánh Công Giáo (GLHTCG), số 464.</span>
       </div>
-      <a href="#fnref-2" class="footnote-backref inline-flex items-center justify-center shrink-0 px-2 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 font-bold text-xs border border-amber-500/30 transition-all" title="Quay lại đoạn văn">↩</a>
+      <a href="#fnref-2" class="footnote-backref" title="Quay lại vị trí vừa đọc [2]">↩</a>
     </li>
   </ol>
 </div>`,
@@ -423,7 +423,7 @@ export const CATHOLIC_BLOCK_TEMPLATES: CatholicBlockTemplate[] = [
       {
         name: 'Thẻ Chú Thích Thân Bài (In-Text Ref)',
         description: 'Chèn ngay sau từ ngữ cần chú thích',
-        snippet: `<sup class="footnote-ref"><a href="#fn-1" id="fnref-1" title="Xem chú thích 1">[1]</a></sup>`
+        snippet: `<a href="#fn-1" id="fnref-1" class="footnote-ref" title="Xem chú thích 1">1</a>`
       },
       {
         name: 'Khối Chú Thích Cuối Bài (Footnotes Section)',
@@ -435,10 +435,10 @@ export const CATHOLIC_BLOCK_TEMPLATES: CatholicBlockTemplate[] = [
   <ol class="footnotes-list space-y-3 font-serif text-sm list-none p-0 m-0">
     <li id="fn-1" class="footnote-item p-3.5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] flex items-start justify-between gap-3">
       <div class="flex-1 leading-relaxed text-[var(--text-main)]">
-        <span class="footnote-num font-mono font-bold text-amber-600 dark:text-amber-400 mr-2">[1]</span>
+        <span class="footnote-num font-mono font-bold text-rose-600 dark:text-rose-400 mr-2">[1]</span>
         <span>Thánh Tôma Aquinô, <em>Summa Theologiae</em>, I, q. 2, a. 3.</span>
       </div>
-      <a href="#fnref-1" class="footnote-backref inline-flex items-center justify-center shrink-0 px-2 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 font-bold text-xs border border-amber-500/30 transition-all" title="Quay lại đoạn văn">↩</a>
+      <a href="#fnref-1" class="footnote-backref" title="Quay lại vị trí vừa đọc [1]">↩</a>
     </li>
   </ol>
 </div>`

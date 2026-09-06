@@ -154,6 +154,57 @@ export default function VisualArticleRenderer({
       img.addEventListener('click', handleImageClick);
     });
 
+    // 5. Footnote Normalization & Bidirectional Return Links (Vòng đỏ & Nút quay lại ↩)
+    const footnoteLinks = containerRef.current.querySelectorAll<HTMLAnchorElement>(
+      'a[href*="#fn-"], a[href*="#fn_"], a[href*="#fn:"], a[href*="#fn"], a.footnote-ref, sup a'
+    );
+    
+    footnoteLinks.forEach((fnLink) => {
+      const href = fnLink.getAttribute('href') || '';
+      if (!href.includes('#fn') && !fnLink.classList.contains('footnote-ref')) return;
+
+      fnLink.classList.add('footnote-ref');
+
+      const rawText = fnLink.textContent || '';
+      const match = rawText.match(/\d+/) || href.match(/#fn[-_:]?(\d+)/);
+      const num = match ? match[1] || match[0] : '';
+
+      if (num) {
+        // Strip square brackets: "[7]" -> "7"
+        fnLink.textContent = num;
+        fnLink.setAttribute('title', `Xem chú thích ${num}`);
+        fnLink.setAttribute('aria-label', `Xem chú thích ${num}`);
+
+        // Ensure the reference has an ID so the back-link can return here
+        if (!fnLink.id) {
+          fnLink.id = `fnref-${num}`;
+        }
+      }
+    });
+
+    // Footnote definitions in footer (li[id^="fn"], .footnote-item, etc.)
+    const footnoteItems = containerRef.current.querySelectorAll<HTMLElement>(
+      '.footnotes-section li, section.footnotes li, .footnote-item, [id^="fn-"], [id^="fn_"], [id^="fn:"]'
+    );
+
+    footnoteItems.forEach((item) => {
+      const id = item.id || '';
+      const match = id.match(/fn[-_:]?(\d+)/);
+      const num = match ? match[1] : '';
+
+      // Check if item already has a backref
+      const existingBackref = item.querySelector('.footnote-backref, a[href*="#fnref"]');
+      if (!existingBackref && num) {
+        const backref = document.createElement('a');
+        backref.href = `#fnref-${num}`;
+        backref.className = 'footnote-backref';
+        backref.innerHTML = '&#x21A9;&#xFE0E;'; // ↩
+        backref.setAttribute('title', `Quay lại vị trí vừa đọc [${num}]`);
+        backref.setAttribute('aria-label', `Quay lại vị trí vừa đọc [${num}]`);
+        item.appendChild(backref);
+      }
+    });
+
     return () => {
       images.forEach((img) => {
         img.removeEventListener('click', handleImageClick);
