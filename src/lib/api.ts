@@ -70,6 +70,7 @@ export interface Article {
   updated_at?: string;
   author?: string;
   author_name?: string;
+  author_id?: string;
   readingTime?: string;
   reading_time?: string;
   views?: number;
@@ -81,6 +82,30 @@ export interface Article {
   scriptureQuote?: string;
   prayerText?: string;
   status?: string;
+}
+
+export interface AuthorProfile {
+  id?: string;
+  full_name: string;
+  christian_name?: string;
+  avatar_url?: string;
+  role?: string;
+  diocese?: string;
+  parish?: string;
+  bio?: string;
+  specialty?: string;
+  is_verified_author?: boolean;
+}
+
+export interface RelatedItem {
+  id: string | number;
+  type: 'article' | 'location' | 'timeline' | 'character';
+  typeLabel: string;
+  title: string;
+  subtitle?: string;
+  description: string;
+  image_url?: string;
+  url: string;
 }
 
 export interface Lesson {
@@ -353,6 +378,7 @@ export async function getLibraryArticleBySlug(slug: string): Promise<Article | n
       status: data.status,
       author: data.author_name || 'VERIDU Team',
       author_name: data.author_name || 'VERIDU Team',
+      author_id: data.author_id || '',
       readingTime: data.reading_time || '5 phút',
       reading_time: data.reading_time || '5 phút',
       views: data.views || 0,
@@ -362,6 +388,183 @@ export async function getLibraryArticleBySlug(slug: string): Promise<Article | n
     console.error('getLibraryArticleBySlug error:', e);
     return null;
   }
+}
+
+// ─── Article Author Profile Fetcher ────────────────────────────
+export async function fetchArticleAuthorProfile(authorId?: string, authorName?: string): Promise<AuthorProfile> {
+  try {
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (authorId && UUID_REGEX.test(authorId)) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, christian_name, avatar_url, role, diocese, parish, bio, specialty, is_verified_author')
+        .eq('id', authorId)
+        .maybeSingle();
+
+      if (!error && data && data.full_name) {
+        return {
+          id: data.id,
+          full_name: data.full_name,
+          christian_name: data.christian_name || '',
+          avatar_url: formatImageUrl(data.avatar_url, 'avatar'),
+          role: data.role || 'Tác Giả & Giáo Lý Viên',
+          diocese: data.diocese || '',
+          parish: data.parish || '',
+          bio: data.bio || 'Tác giả chia sẻ các nghiên cứu thần học, giáo lý và linh đạo sống đức tin trên nền tảng VERIDU.',
+          specialty: data.specialty || '',
+          is_verified_author: data.is_verified_author !== false
+        };
+      }
+    }
+
+    // Try finding by author name if specified
+    if (authorName && authorName !== 'VERIDU Team' && authorName !== 'Ban Biên Tập VERIDU') {
+      const { data: nameMatches } = await supabase
+        .from('profiles')
+        .select('id, full_name, christian_name, avatar_url, role, diocese, parish, bio, specialty, is_verified_author')
+        .ilike('full_name', `%${authorName.trim()}%`)
+        .limit(1);
+
+      if (nameMatches && nameMatches.length > 0) {
+        const data = nameMatches[0];
+        return {
+          id: data.id,
+          full_name: data.full_name,
+          christian_name: data.christian_name || '',
+          avatar_url: formatImageUrl(data.avatar_url, 'avatar'),
+          role: data.role || 'Tác Giả & Giáo Lý Viên',
+          diocese: data.diocese || '',
+          parish: data.parish || '',
+          bio: data.bio || 'Tác giả chia sẻ các nghiên cứu thần học, giáo lý và linh đạo sống đức tin trên nền tảng VERIDU.',
+          specialty: data.specialty || '',
+          is_verified_author: true
+        };
+      }
+    }
+
+    // Default editorial team profile
+    return {
+      full_name: authorName && authorName !== 'VERIDU Team' ? authorName : 'Ban Biên Tập VERIDU',
+      role: 'Ban Biên Tập & Nhóm Nghiên Cứu Thần Học',
+      bio: 'Cộng tác viên nghiên cứu và phổ biến giáo lý, phụng vụ, Kinh Thánh và thần học Công giáo chuẩn mực trên nền tảng VERIDU.',
+      is_verified_author: true
+    };
+  } catch (err) {
+    console.error('fetchArticleAuthorProfile error:', err);
+    return {
+      full_name: authorName || 'Ban Biên Tập VERIDU',
+      role: 'Ban Biên Tập & Nhóm Nghiên Cứu Thần Học',
+      bio: 'Cộng tác viên nghiên cứu và phổ biến giáo lý, phụng vụ, Kinh Thánh và thần học Công giáo chuẩn mực trên nền tảng VERIDU.',
+      is_verified_author: true
+    };
+  }
+}
+
+// ─── Article Related Content Fetcher ───────────────────────────
+export async function fetchRelatedContent(
+  article: Article,
+  geoTimeline?: { locations: MapLocation[]; timelineEvents: TimelineEventData[] }
+): Promise<RelatedItem[]> {
+  const items: RelatedItem[] = [];
+
+  try {
+    // 1. Related Articles (same category or recent other published articles)
+    let relatedPostsQuery = supabase
+      .from('posts')
+      .select('id, slug, title, excerpt, featured_image, category, created_at')
+      .eq('status', 'published')
+      .neq('slug', article.slug);
+
+    if (article.category) {
+      relatedPostsQuery = relatedPostsQuery.eq('category', article.category);
+    }
+
+    const { data: relatedPosts } = await relatedPostsQuery.limit(4);
+
+    if (relatedPosts && relatedPosts.length > 0) {
+      relatedPosts.forEach((p: any) => {
+        items.push({
+          id: `art-${p.id}`,
+          type: 'article',
+          typeLabel: 'Bài Viết',
+          title: typeof p.title === 'string' ? p.title.replace(/<[^>]+>/g, '') : 'Bài Viết',
+          subtitle: p.category || 'Thư Viện',
+          description: (p.excerpt || '').replace(/<[^>]+>/g, '').slice(0, 150),
+          image_url: formatImageUrl(p.featured_image),
+          url: `/${p.slug}`
+        });
+      });
+    }
+
+    // 2. Related Map Locations (from geoTimeline or fallback)
+    if (geoTimeline?.locations && geoTimeline.locations.length > 0) {
+      geoTimeline.locations.forEach((loc) => {
+        items.push({
+          id: `loc-${loc.id}`,
+          type: 'location',
+          typeLabel: 'Địa Danh',
+          title: loc.name,
+          subtitle: loc.region || loc.ancient_name || 'Thánh Địa',
+          description: (loc.summary || loc.description || '').replace(/<[^>]+>/g, '').slice(0, 150),
+          image_url: formatImageUrl(loc.image_url),
+          url: `/ban-do?loc=${loc.slug || loc.id}`
+        });
+      });
+    }
+
+    // 3. Related Timeline Events (from geoTimeline)
+    if (geoTimeline?.timelineEvents && geoTimeline.timelineEvents.length > 0) {
+      geoTimeline.timelineEvents.forEach((evt) => {
+        items.push({
+          id: `evt-${evt.id}`,
+          type: 'timeline',
+          typeLabel: 'Thời Gian',
+          title: evt.title,
+          subtitle: evt.year_label || evt.subtitle || 'Biến Cố',
+          description: (evt.summary || evt.content || '').replace(/<[^>]+>/g, '').slice(0, 150),
+          image_url: formatImageUrl(evt.image_url),
+          url: `/lich-su?event=${evt.slug || evt.id}`
+        });
+      });
+    }
+
+    // 4. Related Characters (check if names mentioned or top characters)
+    const { data: characters } = await supabase
+      .from('characters')
+      .select('id, slug, name, role, era, avatar_url, cover_image, short_description')
+      .order('timeline_order', { ascending: true })
+      .limit(30);
+
+    if (characters && characters.length > 0) {
+      const articleText = `${article.title} ${(article.tags || []).join(' ')} ${(article.excerpt || '')}`.toLowerCase();
+      
+      const matchedCharacters = characters.filter((c: any) => {
+        const nameLower = (c.name || '').toLowerCase();
+        const words = nameLower.split(' ').filter((w: string) => w.length > 2);
+        return articleText.includes(nameLower) || words.some((w: string) => articleText.includes(w));
+      });
+
+      const selectedChars = matchedCharacters.length > 0 ? matchedCharacters.slice(0, 3) : characters.slice(0, 2);
+
+      selectedChars.forEach((c: any) => {
+        items.push({
+          id: `char-${c.id}`,
+          type: 'character',
+          typeLabel: 'Nhân Vật',
+          title: c.name,
+          subtitle: c.role || c.era || 'Kinh Thánh',
+          description: (c.short_description || '').replace(/<[^>]+>/g, '').slice(0, 150),
+          image_url: formatImageUrl(c.avatar_url || c.cover_image, 'avatar'),
+          url: `/nhan-vat/${c.slug}`
+        });
+      });
+    }
+
+  } catch (err) {
+    console.error('fetchRelatedContent error:', err);
+  }
+
+  return items;
 }
 
 // ─── LMS Courses Fetchers ──────────────────────────────────────

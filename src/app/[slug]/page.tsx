@@ -1,4 +1,9 @@
-import { getLibraryArticleBySlug, fetchArticleGeoAndTimeline } from '@/lib/api';
+import { 
+  getLibraryArticleBySlug, 
+  fetchArticleGeoAndTimeline, 
+  fetchArticleAuthorProfile, 
+  fetchRelatedContent 
+} from '@/lib/api';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -9,6 +14,9 @@ import ArticleGeoTimelineWidget from '@/components/ArticleGeoTimelineWidget';
 import ShareButtons from '@/components/ShareButtons';
 import TableOfContents from '@/components/TableOfContents';
 import AdminEditFloatingButton from '@/components/AdminEditFloatingButton';
+import ArticleAuthorCard from '@/components/ArticleAuthorCard';
+import ArticleRelatedContent from '@/components/ArticleRelatedContent';
+import ArticleCitationAndLicense from '@/components/ArticleCitationAndLicense';
 import { BookOpen, Heart, ArrowLeft, Cross, Calendar, Clock, User, Tag } from 'lucide-react';
 import { formatImageUrl } from '@/lib/htmlProcessor';
 
@@ -129,6 +137,11 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
   if (!article) {
     notFound();
   }
+
+  const [authorProfile, relatedItems] = await Promise.all([
+    fetchArticleAuthorProfile(article.author_id, article.author_name || article.author),
+    fetchRelatedContent(article, geoTimeline || undefined)
+  ]);
 
   const articleType = article.article_type || 'standard';
   const titleText = typeof article.title === 'string' ? article.title : 'Bài Viết VERIDU';
@@ -252,7 +265,7 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
         </Link>
         
         <div className="flex flex-col lg:flex-row gap-8">
-          <main className="flex-1 w-full max-w-[850px] mx-auto">
+          <main className="flex-1 w-full max-w-[850px] mx-auto space-y-8">
             <article className="p-6 sm:p-12 rounded-3xl glass-panel space-y-8 relative overflow-hidden">
               <header className="border-b border-slate-200/50 dark:border-white/10 pb-8 text-center sm:text-left space-y-4 relative z-10">
                 <span className="px-3.5 py-1.5 rounded-full bg-slate-500/20 border border-slate-500/30 text-[var(--text-main)] text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm">
@@ -286,6 +299,25 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
                 </div>
               )}
             </article>
+
+            {/* 1. About the Author */}
+            <ArticleAuthorCard 
+              author={authorProfile} 
+              publishedDate={article.created_at} 
+            />
+
+            {/* 2. Multi-dimensional Related Content */}
+            <ArticleRelatedContent 
+              items={relatedItems} 
+            />
+
+            {/* 3. Academic Citation & Copyright License */}
+            <ArticleCitationAndLicense 
+              title={cleanTitle} 
+              authorName={authorProfile.christian_name ? `${authorProfile.christian_name} ${authorProfile.full_name}` : authorProfile.full_name} 
+              publishedDate={article.created_at} 
+              url={articleUrl} 
+            />
           </main>
 
           <aside className="hidden lg:block w-72 xl:w-80 shrink-0 sticky top-36 self-start">

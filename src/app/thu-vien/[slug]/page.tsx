@@ -1,4 +1,10 @@
-import { getLibraryArticleBySlug, determineArticleType, fetchArticleGeoAndTimeline } from '@/lib/api';
+import { 
+  getLibraryArticleBySlug, 
+  determineArticleType, 
+  fetchArticleGeoAndTimeline,
+  fetchArticleAuthorProfile,
+  fetchRelatedContent
+} from '@/lib/api';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -9,7 +15,10 @@ import ArticleGeoTimelineWidget from '@/components/ArticleGeoTimelineWidget';
 import ShareButtons from '@/components/ShareButtons';
 import TableOfContents from '@/components/TableOfContents';
 import AdminEditFloatingButton from '@/components/AdminEditFloatingButton';
-import { BookOpen, Heart, ArrowLeft, Cross, Calendar, Clock, User, Tag, Sparkles } from 'lucide-react';
+import ArticleAuthorCard from '@/components/ArticleAuthorCard';
+import ArticleRelatedContent from '@/components/ArticleRelatedContent';
+import ArticleCitationAndLicense from '@/components/ArticleCitationAndLicense';
+import { BookOpen, Heart, ArrowLeft, Cross, Calendar, Clock, User, Tag } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600; // 1-hour Edge CDN caching with on-demand revalidation
@@ -123,6 +132,11 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
   if (!article) {
     notFound();
   }
+
+  const [authorProfile, relatedItems] = await Promise.all([
+    fetchArticleAuthorProfile(article.author_id, article.author_name || article.author),
+    fetchRelatedContent(article, geoTimeline || undefined)
+  ]);
 
   // Unified Article Type Resolution (interactive vs standard)
   const resolvedType = determineArticleType(article.category, article.article_type, article.interactiveHtml || article.contentHtml);
@@ -251,7 +265,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
           
           {/* Main Article Body Container */}
-          <main className="flex-1 w-full min-w-0 max-w-[880px] mx-auto">
+          <main className="flex-1 w-full min-w-0 max-w-[880px] mx-auto space-y-8">
             <article className="p-6 sm:p-12 lg:p-14 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-8 relative overflow-hidden backdrop-blur-sm">
               
               {/* Header Section */}
@@ -318,6 +332,25 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
               )}
 
             </article>
+
+            {/* 1. About the Author */}
+            <ArticleAuthorCard 
+              author={authorProfile} 
+              publishedDate={article.created_at} 
+            />
+
+            {/* 2. Multi-dimensional Related Content */}
+            <ArticleRelatedContent 
+              items={relatedItems} 
+            />
+
+            {/* 3. Academic Citation & Copyright License */}
+            <ArticleCitationAndLicense 
+              title={cleanTitle} 
+              authorName={authorProfile.christian_name ? `${authorProfile.christian_name} ${authorProfile.full_name}` : authorProfile.full_name} 
+              publishedDate={article.created_at} 
+              url={articleUrl} 
+            />
           </main>
 
           {/* Sticky Table of Contents (TOC) Sidebar */}
