@@ -98,7 +98,7 @@ export default function AuthorDashboardPage() {
   const totalDownloads = resources.reduce((sum, r) => sum + (r.download_count || 0), 0);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col font-sans transition-colors duration-300 pb-24 pt-16 md:pt-20">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col font-sans transition-colors duration-300 pb-24 pt-16 md:pt-20 xl:pt-28">
       
       {/* Top Header Bar */}
       <div className="w-full border-b border-[var(--border-card)] bg-[var(--bg-card)]/60 backdrop-blur-md">

@@ -102,7 +102,7 @@ export default function AuthorLegalTermsPage() {
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] transition-colors pb-24">
       {/* Hero Banner */}
-      <section className="relative overflow-hidden border-b border-[var(--border-card)] bg-gradient-to-b from-amber-500/10 via-[var(--bg-main)] to-[var(--bg-main)] py-14 sm:py-18">
+      <section className="relative overflow-hidden border-b border-[var(--border-card)] bg-gradient-to-b from-amber-500/10 via-[var(--bg-main)] to-[var(--bg-main)] pt-24 sm:pt-28 xl:pt-36 pb-12 sm:pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-serif font-bold uppercase tracking-wider mb-4">
             <Scale className="w-3.5 h-3.5" />
@@ -124,7 +124,7 @@ export default function AuthorLegalTermsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* LEFT COLUMN: 35% (lg:col-span-5) - STICKY SUMMARY CARDS */}
-          <aside className="lg:col-span-5 space-y-6 lg:sticky lg:top-28">
+          <aside className="lg:col-span-5 space-y-6 lg:sticky lg:top-20 xl:top-32">
             
             {/* Quick Summary Box */}
             <div className="p-6 rounded-3xl bg-gradient-to-br from-[var(--bg-card)] via-[var(--bg-card)] to-amber-500/5 border border-amber-500/30 shadow-md space-y-4">

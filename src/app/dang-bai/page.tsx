@@ -758,7 +758,7 @@ function DangBaiContent() {
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`w-full min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col pt-20 sm:pt-24 transition-colors duration-300 relative ${
+      className={`w-full min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col pt-16 sm:pt-20 xl:pt-28 transition-colors duration-300 relative ${
         isDragging ? 'ring-4 ring-amber-500 ring-inset bg-amber-500/5' : ''
       }`}
     >
@@ -786,7 +786,7 @@ function DangBaiContent() {
       )}
 
       {/* 🌟 WYSIWYG STUDIO TOP NAVBAR */}
-      <header className="w-full bg-[var(--bg-card)] border-b border-[var(--border-card)] px-3 sm:px-5 py-2 flex items-center justify-between gap-2 sm:gap-3 shadow-md z-30 sticky top-16 sm:top-20">
+      <header className="w-full bg-[var(--bg-card)] border-b border-[var(--border-card)] px-3 sm:px-5 py-2 flex items-center justify-between gap-2 sm:gap-3 shadow-md z-30 sticky top-16 xl:top-28">
         
         {/* Left: Back, Sidebar Toggle & Post Title */}
         <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">

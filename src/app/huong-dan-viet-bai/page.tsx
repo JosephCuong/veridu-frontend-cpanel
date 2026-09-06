@@ -268,7 +268,7 @@ export default function StyleGuidePage() {
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] transition-colors pb-24">
       {/* Hero Banner */}
-      <section className="relative overflow-hidden border-b border-[var(--border-card)] bg-gradient-to-b from-amber-500/10 via-[var(--bg-main)] to-[var(--bg-main)] py-14 sm:py-18">
+      <section className="relative overflow-hidden border-b border-[var(--border-card)] bg-gradient-to-b from-amber-500/10 via-[var(--bg-main)] to-[var(--bg-main)] pt-24 sm:pt-28 xl:pt-36 pb-12 sm:pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-serif font-bold uppercase tracking-wider mb-4">
             <BookMarked className="w-3.5 h-3.5" />
@@ -568,7 +568,7 @@ export default function StyleGuidePage() {
           </main>
 
           {/* RIGHT COLUMN: 30% (lg:col-span-4) - STICKY TOC & CHECKLIST */}
-          <aside className="lg:col-span-4 space-y-6 lg:sticky lg:top-28">
+          <aside className="lg:col-span-4 space-y-6 lg:sticky lg:top-20 xl:top-32">
             
             {/* Table of Contents (TOC) */}
             <div className="p-5 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-md space-y-3">
