@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -48,7 +48,8 @@ import {
   Share2,
   Compass,
   MapPin,
-  Clock
+  Clock,
+  X
 } from 'lucide-react';
 import { getStoredUser, UserProfile } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
@@ -142,10 +143,55 @@ function DangBaiContent() {
     setActiveTab(newTab);
   };
 
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(Boolean(editId));
-  const [sidebarTab, setSidebarTab] = useState<'settings' | 'blocks' | 'tools'>('settings');
+  // Studio 3-Column Panels State
+  const [leftPanelOpen, setLeftPanelOpen] = useState(true);
+  const [rightPanelOpen, setRightPanelOpen] = useState(true);
+  const [rightPanelTab, setRightPanelTab] = useState<'blocks' | 'outline' | 'tools'>('blocks');
+  const [mobileDrawer, setMobileDrawer] = useState<'left' | 'right' | null>(null);
   const [canvasDevice, setCanvasDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [analysisNotice, setAnalysisNotice] = useState<string | null>(null);
+
+  // Dynamic Document Outline (Headings Extractor for Column 3)
+  const documentHeadings = useMemo(() => {
+    if (!contentHtml) return [];
+    try {
+      if (typeof window !== 'undefined') {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(contentHtml, 'text/html');
+        const nodes = doc.querySelectorAll('h1, h2, h3, h4');
+        const list: { level: number; text: string; id: string }[] = [];
+        nodes.forEach((n, idx) => {
+          const text = n.textContent?.trim() || '';
+          if (text) {
+            list.push({
+              level: parseInt(n.tagName.substring(1), 10),
+              text,
+              id: n.id || `heading-node-${idx}`
+            });
+          }
+        });
+        return list;
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  }, [contentHtml]);
+
+  const scrollToHeading = (text: string) => {
+    if (!visualCanvasRef.current) return;
+    const all = visualCanvasRef.current.querySelectorAll('h1, h2, h3, h4');
+    for (let i = 0; i < all.length; i++) {
+      if (all[i].textContent?.trim() === text) {
+        all[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        all[i].classList.add('ring-2', 'ring-amber-500', 'rounded-lg');
+        setTimeout(() => {
+          all[i].classList.remove('ring-2', 'ring-amber-500', 'rounded-lg');
+        }, 1500);
+        break;
+      }
+    }
+  };
   
   // Submission & Loading State
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -753,12 +799,442 @@ function DangBaiContent() {
     return 'w-full max-w-4xl';
   };
 
+  // ── LEFT PANEL CONTENT (SETTINGS & SEO & GEO/TIMELINE) ──
+  const renderLeftPanelContent = () => (
+    <div className="p-4 space-y-4 text-xs">
+      <div className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+        <BookOpen className="w-3.5 h-3.5" /> Thông Tin Xuất Bản &amp; SEO
+      </div>
+
+      <div className="space-y-3.5 text-xs">
+        <div>
+          <label className="font-bold text-[var(--text-muted)] block mb-1">
+            Tiêu Đề Bài Viết <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => handleTitleChange(e.target.value)}
+            placeholder="Nhập tiêu đề bài viết..."
+            className="w-full p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] font-bold text-[var(--text-main)] outline-none focus:border-amber-500"
+          />
+        </div>
+
+        <div>
+          <label className="font-bold text-[var(--text-muted)] block mb-1">
+            Đường Dẫn Định Danh (Slug)
+          </label>
+          <input
+            type="text"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+            placeholder="tai-sao-gioan-tay-gia-bi-tram-quyet"
+            className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] font-mono text-[11px] text-[var(--text-muted)] outline-none focus:border-amber-500"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="font-bold text-[var(--text-muted)] block mb-1">Chuyên Mục</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] font-bold text-[var(--text-main)] outline-none focus:border-amber-500 text-xs"
+            >
+              <option value="Thần Học">Thần Học &amp; Tín Lý</option>
+              <option value="Kinh Thánh">Kinh Thánh &amp; Chú Giải</option>
+              <option value="Suy Niệm">Suy Niệm Lời Chúa</option>
+              <option value="Các Thánh">Các Thánh &amp; Phụng Vụ</option>
+              <option value="Lịch Sử">Lịch Sử Giáo Hội</option>
+              <option value="Giáo Lý">Giáo Lý Công Giáo</option>
+              <option value="Bài Tương Tác HTML 3D">Bài Tương Tác HTML 3D</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="font-bold text-[var(--text-muted)] block mb-1">Giao Diện</label>
+            <select
+              value={articleType}
+              onChange={(e) => setArticleType(e.target.value)}
+              className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] font-bold text-[var(--text-main)] outline-none focus:border-amber-500 text-xs"
+            >
+              <option value="standard">📖 Tiêu Chuẩn</option>
+              <option value="interactive">🚀 Tương Tác 3D</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="font-bold text-[var(--text-muted)] block mb-1">
+            Ảnh Bìa Đại Diện (Google Drive / URL)
+          </label>
+          <input
+            type="url"
+            value={featuredImage}
+            onChange={(e) => setFeaturedImage(e.target.value)}
+            placeholder="https://images.unsplash.com/... hoặc Drive"
+            className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] font-mono text-[11px] outline-none focus:border-amber-500"
+          />
+          {featuredImage && (
+            <div className="mt-2 rounded-xl overflow-hidden border border-[var(--border-card)] aspect-video relative max-h-32">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src={featuredImage} 
+                alt="Preview Ảnh Bìa" 
+                className="w-full h-full object-cover"
+                onError={(e) => (e.currentTarget.style.display = 'none')}
+              />
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label className="font-bold text-[var(--text-muted)] block mb-1">
+            Tóm Tắt Ngắn (Excerpt SEO)
+          </label>
+          <textarea
+            value={excerpt}
+            onChange={(e) => setExcerpt(e.target.value)}
+            rows={3}
+            placeholder="Tóm tắt ngắn gọn nội dung cốt lõi của bài viết để hiển thị trên thẻ bài và kết quả tìm kiếm..."
+            className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs outline-none focus:border-amber-500 resize-y"
+          />
+        </div>
+
+        {/* EXPANDABLE: BẢN ĐỒ & DÒNG THỜI GIAN BỔ TRỢ */}
+        <div className="pt-2 border-t border-[var(--border-card)]">
+          <button
+            type="button"
+            onClick={() => setShowGeoTimelineSection(!showGeoTimelineSection)}
+            className="w-full py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 flex items-center justify-between text-xs font-bold text-amber-700 dark:text-amber-400 transition-all cursor-pointer"
+          >
+            <span className="flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-amber-500" />
+              <span>📍 Bản Đồ &amp; ⏳ Dòng Thời Gian</span>
+            </span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20">
+              {showGeoTimelineSection ? '▲ Thu gọn' : '▼ Đính kèm'}
+            </span>
+          </button>
+
+          {showGeoTimelineSection && (
+            <div className="mt-3 space-y-3 p-3 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] animate-fadeIn">
+              <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+                Đính kèm dữ liệu tọa độ địa lý (Leaflet) và các mốc lịch sử cứu độ (Salvation Timeline) cho bài viết.
+              </p>
+
+              {/* Upload Actions Grid */}
+              <div className="space-y-1.5">
+                <div className="grid grid-cols-2 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => locFileInputRef.current?.click()}
+                    className="py-1.5 px-2 bg-amber-500/15 hover:bg-amber-500 text-amber-900 dark:text-amber-300 hover:text-slate-950 font-bold rounded-lg text-[10px] transition border border-amber-500/40 cursor-pointer flex items-center justify-center gap-1 shadow-xs"
+                    title="Tải tệp JSON danh sách các tọa độ địa danh"
+                  >
+                    <MapPin className="w-3 h-3 text-amber-500" />
+                    <span>📍 Tải Tọa Độ</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => timelineFileInputRef.current?.click()}
+                    className="py-1.5 px-2 bg-indigo-500/15 hover:bg-indigo-500 text-indigo-700 dark:text-indigo-300 hover:text-white font-bold rounded-lg text-[10px] transition border border-indigo-500/40 cursor-pointer flex items-center justify-center gap-1 shadow-xs"
+                    title="Tải tệp JSON danh sách các mốc thời gian cứu độ"
+                  >
+                    <Clock className="w-3 h-3 text-indigo-500" />
+                    <span>⏳ Tải Thời Gian</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-1.5 text-[10px]">
+                  <button
+                    type="button"
+                    onClick={() => jsonFileInputRef.current?.click()}
+                    className="flex-1 py-1 px-1.5 bg-[var(--bg-card)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 font-bold rounded-md transition border border-[var(--border-card)] cursor-pointer text-center"
+                    title="Nạp tệp JSON tổng hợp cả 2 mảng"
+                  >
+                    📁 Nạp Gộp
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleLoadSampleJson}
+                    className="flex-1 py-1 px-1.5 bg-[var(--bg-card)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 font-bold rounded-md transition border border-[var(--border-card)] cursor-pointer text-center"
+                    title="Nạp mẫu dữ liệu tham khảo"
+                  >
+                    + Mẫu JSON
+                  </button>
+
+                  {geoTimelineJson && (
+                    <button
+                      type="button"
+                      onClick={handleClearGeoTimeline}
+                      className="py-1 px-2 bg-rose-500/10 hover:bg-rose-500 text-rose-600 dark:text-rose-400 hover:text-white font-bold rounded-md transition border border-rose-500/30 cursor-pointer"
+                      title="Xóa toàn bộ dữ liệu tọa độ & dòng thời gian"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <textarea
+                  value={geoTimelineJson}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setGeoTimelineJson(val);
+                    validateGeoTimelineJson(val);
+                  }}
+                  rows={6}
+                  placeholder="Dán mã JSON mảng tọa độ [ ... ] hoặc mốc thời gian [ ... ] tại đây..."
+                  className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] font-mono text-[10px] text-amber-500 dark:text-amber-400 outline-none focus:border-amber-500 resize-y leading-relaxed"
+                  spellCheck={false}
+                />
+              </div>
+
+              {geoTimelineStatus && (
+                <div className={`p-2 rounded-lg text-[10px] font-semibold flex items-center gap-1.5 ${
+                  geoTimelineStatus.valid 
+                    ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' 
+                    : 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30'
+                }`}>
+                  {geoTimelineStatus.valid ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-500" />
+                  ) : (
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-500" />
+                  )}
+                  <span>{geoTimelineStatus.message}</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── RIGHT PANEL CONTENT (8 CATHOLIC BLOCKS & OUTLINE & HTML FILE) ──
+  const renderRightPanelContent = () => (
+    <div className="p-4 space-y-4 text-xs">
+      {/* Tab 1: 8 Khối Chuẩn Công Giáo */}
+      {rightPanelTab === 'blocks' && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+              <BookOpen className="w-3.5 h-3.5" /> 8 Khối Chuẩn Công Giáo
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowBlockModal(true)}
+              className="text-[10px] text-amber-500 hover:underline font-bold cursor-pointer"
+            >
+              Xem Sổ Tay ↗
+            </button>
+          </div>
+
+          <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+            Nhấp vào bất kỳ khối nào bên dưới để chèn mẫu chuẩn vào vị trí con trỏ:
+          </p>
+
+          <div className="space-y-2">
+            {[
+              {
+                name: '1. Lời Chúa Soi Đường',
+                desc: 'Trích dẫn Lời Chúa viền vàng & tra cứu Kinh Thánh',
+                icon: <BookOpen className="w-4 h-4 text-amber-500" />,
+                action: () => handleInsertCatholicBlock(`<div class="sacred-scripture veridu-scripture-quote my-8 p-6 sm:p-7 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-l-4 border-amber-500 shadow-lg backdrop-blur-sm relative overflow-hidden not-prose"><div class="flex items-start gap-4"><div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5 border border-amber-500/30"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg></div><div class="space-y-2.5 flex-1"><blockquote class="font-serif italic text-lg sm:text-xl text-amber-950 dark:text-amber-100 leading-relaxed m-0 p-0 border-0 bg-transparent">“Ngài phải nổi bật lên, còn tôi phải lu mờ đi.”</blockquote><div class="flex items-center gap-2 pt-1"><a href="/kinh-thanh/ga/3" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-900 dark:text-amber-300 font-mono text-xs font-bold border border-amber-500/30 transition-all shadow-xs group"><span>Ga 3:30</span><span class="text-[10px] text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform">↗</span></a></div></div></div></div>`)
+              },
+              {
+                name: '2. Thơ & Lời Nguyện Kính',
+                desc: 'Lời cầu nguyện sốt mến sắc tím & Amen',
+                icon: <Heart className="w-4 h-4 text-indigo-500" />,
+                action: () => handleInsertCatholicBlock(`<div class="prayer-block my-8 p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent border border-indigo-500/30 shadow-xl backdrop-blur-md not-prose"><div class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-2 font-serif mb-3"><span>🕊️</span> LỜI NGUYỆN KÍNH PHỤNG VỤ</div><p class="font-serif italic text-indigo-950 dark:text-indigo-100 text-base sm:text-lg leading-relaxed m-0">“Lạy Chúa Giêsu Thánh Thể, xin ngự vào tâm hồn chúng con, ban cho chúng con ơn bình an, đức tin kiên vững và lòng nhiệt thành phụng sự Hội Thánh...”</p><div class="prayer-amen text-right font-serif font-bold text-amber-600 dark:text-amber-400 text-sm mt-3">Amen.</div></div>`)
+              },
+              {
+                name: '3. Tóm Tắt Nghiên Cứu Thần Học',
+                desc: 'Thẻ tóm tắt học thuật VERIDU RESEARCH',
+                icon: <FileText className="w-4 h-4 text-indigo-500" />,
+                action: () => handleInsertCatholicBlock(`<div class="abstract-research my-8 p-6 sm:p-8 rounded-3xl bg-indigo-500/10 border border-indigo-500/30 shadow-xl backdrop-blur-md space-y-4 not-prose"><div class="abstract-header flex items-center justify-between border-b border-indigo-500/20 pb-3"><span class="text-xs font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 flex items-center gap-2 font-serif"><span>📖</span> TÓM TẮT NGHIÊN CỨU THẦN HỌC</span><span class="abstract-badge text-[10px] px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 font-bold font-mono">VERIDU RESEARCH</span></div><p class="font-serif text-sm sm:text-base leading-relaxed text-[var(--text-main)] m-0">Khảo luận chuyên sâu về nền tảng tín lý và bối cảnh lịch sử của Tín Điều Theotokos tại Công đồng Êphêsô (431), làm rõ sự hiệp nhất hai bản tính trong duy nhất một Ngôi Vị Thiên Chúa.</p><div class="flex flex-wrap gap-2 pt-2 border-t border-indigo-500/10"><span class="text-[10px] px-2.5 py-1 rounded-lg bg-[var(--bg-card)] text-indigo-600 dark:text-indigo-300 font-bold border border-indigo-500/20">#Theotokos</span><span class="text-[10px] px-2.5 py-1 rounded-lg bg-[var(--bg-card)] text-indigo-600 dark:text-indigo-300 font-bold border border-indigo-500/20">#Epheso431</span></div></div>`)
+              },
+              {
+                name: '4. Bằng Chứng Thánh Kinh',
+                desc: 'Bảng danh mục luận điểm & câu đối chiếu',
+                icon: <ListChecks className="w-4 h-4 text-amber-500" />,
+                action: () => handleInsertCatholicBlock(`<div class="scripture-meta my-8 p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-4 not-prose"><div class="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-serif font-black text-sm uppercase tracking-wider border-b border-[var(--border-card)] pb-3"><span>📜</span> DANH MỤC BẰNG CHỨNG THÁNH KINH</div><div class="space-y-3"><div class="scripture-item flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)]/60"><span class="scripture-claim font-bold text-xs text-[var(--text-main)]">Hòm Bia Giao Ước Mới:</span><span class="scripture-refs font-mono text-xs font-bold text-amber-600 dark:text-amber-400">Xh 40,34-35; Lc 1,35; Kh 11,19</span></div><div class="scripture-item flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)]/60"><span class="scripture-claim font-bold text-xs text-[var(--text-main)]">Đấng Trung Gian Duy Nhất:</span><span class="scripture-refs font-mono text-xs font-bold text-amber-600 dark:text-amber-400">1Tm 2,5; Dt 9,15</span></div></div></div>`)
+              },
+              {
+                name: '5. Thuật Ngữ Thần Học',
+                desc: 'Giải nghĩa thuật ngữ kèm từ nguyên Hy Lạp/Latin',
+                icon: <HelpCircle className="w-4 h-4 text-indigo-500" />,
+                action: () => handleInsertCatholicBlock(`<div class="dictionary-meta my-8 p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-4 not-prose"><div class="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-serif font-black text-sm uppercase tracking-wider border-b border-[var(--border-card)] pb-3"><span>📚</span> THUẬT NGỮ GIÁO LÝ & THẦN HỌC</div><div class="space-y-3"><div class="p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] space-y-1"><div class="font-bold text-xs text-amber-600 dark:text-amber-400 flex items-center gap-2"><span>Theotokos</span><span class="text-[10px] font-mono text-[var(--text-muted)] font-normal">(Hy Lạp: Θεοτόκος)</span></div><p class="text-xs text-[var(--text-main)] leading-relaxed m-0">Tước hiệu Mẹ Thiên Chúa, được tuyên tín tại Công đồng Êphêsô (431) nhằm khẳng định Đức Kitô là Thiên Chúa thật và con người thật.</p></div></div></div>`)
+              },
+              {
+                name: '6. Hình Ảnh Nghệ Thuật Thánh',
+                desc: 'Ảnh kèm chú thích & hỗ trợ Lightbox phóng to',
+                icon: <ImageIcon className="w-4 h-4 text-emerald-500" />,
+                action: () => handleInsertCatholicBlock(`<figure class="veridu-image-block my-8 mx-auto text-center not-prose"><img src="https://images.unsplash.com/photo-1548625361-1959728b4e87?auto=format&fit=crop&w=1200&q=80" alt="Nghệ Thuật Thánh Đường" data-lightbox="true" referrerpolicy="no-referrer" class="max-w-full h-auto rounded-3xl shadow-2xl mx-auto block cursor-zoom-in hover:scale-[1.01] transition-transform duration-300 border border-[var(--border-card)]" /><figcaption class="mt-3 text-xs italic text-[var(--text-muted)] font-serif max-w-xl mx-auto">Bích họa Nghệ Thuật Thánh Đường Công Giáo — Kiệt tác nghệ thuật phụng vụ.</figcaption></figure>`)
+              },
+              {
+                name: '7. Video Nhúng 16:9',
+                desc: 'Khung video YouTube/Vimeo tỷ lệ vàng 16:9',
+                icon: <Video className="w-4 h-4 text-rose-500" />,
+                action: () => handleInsertCatholicBlock(`<div class="veridu-embed-video w-full aspect-video rounded-3xl shadow-2xl overflow-hidden border border-[var(--border-card)] my-8 bg-black relative z-10 not-prose"><iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" class="w-full h-full border-none" title="Video Phụng Vụ VERIDU" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`)
+              },
+              {
+                name: '8. Hộp Lưu Ý & Cảnh Báo',
+                desc: 'Hộp nhấn mạnh giáo lý 4 cấp phụng vụ',
+                icon: <AlertTriangle className="w-4 h-4 text-amber-500" />,
+                action: () => handleInsertCatholicBlock(`<div class="catechetical-callout callout-important my-6 p-5 sm:p-6 border-l-4 border-amber-500 rounded-r-2xl bg-amber-500/10 text-amber-900 dark:text-amber-200 backdrop-blur-md shadow-md space-y-1.5 not-prose"><div class="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5"><span>⭐</span> QUAN TRỌNG: TÍN LÝ HỘI THÁNH</div><div class="text-xs sm:text-sm leading-relaxed font-serif text-[var(--text-main)]">Tín điều về Bí tích Thánh Thể là trung tâm và tột đỉnh của toàn bộ đời sống Kitô hữu (Lumen Gentium, 11).</div></div>`)
+              }
+            ].map((item, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={item.action}
+                className="w-full text-left p-2.5 rounded-xl bg-[var(--bg-main)] hover:bg-amber-500/10 border border-[var(--border-card)] hover:border-amber-500/40 transition-all flex items-start gap-2.5 group cursor-pointer"
+              >
+                <div className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-card)] group-hover:border-amber-500/30 shrink-0">
+                  {item.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-bold text-[var(--text-main)] group-hover:text-amber-500 transition">
+                    {item.name}
+                  </div>
+                  <p className="text-[10px] text-[var(--text-muted)] line-clamp-1">
+                    {item.desc}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tab 2: Document Outline (Mục Lục Tự Động) */}
+      {rightPanelTab === 'outline' && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+              <ListChecks className="w-3.5 h-3.5" /> Mục Lục Bài Viết
+            </span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold">
+              {documentHeadings.length} Đề Mục
+            </span>
+          </div>
+
+          <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+            Nhấp vào bất kỳ đề mục nào để cuộn nhanh đến vị trí đó trên bài viết:
+          </p>
+
+          {documentHeadings.length === 0 ? (
+            <div className="p-6 rounded-2xl bg-[var(--bg-main)] border border-dashed border-[var(--border-card)] text-center space-y-2">
+              <ListChecks className="w-6 h-6 text-[var(--text-muted)] mx-auto opacity-50" />
+              <p className="text-xs text-[var(--text-muted)]">Chưa có đề mục nào</p>
+              <p className="text-[10px] text-[var(--text-muted)]/70">
+                Thêm thẻ tiêu đề H1, H2, H3 trong bài viết để mục lục tự động hiển thị tại đây.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-1.5 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
+              {documentHeadings.map((h, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => scrollToHeading(h.text)}
+                  style={{ paddingLeft: `${Math.max(8, (h.level - 1) * 12 + 8)}px` }}
+                  className="w-full text-left py-2 pr-2.5 rounded-xl hover:bg-amber-500/15 hover:text-amber-500 text-[var(--text-main)] transition-all text-xs font-serif flex items-center gap-2 group cursor-pointer border border-transparent hover:border-amber-500/20"
+                >
+                  <span className="text-[9px] font-mono px-1 py-0.5 rounded bg-[var(--bg-card)] border border-[var(--border-card)] text-amber-600 dark:text-amber-400 font-bold shrink-0">
+                    H{h.level}
+                  </span>
+                  <span className="truncate group-hover:translate-x-0.5 transition-transform flex-1">
+                    {h.text}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab 3: HTML File Importer & Styleguide */}
+      {rightPanelTab === 'tools' && (
+        <div className="space-y-4">
+          <div className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+            <Upload className="w-3.5 h-3.5" /> Nạp &amp; Chuyển Hóa Tệp .HTML
+          </div>
+
+          {uploadedFileName ? (
+            <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 space-y-2">
+              <div className="flex items-center justify-between text-xs font-bold text-indigo-600 dark:text-indigo-300">
+                <span className="truncate flex items-center gap-1">
+                  <FileCode className="w-4 h-4 shrink-0" /> {uploadedFileName}
+                </span>
+                <span className="text-[10px] opacity-80 shrink-0">{uploadedFileSize}</span>
+              </div>
+
+              {detectedFeatures.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {detectedFeatures.map((f, i) => (
+                    <span key={i} className="text-[9px] px-2 py-0.5 rounded-md bg-indigo-950/60 text-indigo-200 border border-indigo-500/20">
+                      ✓ {f}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <div className="pt-2 text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-amber-600 dark:text-amber-400 hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                >
+                  <RefreshCw className="w-3 h-3" /> Nạp tệp khác
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 rounded-2xl bg-[var(--bg-main)] border border-dashed border-[var(--border-card)] text-center space-y-3">
+              <Upload className="w-8 h-8 text-[var(--text-muted)] mx-auto" />
+              <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+                Kéo thả hoặc tải lên tệp <code className="px-1 py-0.5 rounded bg-[var(--bg-card)] font-mono text-[10px]">.html</code> để tự động trích xuất tiêu đề, hình ảnh và chuyển hóa thành định dạng Stained-Glass.
+              </p>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-md shadow-indigo-600/20"
+              >
+                Chọn Tệp .HTML Từ Máy Tính
+              </button>
+            </div>
+          )}
+
+          <div className="pt-2 border-t border-[var(--border-card)]">
+            <Link
+              href="/huong-dan-viet-bai"
+              target="_blank"
+              className="w-full py-2 px-3 rounded-xl bg-[var(--bg-main)] hover:bg-amber-500/10 border border-[var(--border-card)] hover:border-amber-500/30 flex items-center justify-between text-xs font-serif font-bold text-[var(--text-main)] hover:text-amber-500 transition group"
+            >
+              <span className="flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5 text-amber-500" />
+                <span>Quy Chuẩn Viết Bài VERIDU</span>
+              </span>
+              <ExternalLink className="w-3 h-3 opacity-60 group-hover:opacity-100" />
+            </Link>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div 
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`w-full min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col pt-16 sm:pt-20 xl:pt-28 transition-colors duration-300 relative ${
+      className={`fixed inset-0 z-50 w-screen h-screen overflow-hidden bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col transition-colors duration-300 ${
         isDragging ? 'ring-4 ring-amber-500 ring-inset bg-amber-500/5' : ''
       }`}
     >
@@ -785,145 +1261,189 @@ function DangBaiContent() {
         </div>
       )}
 
-      {/* 🌟 WYSIWYG STUDIO TOP NAVBAR */}
-      <header className="w-full bg-[var(--bg-card)] border-b border-[var(--border-card)] px-3 sm:px-5 py-2 flex items-center justify-between gap-2 sm:gap-3 shadow-md z-30 sticky top-16 xl:top-28">
+      {/* 🌟 1. ELEMENTOR STUDIO TOP BAR (HEIGHT: 52px, FIXED AT TOP) */}
+      <header className="h-[52px] min-h-[52px] w-full bg-[var(--bg-card)] border-b border-[var(--border-card)] px-3 sm:px-4 flex items-center justify-between gap-2 shrink-0 z-30 shadow-xs">
         
-        {/* Left: Back, Sidebar Toggle & Post Title */}
-        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+        {/* Left: Back button + Left Panel Toggle + Title + Status */}
+        <div className="flex items-center gap-2 min-w-0">
           <button
             type="button"
             onClick={() => router.push('/thu-vien')}
-            className="p-1.5 sm:p-2 rounded-xl hover:bg-amber-500/20 text-[var(--text-muted)] hover:text-amber-500 transition cursor-pointer shrink-0"
-            title="Quay về Thư viện"
+            className="p-1.5 sm:p-2 rounded-xl hover:bg-amber-500/15 text-[var(--text-muted)] hover:text-amber-500 transition cursor-pointer shrink-0"
+            title="Quay về Thư Viện"
           >
-            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+            <ArrowLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </button>
 
-          {/* Dedicated Sidebar Toggle Button */}
+          {/* Left Panel Toggle Button */}
           <button
             type="button"
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                setMobileDrawer(mobileDrawer === 'left' ? null : 'left');
+              } else {
+                setLeftPanelOpen(!leftPanelOpen);
+              }
+            }}
             className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
-              !sidebarCollapsed
-                ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-sm'
+              (leftPanelOpen || mobileDrawer === 'left')
+                ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-xs'
                 : 'bg-[var(--bg-main)] border-[var(--border-card)] text-[var(--text-muted)] hover:text-amber-500 hover:border-amber-500/30'
             }`}
-            title={sidebarCollapsed ? "Mở thanh thiết lập bài viết & bản đồ" : "Thu gọn thanh thiết lập"}
+            title={leftPanelOpen ? "Thu gọn Cài Đặt Bài" : "Mở Cài Đặt Bài"}
           >
             <Settings className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{sidebarCollapsed ? "Thiết Lập Bài" : "Đóng Bảng"}</span>
+            <span className="hidden sm:inline">Cài Đặt</span>
             {geoTimelineStatus?.valid && (
               <span className="w-2 h-2 rounded-full bg-emerald-500" title="Đã có tọa độ & dòng thời gian" />
             )}
           </button>
 
+          <div className="h-4 w-[1px] bg-[var(--border-card)] hidden md:block" />
+
+          {/* Post Title & Status */}
           <div className="flex items-center gap-2 min-w-0">
-            <span className="p-1.5 sm:p-2 rounded-xl bg-amber-500/10 text-amber-500 font-black border border-amber-500/20 shrink-0">
-              <BookOpen className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-            </span>
-            <div className="min-w-0">
-              <h1 className="font-serif font-bold text-xs sm:text-sm text-[var(--text-main)] flex items-center gap-1.5 truncate max-w-[130px] sm:max-w-[200px] md:max-w-xs lg:max-w-md">
-                {title || 'Biên Tập Bài Viết VERIDU'}
-                {postId && (
-                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
-                    #{postId}
-                  </span>
-                )}
-              </h1>
-              <p className="text-[10px] sm:text-[11px] text-[var(--text-muted)] truncate hidden md:block">
-                {activeTab === 'visual' ? '🎨 Soạn thảo trực quan (Live Canvas)' : activeTab === 'code' ? '💻 Mã nguồn HTML' : '👁️ Xem thử độc giả'}
-              </p>
-            </div>
+            <h1 className="font-serif font-bold text-xs sm:text-sm text-[var(--text-main)] truncate max-w-[120px] sm:max-w-[200px] md:max-w-xs lg:max-w-sm">
+              {title || 'Biên Tập Bài Viết VERIDU'}
+            </h1>
+            {postId && (
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
+                #{postId}
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Center: TAB TOGGLE (Live Visual ⟷ HTML Code ⟷ Preview) */}
-        <div className="flex items-center gap-1 bg-[var(--bg-main)] p-1 rounded-2xl border border-[var(--border-card)] shrink-0">
-          <button
-            type="button"
-            onClick={() => switchTab('visual')}
-            className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'visual' 
-                ? 'bg-amber-500 text-slate-950 shadow-md font-black' 
-                : 'text-[var(--text-muted)] hover:text-amber-500'
-            }`}
-            title="Chế độ Soạn Thảo Trực Quan (Live Visual Canvas WYSIWYG)"
-          >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Trực Quan</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => switchTab('code')}
-            className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'code' 
-                ? 'bg-amber-500 text-slate-950 shadow-md font-black' 
-                : 'text-[var(--text-muted)] hover:text-amber-500'
-            }`}
-            title="Chế độ Mã Nguồn (HTML Code Editor)"
-          >
-            <FileCode className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Mã Nguồn</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => switchTab('preview')}
-            className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'preview' 
-                ? 'bg-amber-500 text-slate-950 shadow-md font-black' 
-                : 'text-[var(--text-muted)] hover:text-amber-500'
-            }`}
-            title="Chế độ Xem Trước Độc Giả"
-          >
-            <Eye className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Xem Trước</span>
-          </button>
-        </div>
-
-        {/* Right: Catholic Styleguide Modal Button + Save Button */}
+        {/* Center: TAB SWITCHER (Trực Quan | Mã Nguồn | Xem Trước) + DEVICE SWITCHER */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           
-          {/* 📖 Sổ Tay Khối Chuẩn Công Giáo Modal Button */}
+          {/* Mode Switcher Pill */}
+          <div className="flex items-center gap-1 bg-[var(--bg-main)] p-1 rounded-2xl border border-[var(--border-card)]">
+            <button
+              type="button"
+              onClick={() => switchTab('visual')}
+              className={`px-2.5 sm:px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'visual'
+                  ? 'bg-amber-500 text-slate-950 shadow-xs font-black'
+                  : 'text-[var(--text-muted)] hover:text-amber-500'
+              }`}
+              title="Chế độ Soạn Thảo Trực Quan (Live Canvas)"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Trực Quan</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => switchTab('code')}
+              className={`px-2.5 sm:px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'code'
+                  ? 'bg-amber-500 text-slate-950 shadow-xs font-black'
+                  : 'text-[var(--text-muted)] hover:text-amber-500'
+              }`}
+              title="Chế độ Mã Nguồn (HTML Code Editor)"
+            >
+              <FileCode className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Mã Nguồn</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => switchTab('preview')}
+              className={`px-2.5 sm:px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'preview'
+                  ? 'bg-amber-500 text-slate-950 shadow-xs font-black'
+                  : 'text-[var(--text-muted)] hover:text-amber-500'
+              }`}
+              title="Chế độ Xem Trước Độc Giả"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Xem Trước</span>
+            </button>
+          </div>
+
+          {/* Device Switcher (Desktop / Tablet / Mobile) */}
+          <div className="hidden lg:flex items-center gap-0.5 bg-[var(--bg-main)] p-1 rounded-2xl border border-[var(--border-card)]">
+            <button
+              type="button"
+              onClick={() => setCanvasDevice('desktop')}
+              className={`p-1.5 rounded-lg text-xs transition cursor-pointer ${
+                canvasDevice === 'desktop' ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold' : 'text-[var(--text-muted)] hover:text-amber-500'
+              }`}
+              title="Màn hình Máy tính (Desktop)"
+            >
+              <Monitor className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setCanvasDevice('tablet')}
+              className={`p-1.5 rounded-lg text-xs transition cursor-pointer ${
+                canvasDevice === 'tablet' ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold' : 'text-[var(--text-muted)] hover:text-amber-500'
+              }`}
+              title="Máy tính bảng (Tablet 768px)"
+            >
+              <Tablet className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setCanvasDevice('mobile')}
+              className={`p-1.5 rounded-lg text-xs transition cursor-pointer ${
+                canvasDevice === 'mobile' ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold' : 'text-[var(--text-muted)] hover:text-amber-500'
+              }`}
+              title="Điện thoại (Mobile 375px)"
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+        </div>
+
+        {/* Right: Right Panel Toggle + Block Modal + Publish Button */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          
+          {/* Right Panel Toggle Button */}
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                setMobileDrawer(mobileDrawer === 'right' ? null : 'right');
+              } else {
+                setRightPanelOpen(!rightPanelOpen);
+              }
+            }}
+            className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+              (rightPanelOpen || mobileDrawer === 'right')
+                ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-xs'
+                : 'bg-[var(--bg-main)] border-[var(--border-card)] text-[var(--text-muted)] hover:text-amber-500 hover:border-amber-500/30'
+            }`}
+            title={rightPanelOpen ? "Thu gọn 8 Khối & Mục Lục" : "Mở Thư Viện 8 Khối & Mục Lục"}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Khối &amp; Mục Lục</span>
+            {documentHeadings.length > 0 && (
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-300 font-bold">
+                {documentHeadings.length}
+              </span>
+            )}
+          </button>
+
+          {/* Sổ Tay 8 Khối Chuẩn Modal Button */}
           <button
             type="button"
             onClick={() => setShowBlockModal(true)}
-            className="px-2.5 sm:px-3.5 py-1.5 bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-amber-500/20 hover:from-amber-500 hover:to-amber-600 text-amber-900 dark:text-amber-300 hover:text-slate-950 font-bold rounded-2xl text-xs transition-all border border-amber-500/40 flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 group"
-            title="Mở Sổ Tay 8 Khối Chuẩn Công Giáo VERIDU"
+            className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-[var(--bg-main)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 border border-[var(--border-card)] text-xs font-serif font-bold transition hidden xl:flex items-center gap-1 cursor-pointer"
+            title="Mở Sổ Tay Hướng Dẫn 8 Khối Chuẩn"
           >
-            <BookOpen className="w-3.5 h-3.5 text-amber-500 group-hover:text-slate-950" />
-            <span className="font-serif hidden sm:inline">📖 Sổ Tay Khối Chuẩn</span>
-            <span className="font-serif sm:hidden">Khối Mẫu</span>
+            <BookOpen className="w-3.5 h-3.5 text-amber-500" />
+            <span>Sổ Tay</span>
           </button>
 
-          {/* Quick Upload .HTML Button */}
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="px-2.5 sm:px-3 py-1.5 bg-indigo-600/15 hover:bg-indigo-600 text-indigo-700 dark:text-indigo-300 hover:text-white font-bold rounded-2xl text-xs transition-all border border-indigo-500/30 hidden lg:flex items-center gap-1.5 cursor-pointer"
-            title="Nạp tệp HTML để phân tích và chèn tự động"
-          >
-            <Upload className="w-3.5 h-3.5 text-indigo-500" />
-            <span>Nạp HTML</span>
-          </button>
-
-          {/* Quick Link to Style Guide */}
-          <Link
-            href="/huong-dan-viet-bai"
-            target="_blank"
-            className="p-1.5 sm:px-2.5 sm:py-1.5 bg-[var(--bg-main)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 font-bold rounded-xl text-xs border border-[var(--border-card)] hidden xl:flex items-center gap-1 transition"
-            title="Xem Sổ Tay Quy Chuẩn Viết Bài"
-          >
-            <span>Quy Chuẩn</span>
-          </Link>
-
-          {/* Publish / Update Button */}
+          {/* Publish / Save Button */}
           <button
             type="button"
             onClick={() => handleSubmit()}
             disabled={isSubmitting}
-            className="px-3.5 sm:px-5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black rounded-2xl text-xs transition-all shadow-lg shadow-amber-500/25 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95 border border-amber-400/50 shrink-0"
+            className="px-3.5 sm:px-5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black rounded-xl text-xs transition-all shadow-md shadow-amber-500/20 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95 border border-amber-400/50 shrink-0"
           >
             {isSubmitting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             <span>{isSubmitting ? 'Đang Lưu...' : postId ? 'Lưu Thay Đổi' : 'Xuất Bản'}</span>
@@ -934,7 +1454,7 @@ function DangBaiContent() {
 
       {/* NOTIFICATION BANNER */}
       {message && (
-        <div className={`p-2.5 text-xs font-bold flex items-center justify-center gap-2 ${
+        <div className={`px-4 py-2 text-xs font-bold flex items-center justify-center gap-2 shrink-0 ${
           message.type === 'success' 
             ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border-b border-emerald-500/30' 
             : 'bg-red-500/20 text-red-500 dark:text-red-300 border-b border-red-500/30'
@@ -944,437 +1464,70 @@ function DangBaiContent() {
         </div>
       )}
 
-      {/* 🌟 2-COLUMN FULL-WIDTH WORKBENCH */}
-      <div className="flex-1 flex flex-col lg:flex-row w-full overflow-hidden">
-        
-        {/* ⬅️ LEFT SIDEBAR (SETTINGS & METADATA & QUICK INSERTERS) */}
-        {!sidebarCollapsed && (
-          <aside className="w-full lg:w-96 shrink-0 bg-[var(--bg-card)] border-r border-[var(--border-card)] flex flex-col h-auto lg:h-[calc(100vh-7.5rem)] overflow-y-auto z-20">
-            
-            {/* SIDEBAR TABS HEADER */}
-            <div className="flex items-center border-b border-[var(--border-card)] bg-[var(--bg-main)] p-2 gap-1 sticky top-0 z-10">
-              <button
-                type="button"
-                onClick={() => setSidebarTab('settings')}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                  sidebarTab === 'settings' ? 'bg-amber-500 text-slate-950 shadow-md font-black' : 'text-[var(--text-muted)] hover:text-amber-500'
-                }`}
-              >
-                <Settings className="w-3.5 h-3.5" /> Thiết Lập Bài
-              </button>
-              <button
-                type="button"
-                onClick={() => setSidebarTab('blocks')}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                  sidebarTab === 'blocks' ? 'bg-amber-500 text-slate-950 shadow-md font-black' : 'text-[var(--text-muted)] hover:text-amber-500'
-                }`}
-              >
-                <BookOpen className="w-3.5 h-3.5" /> 8 Khối Chuẩn
-              </button>
-              <button
-                type="button"
-                onClick={() => setSidebarTab('tools')}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                  sidebarTab === 'tools' ? 'bg-amber-500 text-slate-950 shadow-md font-black' : 'text-[var(--text-muted)] hover:text-amber-500'
-                }`}
-              >
-                <Upload className="w-3.5 h-3.5" /> Nạp File
-              </button>
+      {/* 🌟 2. THREE-COLUMN WORKBENCH (FULL SCREEN HEIGHT, NO OVERALL WINDOW SCROLL) */}
+      <div className="flex-1 flex w-full overflow-hidden relative">
+
+        {/* ⬅️ COLUMN 1: LEFT PANEL (SETTINGS & SEO & GEO/TIMELINE) - DESKTOP */}
+        <aside className={`shrink-0 bg-[var(--bg-card)] border-r border-[var(--border-card)] flex flex-col h-full transition-all duration-300 z-20 ${
+          leftPanelOpen ? 'w-80 xl:w-96' : 'w-0 overflow-hidden border-r-0'
+        } hidden lg:flex`}>
+          <div className="p-3 border-b border-[var(--border-card)] bg-[var(--bg-main)] flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+              <Settings className="w-3.5 h-3.5" />
+              <span>Thiết Lập Bài Viết &amp; SEO</span>
             </div>
+            <button
+              type="button"
+              onClick={() => setLeftPanelOpen(false)}
+              className="p-1 rounded-lg hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 transition cursor-pointer"
+              title="Thu gọn Cột Trái (◀)"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="overflow-y-auto flex-1">
+            {renderLeftPanelContent()}
+          </div>
+        </aside>
 
-            {/* TAB 1: POST SETTINGS & METADATA */}
-            {sidebarTab === 'settings' && (
-              <div className="p-4 space-y-4">
-                <div className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                  <BookOpen className="w-3.5 h-3.5" /> Thông Tin Xuất Bản &amp; SEO
+        {/* Mobile / Tablet Left Slide-Over Drawer */}
+        {mobileDrawer === 'left' && (
+          <div className="fixed inset-0 z-50 flex lg:hidden">
+            <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs" onClick={() => setMobileDrawer(null)} />
+            <div className="relative w-80 max-w-[85vw] bg-[var(--bg-card)] h-full z-50 flex flex-col shadow-2xl border-r border-[var(--border-card)] animate-in slide-in-from-left duration-200">
+              <div className="p-3 border-b border-[var(--border-card)] bg-[var(--bg-main)] flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  <Settings className="w-3.5 h-3.5" />
+                  <span>Thiết Lập Bài Viết</span>
                 </div>
-
-                <div className="space-y-3.5 text-xs">
-                  <div>
-                    <label className="font-bold text-[var(--text-muted)] block mb-1">
-                      Tiêu Đề Bài Viết <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={title}
-                      onChange={(e) => handleTitleChange(e.target.value)}
-                      placeholder="Nhập tiêu đề bài viết..."
-                      className="w-full p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] font-bold text-[var(--text-main)] outline-none focus:border-amber-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-bold text-[var(--text-muted)] block mb-1">
-                      Đường Dẫn Định Danh (Slug)
-                    </label>
-                    <input
-                      type="text"
-                      value={slug}
-                      onChange={(e) => setSlug(e.target.value)}
-                      placeholder="tai-sao-gioan-tay-gia-bi-tram-quyet"
-                      className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] font-mono text-[11px] text-[var(--text-muted)] outline-none focus:border-amber-500"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="font-bold text-[var(--text-muted)] block mb-1">Chuyên Mục</label>
-                      <select
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                        className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] font-bold text-[var(--text-main)] outline-none focus:border-amber-500 text-xs"
-                      >
-                        <option value="Thần Học">Thần Học &amp; Tín Lý</option>
-                        <option value="Kinh Thánh">Kinh Thánh &amp; Chú Giải</option>
-                        <option value="Suy Niệm">Suy Niệm Lời Chúa</option>
-                        <option value="Các Thánh">Các Thánh &amp; Phụng Vụ</option>
-                        <option value="Lịch Sử">Lịch Sử Giáo Hội</option>
-                        <option value="Giáo Lý">Giáo Lý Công Giáo</option>
-                        <option value="Bài Tương Tác HTML 3D">Bài Tương Tác HTML 3D</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="font-bold text-[var(--text-muted)] block mb-1">Giao Diện (Template)</label>
-                      <select
-                        value={articleType}
-                        onChange={(e) => setArticleType(e.target.value)}
-                        className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] font-bold text-[var(--text-main)] outline-none focus:border-amber-500 text-xs"
-                      >
-                        <option value="standard">📖 Tiêu Chuẩn</option>
-                        <option value="interactive">🚀 Tương Tác 3D</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="font-bold text-[var(--text-muted)] block mb-1">
-                      Ảnh Bìa Đại Diện (Google Drive / URL)
-                    </label>
-                    <input
-                      type="url"
-                      value={featuredImage}
-                      onChange={(e) => setFeaturedImage(e.target.value)}
-                      placeholder="https://images.unsplash.com/... hoặc Drive"
-                      className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] font-mono text-[11px] outline-none focus:border-amber-500"
-                    />
-                    {featuredImage && (
-                      <div className="mt-2 rounded-xl overflow-hidden border border-[var(--border-card)] aspect-video relative max-h-32">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img 
-                          src={featuredImage} 
-                          alt="Preview Ảnh Bìa" 
-                          className="w-full h-full object-cover"
-                          onError={(e) => (e.currentTarget.style.display = 'none')}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="font-bold text-[var(--text-muted)] block mb-1">
-                      Tóm Tắt Ngắn (Excerpt SEO)
-                    </label>
-                    <textarea
-                      value={excerpt}
-                      onChange={(e) => setExcerpt(e.target.value)}
-                      rows={3}
-                      placeholder="Tóm tắt ngắn gọn nội dung cốt lõi của bài viết để hiển thị trên thẻ bài và kết quả tìm kiếm..."
-                      className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs outline-none focus:border-amber-500 resize-y"
-                    />
-                  </div>
-
-                  {/* EXPANDABLE: BẢN ĐỒ & DÒNG THỜI GIAN BỔ TRỢ */}
-                  <div className="pt-2 border-t border-[var(--border-card)]">
-                    <button
-                      type="button"
-                      onClick={() => setShowGeoTimelineSection(!showGeoTimelineSection)}
-                      className="w-full py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 flex items-center justify-between text-xs font-bold text-amber-700 dark:text-amber-400 transition-all cursor-pointer"
-                    >
-                      <span className="flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-amber-500" />
-                        <span>📍 Bản Đồ &amp; ⏳ Dòng Thời Gian</span>
-                      </span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20">
-                        {showGeoTimelineSection ? '▲ Thu gọn' : '▼ Đính kèm (Tùy chọn)'}
-                      </span>
-                    </button>
-
-                    {showGeoTimelineSection && (
-                      <div className="mt-3 space-y-3 p-3 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] animate-fadeIn">
-                        <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
-                          Đính kèm dữ liệu tọa độ địa lý (Leaflet) và các mốc lịch sử cứu độ (Salvation Timeline) cho bài viết. Dữ liệu sẽ hiển thị ngay dưới bài đọc và tự động đồng bộ vào Bản Đồ (/ban-do) và Dòng Thời Gian (/lich-su).
-                        </p>
-
-                        {/* Upload Actions Grid */}
-                        <div className="space-y-1.5">
-                          <div className="grid grid-cols-2 gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => locFileInputRef.current?.click()}
-                              className="py-1.5 px-2 bg-amber-500/15 hover:bg-amber-500 text-amber-900 dark:text-amber-300 hover:text-slate-950 font-bold rounded-lg text-[10px] transition border border-amber-500/40 cursor-pointer flex items-center justify-center gap-1 shadow-sm"
-                              title="Tải tệp JSON danh sách các tọa độ địa danh"
-                            >
-                              <MapPin className="w-3 h-3 text-amber-500" />
-                              <span>📍 Tải Tọa Độ</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => timelineFileInputRef.current?.click()}
-                              className="py-1.5 px-2 bg-indigo-500/15 hover:bg-indigo-500 text-indigo-700 dark:text-indigo-300 hover:text-white font-bold rounded-lg text-[10px] transition border border-indigo-500/40 cursor-pointer flex items-center justify-center gap-1 shadow-sm"
-                              title="Tải tệp JSON danh sách các mốc thời gian cứu độ"
-                            >
-                              <Clock className="w-3 h-3 text-indigo-500" />
-                              <span>⏳ Tải Thời Gian</span>
-                            </button>
-                          </div>
-
-                          <div className="flex items-center gap-1.5 text-[10px]">
-                            <button
-                              type="button"
-                              onClick={() => jsonFileInputRef.current?.click()}
-                              className="flex-1 py-1 px-1.5 bg-[var(--bg-card)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 font-bold rounded-md transition border border-[var(--border-card)] cursor-pointer text-center"
-                              title="Nạp tệp JSON tổng hợp cả 2 mảng"
-                            >
-                              📁 Nạp Gộp
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={handleLoadSampleJson}
-                              className="flex-1 py-1 px-1.5 bg-[var(--bg-card)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 font-bold rounded-md transition border border-[var(--border-card)] cursor-pointer text-center"
-                              title="Nạp mẫu dữ liệu tham khảo"
-                            >
-                              + Mẫu JSON
-                            </button>
-
-                            {geoTimelineJson && (
-                              <button
-                                type="button"
-                                onClick={handleClearGeoTimeline}
-                                className="py-1 px-2 bg-rose-500/10 hover:bg-rose-500 text-rose-600 dark:text-rose-400 hover:text-white font-bold rounded-md transition border border-rose-500/30 cursor-pointer"
-                                title="Xóa toàn bộ dữ liệu tọa độ & dòng thời gian"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Hidden file inputs for coordinates, timeline, and combined */}
-                        <input
-                          type="file"
-                          ref={locFileInputRef}
-                          onChange={(e) => handleUploadGeoFile(e, 'locations')}
-                          accept=".json"
-                          className="hidden"
-                        />
-                        <input
-                          type="file"
-                          ref={timelineFileInputRef}
-                          onChange={(e) => handleUploadGeoFile(e, 'timeline')}
-                          accept=".json"
-                          className="hidden"
-                        />
-                        <input
-                          type="file"
-                          ref={jsonFileInputRef}
-                          onChange={(e) => handleUploadGeoFile(e)}
-                          accept=".json"
-                          className="hidden"
-                        />
-
-                        <div>
-                          <textarea
-                            value={geoTimelineJson}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setGeoTimelineJson(val);
-                              validateGeoTimelineJson(val);
-                            }}
-                            rows={8}
-                            placeholder="Dán mã JSON mảng tọa độ [ ... ] hoặc mốc thời gian [ ... ] tại đây (hệ thống tự chuẩn hóa)..."
-                            className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] font-mono text-[10px] text-amber-500 dark:text-amber-400 outline-none focus:border-amber-500 resize-y leading-relaxed"
-                            spellCheck={false}
-                          />
-                        </div>
-
-                        {geoTimelineStatus && (
-                          <div className={`p-2 rounded-lg text-[10px] font-semibold flex items-center gap-1.5 ${
-                            geoTimelineStatus.valid 
-                              ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' 
-                              : 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30'
-                          }`}>
-                            {geoTimelineStatus.valid ? (
-                              <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-500" />
-                            ) : (
-                              <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-500" />
-                            )}
-                            <span>{geoTimelineStatus.message}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <button type="button" onClick={() => setMobileDrawer(null)} className="p-1 text-[var(--text-muted)] hover:text-white cursor-pointer">
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-            )}
-
-            {/* TAB 2: 8 CATHOLIC BLOCKS FAST ACCESS */}
-            {sidebarTab === 'blocks' && (
-              <div className="p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                    <BookOpen className="w-3.5 h-3.5" /> 8 Khối Chuẩn Công Giáo
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setShowBlockModal(true)}
-                    className="text-[10px] text-amber-500 hover:underline font-bold"
-                  >
-                    Xem Sổ Tay ↗
-                  </button>
-                </div>
-
-                <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
-                  Nhấp vào bất kỳ khối nào bên dưới để chèn mẫu HTML chuẩn vào vị trí con trỏ:
-                </p>
-
-                <div className="space-y-2">
-                  {[
-                    {
-                      name: '1. Lời Chúa Soi Đường',
-                      desc: 'Trích dẫn Lời Chúa viền vàng & tra cứu Kinh Thánh',
-                      icon: <BookOpen className="w-4 h-4 text-amber-500" />,
-                      action: () => handleInsertCatholicBlock(`<div class="sacred-scripture veridu-scripture-quote my-8 p-6 sm:p-7 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-l-4 border-amber-500 shadow-lg backdrop-blur-sm relative overflow-hidden not-prose"><div class="flex items-start gap-4"><div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5 border border-amber-500/30"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg></div><div class="space-y-2.5 flex-1"><blockquote class="font-serif italic text-lg sm:text-xl text-amber-950 dark:text-amber-100 leading-relaxed m-0 p-0 border-0 bg-transparent">“Ngài phải nổi bật lên, còn tôi phải lu mờ đi.”</blockquote><div class="flex items-center gap-2 pt-1"><a href="/kinh-thanh/ga/3" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-900 dark:text-amber-300 font-mono text-xs font-bold border border-amber-500/30 transition-all shadow-xs group"><span>Ga 3:30</span><span class="text-[10px] text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform">↗</span></a></div></div></div></div>`)
-                    },
-                    {
-                      name: '2. Thơ & Lời Nguyện Kính',
-                      desc: 'Lời cầu nguyện sốt mến sắc tím & Amen',
-                      icon: <Heart className="w-4 h-4 text-indigo-500" />,
-                      action: () => handleInsertCatholicBlock(`<div class="prayer-block my-8 p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent border border-indigo-500/30 shadow-xl backdrop-blur-md not-prose"><div class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-2 font-serif mb-3"><span>🕊️</span> LỜI NGUYỆN KÍNH PHỤNG VỤ</div><p class="font-serif italic text-indigo-950 dark:text-indigo-100 text-base sm:text-lg leading-relaxed m-0">“Lạy Chúa Giêsu Thánh Thể, xin ngự vào tâm hồn chúng con, ban cho chúng con ơn bình an, đức tin kiên vững và lòng nhiệt thành phụng sự Hội Thánh...”</p><div class="prayer-amen text-right font-serif font-bold text-amber-600 dark:text-amber-400 text-sm mt-3">Amen.</div></div>`)
-                    },
-                    {
-                      name: '3. Tóm Tắt Nghiên Cứu Thần Học',
-                      desc: 'Thẻ tóm tắt học thuật VERIDU RESEARCH',
-                      icon: <FileText className="w-4 h-4 text-indigo-500" />,
-                      action: () => handleInsertCatholicBlock(`<div class="abstract-research my-8 p-6 sm:p-8 rounded-3xl bg-indigo-500/10 border border-indigo-500/30 shadow-xl backdrop-blur-md space-y-4 not-prose"><div class="abstract-header flex items-center justify-between border-b border-indigo-500/20 pb-3"><span class="text-xs font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 flex items-center gap-2 font-serif"><span>📖</span> TÓM TẮT NGHIÊN CỨU THẦN HỌC</span><span class="abstract-badge text-[10px] px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 font-bold font-mono">VERIDU RESEARCH</span></div><p class="font-serif text-sm sm:text-base leading-relaxed text-[var(--text-main)] m-0">Khảo luận chuyên sâu về nền tảng tín lý và bối cảnh lịch sử của Tín Điều Theotokos tại Công đồng Êphêsô (431), làm rõ sự hiệp nhất hai bản tính trong duy nhất một Ngôi Vị Thiên Chúa.</p><div class="flex flex-wrap gap-2 pt-2 border-t border-indigo-500/10"><span class="text-[10px] px-2.5 py-1 rounded-lg bg-[var(--bg-card)] text-indigo-600 dark:text-indigo-300 font-bold border border-indigo-500/20">#Theotokos</span><span class="text-[10px] px-2.5 py-1 rounded-lg bg-[var(--bg-card)] text-indigo-600 dark:text-indigo-300 font-bold border border-indigo-500/20">#Epheso431</span></div></div>`)
-                    },
-                    {
-                      name: '4. Bằng Chứng Thánh Kinh',
-                      desc: 'Bảng danh mục luận điểm & câu đối chiếu',
-                      icon: <ListChecks className="w-4 h-4 text-amber-500" />,
-                      action: () => handleInsertCatholicBlock(`<div class="scripture-meta my-8 p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-4 not-prose"><div class="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-serif font-black text-sm uppercase tracking-wider border-b border-[var(--border-card)] pb-3"><span>📜</span> DANH MỤC BẰNG CHỨNG THÁNH KINH</div><div class="space-y-3"><div class="scripture-item flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)]/60"><span class="scripture-claim font-bold text-xs text-[var(--text-main)]">Hòm Bia Giao Ước Mới:</span><span class="scripture-refs font-mono text-xs font-bold text-amber-600 dark:text-amber-400">Xh 40,34-35; Lc 1,35; Kh 11,19</span></div><div class="scripture-item flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)]/60"><span class="scripture-claim font-bold text-xs text-[var(--text-main)]">Đấng Trung Gian Duy Nhất:</span><span class="scripture-refs font-mono text-xs font-bold text-amber-600 dark:text-amber-400">1Tm 2,5; Dt 9,15</span></div></div></div>`)
-                    },
-                    {
-                      name: '5. Thuật Ngữ Thần Học',
-                      desc: 'Giải nghĩa thuật ngữ kèm từ nguyên Hy Lạp/Latin',
-                      icon: <HelpCircle className="w-4 h-4 text-indigo-500" />,
-                      action: () => handleInsertCatholicBlock(`<div class="dictionary-meta my-8 p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-4 not-prose"><div class="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-serif font-black text-sm uppercase tracking-wider border-b border-[var(--border-card)] pb-3"><span>📚</span> THUẬT NGỮ GIÁO LÝ & THẦN HỌC</div><div class="space-y-3"><div class="p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] space-y-1"><div class="font-bold text-xs text-amber-600 dark:text-amber-400 flex items-center gap-2"><span>Theotokos</span><span class="text-[10px] font-mono text-[var(--text-muted)] font-normal">(Hy Lạp: Θεοτόκος)</span></div><p class="text-xs text-[var(--text-main)] leading-relaxed m-0">Tước hiệu Mẹ Thiên Chúa, được tuyên tín tại Công đồng Êphêsô (431) nhằm khẳng định Đức Kitô là Thiên Chúa thật và con người thật.</p></div></div></div>`)
-                    },
-                    {
-                      name: '6. Hình Ảnh Nghệ Thuật Thánh',
-                      desc: 'Ảnh kèm chú thích & hỗ trợ Lightbox phóng to',
-                      icon: <ImageIcon className="w-4 h-4 text-emerald-500" />,
-                      action: () => handleInsertCatholicBlock(`<figure class="veridu-image-block my-8 mx-auto text-center not-prose"><img src="https://images.unsplash.com/photo-1548625361-1959728b4e87?auto=format&fit=crop&w=1200&q=80" alt="Nghệ Thuật Thánh Đường" data-lightbox="true" referrerpolicy="no-referrer" class="max-w-full h-auto rounded-3xl shadow-2xl mx-auto block cursor-zoom-in hover:scale-[1.01] transition-transform duration-300 border border-[var(--border-card)]" /><figcaption class="mt-3 text-xs italic text-[var(--text-muted)] font-serif max-w-xl mx-auto">Bích họa Nghệ Thuật Thánh Đường Công Giáo — Kiệt tác nghệ thuật phụng vụ.</figcaption></figure>`)
-                    },
-                    {
-                      name: '7. Video Nhúng 16:9',
-                      desc: 'Khung video YouTube/Vimeo tỷ lệ vàng 16:9',
-                      icon: <Video className="w-4 h-4 text-rose-500" />,
-                      action: () => handleInsertCatholicBlock(`<div class="veridu-embed-video w-full aspect-video rounded-3xl shadow-2xl overflow-hidden border border-[var(--border-card)] my-8 bg-black relative z-10 not-prose"><iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" class="w-full h-full border-none" title="Video Phụng Vụ VERIDU" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`)
-                    },
-                    {
-                      name: '8. Hộp Lưu Ý & Cảnh Báo',
-                      desc: 'Hộp nhấn mạnh giáo lý 4 cấp phụng vụ',
-                      icon: <AlertTriangle className="w-4 h-4 text-amber-500" />,
-                      action: () => handleInsertCatholicBlock(`<div class="catechetical-callout callout-important my-6 p-5 sm:p-6 border-l-4 border-amber-500 rounded-r-2xl bg-amber-500/10 text-amber-900 dark:text-amber-200 backdrop-blur-md shadow-md space-y-1.5 not-prose"><div class="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5"><span>⭐</span> QUAN TRỌNG: TÍN LÝ HỘI THÁNH</div><div class="text-xs sm:text-sm leading-relaxed font-serif text-[var(--text-main)]">Tín điều về Bí tích Thánh Thể là trung tâm và tột đỉnh của toàn bộ đời sống Kitô hữu (Lumen Gentium, 11).</div></div>`)
-                    }
-                  ].map((item, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={item.action}
-                      className="w-full text-left p-2.5 rounded-xl bg-[var(--bg-main)] hover:bg-amber-500/10 border border-[var(--border-card)] hover:border-amber-500/40 transition-all flex items-start gap-2.5 group cursor-pointer"
-                    >
-                      <div className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-card)] group-hover:border-amber-500/30 shrink-0">
-                        {item.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-bold text-[var(--text-main)] group-hover:text-amber-500 transition">
-                          {item.name}
-                        </div>
-                        <p className="text-[10px] text-[var(--text-muted)] line-clamp-1">
-                          {item.desc}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+              <div className="overflow-y-auto flex-1">
+                {renderLeftPanelContent()}
               </div>
-            )}
-
-            {/* TAB 3: FILE IMPORT & DIAGNOSTICS */}
-            {sidebarTab === 'tools' && (
-              <div className="p-4 space-y-4">
-                <div className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
-                  <Upload className="w-3.5 h-3.5" /> Nạp &amp; Chuyển Hóa Tệp .HTML
-                </div>
-                
-                {uploadedFileName ? (
-                  <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 space-y-2">
-                    <div className="flex items-center justify-between text-xs font-bold text-indigo-600 dark:text-indigo-300">
-                      <span className="truncate flex items-center gap-1">
-                        <FileCode className="w-4 h-4 shrink-0" /> {uploadedFileName}
-                      </span>
-                      <span className="text-[10px] opacity-80 shrink-0">{uploadedFileSize}</span>
-                    </div>
-
-                    {detectedFeatures.length > 0 && (
-                      <div className="flex flex-wrap gap-1 pt-1">
-                        {detectedFeatures.map((f, i) => (
-                          <span key={i} className="text-[9px] px-2 py-0.5 rounded-md bg-indigo-950/60 text-indigo-200 border border-indigo-500/20">
-                            ✓ {f}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="pt-2 text-[11px]">
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="text-amber-600 dark:text-amber-400 hover:underline font-bold flex items-center gap-1 cursor-pointer"
-                      >
-                        <RefreshCw className="w-3 h-3" /> Nạp tệp khác
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-4 rounded-2xl bg-[var(--bg-main)] border border-dashed border-[var(--border-card)] text-center space-y-3">
-                    <Upload className="w-8 h-8 text-[var(--text-muted)] mx-auto" />
-                    <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
-                      Kéo thả hoặc tải lên tệp <code className="px-1 py-0.5 rounded bg-[var(--bg-card)] font-mono text-[10px]">.html</code> để tự động trích xuất tiêu đề, hình ảnh và chuyển hóa thành định dạng Stained-Glass.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-md shadow-indigo-600/20"
-                    >
-                      Chọn Tệp .HTML Từ Máy Tính
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-          </aside>
+            </div>
+          </div>
         )}
 
-        {/* ➡️ RIGHT WORKBENCH: LIVE VISUAL CANVAS / CODE EDITOR / READER PREVIEW */}
-        <main className="flex-1 bg-[var(--bg-main)] p-3 sm:p-6 lg:p-8 h-auto lg:h-[calc(100vh-7.5rem)] overflow-y-auto flex flex-col items-center">
-          <div className={`w-full ${activeTab === 'preview' ? getDeviceWidthClass() : 'max-w-4xl'} transition-all duration-300 space-y-4`}>
+        {/* Floating Left Expand Button (When Left Panel is Collapsed on Desktop) */}
+        {!leftPanelOpen && (
+          <button
+            type="button"
+            onClick={() => setLeftPanelOpen(true)}
+            className="absolute left-3 top-4 z-20 p-2 rounded-xl bg-[var(--bg-card)] hover:bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-[var(--border-card)] shadow-lg transition-all hidden lg:flex items-center gap-1.5 text-xs font-bold cursor-pointer hover:scale-105 group"
+            title="Mở Bảng Cài Đặt Bài Viết"
+          >
+            <Settings className="w-3.5 h-3.5" />
+            <span className="hidden xl:inline text-[11px]">Cài Đặt</span>
+            <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+          </button>
+        )}
+
+        {/* 🎯 COLUMN 2: CENTER CANVAS (INDEPENDENT WORKSPACE SCROLL, NO TOOLBAR OVERLAP) */}
+        <main className="flex-1 h-full overflow-y-auto bg-slate-950/40 p-3 sm:p-6 lg:p-8 flex flex-col items-center relative">
+          <div className={`w-full ${activeTab === 'preview' ? getDeviceWidthClass() : canvasDevice === 'mobile' ? 'max-w-[375px]' : canvasDevice === 'tablet' ? 'max-w-[768px]' : 'max-w-4xl'} transition-all duration-300 space-y-4 pb-16`}>
 
             {/* Diagnostics Banner */}
             {analysisNotice && (
@@ -1404,7 +1557,7 @@ function DangBaiContent() {
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="font-serif font-bold text-amber-500">Live Visual Canvas</span>
-                    <span>— Nhấp trực tiếp vào chữ để sửa, bôi đen để định dạng.</span>
+                    <span className="hidden sm:inline">— Nhấp trực tiếp vào chữ để sửa, bôi đen để định dạng.</span>
                   </div>
                   <button
                     type="button"
@@ -1424,34 +1577,25 @@ function DangBaiContent() {
                       {category}
                     </span>
                     <h1 
-                      contentEditable="true"
-                      suppressContentEditableWarning={true}
-                      onBlur={(e) => {
-                        const newT = e.currentTarget.textContent || '';
-                        handleTitleChange(newT);
-                      }}
-                      className="font-serif font-black text-2xl sm:text-4xl md:text-5xl text-[var(--text-main)] outline-none focus:ring-2 focus:ring-amber-500/30 rounded-2xl p-2 transition-all leading-tight cursor-text"
-                      title="Nhấp vào để đổi tiêu đề bài viết"
+                      contentEditable
+                      suppressContentEditableWarning
+                      onBlur={(e) => setTitle(e.currentTarget.textContent || '')}
+                      className="font-serif font-black text-2xl sm:text-4xl text-[var(--text-main)] leading-tight outline-none focus:ring-2 focus:ring-amber-500/40 rounded-xl px-2 py-1 transition cursor-text"
                     >
                       {title || 'Tiêu Đề Bài Viết...'}
                     </h1>
                   </div>
 
-                  {/* DIRECT CONTENT EDITABLE CONTAINER */}
+                  {/* 🌟 FLOATING FORMAT TOOLBAR */}
+                  <FloatingFormatToolbar editorRef={visualCanvasRef} onContentChange={handleCanvasInput} />
+
+                  {/* 🌟 WYSIWYG CONTENTEDITABLE CANVAS */}
                   <div
                     ref={visualCanvasRef}
-                    contentEditable="true"
-                    suppressContentEditableWarning={true}
+                    contentEditable
+                    suppressContentEditableWarning
                     onInput={handleCanvasInput}
-                    onBlur={handleCanvasInput}
-                    className="veridu-article-body article-prose font-serif text-base sm:text-lg leading-relaxed text-[var(--text-main)] outline-none min-h-[500px] focus:ring-1 focus:ring-amber-500/20 rounded-2xl p-2 cursor-text select-text"
-                    data-placeholder="Nhấp chuột vào đây để bắt đầu viết bài..."
-                  />
-
-                  {/* Selection-activated Floating Format Toolbar */}
-                  <FloatingFormatToolbar 
-                    editorRef={visualCanvasRef} 
-                    onContentChange={handleCanvasInput} 
+                    className="prose dark:prose-invert prose-amber max-w-none font-serif text-base sm:text-lg leading-relaxed text-[var(--text-main)] outline-none min-h-[500px] focus:ring-0 selection:bg-amber-500/30 cursor-text space-y-4"
                   />
 
                 </div>
@@ -1459,58 +1603,39 @@ function DangBaiContent() {
             )}
 
             {/* ══════════════════════════════════════════════════════════════════════════════
-                MODE 2: 💻 HTML CODE EDITOR (DIRECT SOURCE CODE EDITING)
+                MODE 2: 💻 HTML CODE EDITOR
                 ══════════════════════════════════════════════════════════════════════════════ */}
             {activeTab === 'code' && (
               <div className="space-y-3">
-                {/* Code Editor Toolbar */}
-                <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-md">
-                  <div className="flex items-center gap-2 text-xs font-mono text-amber-400 font-bold">
-                    <FileCode className="w-4 h-4" />
-                    <span>Mã Nguồn HTML (Chỉnh sửa trực tiếp):</span>
+                <div className="flex items-center justify-between px-2 text-xs text-[var(--text-muted)]">
+                  <div className="flex items-center gap-2">
+                    <FileCode className="w-4 h-4 text-indigo-400" />
+                    <span className="font-mono text-indigo-400 font-bold">Mã Nguồn HTML</span>
+                    <span>— Tự do chỉnh sửa mã nguồn HTML và các lớp CSS Stained-Glass.</span>
                   </div>
-
-                  <div className="flex items-center gap-1.5 flex-wrap text-xs">
-                    <button
-                      type="button"
-                      onClick={() => setShowBlockModal(true)}
-                      className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500 text-amber-900 dark:text-amber-300 hover:text-slate-950 rounded-lg font-bold transition-all border border-amber-500/30 cursor-pointer"
-                    >
-                      + Chèn Khối Chuẩn
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const cleaned = normalizeAndSyncHtml(contentHtml);
-                        setContentHtml(cleaned);
-                        setMessage({ type: 'success', text: 'Đã chuẩn hóa cấu trúc HTML!' });
-                        setTimeout(() => setMessage(null), 2000);
-                      }}
-                      className="px-2.5 py-1 bg-[var(--bg-main)] hover:bg-indigo-500/20 text-[var(--text-muted)] hover:text-indigo-400 rounded-lg font-medium transition-all border border-[var(--border-card)] cursor-pointer"
-                    >
-                      ✨ Chuẩn Hóa
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => switchTab('visual')}
+                    className="text-amber-500 hover:underline font-bold text-xs flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Quay lại Trực Quan ↗</span>
+                  </button>
                 </div>
 
-                {/* Monospace Code Editor Area */}
-                <div className="relative rounded-3xl overflow-hidden border border-[var(--border-card)] bg-slate-950 shadow-2xl">
-                  <div className="flex items-center justify-between px-4 py-2 bg-slate-900/90 border-b border-white/10 text-xs font-mono text-slate-400">
-                    <span>index.html ({contentHtml.length} ký tự)</span>
-                    <span className="text-amber-400">Đồng bộ 1:1 với Live Canvas</span>
+                <div className="rounded-3xl border border-[var(--border-card)] bg-slate-950 p-4 sm:p-6 shadow-2xl space-y-3">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-800 text-xs">
+                    <span className="font-mono text-slate-400">article_content.html</span>
+                    <span className="text-[10px] font-mono text-slate-500">
+                      {contentHtml.length.toLocaleString('vi-VN')} ký tự
+                    </span>
                   </div>
+
                   <textarea
                     value={contentHtml}
-                    onChange={(e) => {
-                      const newHtml = e.target.value;
-                      setContentHtml(newHtml);
-                      if (visualCanvasRef.current) {
-                        visualCanvasRef.current.innerHTML = newHtml;
-                      }
-                    }}
-                    rows={24}
-                    placeholder="Nhập hoặc dán mã HTML tại đây..."
-                    className="w-full p-5 bg-transparent font-mono text-xs sm:text-sm text-amber-300 outline-none leading-relaxed resize-y selection:bg-amber-500 selection:text-slate-950 custom-scrollbar"
+                    onChange={(e) => setContentHtml(e.target.value)}
+                    rows={26}
+                    className="w-full bg-transparent text-amber-200 font-mono text-xs sm:text-sm leading-relaxed outline-none resize-y border-none p-0 focus:ring-0 selection:bg-indigo-500/40"
+                    placeholder="<p>Dán mã HTML bài viết tại đây...</p>"
                     spellCheck={false}
                   />
                 </div>
@@ -1518,55 +1643,20 @@ function DangBaiContent() {
             )}
 
             {/* ══════════════════════════════════════════════════════════════════════════════
-                MODE 3: 👁️ READER PREVIEW (FULL STAINED-GLASS READING VIEW)
-                ══════════════════════════════════════════════════════════════════════════════ */}
+                MODE 3: 👁️ READER VIEW PREVIEW (FULL RENDERER)
+                ══════════════════════════════════════════════════════ */}
             {activeTab === 'preview' && (
               <div className="space-y-4">
-                
-                {/* Device Switcher Bar */}
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-md">
-                  <div className="text-xs font-bold text-[var(--text-muted)] flex items-center gap-2">
-                    <Eye className="w-4 h-4 text-amber-500" />
-                    <span>Xem Thử Độc Giả:</span>
-                  </div>
-
-                  <div className="flex items-center gap-1 bg-[var(--bg-main)] p-1 rounded-xl border border-[var(--border-card)]">
-                    <button
-                      type="button"
-                      onClick={() => setCanvasDevice('desktop')}
-                      className={`p-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
-                        canvasDevice === 'desktop' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-[var(--text-muted)] hover:text-amber-500'
-                      }`}
-                      title="Xem màn hình Máy tính (100%)"
-                    >
-                      <Monitor className="w-3.5 h-3.5" /> <span className="text-[10px] hidden sm:inline">Desktop</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCanvasDevice('tablet')}
-                      className={`p-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
-                        canvasDevice === 'tablet' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-[var(--text-muted)] hover:text-amber-500'
-                      }`}
-                      title="Xem màn hình Tablet (768px)"
-                    >
-                      <Tablet className="w-3.5 h-3.5" /> <span className="text-[10px] hidden sm:inline">Tablet</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCanvasDevice('mobile')}
-                      className={`p-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
-                        canvasDevice === 'mobile' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-[var(--text-muted)] hover:text-amber-500'
-                      }`}
-                      title="Xem màn hình Điện thoại (375px)"
-                    >
-                      <Smartphone className="w-3.5 h-3.5" /> <span className="text-[10px] hidden sm:inline">Mobile</span>
-                    </button>
+                <div className="flex items-center justify-between px-2 text-xs text-[var(--text-muted)]">
+                  <div className="flex items-center gap-2">
+                    <Eye className="w-4 h-4 text-emerald-400" />
+                    <span className="font-serif font-bold text-emerald-400">Xem Trước Độc Giả</span>
+                    <span>— Bài viết hiển thị thực tế trên website sau khi xuất bản.</span>
                   </div>
                 </div>
 
-                {/* Stained-Glass Reader Article Card */}
-                <div className="p-6 sm:p-12 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-2xl space-y-6">
-                  <div className="border-b border-[var(--border-card)] pb-6 text-center space-y-3">
+                <div className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-2xl p-6 sm:p-10 md:p-12 overflow-hidden">
+                  <div className="border-b border-[var(--border-card)] pb-6 mb-8 text-center space-y-3">
                     <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-serif font-black uppercase tracking-wider">
                       {category}
                     </span>
@@ -1587,6 +1677,134 @@ function DangBaiContent() {
 
           </div>
         </main>
+
+        {/* Floating Right Expand Button (When Right Panel is Collapsed on Desktop) */}
+        {!rightPanelOpen && (
+          <button
+            type="button"
+            onClick={() => setRightPanelOpen(true)}
+            className="absolute right-3 top-4 z-20 p-2 rounded-xl bg-[var(--bg-card)] hover:bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-[var(--border-card)] shadow-lg transition-all hidden lg:flex items-center gap-1.5 text-xs font-bold cursor-pointer hover:scale-105 group"
+            title="Mở Thư Viện 8 Khối & Mục Lục"
+          >
+            <ChevronLeft className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform" />
+            <span className="hidden xl:inline text-[11px]">8 Khối &amp; Mục Lục</span>
+            <Layers className="w-3.5 h-3.5" />
+          </button>
+        )}
+
+        {/* ➡️ COLUMN 3: RIGHT PANEL (8 BLOCKS LIBRARY, OUTLINE, HTML FILE) - DESKTOP */}
+        <aside className={`shrink-0 bg-[var(--bg-card)] border-l border-[var(--border-card)] flex flex-col h-full transition-all duration-300 z-20 ${
+          rightPanelOpen ? 'w-80 xl:w-96' : 'w-0 overflow-hidden border-l-0'
+        } hidden lg:flex`}>
+          
+          {/* Tabs Header */}
+          <div className="border-b border-[var(--border-card)] bg-[var(--bg-main)] p-2 flex items-center justify-between shrink-0 gap-1">
+            <div className="flex items-center gap-1 flex-1">
+              <button
+                type="button"
+                onClick={() => setRightPanelTab('blocks')}
+                className={`flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition flex items-center justify-center gap-1 cursor-pointer ${
+                  rightPanelTab === 'blocks' ? 'bg-amber-500 text-slate-950 shadow-xs font-black' : 'text-[var(--text-muted)] hover:text-amber-500'
+                }`}
+                title="8 Khối Chuẩn Công Giáo"
+              >
+                <BookOpen className="w-3 h-3" />
+                <span>8 Khối</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRightPanelTab('outline')}
+                className={`flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition flex items-center justify-center gap-1 cursor-pointer ${
+                  rightPanelTab === 'outline' ? 'bg-amber-500 text-slate-950 shadow-xs font-black' : 'text-[var(--text-muted)] hover:text-amber-500'
+                }`}
+                title="Mục Lục Tự Động"
+              >
+                <ListChecks className="w-3 h-3" />
+                <span>Mục Lục ({documentHeadings.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRightPanelTab('tools')}
+                className={`flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition flex items-center justify-center gap-1 cursor-pointer ${
+                  rightPanelTab === 'tools' ? 'bg-amber-500 text-slate-950 shadow-xs font-black' : 'text-[var(--text-muted)] hover:text-amber-500'
+                }`}
+                title="Nạp Tệp .HTML"
+              >
+                <Upload className="w-3 h-3" />
+                <span>Nạp File</span>
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setRightPanelOpen(false)}
+              className="p-1 rounded-lg hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 transition cursor-pointer shrink-0"
+              title="Thu gọn Cột Phải (▶)"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Tab Content Body */}
+          <div className="overflow-y-auto flex-1">
+            {renderRightPanelContent()}
+          </div>
+        </aside>
+
+        {/* Mobile / Tablet Right Slide-Over Drawer */}
+        {mobileDrawer === 'right' && (
+          <div className="fixed inset-0 z-50 flex justify-end lg:hidden">
+            <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs" onClick={() => setMobileDrawer(null)} />
+            <div className="relative w-80 max-w-[85vw] bg-[var(--bg-card)] h-full z-50 flex flex-col shadow-2xl border-l border-[var(--border-card)] animate-in slide-in-from-right duration-200">
+              <div className="p-3 border-b border-[var(--border-card)] bg-[var(--bg-main)] flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>8 Khối &amp; Mục Lục</span>
+                </div>
+                <button type="button" onClick={() => setMobileDrawer(null)} className="p-1 text-[var(--text-muted)] hover:text-white cursor-pointer">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Drawer Tabs */}
+              <div className="p-2 border-b border-[var(--border-card)] bg-[var(--bg-card)] flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setRightPanelTab('blocks')}
+                  className={`flex-1 py-1 px-2 text-[10px] font-bold rounded-lg transition ${
+                    rightPanelTab === 'blocks' ? 'bg-amber-500 text-slate-950' : 'text-[var(--text-muted)]'
+                  }`}
+                >
+                  8 Khối
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRightPanelTab('outline')}
+                  className={`flex-1 py-1 px-2 text-[10px] font-bold rounded-lg transition ${
+                    rightPanelTab === 'outline' ? 'bg-amber-500 text-slate-950' : 'text-[var(--text-muted)]'
+                  }`}
+                >
+                  Mục Lục ({documentHeadings.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRightPanelTab('tools')}
+                  className={`flex-1 py-1 px-2 text-[10px] font-bold rounded-lg transition ${
+                    rightPanelTab === 'tools' ? 'bg-amber-500 text-slate-950' : 'text-[var(--text-muted)]'
+                  }`}
+                >
+                  Nạp File
+                </button>
+              </div>
+
+              <div className="overflow-y-auto flex-1">
+                {renderRightPanelContent()}
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
 

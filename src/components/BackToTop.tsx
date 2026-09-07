@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { ArrowUp } from 'lucide-react';
 
 export default function BackToTop() {
+  const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -26,7 +28,7 @@ export default function BackToTop() {
     });
   };
 
-  if (!isVisible) return null;
+  if (!isVisible || pathname === '/dang-bai' || pathname?.startsWith('/dang-bai/')) return null;
 
   return (
     <button

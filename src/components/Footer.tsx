@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { 
   BookOpen, 
   MapPin, 
@@ -26,17 +27,11 @@ import {
 import { supabase } from '@/lib/supabaseClient';
 
 export default function Footer() {
+  const pathname = usePathname();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [pathname, setPathname] = useState('');
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setPathname(window.location.pathname);
-    }
-  }, []);
 
   useEffect(() => {
     // Detect theme state from documentElement
@@ -92,7 +87,7 @@ export default function Footer() {
     ? '/images/veridu_logo_light.png' 
     : '/images/veridu_logo_dark.png';
 
-  if (pathname?.startsWith('/thu-vien/doc/')) {
+  if (pathname?.startsWith('/thu-vien/doc/') || pathname === '/dang-bai' || pathname?.startsWith('/dang-bai/')) {
     return null;
   }
 
