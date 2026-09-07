@@ -216,6 +216,8 @@ function DangBaiContent() {
   const jsonFileInputRef = useRef<HTMLInputElement>(null);
   const locFileInputRef = useRef<HTMLInputElement>(null);
   const timelineFileInputRef = useRef<HTMLInputElement>(null);
+  const [geoViewMode, setGeoViewMode] = useState<'cards' | 'json'>('cards');
+  const [isGeoDragging, setIsGeoDragging] = useState(false);
 
   // Check auth
   useEffect(() => {
@@ -390,10 +392,33 @@ function DangBaiContent() {
           incomingLocs = parsed;
         }
       }
-    } else if (typeof parsed === 'object' && parsed !== null) {
-      if (Array.isArray(parsed.locations)) incomingLocs = parsed.locations;
-      if (Array.isArray(parsed.timeline_events)) incomingEvts = parsed.timeline_events;
-      else if (Array.isArray(parsed.events)) incomingEvts = parsed.events;
+    } else if (parsed && typeof parsed === 'object') {
+      // Support standard GeoJSON FeatureCollection
+      if (parsed.type === 'FeatureCollection' && Array.isArray(parsed.features)) {
+        incomingLocs = parsed.features.map((f: any) => {
+          const coords = f.geometry?.coordinates;
+          const lng = Array.isArray(coords) ? coords[0] : (f.longitude ?? f.lng);
+          const lat = Array.isArray(coords) ? coords[1] : (f.latitude ?? f.lat);
+          const props = f.properties || {};
+          return {
+            name: props.name || props.title || 'Địa danh khảo cổ',
+            ancient_name: props.ancient_name || props.name_original || '',
+            latitude: Number(lat),
+            longitude: Number(lng),
+            description: props.description || props.summary || '',
+            scripture_or_history: props.scripture_or_history || props.biblical_references || props.bible_references || '',
+            historical_period: props.historical_period || props.period || props.era || ''
+          };
+        }).filter((l: any) => !isNaN(l.latitude) && !isNaN(l.longitude));
+      } else {
+        if (Array.isArray(parsed.locations)) incomingLocs = parsed.locations;
+        else if (Array.isArray(parsed.places)) incomingLocs = parsed.places;
+        else if (Array.isArray(parsed.map_locations)) incomingLocs = parsed.map_locations;
+
+        if (Array.isArray(parsed.timeline_events)) incomingEvts = parsed.timeline_events;
+        else if (Array.isArray(parsed.events)) incomingEvts = parsed.events;
+        else if (Array.isArray(parsed.timeline)) incomingEvts = parsed.timeline;
+      }
     }
 
     // Merge locations
@@ -494,6 +519,68 @@ function DangBaiContent() {
     };
     reader.readAsText(file);
     e.target.value = '';
+  };
+
+  const parsedGeoTimeline = useMemo(() => {
+    if (!geoTimelineJson.trim()) return { locations: [], timeline_events: [] };
+    try {
+      const obj = JSON.parse(geoTimelineJson);
+      return {
+        locations: Array.isArray(obj.locations) ? obj.locations : [],
+        timeline_events: Array.isArray(obj.timeline_events) ? obj.timeline_events : Array.isArray(obj.events) ? obj.events : []
+      };
+    } catch {
+      return { locations: [], timeline_events: [] };
+    }
+  }, [geoTimelineJson]);
+
+  const handleRemoveLocation = (indexToRemove: number) => {
+    try {
+      const obj = JSON.parse(geoTimelineJson);
+      const locs = Array.isArray(obj.locations) ? obj.locations : [];
+      const evts = Array.isArray(obj.timeline_events) ? obj.timeline_events : Array.isArray(obj.events) ? obj.events : [];
+      const newLocs = locs.filter((_: any, idx: number) => idx !== indexToRemove);
+      const newObj = { locations: newLocs, timeline_events: evts };
+      const jsonStr = JSON.stringify(newObj, null, 2);
+      setGeoTimelineJson(jsonStr);
+      validateGeoTimelineJson(jsonStr);
+      setMessage({ type: 'success', text: 'Đã xóa địa danh khỏi danh sách đính kèm.' });
+      setTimeout(() => setMessage(null), 2500);
+    } catch {}
+  };
+
+  const handleRemoveTimelineEvent = (indexToRemove: number) => {
+    try {
+      const obj = JSON.parse(geoTimelineJson);
+      const locs = Array.isArray(obj.locations) ? obj.locations : [];
+      const evts = Array.isArray(obj.timeline_events) ? obj.timeline_events : Array.isArray(obj.events) ? obj.events : [];
+      const newEvts = evts.filter((_: any, idx: number) => idx !== indexToRemove);
+      const newObj = { locations: locs, timeline_events: newEvts };
+      const jsonStr = JSON.stringify(newObj, null, 2);
+      setGeoTimelineJson(jsonStr);
+      validateGeoTimelineJson(jsonStr);
+      setMessage({ type: 'success', text: 'Đã xóa mốc thời gian khỏi danh sách đính kèm.' });
+      setTimeout(() => setMessage(null), 2500);
+    } catch {}
+  };
+
+  const handleInsertMapCalloutBlock = () => {
+    const locCount = parsedGeoTimeline.locations.length;
+    const evtCount = parsedGeoTimeline.timeline_events.length;
+    const calloutHtml = `<div class="article-geo-callout my-8 p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-l-4 border-amber-500 shadow-xl backdrop-blur-md not-prose">
+  <div class="flex items-center justify-between gap-2 border-b border-amber-500/20 pb-2.5 mb-3">
+    <span class="text-xs font-serif font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-2">
+      <span>📍</span> TỌA ĐỘ KHẢO CỔ &amp; DÒNG THỜI GIAN ĐỐI CHIẾU
+    </span>
+    <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300">
+      ${locCount} Địa Danh • ${evtCount} Mốc Cứu Độ
+    </span>
+  </div>
+  <p class="font-serif text-sm leading-relaxed text-[var(--text-main)] m-0">
+    Bài viết này đã được định vị trên <strong>Bản Đồ Thánh Địa 3D</strong> và <strong>Dòng Thời Gian Lịch Sử Cứu Độ</strong> của VERIDU. Kéo xuống cuối trang để trải nghiệm bản đồ tương tác Leaflet và các di chỉ liên quan.
+  </p>
+</div>`;
+    handleInsertCatholicBlock(calloutHtml);
   };
 
   const handleClearGeoTimeline = () => {
@@ -918,82 +1005,288 @@ function DangBaiContent() {
           </button>
 
           {showGeoTimelineSection && (
-            <div className="mt-3 space-y-3 p-3 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] animate-fadeIn">
-              <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
-                Đính kèm dữ liệu tọa độ địa lý (Leaflet) và các mốc lịch sử cứu độ (Salvation Timeline) cho bài viết.
-              </p>
+            <div className="mt-3 space-y-3 p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] shadow-xs animate-fadeIn">
+              
+              {/* HIDDEN FILE INPUTS FOR DIRECT PC UPLOAD */}
+              <input
+                type="file"
+                ref={locFileInputRef}
+                accept=".json,.geojson"
+                onChange={(e) => handleUploadGeoFile(e, 'locations')}
+                className="hidden"
+              />
+              <input
+                type="file"
+                ref={timelineFileInputRef}
+                accept=".json"
+                onChange={(e) => handleUploadGeoFile(e, 'timeline')}
+                className="hidden"
+              />
+              <input
+                type="file"
+                ref={jsonFileInputRef}
+                accept=".json,.geojson"
+                onChange={(e) => handleUploadGeoFile(e)}
+                className="hidden"
+              />
 
-              {/* Upload Actions Grid */}
+              {/* DRAG & DROP ZONE */}
+              <div
+                onDragOver={(e) => { e.preventDefault(); setIsGeoDragging(true); }}
+                onDragLeave={() => setIsGeoDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsGeoDragging(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                      const fileContent = event.target?.result as string;
+                      const res = smartNormalizeAndMergeGeoTimeline(fileContent, geoTimelineJson);
+                      setGeoTimelineJson(res.normalizedJson);
+                      setGeoTimelineStatus(res.status);
+                      setShowGeoTimelineSection(true);
+                      setMessage({ type: 'success', text: `Đã nạp tệp "${file.name}" từ máy tính thành công!` });
+                      setTimeout(() => setMessage(null), 3500);
+                    };
+                    reader.readAsText(file);
+                  }
+                }}
+                onClick={() => jsonFileInputRef.current?.click()}
+                className={`p-3 rounded-xl border-2 border-dashed transition-all text-center cursor-pointer ${
+                  isGeoDragging
+                    ? 'border-amber-500 bg-amber-500/20 scale-[1.01]'
+                    : 'border-[var(--border-card)] hover:border-amber-500/50 bg-[var(--bg-card)]'
+                }`}
+                title="Bấm để chọn tệp hoặc kéo thả tệp .json / .geojson vào đây"
+              >
+                <div className="flex items-center justify-center gap-1.5 text-xs font-serif font-bold text-amber-600 dark:text-amber-400">
+                  <Upload className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Kéo Thả Hoặc Bấm Để Nạp Tệp Từ Máy Tính</span>
+                </div>
+                <p className="text-[10px] text-[var(--text-muted)] font-serif mt-0.5">
+                  Hỗ trợ .json (tọa độ, mốc sự kiện) hoặc .geojson (FeatureCollection)
+                </p>
+              </div>
+
+              {/* Upload Actions Toolbar */}
               <div className="space-y-1.5">
                 <div className="grid grid-cols-2 gap-1.5">
                   <button
                     type="button"
                     onClick={() => locFileInputRef.current?.click()}
                     className="py-1.5 px-2 bg-amber-500/15 hover:bg-amber-500 text-amber-900 dark:text-amber-300 hover:text-slate-950 font-bold rounded-lg text-[10px] transition border border-amber-500/40 cursor-pointer flex items-center justify-center gap-1 shadow-xs"
-                    title="Tải tệp JSON danh sách các tọa độ địa danh"
+                    title="Nạp tệp JSON chứa danh sách các địa danh tọa độ"
                   >
                     <MapPin className="w-3 h-3 text-amber-500" />
-                    <span>📍 Tải Tọa Độ</span>
+                    <span>📍 Nạp Tọa Độ (.json)</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => timelineFileInputRef.current?.click()}
                     className="py-1.5 px-2 bg-indigo-500/15 hover:bg-indigo-500 text-indigo-700 dark:text-indigo-300 hover:text-white font-bold rounded-lg text-[10px] transition border border-indigo-500/40 cursor-pointer flex items-center justify-center gap-1 shadow-xs"
-                    title="Tải tệp JSON danh sách các mốc thời gian cứu độ"
+                    title="Nạp tệp JSON chứa danh sách các mốc thời gian cứu độ"
                   >
                     <Clock className="w-3 h-3 text-indigo-500" />
-                    <span>⏳ Tải Thời Gian</span>
+                    <span>⏳ Nạp Thời Gian (.json)</span>
                   </button>
                 </div>
 
-                <div className="flex items-center gap-1.5 text-[10px]">
-                  <button
-                    type="button"
-                    onClick={() => jsonFileInputRef.current?.click()}
-                    className="flex-1 py-1 px-1.5 bg-[var(--bg-card)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 font-bold rounded-md transition border border-[var(--border-card)] cursor-pointer text-center"
-                    title="Nạp tệp JSON tổng hợp cả 2 mảng"
-                  >
-                    📁 Nạp Gộp
-                  </button>
-
+                <div className="flex items-center gap-1 text-[10px]">
                   <button
                     type="button"
                     onClick={handleLoadSampleJson}
                     className="flex-1 py-1 px-1.5 bg-[var(--bg-card)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 font-bold rounded-md transition border border-[var(--border-card)] cursor-pointer text-center"
-                    title="Nạp mẫu dữ liệu tham khảo"
+                    title="Nạp mẫu dữ liệu chuẩn Núi Sinai & Năm Toàn Xá"
                   >
-                    + Mẫu JSON
+                    + Mẫu Chuẩn
                   </button>
 
                   {geoTimelineJson && (
-                    <button
-                      type="button"
-                      onClick={handleClearGeoTimeline}
-                      className="py-1 px-2 bg-rose-500/10 hover:bg-rose-500 text-rose-600 dark:text-rose-400 hover:text-white font-bold rounded-md transition border border-rose-500/30 cursor-pointer"
-                      title="Xóa toàn bộ dữ liệu tọa độ & dòng thời gian"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleInsertMapCalloutBlock}
+                        className="flex-1 py-1 px-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold rounded-md transition border border-amber-500/30 cursor-pointer text-center"
+                        title="Chèn khung thông báo bản đồ đối chiếu vào nội dung bài viết"
+                      >
+                        📌 Chèn Khung Bài
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(geoTimelineJson);
+                          setMessage({ type: 'success', text: 'Đã sao chép mã JSON vào clipboard!' });
+                          setTimeout(() => setMessage(null), 2500);
+                        }}
+                        className="py-1 px-2 bg-[var(--bg-card)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 font-bold rounded-md transition border border-[var(--border-card)] cursor-pointer"
+                        title="Sao chép JSON"
+                      >
+                        <Bookmark className="w-3 h-3" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleClearGeoTimeline}
+                        className="py-1 px-2 bg-rose-500/10 hover:bg-rose-500 text-rose-600 dark:text-rose-400 hover:text-white font-bold rounded-md transition border border-rose-500/30 cursor-pointer"
+                        title="Xóa toàn bộ dữ liệu tọa độ & dòng thời gian"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
 
-              <div>
-                <textarea
-                  value={geoTimelineJson}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setGeoTimelineJson(val);
-                    validateGeoTimelineJson(val);
-                  }}
-                  rows={6}
-                  placeholder="Dán mã JSON mảng tọa độ [ ... ] hoặc mốc thời gian [ ... ] tại đây..."
-                  className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] font-mono text-[10px] text-amber-500 dark:text-amber-400 outline-none focus:border-amber-500 resize-y leading-relaxed"
-                  spellCheck={false}
-                />
+              {/* VIEW MODE TOGGLE (Cards vs Raw JSON) */}
+              <div className="flex items-center justify-between border-t border-[var(--border-card)] pt-2">
+                <div className="flex items-center gap-1 bg-[var(--bg-card)] p-0.5 rounded-lg border border-[var(--border-card)]">
+                  <button
+                    type="button"
+                    onClick={() => setGeoViewMode('cards')}
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-serif font-bold transition cursor-pointer ${
+                      geoViewMode === 'cards'
+                        ? 'bg-amber-500 text-slate-950 shadow-xs'
+                        : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                    }`}
+                  >
+                    👁️ Thẻ Trực Quan ({parsedGeoTimeline.locations.length + parsedGeoTimeline.timeline_events.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGeoViewMode('json')}
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-serif font-bold transition cursor-pointer ${
+                      geoViewMode === 'json'
+                        ? 'bg-amber-500 text-slate-950 shadow-xs'
+                        : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                    }`}
+                  >
+                    {'{ }'} Mã JSON
+                  </button>
+                </div>
+
+                <span className="text-[10px] font-mono text-amber-500 font-bold">
+                  {parsedGeoTimeline.locations.length} địa danh • {parsedGeoTimeline.timeline_events.length} mốc
+                </span>
               </div>
 
+              {/* VIEW MODE: CARDS PREVIEW */}
+              {geoViewMode === 'cards' ? (
+                <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1 scrollbar-thin">
+                  {parsedGeoTimeline.locations.length === 0 && parsedGeoTimeline.timeline_events.length === 0 ? (
+                    <div className="p-4 rounded-xl bg-[var(--bg-card)] border border-dashed border-[var(--border-card)] text-center space-y-1">
+                      <p className="text-[11px] text-[var(--text-muted)] font-serif">
+                        Chưa có dữ liệu bản đồ hoặc mốc thời gian.
+                      </p>
+                      <p className="text-[10px] text-amber-600/80 dark:text-amber-400/80 font-serif">
+                        Kéo thả tệp JSON từ máy tính hoặc bấm &quot;+ Mẫu Chuẩn&quot; để nạp.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Locations List */}
+                      {parsedGeoTimeline.locations.length > 0 && (
+                        <div className="space-y-1.5">
+                          <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            <span>Địa Danh Bản Đồ ({parsedGeoTimeline.locations.length})</span>
+                          </div>
+                          {parsedGeoTimeline.locations.map((loc: any, idx: number) => (
+                            <div
+                              key={idx}
+                              className="p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-amber-500/40 transition flex items-start justify-between gap-2"
+                            >
+                              <div className="space-y-0.5 min-w-0">
+                                <div className="font-bold text-[11px] text-[var(--text-main)] truncate">
+                                  {loc.name}
+                                </div>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-mono text-[9px] px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold">
+                                    {Number(loc.latitude).toFixed(3)}°, {Number(loc.longitude).toFixed(3)}°
+                                  </span>
+                                  {loc.historical_period && (
+                                    <span className="text-[9px] text-[var(--text-muted)] truncate max-w-[120px]">
+                                      {loc.historical_period}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveLocation(idx)}
+                                className="p-1 text-[var(--text-muted)] hover:text-rose-500 rounded transition cursor-pointer shrink-0"
+                                title="Xóa địa danh này"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Timeline Events List */}
+                      {parsedGeoTimeline.timeline_events.length > 0 && (
+                        <div className="space-y-1.5 pt-1">
+                          <div className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            <span>Mốc Lịch Sử Cứu Độ ({parsedGeoTimeline.timeline_events.length})</span>
+                          </div>
+                          {parsedGeoTimeline.timeline_events.map((evt: any, idx: number) => (
+                            <div
+                              key={idx}
+                              className="p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-indigo-500/40 transition flex items-start justify-between gap-2"
+                            >
+                              <div className="space-y-0.5 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-mono text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 font-bold shrink-0">
+                                    {evt.display_date || `${evt.year_bce_ce} TCN`}
+                                  </span>
+                                  <span className="font-bold text-[11px] text-[var(--text-main)] truncate">
+                                    {evt.event_title}
+                                  </span>
+                                </div>
+                                {evt.period && (
+                                  <div className="text-[9px] text-[var(--text-muted)] truncate">
+                                    {evt.period}
+                                  </div>
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveTimelineEvent(idx)}
+                                className="p-1 text-[var(--text-muted)] hover:text-rose-500 rounded transition cursor-pointer shrink-0"
+                                title="Xóa mốc thời gian này"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              ) : (
+                /* VIEW MODE: RAW JSON CODE */
+                <div>
+                  <textarea
+                    value={geoTimelineJson}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setGeoTimelineJson(val);
+                      validateGeoTimelineJson(val);
+                    }}
+                    rows={6}
+                    placeholder="Dán mã JSON mảng tọa độ [ ... ] hoặc mốc thời gian [ ... ] tại đây..."
+                    className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] font-mono text-[10px] text-amber-500 dark:text-amber-400 outline-none focus:border-amber-500 resize-y leading-relaxed"
+                    spellCheck={false}
+                  />
+                </div>
+              )}
+
+              {/* Status Alert Banner */}
               {geoTimelineStatus && (
                 <div className={`p-2 rounded-lg text-[10px] font-semibold flex items-center gap-1.5 ${
                   geoTimelineStatus.valid 
@@ -1008,6 +1301,10 @@ function DangBaiContent() {
                   <span>{geoTimelineStatus.message}</span>
                 </div>
               )}
+
+              <div className="p-2 rounded-xl bg-amber-500/5 border border-amber-500/15 text-[10px] font-serif text-[var(--text-muted)] leading-relaxed">
+                ℹ️ Dữ liệu này sẽ tự động sinh <strong>Widget Bản Đồ Leaflet &amp; Dòng Thời Gian Tương Tác</strong> ở chân bài viết sau khi xuất bản.
+              </div>
             </div>
           )}
         </div>
