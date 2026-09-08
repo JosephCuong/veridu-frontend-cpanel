@@ -11,6 +11,7 @@ import Image from 'next/image';
 import { Metadata } from 'next';
 
 import VisualArticleRenderer from '@/components/VisualArticleRenderer';
+import { formatImageUrl } from '@/lib/htmlProcessor';
 import ArticleGeoTimelineWidget from '@/components/ArticleGeoTimelineWidget';
 import ShareButtons from '@/components/ShareButtons';
 import TableOfContents from '@/components/TableOfContents';
@@ -146,7 +147,7 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
   const htmlContent = article.interactiveHtml || article.contentHtml || '';
   const scriptureQuote = (article as any).scripture_quote || (article as any).scriptureQuote;
   const prayerText = (article as any).prayer_text || (article as any).prayerText;
-  const coverImage = article.featured_image || article.thumbnail;
+  const coverImage = formatImageUrl(article.featured_image || article.thumbnail);
   const articleUrl = `https://www.thapgia.com/thu-vien/${resolvedParams.slug}`;
   const cleanTitle = titleText.replace(/<[^>]+>/g, '');
   const defaultDesc = article.excerpt ? article.excerpt.replace(/<[^>]+>/g, '').substring(0, 160) : 'Khám phá thư viện tài liệu Công giáo trên VERIDU.';

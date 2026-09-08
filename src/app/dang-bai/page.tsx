@@ -58,6 +58,7 @@ import {
   extractTitleFromHtml, 
   extractExcerptFromHtml, 
   extractFeaturedImageFromHtml, 
+  formatImageUrl,
   normalizeAndSyncHtml 
 } from '@/lib/htmlProcessor';
 import VisualArticleRenderer from '@/components/VisualArticleRenderer';
@@ -805,7 +806,7 @@ function DangBaiContent() {
         excerpt: excerpt.trim(),
         category,
         article_type: articleType,
-        featured_image: featuredImage.trim(),
+        featured_image: formatImageUrl(featuredImage.trim()),
         content: finalHtml,
         status: postStatus
       };

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { supabase, getAuthenticatedSupabaseClient } from '@/lib/supabaseClient';
-import { formatImageUrl } from '@/lib/htmlProcessor';
+import { formatImageUrl, convertGoogleDriveImagesInHtml } from '@/lib/htmlProcessor';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,6 +66,7 @@ export async function POST(request: Request) {
       : (status || existingPost.status || 'published');
 
     const formattedImage = formatImageUrl(featured_image);
+    const cleanContent = convertGoogleDriveImagesInHtml(content);
     const cleanExcerpt = excerpt ? excerpt.trim() : '';
     const cleanTitle = title.trim();
     const postCategory = category || 'Thần Học';
@@ -83,7 +84,7 @@ export async function POST(request: Request) {
         p_category: postCategory,
         p_article_type: postArticleType,
         p_featured_image: formattedImage,
-        p_content: content,
+        p_content: cleanContent,
         p_status: targetStatus
       });
 
@@ -107,7 +108,7 @@ export async function POST(request: Request) {
           category: postCategory,
           article_type: postArticleType,
           featured_image: formattedImage,
-          content,
+          content: cleanContent,
           status: targetStatus,
           updated_at: new Date().toISOString()
         })

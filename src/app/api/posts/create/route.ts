@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { supabase } from '@/lib/supabaseClient';
-import { formatImageUrl } from '@/lib/htmlProcessor';
+import { formatImageUrl, convertGoogleDriveImagesInHtml } from '@/lib/htmlProcessor';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
           category: category || 'Thần Học',
           article_type: normalizedArticleType,
           featured_image: formatImageUrl(featured_image),
-          content,
+          content: convertGoogleDriveImagesInHtml(content),
           status: status || 'published',
           author_id: validAuthorId
         }

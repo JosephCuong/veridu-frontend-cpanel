@@ -141,7 +141,7 @@ export default function VisualArticleRenderer({
       table.style.width = '100%';
     });
 
-    // 4. Image Lightbox Click Listener
+    // 4. Image Lightbox Click Listener & Auto Error Fallback
     const images = containerRef.current.querySelectorAll('img');
     const handleImageClick = (e: Event) => {
       const target = e.currentTarget as HTMLImageElement;
@@ -150,8 +150,31 @@ export default function VisualArticleRenderer({
         setLightboxAlt(target.alt || 'Ảnh bài viết');
       }
     };
+    const handleImageError = (e: Event) => {
+      const target = e.currentTarget as HTMLImageElement;
+      if (!target || !target.src) return;
+
+      const currentSrc = target.src;
+      // If it failed with lh3 direct link, attempt Google Drive thumbnail API as fallback
+      const fileIdMatch = currentSrc.match(/\/d\/([a-zA-Z0-9_-]+)/) || currentSrc.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (fileIdMatch && fileIdMatch[1]) {
+        const fileId = fileIdMatch[1];
+        const fallbackUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000`;
+        if (currentSrc !== fallbackUrl && !target.dataset.hasFailedFallback) {
+          target.dataset.hasFailedFallback = 'true';
+          target.src = fallbackUrl;
+          return;
+        }
+      }
+
+      // If still fails or not Google Drive, soften styling gracefully
+      target.classList.add('opacity-50', 'grayscale');
+      target.title = 'Không thể tải ảnh từ nguồn này';
+    };
+
     images.forEach((img) => {
       img.addEventListener('click', handleImageClick);
+      img.addEventListener('error', handleImageError);
     });
 
     // 5. Footnote Normalization & Bidirectional Return Links (Vòng đỏ & Nút quay lại ↩)
@@ -284,6 +307,7 @@ export default function VisualArticleRenderer({
     return () => {
       images.forEach((img) => {
         img.removeEventListener('click', handleImageClick);
+        img.removeEventListener('error', handleImageError);
       });
       containerEl.removeEventListener('click', handleContainerClick);
     };

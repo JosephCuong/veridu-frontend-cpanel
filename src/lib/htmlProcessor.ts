@@ -171,6 +171,69 @@ export function extractFeaturedImageFromHtml(html: string): string {
 }
 
 /**
+ * Automatically detects and converts all Google Drive image URLs inside HTML
+ * (both in <img src="..."> and in CSS/link tags) to Google's direct high-res CDN format
+ * (https://lh3.googleusercontent.com/d/FILE_ID) and ensures referrerpolicy="no-referrer" is attached.
+ */
+export function convertGoogleDriveImagesInHtml(html: string): string {
+  if (!html || typeof html !== 'string') return '';
+
+  // 1. Strip wrapping <a> tags that point directly to Google Drive view/preview or Google CDN,
+  // so clicking the image opens the in-app Lightbox modal instead of navigating away.
+  let out = html.replace(
+    /<a\s+[^>]*?href=["']https?:\/\/(?:(?:drive|docs)\.google\.com|lh3\.googleusercontent\.com\/d)[^"']*["'][^>]*>([\s\S]*?<img[\s\S]*?>[\s\S]*?)<\/a>/gi,
+    '$1'
+  );
+
+  // 2. Convert all <img> src attributes pointing to Google Drive
+  out = out.replace(/<img\s+([^>]*?)>/gi, (fullTag, attrs) => {
+    const srcMatch = attrs.match(/src=["']([^"']+)["']/i);
+    if (!srcMatch) return fullTag;
+
+    const originalSrc = srcMatch[1];
+    let newSrc = originalSrc;
+    let isDrive = false;
+
+    if (originalSrc.includes('drive.google.com') || originalSrc.includes('docs.google.com')) {
+      const match = originalSrc.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)
+        || originalSrc.match(/[?&]id=([a-zA-Z0-9_-]+)/)
+        || originalSrc.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        newSrc = `https://lh3.googleusercontent.com/d/${match[1]}`;
+        isDrive = true;
+      }
+    } else if (originalSrc.includes('lh3.googleusercontent.com/d/')) {
+      isDrive = true;
+    }
+
+    let updatedAttrs = attrs;
+    if (newSrc !== originalSrc) {
+      updatedAttrs = updatedAttrs.replace(/src=["'][^"']+["']/i, `src="${newSrc}"`);
+    }
+
+    if (isDrive) {
+      if (!/referrerpolicy/i.test(updatedAttrs)) {
+        updatedAttrs = `referrerpolicy="no-referrer" ${updatedAttrs}`;
+      }
+      if (!/data-lightbox/i.test(updatedAttrs)) {
+        updatedAttrs = `${updatedAttrs} data-lightbox="true"`;
+      }
+      if (!/class=["'][^"']*rounded-2xl/i.test(updatedAttrs)) {
+        if (/class=["']/i.test(updatedAttrs)) {
+          updatedAttrs = updatedAttrs.replace(/class=["']([^"']*)["']/i, 'class="$1 max-w-full h-auto rounded-2xl shadow-2xl my-6 cursor-zoom-in hover:scale-[1.01] transition-all duration-300 mx-auto block"');
+        } else {
+          updatedAttrs = `class="max-w-full h-auto rounded-2xl shadow-2xl my-6 cursor-zoom-in hover:scale-[1.01] transition-all duration-300 mx-auto block" ${updatedAttrs}`;
+        }
+      }
+    }
+
+    return `<img ${updatedAttrs.trim()}>`;
+  });
+
+  return out;
+}
+
+/**
  * Strips layout-breaking inline styles (width, max-width, margins, absolute colors)
  */
 function cleanInlineStyle(styleAttr: string): string {
@@ -343,7 +406,8 @@ export function normalizeAndSyncHtml(
     return html.trim();
   }
 
-  let cleanHtml = html;
+  // Universally convert Google Drive image links and ensure styling tokens before DOMParser or SSR regex cleaners
+  let cleanHtml = convertGoogleDriveImagesInHtml(html);
 
   // DOMParser path (Browser Environment)
   if (typeof window !== 'undefined' && typeof DOMParser !== 'undefined') {
