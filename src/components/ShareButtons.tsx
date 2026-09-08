@@ -16,10 +16,17 @@ export default function ShareButtons({ url, title }: ShareButtonsProps) {
   const encodedTitle = encodeURIComponent(title);
 
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      setIsSticky(window.scrollY > 100);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setIsSticky(window.scrollY > 100);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -37,19 +44,30 @@ export default function ShareButtons({ url, title }: ShareButtonsProps) {
   const buttonClass = "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110 shadow-lg backdrop-blur-md border";
 
   return (
-    <div className={`fixed z-50 transition-all duration-500 ease-in-out ${isSticky ? 'bottom-6 left-1/2 -translate-x-1/2 lg:bottom-1/2 lg:translate-y-1/2 lg:left-6 lg:translate-x-0 lg:scale-100 lg:opacity-100 scale-100 opacity-100' : '-bottom-24 left-1/2 -translate-x-1/2 lg:bottom-1/2 lg:translate-y-1/2 lg:-left-24 lg:translate-x-0 scale-50 opacity-0 pointer-events-none'}`}>
-      <div className="flex lg:flex-col items-center space-x-3 lg:space-x-0 lg:space-y-3 px-6 py-3 lg:px-3 lg:py-6 rounded-full bg-[var(--bg-card)]/95 border border-[var(--border-card)] shadow-2xl backdrop-blur-xl">
-        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 mr-2 lg:mr-0 lg:mb-2 flex items-center lg:justify-center uppercase tracking-wider hidden sm:flex">
-          <Share2 className="w-3 h-3 mr-1 lg:mr-0 lg:mb-1 text-slate-600 dark:text-slate-400" />
-          <span className="lg:hidden">Chia sẻ</span>
-        </span>
+    <aside
+      aria-label="Chia sẻ bài viết"
+      style={{ contain: 'layout paint', willChange: 'opacity, transform' }}
+      className={`fixed z-40 transition-all duration-300 ease-out ${
+        isSticky
+          ? 'bottom-6 left-1/2 -translate-x-1/2 lg:bottom-1/2 lg:left-6 lg:translate-x-0 lg:translate-y-1/2 opacity-100 scale-100 pointer-events-auto'
+          : 'bottom-6 left-1/2 -translate-x-1/2 lg:bottom-1/2 lg:left-6 lg:translate-x-0 lg:translate-y-1/2 opacity-0 scale-90 pointer-events-none translate-y-6 lg:translate-y-1/2 lg:-translate-x-6'
+      }`}
+    >
+      <div className="flex lg:flex-col items-center gap-2 p-2 rounded-full bg-[var(--bg-card)]/95 border border-[var(--border-card)] shadow-2xl backdrop-blur-xl">
+        <div
+          className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-400 bg-slate-500/10 border border-slate-500/20 shrink-0"
+          title="Chia sẻ bài viết"
+          aria-hidden="true"
+        >
+          <Share2 className="w-4 h-4" />
+        </div>
 
         {/* Facebook */}
         <a 
           href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
           target="_blank"
           rel="noopener noreferrer"
-          className={`${buttonClass} bg-blue-600/10 text-blue-700 dark:text-blue-400 border-blue-600/30 hover:bg-blue-600 hover:text-white hover:border-blue-600 font-bold text-xs`}
+          className={`${buttonClass} bg-blue-600/10 text-blue-700 dark:text-blue-400 border-blue-600/30 hover:bg-blue-600 hover:text-white hover:border-blue-600 font-bold text-xs shrink-0`}
           aria-label="Chia sẻ lên Facebook"
         >
           FB
@@ -60,7 +78,7 @@ export default function ShareButtons({ url, title }: ShareButtonsProps) {
           href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`}
           target="_blank"
           rel="noopener noreferrer"
-          className={`${buttonClass} bg-slate-800/10 text-slate-800 dark:text-slate-200 border-slate-700/30 hover:bg-slate-800 hover:text-white hover:border-slate-800 font-bold text-xs`}
+          className={`${buttonClass} bg-slate-800/10 text-slate-800 dark:text-slate-200 border-slate-700/30 hover:bg-slate-800 hover:text-white hover:border-slate-800 font-bold text-xs shrink-0`}
           aria-label="Chia sẻ lên X (Twitter)"
         >
           X
@@ -71,7 +89,7 @@ export default function ShareButtons({ url, title }: ShareButtonsProps) {
           href={`https://sp.zalo.me/plugins/share?url=${encodedUrl}`}
           target="_blank"
           rel="noopener noreferrer"
-          className={`${buttonClass} bg-sky-600/10 text-sky-700 dark:text-sky-400 border-sky-600/30 hover:bg-sky-600 hover:text-white hover:border-sky-600 font-bold text-xs`}
+          className={`${buttonClass} bg-sky-600/10 text-sky-700 dark:text-sky-400 border-sky-600/30 hover:bg-sky-600 hover:text-white hover:border-sky-600 font-bold text-xs shrink-0`}
           aria-label="Chia sẻ lên Zalo"
         >
           Zalo
@@ -80,12 +98,12 @@ export default function ShareButtons({ url, title }: ShareButtonsProps) {
         {/* Copy Link */}
         <button 
           onClick={handleCopyLink}
-          className={`${buttonClass} ${copied ? 'bg-green-600/10 text-green-700 dark:text-green-400 border-green-600/30' : 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-600/30 hover:bg-amber-500 hover:text-slate-950'}`}
+          className={`${buttonClass} shrink-0 ${copied ? 'bg-green-600/10 text-green-700 dark:text-green-400 border-green-600/30' : 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-600/30 hover:bg-amber-500 hover:text-slate-950'}`}
           aria-label="Sao chép liên kết"
         >
           {copied ? <Check className="w-4 h-4" /> : <LinkIcon className="w-4 h-4" />}
         </button>
       </div>
-    </div>
+    </aside>
   );
 }
