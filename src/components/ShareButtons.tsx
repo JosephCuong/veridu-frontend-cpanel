@@ -41,16 +41,16 @@ export default function ShareButtons({ url, title }: ShareButtonsProps) {
     }
   };
 
-  const buttonClass = "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110 shadow-lg backdrop-blur-md border";
+  const buttonClass = "w-10 h-10 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md border shrink-0 transition-colors duration-200";
 
   return (
     <aside
       aria-label="Chia sẻ bài viết"
-      style={{ contain: 'layout paint', willChange: 'opacity, transform' }}
-      className={`fixed z-40 transition-all duration-300 ease-out ${
+      style={{ contain: 'layout paint' }}
+      className={`fixed z-40 bottom-6 left-1/2 -translate-x-1/2 lg:bottom-1/2 lg:left-6 lg:translate-x-0 lg:-translate-y-1/2 transition-opacity duration-200 ease-out ${
         isSticky
-          ? 'bottom-6 left-1/2 -translate-x-1/2 lg:bottom-1/2 lg:left-6 lg:translate-x-0 lg:translate-y-1/2 opacity-100 scale-100 pointer-events-auto'
-          : 'bottom-6 left-1/2 -translate-x-1/2 lg:bottom-1/2 lg:left-6 lg:translate-x-0 lg:translate-y-1/2 opacity-0 scale-90 pointer-events-none translate-y-6 lg:translate-y-1/2 lg:-translate-x-6'
+          ? 'opacity-100 pointer-events-auto visible'
+          : 'opacity-0 pointer-events-none invisible'
       }`}
     >
       <div className="flex lg:flex-col items-center gap-2 p-2 rounded-full bg-[var(--bg-card)]/95 border border-[var(--border-card)] shadow-2xl backdrop-blur-xl">
