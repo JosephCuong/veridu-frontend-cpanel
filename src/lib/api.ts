@@ -109,10 +109,31 @@ export interface RelatedItem {
   url: string;
 }
 
+export interface LessonSection {
+  id: number | string;
+  lessonId: number | string;
+  title: string;
+  sectionType: 'video' | 'text' | 'pdf' | 'quiz' | 'audio';
+  orderIndex: number;
+  mediaUrl?: string;
+  contentHtml?: string;
+  quizData?: Array<{
+    id: number | string;
+    question: string;
+    options: string[];
+    correctAnswerIndex: number;
+    explanation: string;
+  }>;
+  durationMinutes?: number;
+  duration?: string;
+  isCompleted?: boolean;
+}
+
 export interface Lesson {
   id: number | string;
   title: string;
   slug?: string;
+  description?: string;
   orderIndex?: number;
   orderNumber?: number;
   chapterTitle?: string;
@@ -126,6 +147,7 @@ export interface Lesson {
   durationMinutes?: number;
   duration?: string;
   isCompleted?: boolean;
+  sections?: LessonSection[];
 }
 
 export interface Course {
@@ -138,7 +160,12 @@ export interface Course {
   category?: string;
   level?: string;
   instructor?: string;
+  instructor_name?: string;
+  instructor_title?: string;
+  instructor_avatar?: string;
   duration?: string;
+  total_duration?: string;
+  certificate_enabled?: boolean;
   lessonsCount?: number;
   totalLessons?: number;
   lessons?: Lesson[];
@@ -611,8 +638,13 @@ export async function fetchCourses(): Promise<Course[]> {
       featured_image: c.thumbnail || '',
       category: c.category || 'Kinh Thánh',
       level: c.level || 'Cơ Bản',
-      instructor: c.instructor || 'VERIDU Team',
-      duration: c.duration || '12 Bài Học',
+      instructor: c.instructor_name || c.instructor || 'VERIDU Team',
+      instructor_name: c.instructor_name || c.instructor || 'VERIDU Team',
+      instructor_title: c.instructor_title || 'Hội Đồng Khảo Cứu Thần Học VERIDU',
+      instructor_avatar: c.instructor_avatar || 'https://lh3.googleusercontent.com/d/1iRz6nIRhfEoV_fbxVTCwW0ApQ87IqHK5',
+      duration: c.total_duration || c.duration || '12 Bài Học',
+      total_duration: c.total_duration || c.duration || '12 Bài Học',
+      certificate_enabled: c.certificate_enabled ?? true,
       lessonsCount: c.lessons?.length || 0,
       totalLessons: c.lessons?.length || 0
     }));
@@ -626,11 +658,54 @@ export async function fetchCourseBySlug(slug: string): Promise<CourseDetail | nu
   try {
     const { data, error } = await supabase
       .from('courses')
-      .select('*, lessons(*)')
+      .select('*, lessons(*, lesson_sections(*))')
       .eq('slug', slug)
       .single();
 
     if (error || !data) return null;
+
+    const rawLessons = data.lessons || [];
+    // Sort lessons by order_index
+    rawLessons.sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0));
+
+    const mappedLessons: Lesson[] = rawLessons.map((l: any, idx: number) => {
+      const rawSections = l.lesson_sections || [];
+      rawSections.sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0));
+
+      const mappedSections: LessonSection[] = rawSections.map((s: any) => ({
+        id: s.id,
+        lessonId: l.id,
+        title: s.title,
+        sectionType: s.section_type || 'text',
+        orderIndex: s.order_index || 1,
+        mediaUrl: s.media_url || '',
+        contentHtml: s.content_html || '',
+        quizData: Array.isArray(s.quiz_data) ? s.quiz_data : undefined,
+        durationMinutes: s.duration_minutes || 10,
+        duration: `${s.duration_minutes || 10} phút`,
+        isCompleted: false,
+      }));
+
+      return {
+        id: l.id,
+        title: l.title,
+        slug: l.slug || `bai-${idx + 1}`,
+        description: l.description || '',
+        orderIndex: l.order_index || idx + 1,
+        orderNumber: l.order_index || idx + 1,
+        chapterTitle: l.chapter_title || `Chương ${idx + 1}`,
+        videoUrl: l.video_url || '',
+        audioUrl: l.audio_url || '',
+        content: l.content || '',
+        contentHtml: l.content || '',
+        lessonType: l.type || l.lesson_type || 'reading',
+        scripture: l.scripture || '',
+        prayer: l.prayer || '',
+        durationMinutes: l.duration_minutes || 15,
+        duration: l.duration || `${l.duration_minutes || 15} phút`,
+        sections: mappedSections,
+      };
+    });
 
     return {
       id: data.id,
@@ -641,30 +716,121 @@ export async function fetchCourseBySlug(slug: string): Promise<CourseDetail | nu
       featured_image: data.thumbnail || '',
       category: data.category || 'Kinh Thánh',
       level: data.level || 'Cơ Bản',
-      instructor: data.instructor || 'VERIDU Team',
-      duration: data.duration || '12 Bài Học',
-      lessonsCount: data.lessons?.length || 0,
-      totalLessons: data.lessons?.length || 0,
-      lessons: (data.lessons || []).map((l: any, idx: number) => ({
-        id: l.id,
-        title: l.title,
-        slug: l.slug || `bai-${idx + 1}`,
-        orderIndex: l.order_index || idx + 1,
-        orderNumber: l.order_number || l.order_index || idx + 1,
-        chapterTitle: l.chapter_title || 'Chương chung',
-        videoUrl: l.video_url || '',
-        audioUrl: l.audio_url || '',
-        content: l.content || '',
-        contentHtml: l.content || '',
-        lessonType: l.lesson_type || 'reading',
-        scripture: l.scripture || '',
-        prayer: l.prayer || '',
-        durationMinutes: l.duration_minutes || 15,
-        duration: l.duration || `${l.duration_minutes || 15} phút`
-      }))
+      instructor: data.instructor_name || data.instructor || 'VERIDU Team',
+      instructor_name: data.instructor_name || data.instructor || 'VERIDU Team',
+      instructor_title: data.instructor_title || 'Hội Đồng Khảo Cứu Thần Học & Kinh Thánh',
+      instructor_avatar: data.instructor_avatar || 'https://lh3.googleusercontent.com/d/1iRz6nIRhfEoV_fbxVTCwW0ApQ87IqHK5',
+      duration: data.total_duration || data.duration || `${mappedLessons.length} Bài Học`,
+      total_duration: data.total_duration || data.duration || `${mappedLessons.length} Bài Học`,
+      certificate_enabled: data.certificate_enabled ?? true,
+      lessonsCount: mappedLessons.length,
+      totalLessons: mappedLessons.length,
+      lessons: mappedLessons,
     };
   } catch (e) {
     console.error('fetchCourseBySlug error:', e);
+    return null;
+  }
+}
+
+export interface UserCourseProgressData {
+  courseId: number | string;
+  userId: string;
+  progressPercent: number;
+  completedSections: Array<number | string>;
+  completedLessons: Array<number | string>;
+  currentLessonId?: number | string;
+  currentSectionId?: number | string;
+  isCertified?: boolean;
+}
+
+export async function fetchUserCourseProgress(courseId: number | string, userId: string): Promise<UserCourseProgressData | null> {
+  if (!userId || !courseId) return null;
+  try {
+    const { data, error } = await supabase
+      .from('user_course_progress')
+      .select('*')
+      .eq('course_id', courseId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    return {
+      courseId: data.course_id,
+      userId: data.user_id,
+      progressPercent: data.progress_percent || 0,
+      completedSections: Array.isArray(data.completed_sections) ? data.completed_sections : [],
+      completedLessons: Array.isArray(data.completed_lessons) ? data.completed_lessons : [],
+      currentLessonId: data.current_lesson_id,
+      currentSectionId: data.current_section_id,
+      isCertified: !!data.is_certified,
+    };
+  } catch (e) {
+    console.error('fetchUserCourseProgress error:', e);
+    return null;
+  }
+}
+
+export async function saveUserSectionProgress({
+  userId,
+  courseId,
+  lessonId,
+  sectionId,
+  totalSectionsCount,
+  isCompleted = true,
+}: {
+  userId: string;
+  courseId: number | string;
+  lessonId: number | string;
+  sectionId: number | string;
+  totalSectionsCount: number;
+  isCompleted?: boolean;
+}): Promise<UserCourseProgressData | null> {
+  if (!userId || !courseId) return null;
+  try {
+    const existing = await fetchUserCourseProgress(courseId, userId);
+    let completedSections: Array<number | string> = existing?.completedSections || [];
+
+    if (isCompleted && !completedSections.includes(sectionId)) {
+      completedSections = [...completedSections, sectionId];
+    }
+
+    const calculatedPercent = totalSectionsCount > 0
+      ? Math.min(100, Math.round((completedSections.length / totalSectionsCount) * 100))
+      : 0;
+
+    const payload = {
+      user_id: userId,
+      course_id: courseId,
+      current_lesson_id: lessonId,
+      current_section_id: sectionId,
+      completed_sections: completedSections,
+      progress_percent: calculatedPercent,
+      is_certified: calculatedPercent >= 100,
+      last_accessed_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase
+      .from('user_course_progress')
+      .upsert(payload, { onConflict: 'user_id,course_id' })
+      .select('*')
+      .maybeSingle();
+
+    if (error) {
+      console.warn('upsert user_course_progress fallback:', error.message);
+    }
+
+    return {
+      courseId,
+      userId,
+      progressPercent: calculatedPercent,
+      completedSections,
+      completedLessons: (data && Array.isArray(data.completed_lessons)) ? data.completed_lessons : [],
+      isCertified: calculatedPercent >= 100,
+    };
+  } catch (e) {
+    console.error('saveUserSectionProgress error:', e);
     return null;
   }
 }
