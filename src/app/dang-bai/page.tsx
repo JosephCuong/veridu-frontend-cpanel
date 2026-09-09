@@ -53,7 +53,7 @@ import {
 } from 'lucide-react';
 import { getStoredUser, UserProfile } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
-import { fetchArticleGeoAndTimeline } from '@/lib/api';
+import { fetchArticleGeoAndTimeline, calculateReadingTime } from '@/lib/api';
 import { 
   extractTitleFromHtml, 
   extractExcerptFromHtml, 
@@ -122,6 +122,10 @@ function DangBaiContent() {
   const [category, setCategory] = useState('Thần Học');
   const [articleType, setArticleType] = useState('standard');
   const [featuredImage, setFeaturedImage] = useState('');
+  const [authorName, setAuthorName] = useState('');
+  const [readingTime, setReadingTime] = useState('5 phút');
+  const [publishedDate, setPublishedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [isReadingTimeManual, setIsReadingTimeManual] = useState(false);
   const [contentHtml, setContentHtml] = useState<string>(editId ? '' : DEFAULT_INITIAL_CONTENT);
   const [existingStatus, setExistingStatus] = useState<string>('published');
 
@@ -224,7 +228,20 @@ function DangBaiContent() {
   useEffect(() => {
     const u = getStoredUser();
     setUser(u);
-  }, []);
+    if (!editId && u) {
+      const defaultName = u.fullName || u.displayName || (u.christianName ? `${u.christianName} ${u.displayName}` : '') || '';
+      if (defaultName) {
+        setAuthorName(defaultName);
+      }
+    }
+  }, [editId]);
+
+  // Live auto-calculate reading time from content if not manually overridden
+  useEffect(() => {
+    if (!isReadingTimeManual && contentHtml) {
+      setReadingTime(calculateReadingTime(contentHtml));
+    }
+  }, [contentHtml, isReadingTimeManual]);
 
   // Fetch post for edit mode if editId exists
   useEffect(() => {
@@ -242,9 +259,19 @@ function DangBaiContent() {
           setCategory(p.category || 'Thần Học');
           setArticleType(p.article_type === 'interactive' ? 'interactive' : 'standard');
           setFeaturedImage(p.featured_image || '');
+          setAuthorName(p.author_name || 'Ban Biên Tập VERIDU');
           const html = p.content || '';
           setContentHtml(html);
           setExistingStatus(p.status || 'published');
+          const rTime = p.reading_time || calculateReadingTime(html);
+          setReadingTime(rTime);
+          setIsReadingTimeManual(!!p.reading_time);
+          if (p.published_at || p.created_at) {
+            const d = new Date(p.published_at || p.created_at);
+            if (!isNaN(d.getTime())) {
+              setPublishedDate(d.toISOString().split('T')[0]);
+            }
+          }
 
           // Sync into DOM if visual editor is mounted
           if (visualCanvasRef.current) {
@@ -808,7 +835,10 @@ function DangBaiContent() {
         article_type: articleType,
         featured_image: formatImageUrl(featuredImage.trim()),
         content: finalHtml,
-        status: postStatus
+        status: postStatus,
+        author_name: authorName.trim() || user?.fullName || user?.displayName || 'Ban Biên Tập VERIDU',
+        reading_time: readingTime.trim() || calculateReadingTime(finalHtml),
+        published_at: publishedDate ? new Date(publishedDate).toISOString() : new Date().toISOString()
       };
 
       if (isEdit) {
@@ -949,6 +979,62 @@ function DangBaiContent() {
               <option value="standard">📖 Tiêu Chuẩn</option>
               <option value="interactive">🚀 Tương Tác 3D</option>
             </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="font-bold text-[var(--text-muted)] block mb-1">
+            Tác Giả / Người Viết
+          </label>
+          <input
+            type="text"
+            value={authorName}
+            onChange={(e) => setAuthorName(e.target.value)}
+            placeholder="Ban Biên Tập VERIDU, Lm. Giuse, Học giả..."
+            className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs text-[var(--text-main)] outline-none focus:border-amber-500"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="font-bold text-[var(--text-muted)] block text-xs">
+                Thời Gian Đọc
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsReadingTimeManual(false);
+                  setReadingTime(calculateReadingTime(contentHtml));
+                }}
+                className="text-[10px] text-amber-500 hover:underline cursor-pointer"
+                title="Tính lại tự động theo số từ"
+              >
+                ⚡ Tự tính
+              </button>
+            </div>
+            <input
+              type="text"
+              value={readingTime}
+              onChange={(e) => {
+                setIsReadingTimeManual(true);
+                setReadingTime(e.target.value);
+              }}
+              placeholder="ví dụ: 12 phút"
+              className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs text-[var(--text-main)] outline-none focus:border-amber-500"
+            />
+          </div>
+
+          <div>
+            <label className="font-bold text-[var(--text-muted)] block mb-1 text-xs">
+              Ngày Đăng
+            </label>
+            <input
+              type="date"
+              value={publishedDate}
+              onChange={(e) => setPublishedDate(e.target.value)}
+              className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs text-[var(--text-main)] outline-none focus:border-amber-500"
+            />
           </div>
         </div>
 

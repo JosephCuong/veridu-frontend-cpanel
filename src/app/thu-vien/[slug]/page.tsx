@@ -74,34 +74,53 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 // ─── HELPER COMPONENTS ────────────────────────────────────────────────────────
-const MetaDataRow = ({ article }: { article: any }) => (
-  <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-xs font-serif text-[var(--text-muted)] mt-5 pt-4 border-t border-[var(--border-card)]/40">
-    {article.author && (
-      <div className="flex items-center gap-1.5 bg-[var(--bg-main)] px-3 py-1.5 rounded-full border border-[var(--border-card)] text-[var(--text-main)] font-bold">
-        <User className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-        <span>{article.author}</span>
-      </div>
-    )}
-    {article.created_at && (
-      <div className="flex items-center gap-1.5">
-        <Calendar className="w-3.5 h-3.5 text-amber-500" />
-        <span>{new Date(article.created_at).toLocaleDateString('vi-VN')}</span>
-      </div>
-    )}
-    {(article.readingTime || article.reading_time) && (
-      <div className="flex items-center gap-1.5">
-        <Clock className="w-3.5 h-3.5 text-amber-500" />
-        <span>{article.readingTime || article.reading_time}</span>
-      </div>
-    )}
-    {article.category && (
-      <div className="flex items-center gap-1.5">
-        <Tag className="w-3.5 h-3.5 text-amber-500" />
-        <span>{article.category}</span>
-      </div>
-    )}
-  </div>
-);
+const MetaDataRow = ({ article }: { article: any }) => {
+  const authorName = article.author_name || article.author || 'Ban Biên Tập VERIDU';
+  const readingTime = article.reading_time || article.readingTime || '5 phút';
+  
+  let formattedDate = '';
+  const dateVal = article.published_at || article.created_at;
+  if (dateVal) {
+    try {
+      const d = new Date(dateVal);
+      if (!isNaN(d.getTime())) {
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        formattedDate = `${day}/${month}/${year}`;
+      }
+    } catch (e) {}
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-xs font-serif text-[var(--text-muted)] mt-5 pt-4 border-t border-[var(--border-card)]/40">
+      {authorName && (
+        <div className="flex items-center gap-1.5 bg-[var(--bg-main)] px-3 py-1.5 rounded-full border border-[var(--border-card)] text-[var(--text-main)] font-bold">
+          <User className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+          <span>{authorName}</span>
+        </div>
+      )}
+      {formattedDate && (
+        <div className="flex items-center gap-1.5">
+          <Calendar className="w-3.5 h-3.5 text-amber-500" />
+          <span>{formattedDate}</span>
+        </div>
+      )}
+      {readingTime && (
+        <div className="flex items-center gap-1.5">
+          <Clock className="w-3.5 h-3.5 text-amber-500" />
+          <span>{readingTime}</span>
+        </div>
+      )}
+      {article.category && (
+        <div className="flex items-center gap-1.5">
+          <Tag className="w-3.5 h-3.5 text-amber-500" />
+          <span>{article.category}</span>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const HeroBanner = ({ imageUrl }: { imageUrl?: string }) => {
   if (!imageUrl) return null;

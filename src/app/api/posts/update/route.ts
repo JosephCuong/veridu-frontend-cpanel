@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { supabase, getAuthenticatedSupabaseClient } from '@/lib/supabaseClient';
 import { formatImageUrl, convertGoogleDriveImagesInHtml } from '@/lib/htmlProcessor';
+import { calculateReadingTime } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +29,20 @@ export async function POST(request: Request) {
     const dbClient = getAuthenticatedSupabaseClient(token);
 
     const body = await request.json();
-    const { id, title, slug, excerpt, category, article_type, featured_image, content, status } = body;
+    const { 
+      id, 
+      title, 
+      slug, 
+      excerpt, 
+      category, 
+      article_type, 
+      featured_image, 
+      content, 
+      status,
+      author_name,
+      reading_time,
+      published_at
+    } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'Thiếu ID bài viết cần cập nhật.' }, { status: 400 });
@@ -72,6 +86,16 @@ export async function POST(request: Request) {
     const postCategory = category || 'Thần Học';
     const postArticleType = (article_type === 'interactive') ? 'interactive' : 'standard';
 
+    const finalReadingTime = (reading_time && typeof reading_time === 'string' && reading_time.trim())
+      ? reading_time.trim()
+      : calculateReadingTime(cleanContent);
+    const finalAuthorName = (author_name && typeof author_name === 'string' && author_name.trim())
+      ? author_name.trim()
+      : 'Ban Biên Tập VERIDU';
+    const finalPublishedAt = (published_at && typeof published_at === 'string' && published_at.trim())
+      ? new Date(published_at).toISOString()
+      : null;
+
     let updatedPost: any = null;
 
     // 4. Tier 1: Try Postgres RPC (SECURITY INVOKER)
@@ -85,7 +109,10 @@ export async function POST(request: Request) {
         p_article_type: postArticleType,
         p_featured_image: formattedImage,
         p_content: cleanContent,
-        p_status: targetStatus
+        p_status: targetStatus,
+        p_author_name: finalAuthorName,
+        p_reading_time: finalReadingTime,
+        p_published_at: finalPublishedAt
       });
 
       if (!rpcError && rpcData && rpcData.length > 0) {
@@ -99,19 +126,26 @@ export async function POST(request: Request) {
 
     // 5. Tier 2: Direct update fallback if RPC didn't return data
     if (!updatedPost) {
+      const updatePayload: Record<string, any> = {
+        title: cleanTitle,
+        slug: finalSlug,
+        excerpt: cleanExcerpt,
+        category: postCategory,
+        article_type: postArticleType,
+        featured_image: formattedImage,
+        content: cleanContent,
+        author_name: finalAuthorName,
+        reading_time: finalReadingTime,
+        status: targetStatus,
+        updated_at: new Date().toISOString()
+      };
+      if (finalPublishedAt) {
+        updatePayload.published_at = finalPublishedAt;
+      }
+
       const { data: updateData, error: updateError } = await dbClient
         .from('posts')
-        .update({
-          title: cleanTitle,
-          slug: finalSlug,
-          excerpt: cleanExcerpt,
-          category: postCategory,
-          article_type: postArticleType,
-          featured_image: formattedImage,
-          content: cleanContent,
-          status: targetStatus,
-          updated_at: new Date().toISOString()
-        })
+        .update(updatePayload)
         .eq('id', numericId)
         .select();
 

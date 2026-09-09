@@ -82,6 +82,7 @@ export interface Article {
   scriptureQuote?: string;
   prayerText?: string;
   status?: string;
+  published_at?: string;
 }
 
 export interface AuthorProfile {
@@ -302,6 +303,24 @@ export function determineArticleType(category?: string, dbArticleType?: string, 
   return 'standard';
 }
 
+/**
+ * Calculates estimated reading time based on actual word count (approx 220 words per minute).
+ */
+export function calculateReadingTime(content?: string | null): string {
+  if (!content || typeof content !== 'string') return '5 phút';
+  const clean = content
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&[a-z0-9#]+;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!clean) return '3 phút';
+  const words = clean.split(/\s+/).filter(Boolean).length;
+  const minutes = Math.max(1, Math.ceil(words / 220));
+  return `${minutes} phút`;
+}
+
 // ─── Library Articles (Supabase Integration) ───────────────────
 export async function getLibraryArticles(): Promise<Article[]> {
   try {
@@ -332,12 +351,14 @@ export async function getLibraryArticles(): Promise<Article[]> {
       scriptureQuote: item.scripture_quote || '',
       prayerText: item.prayer_text || '',
       tags: item.tags || [],
-      created_at: item.created_at,
+      created_at: item.published_at || item.created_at,
+      published_at: item.published_at || item.created_at,
       status: item.status,
-      author: item.author_name || 'VERIDU Team',
-      author_name: item.author_name || 'VERIDU Team',
-      readingTime: item.reading_time || '5 phút',
-      reading_time: item.reading_time || '5 phút',
+      author: item.author_name || 'Ban Biên Tập VERIDU',
+      author_name: item.author_name || 'Ban Biên Tập VERIDU',
+      author_id: item.author_id || '',
+      readingTime: item.reading_time || calculateReadingTime(item.content),
+      reading_time: item.reading_time || calculateReadingTime(item.content),
       views: item.views || 0,
       likes: item.likes || 0,
     }));
@@ -358,6 +379,9 @@ export async function getLibraryArticleBySlug(slug: string): Promise<Article | n
 
     if (error || !data) return null;
 
+    const calculatedTime = data.reading_time || calculateReadingTime(data.content);
+    const resolvedAuthor = data.author_name || 'Ban Biên Tập VERIDU';
+
     return {
       id: data.id,
       title: data.title,
@@ -374,13 +398,14 @@ export async function getLibraryArticleBySlug(slug: string): Promise<Article | n
       scriptureQuote: data.scripture_quote || '',
       prayerText: data.prayer_text || '',
       tags: data.tags || [],
-      created_at: data.created_at,
+      created_at: data.published_at || data.created_at,
+      published_at: data.published_at || data.created_at,
       status: data.status,
-      author: data.author_name || 'VERIDU Team',
-      author_name: data.author_name || 'VERIDU Team',
+      author: resolvedAuthor,
+      author_name: resolvedAuthor,
       author_id: data.author_id || '',
-      readingTime: data.reading_time || '5 phút',
-      reading_time: data.reading_time || '5 phút',
+      readingTime: calculatedTime,
+      reading_time: calculatedTime,
       views: data.views || 0,
       likes: data.likes || 0,
     };
