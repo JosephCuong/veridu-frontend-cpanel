@@ -7,7 +7,8 @@ import {
   Play, CheckCircle, Circle, BookOpen, Clock, 
   Video, Headphones, ChevronLeft, ChevronRight, Award, Loader2, Book,
   FileText, HelpCircle, Lock, Download, Maximize2, ShieldCheck,
-  RotateCcw, Sparkles, Check, ChevronDown, Eye
+  RotateCcw, Sparkles, Check, ChevronDown, Eye, PanelLeftClose, PanelLeft,
+  AlertTriangle, RefreshCw, Volume2, ExternalLink
 } from 'lucide-react';
 import { 
   fetchCourseBySlug, 
@@ -20,12 +21,16 @@ import {
 import { getStoredUser, UserProfile } from '@/lib/auth';
 import CourseCertificateModal, { CertificateData } from '@/components/CourseCertificateModal';
 
-// ─── HELPER: EMBED URL RESOLVER ───────────────────────────────────────────────
-function resolveMediaEmbedUrl(url?: string): { type: 'youtube' | 'drive' | 'direct' | 'none'; embedUrl: string } {
-  if (!url || typeof url !== 'string') return { type: 'none', embedUrl: '' };
+// ─── HELPER: MULTI-SOURCE VIDEO & MEDIA EMBED RESOLVER ───────────────────────
+function resolveMediaEmbedUrl(url?: string): { 
+  type: 'youtube' | 'facebook' | 'drive' | 'mp4' | 'direct' | 'none'; 
+  embedUrl: string; 
+  originalUrl: string;
+} {
+  if (!url || typeof url !== 'string') return { type: 'none', embedUrl: '', originalUrl: '' };
   const clean = url.trim();
 
-  // YouTube
+  // 1. YouTube (Watch, Embed, Short, youtu.be)
   if (clean.includes('youtube.com') || clean.includes('youtu.be')) {
     let videoId = '';
     if (clean.includes('embed/')) {
@@ -34,31 +39,59 @@ function resolveMediaEmbedUrl(url?: string): { type: 'youtube' | 'drive' | 'dire
       videoId = clean.split('watch?v=')[1]?.split('&')[0] || '';
     } else if (clean.includes('youtu.be/')) {
       videoId = clean.split('youtu.be/')[1]?.split('?')[0] || '';
+    } else if (clean.includes('shorts/')) {
+      videoId = clean.split('shorts/')[1]?.split('?')[0] || '';
     }
     return {
       type: 'youtube',
-      embedUrl: videoId ? `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1` : clean
+      embedUrl: videoId 
+        ? `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&enablejsapi=1` 
+        : clean,
+      originalUrl: clean
     };
   }
 
-  // Google Drive (PDF or Video)
+  // 2. Facebook Video
+  if (clean.includes('facebook.com') || clean.includes('fb.watch')) {
+    return {
+      type: 'facebook',
+      embedUrl: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(clean)}&show_text=0&autoplay=0`,
+      originalUrl: clean
+    };
+  }
+
+  // 3. Google Drive (PDF or Video preview)
   if (clean.includes('drive.google.com')) {
     let fileId = '';
     const match = clean.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || clean.match(/id=([a-zA-Z0-9_-]+)/);
     if (match && match[1]) fileId = match[1];
     return {
       type: 'drive',
-      embedUrl: fileId ? `https://drive.google.com/file/d/${fileId}/preview` : clean
+      embedUrl: fileId ? `https://drive.google.com/file/d/${fileId}/preview` : clean,
+      originalUrl: clean
     };
   }
 
-  return { type: 'direct', embedUrl: clean };
+  // 4. Direct Video Stream (MP4, WebM, OGG, M3U8)
+  const isDirectVideo = /\.(mp4|webm|ogg|m3u8)(\?|$)/i.test(clean);
+  if (isDirectVideo) {
+    return {
+      type: 'mp4',
+      embedUrl: clean,
+      originalUrl: clean
+    };
+  }
+
+  return { type: 'direct', embedUrl: clean, originalUrl: clean };
 }
 
 export default function CoursePlayerPage({ params }: { params: { slug: string } }) {
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Layout State: Left Sidebar Toggle
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Hierarchy Indices: Lesson -> Section (Single Page Unit)
   const [activeLessonIndex, setActiveLessonIndex] = useState<number>(0);
@@ -72,174 +105,139 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
   // Certificate Modal State
   const [showCertificate, setShowCertificate] = useState(false);
 
-  // Quiz Interaction State (for quiz sections)
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
-  const [showQuizFeedback, setShowQuizFeedback] = useState(false);
+  // ─── QUIZ DRIP-FEEDING STATE ───────────────────────────────────────────────
+  const [quizQuestionIndex, setQuizQuestionIndex] = useState<number>(0);
+  const [quizSelectedAnswers, setQuizSelectedAnswers] = useState<{ [qIdx: number]: number }>({});
+  const [quizFinished, setQuizFinished] = useState(false);
+  const [quizScore, setQuizScore] = useState(0);
 
-  // 1. Initial Load & User Auth Fetch
+  // Reset Quiz State when switching section or lesson
   useEffect(() => {
-    const stored = getStoredUser();
-    setUser(stored);
+    setQuizQuestionIndex(0);
+    setQuizSelectedAnswers({});
+    setQuizFinished(false);
+    setQuizScore(0);
+  }, [activeLessonIndex, activeSectionIndex]);
 
-    async function loadCourse() {
+  // Load User & Course Data
+  useEffect(() => {
+    const currentUser = getStoredUser();
+    setUser(currentUser);
+
+    async function loadData() {
       try {
         setLoading(true);
         const data = await fetchCourseBySlug(params.slug);
         if (!data) {
-          setError('Không tìm thấy khóa học này trên hệ thống.');
+          setError('Không tìm thấy khóa học.');
           return;
         }
         setCourse(data);
 
-        // Load saved progress from Supabase if user is logged in
-        if (stored?.id) {
-          const progress = await fetchUserCourseProgress(data.id, String(stored.id));
-          if (progress?.completedSections && progress.completedSections.length > 0) {
-            setCompletedSections(progress.completedSections);
-          }
-        } else {
-          // Local fallback for guest
-          try {
-            const localSaved = localStorage.getItem(`veridu_course_progress_${data.id}`);
-            if (localSaved) {
-              setCompletedSections(JSON.parse(localSaved));
-            }
-          } catch (e) {}
+        // Fetch user progress from Supabase / localStorage
+        const progress = await fetchUserCourseProgress(data.id, currentUser?.id);
+        if (progress?.completedSections && Array.isArray(progress.completedSections)) {
+          setCompletedSections(progress.completedSections);
         }
-      } catch (e) {
-        setError('Lỗi kết nối khi tải khóa học. Vui lòng thử lại sau.');
+      } catch (err: any) {
+        console.error('Error fetching course:', err);
+        setError('Đã có lỗi xảy ra khi tải khóa học.');
       } finally {
         setLoading(false);
       }
     }
 
-    loadCourse();
+    loadData();
   }, [params.slug]);
 
-  // Reset quiz state when moving to a new section
-  useEffect(() => {
-    setSelectedAnswers({});
-    setShowQuizFeedback(false);
-  }, [activeLessonIndex, activeSectionIndex]);
+  // ─── DERIVED CURRENT SECTION & STATS ───────────────────────────────────────
+  const currentLessons = course?.lessons || [];
+  const activeLesson = currentLessons[activeLessonIndex];
+  const currentSections = activeLesson?.sections || [];
+  const activeSection = currentSections[activeSectionIndex];
 
-  // ─── COMPUTED CURRICULUM DATA ───────────────────────────────────────────────
-  const activeLesson: Lesson | null = useMemo(() => {
-    if (!course || !course.lessons || course.lessons.length === 0) return null;
-    return course.lessons[activeLessonIndex] || course.lessons[0] || null;
-  }, [course, activeLessonIndex]);
-
-  // Ensure every lesson has at least 1 section (fallback if DB has no sections)
-  const currentSections: LessonSection[] = useMemo(() => {
-    if (!activeLesson) return [];
-    if (activeLesson.sections && activeLesson.sections.length > 0) {
-      return activeLesson.sections;
-    }
-    // Fallback single section from lesson properties
-    return [
-      {
-        id: `fallback-${activeLesson.id}`,
-        lessonId: activeLesson.id,
-        title: activeLesson.title,
-        sectionType: (activeLesson.lessonType as any) || (activeLesson.videoUrl ? 'video' : 'text'),
-        orderIndex: 1,
-        mediaUrl: activeLesson.videoUrl || activeLesson.audioUrl || '',
-        contentHtml: activeLesson.contentHtml || activeLesson.content || '',
-        duration: activeLesson.duration || '15 phút',
-        durationMinutes: activeLesson.durationMinutes || 15
-      }
-    ];
-  }, [activeLesson]);
-
-  const activeSection: LessonSection | null = useMemo(() => {
-    if (!currentSections || currentSections.length === 0) return null;
-    return currentSections[activeSectionIndex] || currentSections[0] || null;
-  }, [currentSections, activeSectionIndex]);
-
-  // Flatten all sections across the entire course to calculate exact % progress
-  const allCourseSections: LessonSection[] = useMemo(() => {
-    if (!course || !course.lessons) return [];
-    return course.lessons.flatMap((l, lIdx) => {
-      if (l.sections && l.sections.length > 0) return l.sections;
-      return [
-        {
-          id: `fallback-${l.id || lIdx}`,
-          lessonId: l.id,
-          title: l.title,
-          sectionType: 'text',
-          orderIndex: 1
-        } as LessonSection
-      ];
-    });
+  // Total sections count across entire course
+  const totalSectionsCount = useMemo(() => {
+    if (!course?.lessons) return 0;
+    return course.lessons.reduce((acc, l) => acc + (l.sections?.length || 0), 0);
   }, [course]);
 
-  const totalSectionsCount = allCourseSections.length;
-  const progressPercent = totalSectionsCount > 0
-    ? Math.min(100, Math.round((completedSections.length / totalSectionsCount) * 100))
-    : 0;
+  // Total Progress Percentage
+  const progressPercent = useMemo(() => {
+    if (totalSectionsCount === 0) return 0;
+    const completedCount = completedSections.length;
+    return Math.min(100, Math.round((completedCount / totalSectionsCount) * 100));
+  }, [completedSections, totalSectionsCount]);
 
-  // ─── DRIP-FEEDING UNLOCK LOGIC ──────────────────────────────────────────────
-  const isSectionUnlocked = (lessonIdx: number, sectionIdx: number): boolean => {
+  // Check if a section is unlocked based on Drip-Feeding sequential rule
+  const isSectionUnlocked = (lessonIdx: number, sectionIdx: number) => {
+    // Section 1 of Lesson 1 is always unlocked
     if (lessonIdx === 0 && sectionIdx === 0) return true;
-    
-    // Find absolute index in allCourseSections
-    let targetSection: LessonSection | null = null;
-    let targetAbsIdx = 0;
-    let currAbsIdx = 0;
 
-    for (let i = 0; i < (course?.lessons?.length || 0); i++) {
-      const les = course!.lessons[i];
-      const secs = les.sections && les.sections.length > 0 ? les.sections : [{ id: `fallback-${les.id}` } as any];
-      for (let s = 0; s < secs.length; s++) {
-        if (i === lessonIdx && s === sectionIdx) {
-          targetSection = secs[s];
-          targetAbsIdx = currAbsIdx;
+    // Flatten all sections in order
+    let previousSectionId: number | string | null = null;
+    let found = false;
+
+    for (let l = 0; l < currentLessons.length; l++) {
+      const les = currentLessons[l];
+      if (!les.sections) continue;
+      for (let s = 0; s < les.sections.length; s++) {
+        const sec = les.sections[s];
+        if (l === lessonIdx && s === sectionIdx) {
+          found = true;
+          break;
         }
-        currAbsIdx++;
+        previousSectionId = sec.id;
       }
+      if (found) break;
     }
 
-    if (!targetSection) return false;
-    if (completedSections.includes(targetSection.id)) return true;
-
-    // Check if the previous absolute section is completed
-    if (targetAbsIdx > 0 && targetAbsIdx - 1 < allCourseSections.length) {
-      const prevSection = allCourseSections[targetAbsIdx - 1];
-      return completedSections.includes(prevSection.id);
-    }
-
-    return false;
+    if (!previousSectionId) return true;
+    return completedSections.includes(previousSectionId);
   };
 
-  const isCurrentSectionDone = activeSection ? completedSections.includes(activeSection.id) : false;
+  // Passing Threshold for Quiz (Default 80%)
+  const quizPassingThreshold = useMemo(() => {
+    if (activeSection?.sectionType !== 'quiz') return 80;
+    return 80;
+  }, [activeSection]);
 
-  // ─── STEP PROGRESSION ACTIONS ───────────────────────────────────────────────
+  const isCurrentQuizPassed = useMemo(() => {
+    if (activeSection?.sectionType !== 'quiz') return true;
+    if (completedSections.includes(activeSection.id)) return true;
+    if (!quizFinished) return false;
+    const totalQ = activeSection.quizData?.length || 1;
+    const pct = Math.round((quizScore / totalQ) * 100);
+    return pct >= quizPassingThreshold;
+  }, [activeSection, completedSections, quizFinished, quizScore, quizPassingThreshold]);
+
+  // ─── ACTION: MARK SECTION COMPLETE & ADVANCE STEPPER ───────────────────────
   const handleCompleteAndNext = async () => {
-    if (!activeSection || !activeLesson || !course) return;
+    if (!course || !activeSection) return;
 
-    setSavingProgress(true);
-    const sectionId = activeSection.id;
-
-    // 1. Update state
-    let updatedCompleted = completedSections;
-    if (!completedSections.includes(sectionId)) {
-      updatedCompleted = [...completedSections, sectionId];
-      setCompletedSections(updatedCompleted);
+    // If quiz is not passed, block progress!
+    if (activeSection.sectionType === 'quiz' && !isCurrentQuizPassed) {
+      return;
     }
 
-    // 2. Save to Supabase or LocalStorage
+    // 1. Add to completed sections if not already there
+    const updatedCompleted = completedSections.includes(activeSection.id)
+      ? completedSections
+      : [...completedSections, activeSection.id];
+
+    setCompletedSections(updatedCompleted);
+
+    // 2. Persist to Supabase & LocalStorage
     try {
-      if (user?.id) {
-        await saveUserSectionProgress({
-          userId: String(user.id),
-          courseId: course.id,
-          lessonId: activeLesson.id,
-          sectionId: sectionId,
-          totalSectionsCount: totalSectionsCount,
-          isCompleted: true
-        });
-      } else {
-        localStorage.setItem(`veridu_course_progress_${course.id}`, JSON.stringify(updatedCompleted));
-      }
+      setSavingProgress(true);
+      await saveUserSectionProgress({
+        courseId: course.id,
+        sectionId: activeSection.id,
+        lessonId: activeLesson.id,
+        totalSectionsCount,
+        userId: user?.id
+      });
+      localStorage.setItem(`veridu_course_progress_${course.id}`, JSON.stringify(updatedCompleted));
     } catch (e) {
       console.warn('Could not persist progress:', e);
     } finally {
@@ -254,16 +252,16 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
 
     // 4. Advance Stepper to next section or next lesson
     if (activeSectionIndex < currentSections.length - 1) {
-      setActiveSectionIndex((prev) => prev + 1);
+      setActiveSectionIndex(prev => prev + 1);
     } else if (activeLessonIndex < course.lessons.length - 1) {
-      setActiveLessonIndex((prev) => prev + 1);
+      setActiveLessonIndex(prev => prev + 1);
       setActiveSectionIndex(0);
     }
   };
 
   const handlePrevStep = () => {
     if (activeSectionIndex > 0) {
-      setActiveSectionIndex((prev) => prev - 1);
+      setActiveSectionIndex(prev => prev - 1);
     } else if (activeLessonIndex > 0 && course) {
       const prevLesson = course.lessons[activeLessonIndex - 1];
       const prevSectionsCount = prevLesson.sections?.length || 1;
@@ -272,7 +270,7 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
     }
   };
 
-  // ─── SECTION TYPE ICONS ─────────────────────────────────────────────────────
+  // Helper for Section Icons
   const getSectionIcon = (type: string, className = 'w-4 h-4') => {
     switch (type) {
       case 'video': return <Video className={className} />;
@@ -286,14 +284,14 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
   const getSectionTypeLabel = (type: string) => {
     switch (type) {
       case 'video': return 'Video Bài Giảng';
-      case 'pdf': return 'Tài Liệu PDF';
-      case 'quiz': return 'Trắc Nghiệm Củng Cố';
+      case 'pdf': return 'Tài Liệu Chuyên Khảo PDF';
+      case 'quiz': return 'Trắc Nghiệm Khảo Hạch';
       case 'audio': return 'Audio Suy Niệm';
       default: return 'Bài Đọc Khảo Cứu';
     }
   };
 
-  // Certificate Data for Modal
+  // Certificate Data
   const certificateData: CertificateData | null = useMemo(() => {
     if (!course) return null;
     return {
@@ -325,16 +323,16 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
   if (error || !course) {
     return (
       <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col items-center justify-center p-4">
-        <div className="text-center space-y-4 max-w-md bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border-card)] shadow-2xl">
-          <BookOpen className="w-12 h-12 text-amber-500 mx-auto" />
-          <h2 className="font-serif font-black text-xl text-[var(--text-main)]">
-            {error || 'Khóa học không tồn tại'}
-          </h2>
-          <Link 
-            href="/khoa-hoc" 
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs shadow-md hover:bg-amber-400 transition"
+        <div className="max-w-md text-center space-y-4">
+          <BookOpen className="w-12 h-12 text-amber-500 mx-auto opacity-80" />
+          <h2 className="font-serif font-bold text-xl text-[var(--text-main)]">Không thể tải khóa học</h2>
+          <p className="text-xs text-[var(--text-muted)] font-serif">{error || 'Khóa học không tồn tại hoặc đã bị ẩn.'}</p>
+          <Link
+            href="/khoa-hoc"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 transition"
           >
-            <ChevronLeft className="w-4 h-4" /> Quay Lại Danh Sách Khóa Học
+            <ChevronLeft className="w-4 h-4" />
+            <span>Về Danh Mục Khóa Học</span>
           </Link>
         </div>
       </div>
@@ -342,564 +340,675 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] transition-colors duration-300 pt-20 sm:pt-24 pb-20 font-sans">
+    <div className="min-h-screen flex flex-col bg-[var(--bg-main)] text-[var(--text-main)] font-sans transition-colors duration-300">
       
-      {/* ── 1. COURSE TOP BAR & BREADCRUMB ── */}
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 mb-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border-card)] pb-4">
-          
-          <div className="flex items-center gap-3">
-            <Link 
-              href="/khoa-hoc" 
-              className="p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-amber-500/50 transition shadow-sm"
-              title="Quay lại danh mục"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Link>
-            <div>
-              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                <span>{course.category}</span>
-                <span>•</span>
-                <span>{course.level}</span>
-              </div>
-              <h1 className="font-serif font-black text-base sm:text-xl text-[var(--text-main)] leading-tight">
-                {course.title}
-              </h1>
+      {/* ── 1. STICKY TOP LMS TOOLBAR (FULL FOCUS MODE - 0 OFFSET) ── */}
+      <header className="sticky top-0 z-40 bg-slate-900/95 dark:bg-slate-950/95 backdrop-blur-xl border-b border-[var(--border-card)] shadow-md px-4 sm:px-6 py-3 flex items-center justify-between transition-all">
+        
+        {/* Left: Back + Toggle Sidebar + Breadcrumb & Title */}
+        <div className="flex items-center gap-3 min-w-0">
+          <Link 
+            href="/khoa-hoc" 
+            className="p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-muted)] hover:text-amber-400 hover:border-amber-500/50 transition shadow-sm shrink-0"
+            title="Quay lại danh mục khóa học"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Link>
+
+          {/* Toggle Sidebar Button */}
+          <button
+            onClick={() => setIsSidebarOpen(prev => !prev)}
+            className="p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-muted)] hover:text-amber-400 hover:border-amber-500/50 transition shadow-sm shrink-0"
+            title={isSidebarOpen ? 'Thu gọn thanh tiến trình' : 'Mở thanh tiến trình'}
+          >
+            {isSidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4 text-amber-500" />}
+          </button>
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-amber-500 font-serif">
+              <span>{course.category}</span>
+              <span>•</span>
+              <span className="text-[var(--text-muted)]">{course.level}</span>
             </div>
+            <h1 className="font-serif font-black text-xs sm:text-sm md:text-base text-[var(--text-main)] truncate max-w-xs sm:max-w-md lg:max-w-xl">
+              {course.title}
+            </h1>
           </div>
-
-          {/* Quick Progress Header */}
-          <div className="flex items-center gap-4">
-            <div className="hidden sm:flex flex-col items-end">
-              <span className="text-[11px] text-[var(--text-muted)] font-serif">Tiến độ khóa học</span>
-              <span className="text-xs font-black font-mono text-amber-500">{progressPercent}% Hoàn Thành</span>
-            </div>
-
-            {progressPercent >= 100 && (
-              <button
-                onClick={() => setShowCertificate(true)}
-                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 hover:scale-105 transition flex items-center gap-1.5 cursor-pointer"
-              >
-                <Award className="w-4 h-4" />
-                <span>Nhận Chứng Chỉ</span>
-              </button>
-            )}
-          </div>
-
         </div>
-      </div>
 
-      {/* ── 2. MAIN LMS GRID (SINGLE-PAGE SECTION CANVAS + CURRICULUM DRAWER) ── */}
-      <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* ── LEFT COLUMN: SINGLE-PAGE FOCUS SECTION CANVAS (8 Cols) ── */}
-          <div className="lg:col-span-8 space-y-6">
+        {/* Right: Quick Progress & Certificate Action */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="hidden sm:flex flex-col items-end">
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-[11px] text-[var(--text-muted)] font-serif">Tiến độ:</span>
+              <span className="font-black font-mono text-amber-500">{progressPercent}%</span>
+            </div>
+            <div className="w-28 h-1.5 bg-slate-800 rounded-full overflow-hidden mt-1">
+              <div 
+                className="h-full bg-gradient-to-r from-amber-600 to-amber-400 transition-all duration-500" 
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+          </div>
 
-            {/* Stepper Navigation: Current Lesson's Sections */}
-            <div className="p-4 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-card)]/50 pb-2.5">
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-700 dark:text-amber-400 font-mono font-bold text-[10px]">
-                    Bài {activeLesson?.orderNumber || activeLessonIndex + 1}
-                  </span>
-                  <h2 className="font-serif font-black text-sm sm:text-base text-[var(--text-main)]">
-                    {activeLesson?.title}
-                  </h2>
+          {progressPercent >= 100 && (
+            <button
+              onClick={() => setShowCertificate(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 hover:scale-105 transition flex items-center gap-1.5 cursor-pointer animate-pulse"
+            >
+              <Award className="w-4 h-4" />
+              <span className="hidden md:inline">Nhận Chứng Chỉ</span>
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* ── 2. MAIN 2-COLUMN BODY (LEFT: CURRICULUM SIDEBAR | RIGHT: FOCUS CANVAS) ── */}
+      <div className="flex-1 flex flex-col md:flex-row w-full max-w-full overflow-hidden">
+
+        {/* ── COLUMN A: PROGRESS & CURRICULUM SIDEBAR (LEFT) ── */}
+        <aside 
+          className={`${
+            isSidebarOpen ? 'w-full md:w-80 lg:w-96 flex' : 'hidden'
+          } bg-[var(--bg-card)]/80 border-r border-[var(--border-card)] flex-col shrink-0 custom-scrollbar overflow-y-auto max-h-[calc(100vh-60px)] transition-all duration-300 z-20`}
+        >
+          {/* Sidebar Header */}
+          <div className="p-4 border-b border-[var(--border-card)] space-y-2">
+            <div className="flex items-center justify-between text-xs font-serif font-bold uppercase tracking-wider text-[var(--text-main)]">
+              <span className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-amber-500" />
+                Giáo Trình Khóa Học
+              </span>
+              <span className="font-mono text-amber-500 font-black text-[11px]">
+                {completedSections.length} / {totalSectionsCount} Hoàn Tất
+              </span>
+            </div>
+            <div className="w-full bg-slate-800/80 h-2 rounded-full overflow-hidden">
+              <div 
+                className="bg-amber-500 h-full transition-all duration-500 rounded-full" 
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Lessons & Sections List */}
+          <div className="p-3 space-y-3 flex-1 overflow-y-auto custom-scrollbar">
+            {currentLessons.map((les, lIdx) => {
+              const isLessonActive = lIdx === activeLessonIndex;
+              const lessonSections = les.sections || [];
+              const completedCountInLesson = lessonSections.filter(s => completedSections.includes(s.id)).length;
+              const isLessonDone = lessonSections.length > 0 && completedCountInLesson === lessonSections.length;
+
+              return (
+                <div 
+                  key={les.id} 
+                  className={`rounded-2xl border transition-all ${
+                    isLessonActive 
+                      ? 'bg-[var(--bg-card)] border-amber-500/50 shadow-md ring-1 ring-amber-500/20' 
+                      : 'bg-[var(--bg-main)]/50 border-[var(--border-card)]/70 hover:border-[var(--border-card)]'
+                  }`}
+                >
+                  {/* Lesson Header */}
+                  <div className="p-3 border-b border-[var(--border-card)]/40 flex items-center justify-between gap-2">
+                    <div>
+                      <div className="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                        Bài {les.orderNumber || lIdx + 1}
+                      </div>
+                      <h3 className="font-serif font-bold text-xs sm:text-sm text-[var(--text-main)] line-clamp-1">
+                        {les.title}
+                      </h3>
+                    </div>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                      isLessonDone 
+                        ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/30' 
+                        : 'bg-amber-500/10 text-amber-500'
+                    }`}>
+                      {isLessonDone ? 'Đã xong ✓' : `${completedCountInLesson}/${lessonSections.length}`}
+                    </span>
+                  </div>
+
+                  {/* Sections List */}
+                  <div className="p-2 space-y-1">
+                    {lessonSections.map((sec, sIdx) => {
+                      const isSecDone = completedSections.includes(sec.id);
+                      const isSecCurrent = isLessonActive && sIdx === activeSectionIndex;
+                      const unlocked = isSectionUnlocked(lIdx, sIdx);
+
+                      let stateClass = 'text-[var(--text-muted)] hover:bg-[var(--bg-card)] hover:text-[var(--text-main)]';
+                      if (isSecCurrent) {
+                        stateClass = 'bg-amber-500/15 text-amber-500 font-bold border border-amber-500/40 shadow-xs';
+                      } else if (isSecDone) {
+                        stateClass = 'text-emerald-500/90 hover:bg-emerald-500/10';
+                      } else if (!unlocked) {
+                        stateClass = 'opacity-40 cursor-not-allowed hover:bg-transparent';
+                      }
+
+                      return (
+                        <button
+                          key={sec.id}
+                          disabled={!unlocked}
+                          onClick={() => {
+                            setActiveLessonIndex(lIdx);
+                            setActiveSectionIndex(sIdx);
+                          }}
+                          className={`w-full p-2 rounded-xl text-left text-xs font-serif flex items-center justify-between gap-2 transition cursor-pointer ${stateClass}`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="shrink-0">{getSectionIcon(sec.sectionType, 'w-3.5 h-3.5')}</span>
+                            <span className="truncate">{sec.title}</span>
+                          </div>
+                          <span className="shrink-0">
+                            {isSecDone ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-500" />
+                            ) : !unlocked ? (
+                              <Lock className="w-3 h-3 text-slate-500" />
+                            ) : isSecCurrent ? (
+                              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                            ) : null}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <span className="text-[11px] text-[var(--text-muted)] font-serif">
-                  Phần {activeSectionIndex + 1} / {currentSections.length}
-                </span>
-              </div>
+              );
+            })}
+          </div>
 
-              {/* Horizontal Stepper */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {/* Instructor Footer Card */}
+          {course.instructor_name && (
+            <div className="p-3 border-t border-[var(--border-card)] bg-[var(--bg-main)]/40 flex items-center gap-3">
+              {course.instructor_avatar ? (
+                <Image 
+                  src={course.instructor_avatar} 
+                  alt={course.instructor_name} 
+                  width={36} 
+                  height={36} 
+                  className="w-9 h-9 rounded-full object-cover border border-amber-500/40"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-xs border border-amber-500/30">
+                  {course.instructor_name.charAt(0)}
+                </div>
+              )}
+              <div className="min-w-0">
+                <div className="text-[10px] text-[var(--text-muted)] font-serif uppercase">Giảng Viên Phụ Trách</div>
+                <div className="text-xs font-serif font-bold text-[var(--text-main)] truncate">{course.instructor_name}</div>
+                {course.instructor_title && (
+                  <div className="text-[10px] text-amber-600 dark:text-amber-400 truncate">{course.instructor_title}</div>
+                )}
+              </div>
+            </div>
+          )}
+        </aside>
+
+        {/* ── COLUMN B: SINGLE-PAGE FOCUS CONTENT CANVAS (RIGHT) ── */}
+        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 custom-scrollbar overflow-y-auto max-h-[calc(100vh-60px)] space-y-6">
+          <div className="max-w-4xl mx-auto space-y-6">
+
+            {/* Stepper Tabs Bar for Active Lesson's Sections */}
+            <div className="p-3 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-md flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar py-1">
                 {currentSections.map((sec, sIdx) => {
                   const isDone = completedSections.includes(sec.id);
                   const isCurrent = sIdx === activeSectionIndex;
                   const unlocked = isSectionUnlocked(activeLessonIndex, sIdx);
+
+                  let pillStyle = 'bg-[var(--bg-main)] text-[var(--text-muted)] border-[var(--border-card)] hover:border-amber-500/40';
+                  if (isCurrent) {
+                    pillStyle = 'bg-amber-500 text-slate-950 font-bold border-amber-500 shadow-sm';
+                  } else if (isDone) {
+                    pillStyle = 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30';
+                  } else if (!unlocked) {
+                    pillStyle = 'opacity-50 cursor-not-allowed bg-[var(--bg-main)]';
+                  }
 
                   return (
                     <button
                       key={sec.id}
                       disabled={!unlocked}
                       onClick={() => setActiveSectionIndex(sIdx)}
-                      className={`p-2.5 rounded-2xl text-left transition-all flex items-center justify-between gap-2 border text-xs cursor-pointer ${
-                        isCurrent
-                          ? 'bg-amber-500/15 border-amber-500 text-amber-700 dark:text-amber-400 font-bold shadow-md ring-1 ring-amber-500/40'
-                          : isDone
-                          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:border-emerald-500/50'
-                          : unlocked
-                          ? 'bg-[var(--bg-main)] border-[var(--border-card)] text-[var(--text-main)] hover:border-amber-500/30'
-                          : 'bg-[var(--bg-main)]/50 border-[var(--border-card)]/40 text-[var(--text-muted)] opacity-40 cursor-not-allowed'
-                      }`}
+                      className={`px-3 py-1.5 rounded-xl border text-xs font-serif flex items-center gap-1.5 shrink-0 transition cursor-pointer ${pillStyle}`}
                     >
-                      <div className="flex items-center gap-1.5 truncate">
-                        {getSectionIcon(sec.sectionType, 'w-3.5 h-3.5 shrink-0')}
-                        <span className="truncate text-[11px]">{sec.title}</span>
-                      </div>
-                      {isDone ? (
-                        <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                      ) : !unlocked ? (
-                        <Lock className="w-3 h-3 text-[var(--text-muted)] shrink-0" />
-                      ) : isCurrent ? (
-                        <Play className="w-3 h-3 text-amber-500 fill-current shrink-0" />
-                      ) : null}
+                      {getSectionIcon(sec.sectionType, 'w-3.5 h-3.5')}
+                      <span>Phần {sIdx + 1}</span>
+                      {isDone && <Check className="w-3 h-3" />}
+                      {!unlocked && <Lock className="w-2.5 h-2.5" />}
                     </button>
                   );
                 })}
               </div>
+
+              <div className="text-right shrink-0">
+                <span className="text-[11px] font-serif text-[var(--text-muted)]">
+                  Phần {activeSectionIndex + 1} / {currentSections.length}
+                </span>
+              </div>
             </div>
 
-            {/* ── 3. SINGLE-PAGE SECTION CONTAINER ── */}
-            <div className="p-6 sm:p-10 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-2xl space-y-6 relative overflow-hidden">
-              
-              {activeSection && (
-                <>
-                  {/* Section Title & Type Badge */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border-card)] pb-4">
-                    <div className="space-y-1">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-bold uppercase tracking-wider">
-                        {getSectionIcon(activeSection.sectionType, 'w-3.5 h-3.5')}
-                        <span>{getSectionTypeLabel(activeSection.sectionType)}</span>
-                      </div>
-                      <h3 className="font-serif font-black text-xl sm:text-2xl text-[var(--text-main)] pt-1">
-                        {activeSection.title}
-                      </h3>
-                    </div>
-
-                    <span className="text-xs font-serif text-[var(--text-muted)] flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-amber-500" />
-                      <span>{activeSection.duration || `${activeSection.durationMinutes || 10} phút`}</span>
+            {/* Single Section Container */}
+            {activeSection ? (
+              <div className="p-5 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-6">
+                
+                {/* Section Header */}
+                <div className="border-b border-[var(--border-card)]/60 pb-5 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5">
+                      {getSectionIcon(activeSection.sectionType, 'w-3 h-3')}
+                      <span>{getSectionTypeLabel(activeSection.sectionType)}</span>
                     </span>
+                    {activeSection.durationMinutes && (
+                      <span className="text-[11px] text-[var(--text-muted)] font-serif flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-amber-500" />
+                        <span>{activeSection.durationMinutes} phút</span>
+                      </span>
+                    )}
                   </div>
+                  <h2 className="font-serif font-black text-lg sm:text-2xl text-[var(--text-main)] leading-snug">
+                    {activeSection.title}
+                  </h2>
+                </div>
 
-                  {/* ── A. VIDEO SECTION SINGLE PAGE ── */}
-                  {activeSection.sectionType === 'video' && (
-                    <div className="space-y-6">
-                      {activeSection.mediaUrl ? (
-                        <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-950 border border-[var(--border-card)] shadow-2xl">
-                          {(() => {
-                            const media = resolveMediaEmbedUrl(activeSection.mediaUrl);
-                            return (
+                {/* ── 1. MULTI-SOURCE VIDEO RENDERER ── */}
+                {activeSection.sectionType === 'video' && (
+                  <div className="space-y-4">
+                    {activeSection.mediaUrl ? (
+                      (() => {
+                        const parsed = resolveMediaEmbedUrl(activeSection.mediaUrl);
+                        
+                        if (parsed.type === 'mp4') {
+                          return (
+                            <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-slate-950 border border-[var(--border-card)] shadow-2xl">
+                              <video 
+                                src={parsed.embedUrl} 
+                                controls 
+                                className="w-full h-full object-contain"
+                              >
+                                Trình duyệt của bạn không hỗ trợ phát video HTML5.
+                              </video>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div className="space-y-2">
+                            <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-slate-950 border border-[var(--border-card)] shadow-2xl">
                               <iframe
-                                src={media.embedUrl}
+                                src={parsed.embedUrl}
                                 className="w-full h-full border-none"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowFullScreen
                                 title={activeSection.title}
                               />
-                            );
-                          })()}
-                        </div>
-                      ) : (
-                        <div className="p-10 rounded-2xl bg-[var(--bg-main)] text-center space-y-3 border border-[var(--border-card)]">
-                          <Video className="w-12 h-12 text-amber-500/50 mx-auto" />
-                          <p className="font-serif text-sm text-[var(--text-muted)]">Chưa có liên kết video cho bài giảng này.</p>
-                        </div>
-                      )}
-
-                      {activeSection.contentHtml && (
-                        <div 
-                          className="prose prose-veridu-sanitized max-w-none font-serif text-[var(--text-main)] text-base leading-relaxed pt-2"
-                          dangerouslySetInnerHTML={{ __html: activeSection.contentHtml }}
-                        />
-                      )}
-                    </div>
-                  )}
-
-                  {/* ── B. TEXT/WYSIWYG SECTION SINGLE PAGE ── */}
-                  {activeSection.sectionType === 'text' && (
-                    <div className="space-y-6">
-                      {activeSection.contentHtml ? (
-                        <div 
-                          className="prose prose-veridu-sanitized max-w-none font-serif text-[var(--text-main)] text-base sm:text-lg leading-relaxed space-y-4"
-                          dangerouslySetInnerHTML={{ __html: activeSection.contentHtml }}
-                        />
-                      ) : (
-                        <p className="font-serif italic text-[var(--text-muted)]">Nội dung bài học đang được cập nhật.</p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* ── C. PDF DOCUMENT VIEWER SINGLE PAGE ── */}
-                  {activeSection.sectionType === 'pdf' && (
-                    <div className="space-y-6">
-                      {activeSection.mediaUrl ? (
-                        <div className="space-y-4">
-                          {/* PDF Toolbar */}
-                          <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)]">
-                            <div className="flex items-center gap-2 text-xs font-serif text-[var(--text-main)]">
-                              <FileText className="w-4 h-4 text-rose-500" />
-                              <span className="font-bold">Tài Liệu Chuyên Khảo PDF</span>
                             </div>
-                            
-                            <div className="flex items-center gap-2">
-                              <a
-                                href={activeSection.mediaUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-3 py-1.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 hover:bg-amber-400 transition cursor-pointer"
+                            <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)] font-serif px-1">
+                              <span>Nguồn video: {parsed.type.toUpperCase()} (Tự động thích ứng chất lượng cao)</span>
+                              <a 
+                                href={parsed.originalUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="text-amber-500 hover:underline flex items-center gap-1"
                               >
-                                <Maximize2 className="w-3.5 h-3.5" />
-                                <span>Mở Toàn Màn Hình</span>
-                              </a>
-                              <a
-                                href={activeSection.mediaUrl}
-                                download
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-3 py-1.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-main)] font-bold text-xs flex items-center gap-1.5 hover:border-amber-500 transition cursor-pointer"
-                              >
-                                <Download className="w-3.5 h-3.5" />
-                                <span>Tải Về Máy</span>
+                                <span>Mở tab mới</span>
+                                <ExternalLink className="w-3 h-3" />
                               </a>
                             </div>
                           </div>
+                        );
+                      })()
+                    ) : (
+                      <div className="p-10 rounded-2xl bg-[var(--bg-main)] text-center space-y-3 border border-[var(--border-card)]">
+                        <Video className="w-12 h-12 text-amber-500/50 mx-auto" />
+                        <p className="font-serif text-sm text-[var(--text-muted)]">Video bài giảng đang được cập nhật.</p>
+                      </div>
+                    )}
 
-                          {/* PDF Viewer Frame */}
-                          <div className="relative w-full h-[600px] sm:h-[750px] rounded-2xl overflow-hidden border border-[var(--border-card)] bg-slate-900 shadow-inner">
-                            <iframe
-                              src={resolveMediaEmbedUrl(activeSection.mediaUrl).embedUrl}
-                              className="w-full h-full border-none"
-                              title={activeSection.title}
-                            />
+                    {activeSection.contentHtml && (
+                      <div 
+                        className="prose prose-invert max-w-none font-serif text-[var(--text-main)] text-sm sm:text-base leading-relaxed pt-3 border-t border-[var(--border-card)]/50"
+                        dangerouslySetInnerHTML={{ __html: activeSection.contentHtml }}
+                      />
+                    )}
+                  </div>
+                )}
+
+                {/* ── 2. TEXT / WYSIWYG RENDERER ── */}
+                {activeSection.sectionType === 'text' && (
+                  <div className="space-y-4">
+                    {activeSection.contentHtml ? (
+                      <div 
+                        className="prose prose-invert max-w-none font-serif text-[var(--text-main)] text-base sm:text-lg leading-relaxed space-y-4"
+                        dangerouslySetInnerHTML={{ __html: activeSection.contentHtml }}
+                      />
+                    ) : (
+                      <p className="font-serif italic text-[var(--text-muted)] text-sm">Nội dung bài khảo cứu đang được hoàn thiện.</p>
+                    )}
+                  </div>
+                )}
+
+                {/* ── 3. PDF DOCUMENT VIEWER ── */}
+                {activeSection.sectionType === 'pdf' && (
+                  <div className="space-y-4">
+                    {activeSection.mediaUrl ? (
+                      <div className="space-y-3">
+                        {/* PDF Toolbar */}
+                        <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)]">
+                          <div className="flex items-center gap-2 text-xs font-serif text-[var(--text-main)]">
+                            <FileText className="w-4 h-4 text-rose-500" />
+                            <span className="font-bold">Tài Liệu Chuyên Khảo PDF</span>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={activeSection.mediaUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3 py-1.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 hover:bg-amber-400 transition cursor-pointer"
+                            >
+                              <Maximize2 className="w-3.5 h-3.5" />
+                              <span>Mở Toàn Màn Hình</span>
+                            </a>
+                            <a
+                              href={activeSection.mediaUrl}
+                              download
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3 py-1.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-main)] font-bold text-xs flex items-center gap-1.5 hover:border-amber-500 transition cursor-pointer"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span>Tải Về Máy</span>
+                            </a>
                           </div>
                         </div>
-                      ) : (
-                        <div className="p-10 rounded-2xl bg-[var(--bg-main)] text-center space-y-3 border border-[var(--border-card)]">
-                          <FileText className="w-12 h-12 text-rose-500/50 mx-auto" />
-                          <p className="font-serif text-sm text-[var(--text-muted)]">Chưa có tệp PDF đính kèm cho phần học này.</p>
+
+                        {/* Frame */}
+                        <div className="relative w-full h-[600px] sm:h-[750px] rounded-2xl overflow-hidden border border-[var(--border-card)] bg-slate-950 shadow-inner">
+                          <iframe
+                            src={resolveMediaEmbedUrl(activeSection.mediaUrl).embedUrl}
+                            className="w-full h-full border-none"
+                            title={activeSection.title}
+                          />
                         </div>
-                      )}
+                      </div>
+                    ) : (
+                      <div className="p-10 rounded-2xl bg-[var(--bg-main)] text-center space-y-3 border border-[var(--border-card)]">
+                        <FileText className="w-12 h-12 text-rose-500/50 mx-auto" />
+                        <p className="font-serif text-sm text-[var(--text-muted)]">Chưa có tệp PDF đính kèm cho phần này.</p>
+                      </div>
+                    )}
 
-                      {activeSection.contentHtml && (
-                        <div 
-                          className="prose prose-veridu-sanitized max-w-none font-serif text-[var(--text-main)] text-base leading-relaxed pt-2"
-                          dangerouslySetInnerHTML={{ __html: activeSection.contentHtml }}
-                        />
-                      )}
-                    </div>
-                  )}
+                    {activeSection.contentHtml && (
+                      <div 
+                        className="prose prose-invert max-w-none font-serif text-[var(--text-main)] text-sm leading-relaxed pt-2"
+                        dangerouslySetInnerHTML={{ __html: activeSection.contentHtml }}
+                      />
+                    )}
+                  </div>
+                )}
 
-                  {/* ── D. QUIZ TEST SECTION SINGLE PAGE ── */}
-                  {activeSection.sectionType === 'quiz' && (
-                    <div className="space-y-6">
-                      {activeSection.quizData && activeSection.quizData.length > 0 ? (
-                        <div className="space-y-8">
-                          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-xs">
-                            <span className="font-serif font-bold text-amber-700 dark:text-amber-400">
-                              Bài Tập Thẩm Định Tri Thức ({activeSection.quizData.length} Câu Hỏi)
-                            </span>
-                            <span className="text-[var(--text-muted)] font-serif">
-                              Đạt từ 66% để hoàn thành phần học
-                            </span>
-                          </div>
+                {/* ── 4. QUIZ DRIP-FEEDING & PASSING GATE (≥ 80%) ── */}
+                {activeSection.sectionType === 'quiz' && (
+                  <div className="space-y-6">
+                    {activeSection.quizData && activeSection.quizData.length > 0 ? (
+                      (() => {
+                        const questions = activeSection.quizData;
+                        const totalQ = questions.length;
+                        const currentQ = questions[quizQuestionIndex];
+                        const selectedAnswer = quizSelectedAnswers[quizQuestionIndex];
+                        const isCurrentAnswered = selectedAnswer !== undefined;
 
-                          {activeSection.quizData.map((q, qIdx) => {
-                            const selected = selectedAnswers[qIdx];
-                            const isAnswered = selected !== undefined;
-                            const isCorrect = selected === q.correctAnswerIndex;
+                        // Normalize correct answer index (support correctAnswerIndex or correct)
+                        const correctAnswer = currentQ.correctAnswerIndex ?? currentQ.correct ?? 0;
+                        const explanation = currentQ.explanation ?? currentQ.explain ?? '';
 
-                            return (
-                              <div key={q.id || qIdx} className="p-5 sm:p-6 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] space-y-4 shadow-sm">
-                                <div className="flex items-start justify-between gap-3">
-                                  <h4 className="font-serif font-bold text-sm sm:text-base text-[var(--text-main)]">
-                                    <span className="text-amber-500 font-mono mr-2">Câu {qIdx + 1}.</span>
-                                    {q.question}
-                                  </h4>
-                                  {isAnswered && (
-                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 ${
-                                      isCorrect ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-500 border border-rose-500/40'
-                                    }`}>
-                                      {isCorrect ? 'Chính Xác' : 'Chưa Đúng'}
-                                    </span>
-                                  )}
-                                </div>
+                        // If Quiz Finished: Show Passing Gate Result Screen
+                        if (quizFinished) {
+                          const percent = Math.round((quizScore / totalQ) * 100);
+                          const isPassed = percent >= quizPassingThreshold;
 
-                                {/* Options */}
-                                <div className="space-y-2">
-                                  {q.options.map((opt, oIdx) => {
-                                    const isChosen = selected === oIdx;
-                                    const isCorrectOption = oIdx === q.correctAnswerIndex;
-                                    
-                                    let optionStyle = 'bg-[var(--bg-card)] border-[var(--border-card)] text-[var(--text-main)] hover:border-amber-500/50';
-                                    if (isAnswered) {
-                                      if (isCorrectOption) {
-                                        optionStyle = 'bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold';
-                                      } else if (isChosen && !isCorrect) {
-                                        optionStyle = 'bg-rose-500/15 border-rose-500 text-rose-700 dark:text-rose-300 line-through';
-                                      } else {
-                                        optionStyle = 'opacity-50 border-transparent';
-                                      }
-                                    }
+                          return (
+                            <div className={`p-6 sm:p-8 rounded-3xl border text-center space-y-4 shadow-2xl transition-all ${
+                              isPassed 
+                                ? 'bg-emerald-950/40 border-emerald-500/60' 
+                                : 'bg-rose-950/40 border-rose-500/60'
+                            }`}>
+                              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold shadow-md ${
+                                isPassed 
+                                  ? 'bg-emerald-500 text-slate-950' 
+                                  : 'bg-rose-500 text-white'
+                              }`}>
+                                {isPassed ? <Check className="w-8 h-8 stroke-[3]" /> : <Lock className="w-8 h-8" />}
+                              </div>
 
-                                    return (
-                                      <button
-                                        key={oIdx}
-                                        disabled={isAnswered}
-                                        onClick={() => {
-                                          setSelectedAnswers(prev => ({ ...prev, [qIdx]: oIdx }));
-                                          setShowQuizFeedback(true);
-                                        }}
-                                        className={`w-full p-3 rounded-xl border text-left transition-all text-xs font-serif flex items-center justify-between gap-2 cursor-pointer ${optionStyle}`}
-                                      >
-                                        <span>{opt}</span>
-                                        {isAnswered && isCorrectOption && <Check className="w-4 h-4 text-emerald-500 shrink-0" />}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
+                              <div className="space-y-1">
+                                <h3 className={`font-serif font-black text-xl sm:text-2xl ${
+                                  isPassed ? 'text-emerald-400' : 'text-rose-400'
+                                }`}>
+                                  {isPassed 
+                                    ? `Xuất Sắc! Đạt ${percent}% (${quizScore}/${totalQ} Câu Đúng)` 
+                                    : `Chưa Đạt Điểm Sàn (${percent}%)`}
+                                </h3>
+                                <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto font-serif">
+                                  {isPassed
+                                    ? `Bạn đã vượt qua điểm sàn yêu cầu (≥ ${quizPassingThreshold}%). Phần học đã được ghi nhận hoàn thành vào tiến trình cá nhân!`
+                                    : `Hệ thống yêu cầu điểm sàn tối thiểu ${quizPassingThreshold}% (đúng ít nhất ${Math.ceil((quizPassingThreshold / 100) * totalQ)}/${totalQ} câu) để đảm bảo chuẩn kiến thức thần học. Vui lòng bấm "Làm lại Quiz" để thử lại.`}
+                                </p>
+                              </div>
 
-                                {/* Explanation Banner */}
-                                {isAnswered && (
-                                  <div className="p-3.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs font-serif space-y-1 mt-2">
-                                    <div className="font-bold text-amber-600 dark:text-amber-400 text-[11px] uppercase tracking-wider">
-                                      {isCorrect ? '✓ Chú giải thần học:' : '✗ Lời giải thích đúng:'}
-                                    </div>
-                                    <p className="text-[var(--text-muted)] leading-relaxed">{q.explanation}</p>
-                                  </div>
+                              {/* Actions */}
+                              <div className="flex flex-wrap justify-center gap-3 pt-3">
+                                <button
+                                  onClick={() => {
+                                    setQuizQuestionIndex(0);
+                                    setQuizSelectedAnswers({});
+                                    setQuizFinished(false);
+                                    setQuizScore(0);
+                                  }}
+                                  className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-sm"
+                                >
+                                  <RefreshCw className="w-3.5 h-3.5" />
+                                  <span>Làm Lại Bài Quiz</span>
+                                </button>
+
+                                {isPassed && (
+                                  <button
+                                    onClick={handleCompleteAndNext}
+                                    className="px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition flex items-center gap-2 cursor-pointer"
+                                  >
+                                    <span>Hoàn Thành & Sang Bài Kế Tiếp ✓</span>
+                                  </button>
                                 )}
                               </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="p-10 rounded-2xl bg-[var(--bg-main)] text-center space-y-3 border border-[var(--border-card)]">
-                          <HelpCircle className="w-12 h-12 text-indigo-500/50 mx-auto" />
-                          <p className="font-serif text-sm text-[var(--text-muted)]">Chưa có câu hỏi trắc nghiệm cho phần học này.</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                            </div>
+                          );
+                        }
 
-                  {/* ── E. AUDIO/PODCAST SECTION SINGLE PAGE ── */}
-                  {activeSection.sectionType === 'audio' && (
-                    <div className="p-8 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-center space-y-4 border border-white/10">
-                      <Headphones className="w-14 h-14 text-amber-500 drop-shadow-md mx-auto" />
-                      <h4 className="font-serif font-bold text-lg text-white">Nghe Đọc &amp; Suy Niệm Lời Chúa</h4>
-                      {activeSection.mediaUrl ? (
-                        <audio controls className="w-full max-w-md mx-auto" src={activeSection.mediaUrl}>
-                          Trình duyệt của bạn không hỗ trợ phát âm thanh.
-                        </audio>
-                      ) : (
-                        <p className="text-xs text-slate-400">Đang cập nhật tệp audio bài giảng.</p>
-                      )}
-                    </div>
-                  )}
+                        // Stepper Question Card (Drip mode: 1 by 1)
+                        return (
+                          <div className="space-y-6 bg-[var(--bg-main)]/70 p-5 sm:p-7 rounded-3xl border border-[var(--border-card)] shadow-inner">
+                            
+                            {/* Stepper Progress Bar */}
+                            <div className="flex items-center justify-between text-xs font-serif border-b border-[var(--border-card)]/50 pb-3">
+                              <span className="text-amber-500 font-mono font-bold text-sm">
+                                Câu {quizQuestionIndex + 1} / {totalQ}
+                              </span>
+                              <span className="text-[var(--text-muted)] text-[11px]">
+                                Điểm sàn đỗ: ≥ {quizPassingThreshold}%
+                              </span>
+                            </div>
 
-                  {/* ── DRIP ACTION FOOTER ── */}
-                  <div className="pt-6 border-t border-[var(--border-card)] flex flex-wrap items-center justify-between gap-4">
-                    <button
-                      onClick={handlePrevStep}
-                      disabled={activeLessonIndex === 0 && activeSectionIndex === 0}
-                      className="px-4 py-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-amber-500/40 disabled:opacity-30 flex items-center gap-1.5 transition cursor-pointer"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                      <span>Phần Trước</span>
-                    </button>
+                            {/* Question Title */}
+                            <h4 className="font-serif font-black text-base sm:text-lg text-[var(--text-main)] leading-relaxed">
+                              {currentQ.question || currentQ.q}
+                            </h4>
 
-                    <div className="flex items-center gap-3">
-                      {isCurrentSectionDone && (
-                        <span className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-emerald-500">
-                          <CheckCircle className="w-4 h-4" />
-                          <span>Đã hoàn thành phần này</span>
-                        </span>
-                      )}
+                            {/* Options List */}
+                            <div className="space-y-2.5">
+                              {currentQ.options.map((opt: string, optIdx: number) => {
+                                const isSelected = selectedAnswer === optIdx;
+                                const isCorrect = optIdx === correctAnswer;
+                                const char = String.fromCharCode(65 + optIdx);
 
+                                let optStyle = 'bg-[var(--bg-card)] border-[var(--border-card)] text-[var(--text-main)] hover:border-amber-500/50 hover:bg-amber-500/5';
+                                if (isCurrentAnswered) {
+                                  if (isCorrect) {
+                                    optStyle = 'bg-emerald-500/20 border-emerald-500 text-emerald-300 font-bold ring-1 ring-emerald-500/40';
+                                  } else if (isSelected && !isCorrect) {
+                                    optStyle = 'bg-rose-500/20 border-rose-500 text-rose-300 line-through';
+                                  } else {
+                                    optStyle = 'opacity-40 border-transparent';
+                                  }
+                                }
+
+                                return (
+                                  <button
+                                    key={optIdx}
+                                    disabled={isCurrentAnswered}
+                                    onClick={() => {
+                                      const isRight = optIdx === correctAnswer;
+                                      setQuizSelectedAnswers(prev => ({ ...prev, [quizQuestionIndex]: optIdx }));
+                                      if (isRight) setQuizScore(prev => prev + 1);
+                                    }}
+                                    className={`w-full p-3.5 rounded-2xl border text-left text-xs sm:text-sm font-serif transition-all flex items-start gap-3 cursor-pointer ${optStyle}`}
+                                  >
+                                    <span className="w-6 h-6 rounded-full bg-slate-800/90 border border-slate-700 flex items-center justify-center font-mono font-bold text-xs shrink-0 text-amber-400">
+                                      {char}
+                                    </span>
+                                    <span className="flex-1 leading-relaxed">{opt}</span>
+                                    {isCurrentAnswered && isCorrect && (
+                                      <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            {/* Instant Explanation Feedback */}
+                            {isCurrentAnswered && (
+                              <div className={`p-4 rounded-2xl text-xs sm:text-sm font-serif leading-relaxed border animate-in fade-in-50 duration-200 ${
+                                selectedAnswer === correctAnswer 
+                                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' 
+                                  : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                              }`}>
+                                <div className="font-bold mb-1 flex items-center gap-1.5">
+                                  {selectedAnswer === correctAnswer ? (
+                                    <><span>✓</span><span>Chính xác!</span></>
+                                  ) : (
+                                    <><span>✗</span><span>Chưa chính xác!</span></>
+                                  )}
+                                </div>
+                                <div>{explanation}</div>
+                              </div>
+                            )}
+
+                            {/* Stepper Navigation Footer */}
+                            <div className="flex items-center justify-between pt-4 border-t border-[var(--border-card)]/50">
+                              <span className="text-[11px] text-[var(--text-muted)] font-serif italic">
+                                {isCurrentAnswered ? 'Nhấn để tiếp tục câu kế tiếp' : 'Chọn đáp án để xem giải thích'}
+                              </span>
+
+                              <button
+                                disabled={!isCurrentAnswered}
+                                onClick={() => {
+                                  if (quizQuestionIndex < totalQ - 1) {
+                                    setQuizQuestionIndex(prev => prev + 1);
+                                  } else {
+                                    setQuizFinished(true);
+                                  }
+                                }}
+                                className={`px-5 py-2.5 rounded-xl font-serif font-bold text-xs transition flex items-center gap-1.5 cursor-pointer ${
+                                  isCurrentAnswered 
+                                    ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20' 
+                                    : 'bg-slate-800 text-slate-500 opacity-50 cursor-not-allowed'
+                                }`}
+                              >
+                                <span>{quizQuestionIndex < totalQ - 1 ? 'Câu Kế Tiếp →' : 'Xem Kết Quả Khảo Hạch ✓'}</span>
+                              </button>
+                            </div>
+
+                          </div>
+                        );
+                      })()
+                    ) : (
+                      <div className="p-10 rounded-2xl bg-[var(--bg-main)] text-center space-y-3 border border-[var(--border-card)]">
+                        <HelpCircle className="w-12 h-12 text-amber-500/50 mx-auto" />
+                        <p className="font-serif text-sm text-[var(--text-muted)]">Chưa có câu hỏi trắc nghiệm cho phần này.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ── 5. AUDIO / PODCAST RENDERER ── */}
+                {activeSection.sectionType === 'audio' && (
+                  <div className="space-y-4">
+                    {activeSection.mediaUrl ? (
+                      <div className="p-6 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] space-y-4 text-center">
+                        <Volume2 className="w-12 h-12 text-indigo-400 mx-auto animate-bounce" />
+                        <h4 className="font-serif font-bold text-sm text-[var(--text-main)]">Nghe Audio Lời Chúa & Suy Niệm</h4>
+                        <audio src={activeSection.mediaUrl} controls className="w-full max-w-md mx-auto" />
+                      </div>
+                    ) : (
+                      <div className="p-10 rounded-2xl bg-[var(--bg-main)] text-center space-y-3 border border-[var(--border-card)]">
+                        <Headphones className="w-12 h-12 text-indigo-500/50 mx-auto" />
+                        <p className="font-serif text-sm text-[var(--text-muted)]">Bản ghi âm đang được chuẩn bị.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ── 6. BOTTOM NAVIGATION ACTIONS ── */}
+                <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-[var(--border-card)]">
+                  
+                  {/* Previous Section */}
+                  <button
+                    onClick={handlePrevStep}
+                    disabled={activeLessonIndex === 0 && activeSectionIndex === 0}
+                    className="px-4 py-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-amber-500/50 text-xs font-serif font-bold transition flex items-center gap-1.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span>Phần Trước</span>
+                  </button>
+
+                  {/* Next / Complete Section */}
+                  <div>
+                    {activeSection.sectionType === 'quiz' && !isCurrentQuizPassed ? (
+                      <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 text-slate-500 border border-slate-700 text-xs font-serif font-bold cursor-not-allowed">
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>Cần Vượt Qua Quiz (≥ 80%) 🔒</span>
+                      </div>
+                    ) : (
                       <button
                         onClick={handleCompleteAndNext}
                         disabled={savingProgress}
-                        className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 flex items-center gap-2 transition hover:scale-105 cursor-pointer disabled:opacity-50"
+                        className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-xs shadow-lg shadow-amber-500/20 hover:scale-[1.02] transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
                       >
-                        {savingProgress ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>Đang Lưu...</span>
-                          </>
-                        ) : activeSectionIndex === currentSections.length - 1 && activeLessonIndex === course.lessons.length - 1 ? (
-                          <>
-                            <Award className="w-4 h-4" />
-                            <span>Hoàn Tất Khóa Học</span>
-                          </>
-                        ) : (
-                          <>
-                            <span>Hoàn Thành &amp; Tiếp Tục</span>
-                            <ChevronRight className="w-4 h-4" />
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-
-            </div>
-          </div>
-
-          {/* ── RIGHT COLUMN: CURRICULUM ACCORDION & PROGRESS SIDEBAR (4 Cols) ── */}
-          <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-24">
-            
-            {/* Progress Card */}
-            <div className="p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-serif font-bold text-base text-[var(--text-main)] flex items-center gap-2">
-                  <Award className="w-5 h-5 text-amber-500" />
-                  <span>Tiến Độ Tổng Thể</span>
-                </h3>
-                <span className="text-sm font-black font-mono text-amber-500">{progressPercent}%</span>
-              </div>
-
-              <div className="w-full bg-[var(--bg-main)] h-2.5 rounded-full overflow-hidden border border-[var(--border-card)]">
-                <div 
-                  className="bg-gradient-to-r from-amber-500 to-yellow-400 h-full transition-all duration-500 rounded-full"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-
-              <div className="flex items-center justify-between text-xs text-[var(--text-muted)] font-serif pt-1">
-                <span>{completedSections.length} / {totalSectionsCount} phần học hoàn tất</span>
-                {progressPercent >= 100 && (
-                  <span className="text-emerald-500 font-bold flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Đạt chuẩn</span>
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Curriculum Accordion (Tutor LMS / LearnDash Style) */}
-            <div className="p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-4 flex flex-col max-h-[75vh]">
-              <div className="flex items-center justify-between border-b border-[var(--border-card)] pb-3">
-                <h3 className="font-serif font-bold text-base text-amber-800 dark:text-amber-400 flex items-center gap-2">
-                  <BookOpen className="w-4 h-4" />
-                  <span>Giáo Trình Khóa Học</span>
-                </h3>
-                <span className="text-[11px] font-bold text-[var(--text-muted)]">
-                  {course.lessons.length} Bài Học
-                </span>
-              </div>
-
-              {/* Lesson List */}
-              <div className="space-y-4 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-amber-500/20 scrollbar-track-transparent flex-1">
-                {course.lessons.map((les, lIdx) => {
-                  const isCurrentLesson = lIdx === activeLessonIndex;
-                  const sections = les.sections && les.sections.length > 0 ? les.sections : [{ id: `fallback-${les.id}`, title: les.title, sectionType: 'text' } as any];
-                  const lessonDoneCount = sections.filter((s: any) => completedSections.includes(s.id)).length;
-                  const isLessonDone = sections.length > 0 && lessonDoneCount === sections.length;
-
-                  return (
-                    <div 
-                      key={les.id} 
-                      className={`rounded-2xl border transition-all overflow-hidden ${
-                        isCurrentLesson 
-                          ? 'border-amber-500/50 bg-amber-500/[0.03] shadow-md' 
-                          : 'border-[var(--border-card)] bg-[var(--bg-main)]/50'
-                      }`}
-                    >
-                      {/* Lesson Accordion Header */}
-                      <button
-                        onClick={() => {
-                          setActiveLessonIndex(lIdx);
-                          setActiveSectionIndex(0);
-                        }}
-                        className="w-full p-3.5 text-left flex items-start justify-between gap-2 transition cursor-pointer hover:bg-amber-500/5"
-                      >
-                        <div className="space-y-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] font-mono font-bold uppercase text-amber-600 dark:text-amber-400">
-                              Bài {lIdx + 1}
-                            </span>
-                            {isLessonDone && (
-                              <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                            )}
-                          </div>
-                          <h4 className="font-serif font-bold text-xs text-[var(--text-main)] line-clamp-2 leading-tight">
-                            {les.title}
-                          </h4>
-                        </div>
-                        <span className="text-[10px] text-[var(--text-muted)] font-mono shrink-0">
-                          {lessonDoneCount}/{sections.length}
+                        {savingProgress && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                        <span>
+                          {activeLessonIndex === currentLessons.length - 1 && activeSectionIndex === currentSections.length - 1
+                            ? 'Hoàn Tất Khóa Học & Nhận Chứng Chỉ ✓'
+                            : 'Hoàn Thành & Sang Phần Kế Tiếp →'}
                         </span>
                       </button>
+                    )}
+                  </div>
 
-                      {/* Sections List under this Lesson */}
-                      <div className="p-2 pt-0 space-y-1 border-t border-[var(--border-card)]/40">
-                        {sections.map((sec: any, sIdx: number) => {
-                          const isSecActive = isCurrentLesson && sIdx === activeSectionIndex;
-                          const isSecDone = completedSections.includes(sec.id);
-                          const isSecUnlocked = isSectionUnlocked(lIdx, sIdx);
-
-                          return (
-                            <button
-                              key={sec.id}
-                              disabled={!isSecUnlocked}
-                              onClick={() => {
-                                setActiveLessonIndex(lIdx);
-                                setActiveSectionIndex(sIdx);
-                              }}
-                              className={`w-full p-2 rounded-xl text-left transition-all flex items-center justify-between gap-2 text-[11px] cursor-pointer ${
-                                isSecActive
-                                  ? 'bg-amber-500/20 text-amber-800 dark:text-amber-300 font-bold shadow-xs'
-                                  : isSecDone
-                                  ? 'text-emerald-600 dark:text-emerald-400 hover:bg-[var(--bg-card)]'
-                                  : isSecUnlocked
-                                  ? 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card)]'
-                                  : 'text-[var(--text-muted)]/40 cursor-not-allowed'
-                              }`}
-                            >
-                              <div className="flex items-center gap-2 truncate">
-                                {getSectionIcon(sec.sectionType, 'w-3 h-3 shrink-0')}
-                                <span className="truncate">{sec.title}</span>
-                              </div>
-                              {isSecDone ? (
-                                <Check className="w-3 h-3 text-emerald-500 shrink-0" />
-                              ) : !isSecUnlocked ? (
-                                <Lock className="w-2.5 h-2.5 text-[var(--text-muted)] shrink-0" />
-                              ) : isSecActive ? (
-                                <Play className="w-2.5 h-2.5 text-amber-500 fill-current shrink-0" />
-                              ) : null}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Instructor Card */}
-              <div className="p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] flex items-center gap-3">
-                <div className="relative w-10 h-10 rounded-full overflow-hidden border border-amber-500/40 shrink-0 bg-amber-500/10">
-                  <Image 
-                    src={course.instructor_avatar || 'https://lh3.googleusercontent.com/d/1iRz6nIRhfEoV_fbxVTCwW0ApQ87IqHK5'}
-                    alt={course.instructor_name || 'Giảng Viên'}
-                    fill
-                    className="object-cover"
-                  />
                 </div>
-                <div className="min-w-0">
-                  <h5 className="font-serif font-bold text-xs text-[var(--text-main)] truncate">
-                    {course.instructor_name || 'Ban Biên Tập VERIDU'}
-                  </h5>
-                  <p className="text-[10px] text-[var(--text-muted)] truncate font-serif">
-                    {course.instructor_title || 'Hội Đồng Khảo Cứu Thần Học'}
-                  </p>
-                </div>
-              </div>
 
-            </div>
+              </div>
+            ) : null}
 
           </div>
+        </main>
 
-        </div>
-      </main>
+      </div>
 
-      {/* ── 4. COURSE CERTIFICATE MODAL ── */}
-      <CourseCertificateModal
-        certificate={showCertificate ? certificateData : null}
-        onClose={() => setShowCertificate(false)}
-      />
+      {/* ── 3. GRADUATION CERTIFICATE MODAL ── */}
+      {showCertificate && (
+        <CourseCertificateModal
+          certificate={certificateData}
+          onClose={() => setShowCertificate(false)}
+        />
+      )}
 
     </div>
   );

@@ -253,9 +253,14 @@ export default function LiturgicalHeader() {
     );
   };
 
-  if (pathname === '/dang-bai' || pathname?.startsWith('/dang-bai/')) {
+  // Ẩn Header toàn cục trên trang soạn thảo và trang phát bài học LMS (/khoa-hoc/[slug]) để tạo Chế độ Tập Trung (Focus Mode)
+  const isCoursePlayer = (pathname !== '/khoa-hoc' && !!pathname?.startsWith('/khoa-hoc/')) || 
+                         (pathname !== '/courses' && !!pathname?.startsWith('/courses/'));
+
+  if (pathname === '/dang-bai' || pathname?.startsWith('/dang-bai/') || isCoursePlayer) {
     return null;
   }
+
 
   return (
     <header

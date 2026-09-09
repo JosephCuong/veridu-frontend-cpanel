@@ -118,11 +118,15 @@ export interface LessonSection {
   mediaUrl?: string;
   contentHtml?: string;
   quizData?: Array<{
-    id: number | string;
-    question: string;
+    id?: number | string;
+    question?: string;
+    q?: string;
     options: string[];
-    correctAnswerIndex: number;
-    explanation: string;
+    correctAnswerIndex?: number;
+    correct?: number;
+    explanation?: string;
+    explain?: string;
+    [key: string]: any;
   }>;
   durationMinutes?: number;
   duration?: string;
@@ -744,14 +748,15 @@ export interface UserCourseProgressData {
   isCertified?: boolean;
 }
 
-export async function fetchUserCourseProgress(courseId: number | string, userId: string): Promise<UserCourseProgressData | null> {
+export async function fetchUserCourseProgress(courseId: number | string, userId?: string | number): Promise<UserCourseProgressData | null> {
   if (!userId || !courseId) return null;
+  const uid = String(userId);
   try {
     const { data, error } = await supabase
       .from('user_course_progress')
       .select('*')
       .eq('course_id', courseId)
-      .eq('user_id', userId)
+      .eq('user_id', uid)
       .maybeSingle();
 
     if (error || !data) return null;
@@ -780,16 +785,18 @@ export async function saveUserSectionProgress({
   totalSectionsCount,
   isCompleted = true,
 }: {
-  userId: string;
+  userId?: string | number;
   courseId: number | string;
   lessonId: number | string;
   sectionId: number | string;
   totalSectionsCount: number;
   isCompleted?: boolean;
 }): Promise<UserCourseProgressData | null> {
+
   if (!userId || !courseId) return null;
+  const uid = String(userId);
   try {
-    const existing = await fetchUserCourseProgress(courseId, userId);
+    const existing = await fetchUserCourseProgress(courseId, uid);
     let completedSections: Array<number | string> = existing?.completedSections || [];
 
     if (isCompleted && !completedSections.includes(sectionId)) {
@@ -801,20 +808,20 @@ export async function saveUserSectionProgress({
       : 0;
 
     const payload = {
-      user_id: userId,
+      user_id: uid,
       course_id: courseId,
+      completed_sections: completedSections,
       current_lesson_id: lessonId,
       current_section_id: sectionId,
-      completed_sections: completedSections,
       progress_percent: calculatedPercent,
       is_certified: calculatedPercent >= 100,
-      last_accessed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
 
     const { data, error } = await supabase
       .from('user_course_progress')
       .upsert(payload, { onConflict: 'user_id,course_id' })
-      .select('*')
+      .select()
       .maybeSingle();
 
     if (error) {
@@ -823,7 +830,7 @@ export async function saveUserSectionProgress({
 
     return {
       courseId,
-      userId,
+      userId: uid,
       progressPercent: calculatedPercent,
       completedSections,
       completedLessons: (data && Array.isArray(data.completed_lessons)) ? data.completed_lessons : [],
