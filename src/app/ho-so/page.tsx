@@ -22,7 +22,8 @@ import {
   User, Mail, Church, Compass, Award, Flame, Shield, LogOut, 
   Settings, BookOpen, CheckCircle, Clock, Save, Phone, Image as ImageIcon,
   Heart, Calendar, Loader2, Trophy, Trash2, ArrowRight, PlayCircle, BarChart3, 
-  AlertTriangle, Check, Plus, Eye, Cross, FileText, Zap, Droplets, Sparkles, Scroll
+  AlertTriangle, Check, Plus, Eye, Cross, FileText, Zap, Droplets, Sparkles, Scroll,
+  GraduationCap, ExternalLink, ShieldCheck, PenTool
 } from 'lucide-react';
 
 import { 
@@ -30,27 +31,32 @@ import {
   fetchUserCourseProgressFromSupabase, fetchCharacters, Character 
 } from '@/lib/api';
 
+type ProfileTab = 'dashboard' | 'courses' | 'certificates' | 'titles' | 'mana' | 'quiz' | 'posts' | 'authored-courses' | 'settings';
+const VALID_TABS: ProfileTab[] = ['dashboard', 'courses', 'certificates', 'titles', 'mana', 'quiz', 'posts', 'authored-courses', 'settings'];
+
 function ProfileDashboardContent() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const searchParams = useSearchParams();
   const tabQuery = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'courses' | 'certificates' | 'titles' | 'mana' | 'quiz' | 'posts' | 'settings'>(
-    (tabQuery && ['dashboard', 'courses', 'certificates', 'titles', 'mana', 'quiz', 'posts', 'settings'].includes(tabQuery))
-      ? (tabQuery as any)
+  const [activeTab, setActiveTab] = useState<ProfileTab>(
+    (tabQuery && (VALID_TABS as string[]).includes(tabQuery))
+      ? (tabQuery as ProfileTab)
       : 'dashboard'
   );
 
   useEffect(() => {
-    if (tabQuery && ['dashboard', 'courses', 'certificates', 'titles', 'mana', 'quiz', 'posts', 'settings'].includes(tabQuery)) {
-      setActiveTab(tabQuery as any);
+    if (tabQuery && (VALID_TABS as string[]).includes(tabQuery)) {
+      setActiveTab(tabQuery as ProfileTab);
     }
   }, [tabQuery]);
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   
-  // Admin Post Management State
+  // Post & Course Management State
   const [userPosts, setUserPosts] = useState<any[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
+  const [authoredCourses, setAuthoredCourses] = useState<any[]>([]);
+  const [isLoadingAuthoredCourses, setIsLoadingAuthoredCourses] = useState(false);
   const [postToDelete, setPostToDelete] = useState<any | null>(null);
 
   // Avatar & Confirmation State
@@ -181,16 +187,45 @@ function ProfileDashboardContent() {
       setIsLoadingPosts(true);
       (async () => {
         try {
-          const { data } = await supabase
+          let q = supabase
             .from('posts')
             .select('id, title, slug, category, created_at, status')
-            .order('created_at', { ascending: false })
-            .limit(20);
+            .order('created_at', { ascending: false });
+          
+          const rawRole = (current.role || '').toLowerCase();
+          const isAdminRole = rawRole === 'admin' || rawRole === 'quản trị viên' || rawRole.includes('admin');
+          if (!isAdminRole && current.id) {
+            q = q.eq('author_id', current.id);
+          }
+          const { data } = await q.limit(40);
           if (data) setUserPosts(data);
         } catch (err) {
           console.warn('Load posts error:', err);
         } finally {
           setIsLoadingPosts(false);
+        }
+      })();
+
+      // Load user authored courses from Supabase
+      setIsLoadingAuthoredCourses(true);
+      (async () => {
+        try {
+          let q = supabase
+            .from('courses')
+            .select('id, slug, title, thumbnail, category, published, level, total_duration, updated_at, created_at')
+            .order('created_at', { ascending: false });
+          
+          const rawRole = (current.role || '').toLowerCase();
+          const isAdminRole = rawRole === 'admin' || rawRole === 'quản trị viên' || rawRole.includes('admin');
+          if (!isAdminRole && current.id) {
+            q = q.eq('author_id', current.id);
+          }
+          const { data: cData } = await q;
+          if (cData) setAuthoredCourses(cData);
+        } catch (err) {
+          console.warn('Load authored courses error:', err);
+        } finally {
+          setIsLoadingAuthoredCourses(false);
         }
       })();
     }
@@ -293,6 +328,12 @@ function ProfileDashboardContent() {
   const levelInfo = calculateLevelInfo(user.points || 100, selectedTitle);
   const currentMana = user.manna !== undefined ? user.manna : 100;
 
+  const rawRole = (user.role || '').toLowerCase();
+  const isAdmin = rawRole === 'admin' || rawRole === 'quản trị viên' || rawRole.includes('admin');
+  const isScholar = rawRole === 'scholar' || rawRole.includes('học giả');
+  const isAuthor = isAdmin || isScholar || rawRole === 'author' || rawRole.includes('tác giả') || Boolean((user as any).is_verified_author);
+  const isInstructor = isAdmin || rawRole === 'instructor' || rawRole === 'catechist' || rawRole.includes('giảng viên') || rawRole.includes('giáo lý viên');
+
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] pt-28 pb-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -330,11 +371,44 @@ function ProfileDashboardContent() {
             </div>
 
             {/* Core Identity Info */}
-            <div className="text-center space-y-1 border-t border-[var(--border-card)] pt-4">
+            <div className="text-center space-y-2 border-t border-[var(--border-card)] pt-4">
               <h3 className="text-xl font-serif font-black text-[var(--text-main)]">
                 {user.christianName ? `${user.christianName} ` : ''}{user.displayName || 'Thành Viên'}
               </h3>
               <p className="text-xs font-mono text-[var(--text-muted)]">{user.email}</p>
+
+              {/* Stained-Glass Role Badge */}
+              <div className="flex items-center justify-center gap-1.5 pt-1">
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-serif font-bold border shadow-xs ${
+                  isAdmin 
+                    ? 'bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-300' 
+                    : isScholar 
+                    ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-700 dark:text-indigo-300' 
+                    : isInstructor 
+                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-300' 
+                    : isAuthor 
+                    ? 'bg-sky-500/15 border-sky-500/40 text-sky-700 dark:text-sky-300' 
+                    : 'bg-slate-500/15 border-slate-500/30 text-slate-700 dark:text-slate-300'
+                }`}>
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>{user.role || 'Thành Viên'}</span>
+                </span>
+              </div>
+
+              {/* Public Author Profile Link Button */}
+              {(isAuthor || isInstructor || (user as any).is_verified_author) && user.id && (
+                <div className="pt-2">
+                  <Link
+                    href={`/tac-gia/${user.id}`}
+                    target="_blank"
+                    className="inline-flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-serif font-bold transition-all shadow-xs group"
+                  >
+                    <Eye className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                    <span>Xem Hồ Sơ Tác Giả Công Khai</span>
+                    <ExternalLink className="w-3 h-3 opacity-60" />
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Quick Stats Grid: Streak, EXP, Mana */}
@@ -436,14 +510,35 @@ function ProfileDashboardContent() {
                 <Trophy className="w-4 h-4" /> Lịch Sử Đấu Trường
               </button>
 
-              {user.role === 'Quản Trị Viên' && (
+              {isAuthor && (
                 <button
                   onClick={() => setActiveTab('posts')}
-                  className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
+                  className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center justify-between cursor-pointer ${
                     activeTab === 'posts' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-amber-700 dark:text-amber-400'
                   }`}
                 >
-                  <FileText className="w-4 h-4" /> Quản Lý Bài Viết ({userPosts.length})
+                  <span className="flex items-center gap-2.5">
+                    <FileText className="w-4 h-4" /> Quản Lý Bài Viết
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/30">
+                    {userPosts.length}
+                  </span>
+                </button>
+              )}
+
+              {isInstructor && (
+                <button
+                  onClick={() => setActiveTab('authored-courses')}
+                  className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center justify-between cursor-pointer ${
+                    activeTab === 'authored-courses' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-emerald-700 dark:text-emerald-400'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <GraduationCap className="w-4 h-4" /> Khóa Học Đã Soạn
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/30">
+                    {authoredCourses.length}
+                  </span>
                 </button>
               )}
 
@@ -814,34 +909,142 @@ function ProfileDashboardContent() {
               </div>
             )}
 
-            {/* ── TAB 7: POSTS (ADMIN) ── */}
-            {activeTab === 'posts' && user.role === 'Quản Trị Viên' && (
+            {/* ── TAB 7: POSTS (AUTHOR / SCHOLAR / ADMIN) ── */}
+            {activeTab === 'posts' && isAuthor && (
               <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
-                <div className="flex justify-between items-center border-b border-[var(--border-card)] pb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border-card)] pb-4">
                   <div>
-                    <h2 className="text-xl sm:text-2xl font-serif font-black">Quản Lý Bài Viết ({userPosts.length})</h2>
-                    <p className="text-xs text-[var(--text-muted)] font-serif mt-1">Danh sách bài viết đã xuất bản trên hệ thống VERIDU.</p>
+                    <h2 className="text-xl sm:text-2xl font-serif font-black flex items-center gap-2">
+                      <FileText className="w-6 h-6 text-amber-500" />
+                      <span>Quản Lý Bài Viết ({userPosts.length})</span>
+                    </h2>
+                    <p className="text-xs text-[var(--text-muted)] font-serif mt-1">Danh sách bài viết và chuyên khảo của bạn trên hệ thống VERIDU.</p>
                   </div>
-                  <Link href="/dang-bai" className="px-4 py-2 rounded-2xl bg-amber-500 text-slate-950 font-serif font-bold text-xs shadow-md">
-                    + Soạn Bài Viết Mới
+                  <Link href="/dang-bai" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-amber-500 text-slate-950 font-serif font-bold text-xs shadow-md hover:bg-amber-400 transition shrink-0">
+                    <PenTool className="w-3.5 h-3.5" />
+                    <span>+ Soạn Bài Viết Mới</span>
                   </Link>
                 </div>
 
-                <div className="space-y-3">
-                  {userPosts.map((post) => (
-                    <div key={post.id} className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] flex items-center justify-between gap-4">
-                      <div className="space-y-1 min-w-0">
-                        <span className="text-[10px] font-mono uppercase text-amber-600 font-bold">{post.category}</span>
-                        <h4 className="font-serif font-bold text-sm truncate">{post.title}</h4>
+                {isLoadingPosts ? (
+                  <div className="py-8 text-center text-xs font-serif text-amber-500 animate-pulse">
+                    Đang tải danh sách bài viết...
+                  </div>
+                ) : userPosts.length === 0 ? (
+                  <div className="text-center py-12 text-[var(--text-muted)] space-y-3">
+                    <FileText className="w-10 h-10 mx-auto opacity-40" />
+                    <p className="font-serif text-sm">Bạn chưa có bài viết nào.</p>
+                    <Link href="/dang-bai" className="inline-block px-5 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs font-serif">
+                      Bắt Đầu Soạn Bài
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {userPosts.map((post) => (
+                      <div key={post.id} className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-amber-500/40 transition">
+                        <div className="space-y-1 min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold">
+                              {post.category || 'Bài Viết'}
+                            </span>
+                            <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${
+                              post.status === 'published' 
+                                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' 
+                                : 'bg-slate-500/15 text-slate-400'
+                            }`}>
+                              {post.status === 'published' ? 'Đã xuất bản' : 'Bản nháp'}
+                            </span>
+                          </div>
+                          <h4 className="font-serif font-bold text-sm text-[var(--text-main)] line-clamp-1">{post.title}</h4>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Link href={`/dang-bai?edit=${post.id}`} className="px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-serif font-bold hover:bg-amber-500/25 transition">
+                            Sửa Bài
+                          </Link>
+                          <Link href={`/${post.slug}`} className="px-3 py-1.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs font-serif font-bold hover:text-amber-500 transition">
+                            Xem
+                          </Link>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Link href={`/thu-vien/${post.slug}`} className="px-3 py-1.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs font-serif font-bold hover:text-amber-500">
-                          Xem
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── TAB: AUTHORED COURSES (INSTRUCTOR / CATECHIST / ADMIN) ── */}
+            {activeTab === 'authored-courses' && isInstructor && (
+              <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border-card)] pb-4">
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-serif font-black flex items-center gap-2">
+                      <GraduationCap className="w-6 h-6 text-emerald-500" />
+                      <span>Khóa Học Đã Soạn Thảo ({authoredCourses.length})</span>
+                    </h2>
+                    <p className="text-xs text-[var(--text-muted)] font-serif mt-1">Quản lý các khóa học, bài học và ngân hàng câu hỏi do bạn giảng dạy / biên soạn.</p>
+                  </div>
+                  <Link href="/admin/khoa-hoc" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-serif font-bold text-xs shadow-md transition shrink-0">
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>+ Soạn Khóa Học Mới</span>
+                  </Link>
                 </div>
+
+                {isLoadingAuthoredCourses ? (
+                  <div className="py-8 text-center text-xs font-serif text-emerald-500 animate-pulse">
+                    Đang tải danh sách khóa học...
+                  </div>
+                ) : authoredCourses.length === 0 ? (
+                  <div className="text-center py-12 text-[var(--text-muted)] space-y-3">
+                    <GraduationCap className="w-10 h-10 mx-auto opacity-40 text-emerald-500" />
+                    <p className="font-serif text-sm">Bạn chưa tạo khóa học nào.</p>
+                    <Link href="/admin/khoa-hoc" className="inline-block px-5 py-2 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs font-serif">
+                      Khởi Tạo Khóa Học Đầu Tiên
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {authoredCourses.map((c) => (
+                      <div key={c.id} className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-emerald-500/40 transition flex flex-col justify-between space-y-3 shadow-xs">
+                        <div className="flex gap-3">
+                          <div className="w-20 h-14 rounded-xl bg-slate-800 overflow-hidden relative shrink-0">
+                            {c.thumbnail ? (
+                              <Image src={c.thumbnail} alt={c.title} fill className="object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-[9px] font-serif text-amber-400">LMS</div>
+                            )}
+                          </div>
+                          <div className="space-y-1 min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                                {c.category || 'Giáo Lý'}
+                              </span>
+                              <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${
+                                c.published 
+                                  ? 'bg-emerald-500/20 text-emerald-500' 
+                                  : 'bg-amber-500/20 text-amber-500'
+                              }`}>
+                                {c.published ? 'Đã Xuất Bản' : 'Bản Nháp'}
+                              </span>
+                            </div>
+                            <h4 className="font-serif font-bold text-sm text-[var(--text-main)] line-clamp-2">{c.title}</h4>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-[var(--border-card)]/50 flex items-center justify-between text-xs font-serif">
+                          <span className="text-[11px] text-[var(--text-muted)]">{c.total_duration || 'Đa bài học'}</span>
+                          <div className="flex items-center gap-2">
+                            <Link href={`/admin/khoa-hoc?edit=${c.id}`} className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300 font-bold text-xs transition">
+                              Sửa / Biên Tập
+                            </Link>
+                            <Link href={`/khoa-hoc/${c.slug}`} className="px-2.5 py-1 rounded-lg bg-[var(--bg-card)] border border-[var(--border-card)] hover:text-amber-500 font-bold text-xs transition">
+                              Xem
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

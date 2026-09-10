@@ -524,7 +524,7 @@ export default function LiturgicalHeader() {
               <Link 
                 href="/dong-gop" 
                 className={`flex items-center gap-1.5 py-1 text-slate-200 hover:text-amber-400 transition-colors drop-shadow-xs ${
-                  pathname === '/dong-gop' || pathname === '/noi-dung-can-thiet' || pathname === '/huong-dan-viet-bai' || pathname === '/dieu-khoan-tac-gia' || pathname === '/dang-bai'
+                  pathname === '/dong-gop' || pathname === '/noi-dung-can-thiet' || pathname === '/huong-dan-viet-bai' || pathname === '/dieu-khoan-tac-gia' || pathname === '/dang-bai' || pathname === '/tac-gia' || pathname?.startsWith('/tac-gia/')
                     ? 'text-amber-400 font-black border-b-2 border-amber-400 pb-0.5' 
                     : ''
                 }`}
@@ -542,6 +542,16 @@ export default function LiturgicalHeader() {
                     <div>
                       <div className="font-bold text-xs text-slate-100 group-hover:text-amber-400">Sứ Mạng Đóng Góp</div>
                       <div className="text-[10px] text-slate-400 lowercase">Tham gia đội ngũ tác giả</div>
+                    </div>
+                  </Link>
+
+                  <Link href="/tac-gia" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-sky-500/15 group transition-colors">
+                    <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0 border border-sky-500/30">
+                      <Users className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs text-slate-100 group-hover:text-sky-400">Đội Ngũ Tác Giả</div>
+                      <div className="text-[10px] text-slate-400 lowercase">Hồ sơ học giả &amp; chuyên gia</div>
                     </div>
                   </Link>
 
@@ -750,7 +760,7 @@ export default function LiturgicalHeader() {
             <Link 
               href="/dong-gop" 
               className={`flex items-center gap-1 py-1 text-slate-200 hover:text-amber-400 transition-colors ${
-                pathname === '/dong-gop' || pathname === '/noi-dung-can-thiet' || pathname === '/huong-dan-viet-bai' || pathname === '/dieu-khoan-tac-gia' || pathname === '/dang-bai'
+                pathname === '/dong-gop' || pathname === '/noi-dung-can-thiet' || pathname === '/huong-dan-viet-bai' || pathname === '/dieu-khoan-tac-gia' || pathname === '/dang-bai' || pathname === '/tac-gia' || pathname?.startsWith('/tac-gia/')
                   ? 'text-amber-400 font-black' 
                   : ''
               }`}
@@ -764,6 +774,10 @@ export default function LiturgicalHeader() {
                 <Link href="/dong-gop" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-amber-500/15 group transition-colors">
                   <Feather className="w-4 h-4 text-amber-400 shrink-0" />
                   <span className="font-bold text-xs text-slate-100 group-hover:text-amber-400">Sứ Mạng Đóng Góp</span>
+                </Link>
+                <Link href="/tac-gia" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-sky-500/15 group transition-colors">
+                  <Users className="w-4 h-4 text-sky-400 shrink-0" />
+                  <span className="font-bold text-xs text-slate-100 group-hover:text-sky-400">Đội Ngũ Tác Giả</span>
                 </Link>
                 <Link href="/noi-dung-can-thiet" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-emerald-500/15 group transition-colors">
                   <ClipboardList className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -1108,6 +1122,9 @@ export default function LiturgicalHeader() {
               <div className="pl-6 space-y-2 py-2 border-l-2 border-amber-500/30 ml-2">
                 <Link href="/dong-gop" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-amber-400">
                   <Feather className="w-3.5 h-3.5 text-amber-400" /> Sứ Mạng Đóng Góp
+                </Link>
+                <Link href="/tac-gia" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-sky-400">
+                  <Users className="w-3.5 h-3.5 text-sky-400" /> Đội Ngũ Tác Giả
                 </Link>
                 <Link href="/noi-dung-can-thiet" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-emerald-400">
                   <ClipboardList className="w-3.5 h-3.5 text-emerald-400" /> Đề Tài Cần Nghiên Cứu

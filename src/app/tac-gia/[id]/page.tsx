@@ -13,7 +13,8 @@ import {
   Eye, 
   Download, 
   ChevronRight,
-  Cross
+  Cross,
+  GraduationCap
 } from 'lucide-react';
 
 export const revalidate = 3600;
@@ -23,7 +24,7 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
     .from('profiles')
     .select('full_name, christian_name, role, specialty, bio')
     .eq('id', params.id)
-    .single();
+    .maybeSingle();
 
   if (!profile) return { title: 'Tác Giả VERIDU' };
   const name = profile.christian_name ? `${profile.christian_name} ${profile.full_name}` : (profile.full_name || 'Tác Giả');
@@ -39,7 +40,7 @@ export default async function AuthorProfilePage({ params }: { params: { id: stri
     .from('profiles')
     .select('*')
     .eq('id', params.id)
-    .single();
+    .maybeSingle();
 
   if (!profile) {
     notFound();
@@ -51,6 +52,14 @@ export default async function AuthorProfilePage({ params }: { params: { id: stri
     .select('id, slug, title, excerpt, category, created_at, views')
     .eq('author_id', params.id)
     .eq('status', 'published')
+    .order('created_at', { ascending: false });
+
+  // Fetch author published courses
+  const { data: courses } = await supabase
+    .from('courses')
+    .select('id, slug, title, thumbnail, category, total_duration, level')
+    .eq('author_id', params.id)
+    .eq('published', true)
     .order('created_at', { ascending: false });
 
   // Fetch author published resources
@@ -127,6 +136,55 @@ export default async function AuthorProfilePage({ params }: { params: { id: stri
             )}
           </div>
         </div>
+
+        {/* Author Courses Section if any */}
+        {courses && courses.length > 0 && (
+          <div className="p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] space-y-6 shadow-xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-card)] pb-3">
+              <h3 className="font-serif font-bold text-lg text-[var(--text-main)] flex items-center gap-2">
+                <GraduationCap className="w-5 h-5 text-amber-500" />
+                <span>Khóa Học Giảng Dạy ({courses.length})</span>
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {courses.map(c => (
+                <Link
+                  key={c.id}
+                  href={`/khoa-hoc/${c.slug}`}
+                  className="group rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500/50 transition-all overflow-hidden flex flex-col shadow-sm hover:shadow-md"
+                >
+                  <div className="relative aspect-video w-full bg-slate-800 overflow-hidden">
+                    {c.thumbnail ? (
+                      <Image src={c.thumbnail} alt={c.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-amber-500 font-serif font-bold text-xs">
+                        VERIDU LMS
+                      </div>
+                    )}
+                    {c.category && (
+                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-slate-900/80 backdrop-blur text-amber-400 font-bold text-[10px]">
+                        {c.category}
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-4 flex-1 flex flex-col justify-between space-y-2">
+                    <h4 className="font-serif font-bold text-sm text-[var(--text-main)] group-hover:text-amber-500 transition-colors line-clamp-2">
+                      {c.title}
+                    </h4>
+                    <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)] pt-2 border-t border-[var(--border-card)]/50">
+                      <span>{c.total_duration || 'Nhiều bài học'}</span>
+                      <span className="text-amber-600 dark:text-amber-400 font-bold group-hover:underline flex items-center gap-0.5">
+                        <span>Vào học</span>
+                        <ChevronRight className="w-3 h-3" />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Author Works Grid (Posts & Resources) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
