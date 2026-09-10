@@ -23,6 +23,8 @@ export async function POST(req: NextRequest) {
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-');
 
+    const status = course.status || (course.published ? 'published' : 'draft');
+
     const courseData: any = {
       title: course.title,
       slug: slug,
@@ -30,13 +32,18 @@ export async function POST(req: NextRequest) {
       thumbnail: course.thumbnail || '',
       category: course.category || 'Kinh Thánh Cựu Ước',
       level: course.level || 'Cơ Bản',
-      published: course.published !== undefined ? Boolean(course.published) : true,
+      published: status === 'published',
+      status: status,
       instructor_name: course.instructor_name || 'VERIDU Team',
       instructor_title: course.instructor_title || 'Hội Đồng Khảo Cứu Thần Học',
       instructor_avatar: course.instructor_avatar || 'https://lh3.googleusercontent.com/d/1iRz6nIRhfEoV_fbxVTCwW0ApQ87IqHK5',
       total_duration: course.total_duration || `${course.lessons?.length || 0} Bài Học`,
       certificate_enabled: course.certificate_enabled !== undefined ? Boolean(course.certificate_enabled) : true,
     };
+
+    if (course.author_id) {
+      courseData.author_id = course.author_id;
+    }
 
     if (courseId && courseId > 0) {
       const { error: updateError } = await supabase

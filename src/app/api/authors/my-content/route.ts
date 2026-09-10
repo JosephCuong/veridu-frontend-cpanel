@@ -24,9 +24,17 @@ export async function GET(request: NextRequest) {
       .eq('author_id', userId)
       .order('created_at', { ascending: false });
 
+    // Fetch courses by this author
+    const { data: courses } = await supabase
+      .from('courses')
+      .select('id, slug, title, category, level, thumbnail, status, created_at, lessons(count)')
+      .eq('author_id', userId)
+      .order('created_at', { ascending: false });
+
     return NextResponse.json({
       posts: posts || [],
-      resources: resources || []
+      resources: resources || [],
+      courses: courses || []
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

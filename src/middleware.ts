@@ -98,18 +98,24 @@ export async function middleware(request: NextRequest) {
     }
 
     // Role check from user cookie
-    let isUserAdmin = false;
+    let isAuthorized = false;
     if (userCookie) {
       try {
         const decoded = userCookie.includes('%') ? decodeURIComponent(userCookie) : userCookie;
         const parsed = JSON.parse(decoded);
-        if (parsed?.role === 'Quản Trị Viên' || parsed?.role === 'admin') {
-          isUserAdmin = true;
+        const userRole = (parsed?.role || '').toLowerCase();
+        const isAdmin = userRole.includes('quản trị') || userRole === 'admin';
+        const isInstructor = userRole.includes('giảng viên') || userRole === 'instructor' || userRole.includes('giáo lý') || userRole === 'catechist';
+
+        if (cleanPath.startsWith('/admin/khoa-hoc') || cleanPath.startsWith('/khoa-hoc/studio')) {
+          isAuthorized = isAdmin || isInstructor;
+        } else {
+          isAuthorized = isAdmin;
         }
       } catch (e) {}
     }
 
-    if (!isUserAdmin) {
+    if (!isAuthorized) {
       return NextResponse.redirect(new URL('/ho-so?error=forbidden', request.url));
     }
   }

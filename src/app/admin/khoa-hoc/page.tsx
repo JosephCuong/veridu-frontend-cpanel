@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { 
   BookOpen, 
   Video, 
@@ -30,7 +31,9 @@ import {
   CheckCircle2,
   RefreshCw,
   FolderPlus,
-  BookMarked
+  BookMarked,
+  Send,
+  UploadCloud
 } from 'lucide-react';
 import { getStoredUser, UserProfile } from '@/lib/auth';
 import FloatingFormatToolbar from '@/components/editor/FloatingFormatToolbar';
@@ -68,6 +71,8 @@ interface LessonItem {
 
 interface CourseItem {
   id?: number;
+  author_id?: string;
+  status?: 'draft' | 'pending' | 'published';
   title: string;
   slug: string;
   description: string;
@@ -86,11 +91,12 @@ interface CourseItem {
 const DEFAULT_NEW_COURSE: CourseItem = {
   title: 'Khóa Học Mới',
   slug: 'khoa-hoc-moi',
+  status: 'draft',
   description: 'Mô tả tóm tắt nội dung và mục tiêu đào tạo của khóa học.',
   thumbnail: 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?q=80&w=1200&auto=format&fit=crop',
   category: 'Kinh Thánh Cựu Ước',
   level: 'Cơ Bản',
-  published: true,
+  published: false,
   instructor_name: 'Hội Đồng Khảo Cứu VERIDU',
   instructor_title: 'Giảng Viên Thần Học & Kinh Thánh',
   instructor_avatar: 'https://lh3.googleusercontent.com/d/1iRz6nIRhfEoV_fbxVTCwW0ApQ87IqHK5',
@@ -176,13 +182,21 @@ function resolveVideoEmbed(url?: string) {
   return { type: 'link', embedUrl: clean };
 }
 
-export default function VisualCourseStudioPage() {
+function VisualCourseStudioContent() {
+  const searchParams = useSearchParams();
+  const editId = searchParams.get('edit');
+  const action = searchParams.get('action');
+
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [coursesList, setCoursesList] = useState<Array<{ id: number; title: string; slug: string }>>([]);
   const [currentCourse, setCurrentCourse] = useState<CourseItem>(DEFAULT_NEW_COURSE);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const isAdmin = user?.role === 'admin' || user?.role === 'Quản Trị Viên';
+  const isInstructor = user?.role === 'instructor' || user?.role === 'Giảng Viên Thần Học' || user?.role === 'catechist' || user?.role === 'Giáo Lý Viên';
 
   // Selection state
   // 'course' | { type: 'lesson', lessonIndex: number } | { type: 'section', lessonIndex: number, sectionIndex: number }
@@ -200,6 +214,9 @@ export default function VisualCourseStudioPage() {
 
   // Load courses list
   useEffect(() => {
+    const currentUser = getStoredUser();
+    setUser(currentUser);
+
     async function loadCourses() {
       try {
         setLoading(true);
@@ -207,8 +224,20 @@ export default function VisualCourseStudioPage() {
         const data = await res.json();
         if (data.success && Array.isArray(data.courses) && data.courses.length > 0) {
           setCoursesList(data.courses);
-          // Load the first course details
-          loadCourseDetails(data.courses[0].id);
+          if (editId) {
+            loadCourseDetails(Number(editId));
+          } else if (action === 'new') {
+            setCurrentCourse({
+              ...DEFAULT_NEW_COURSE,
+              author_id: currentUser?.id ? String(currentUser.id) : undefined,
+              status: 'draft',
+              published: false
+            });
+            setSelectedNode({ type: 'course' });
+            setLoading(false);
+          } else {
+            loadCourseDetails(data.courses[0].id);
+          }
         } else {
           setLoading(false);
         }
@@ -218,7 +247,7 @@ export default function VisualCourseStudioPage() {
       }
     }
     loadCourses();
-  }, []);
+  }, [editId, action]);
 
   const loadCourseDetails = async (id: number) => {
     try {
@@ -248,13 +277,15 @@ export default function VisualCourseStudioPage() {
 
         setCurrentCourse({
           id: raw.id,
+          author_id: raw.author_id,
+          status: raw.status || (raw.published ? 'published' : 'draft'),
           title: raw.title || 'Khóa Học',
           slug: raw.slug || 'khoa-hoc',
           description: raw.description || '',
           thumbnail: raw.thumbnail || '',
           category: raw.category || 'Kinh Thánh Cựu Ước',
           level: raw.level || 'Cơ Bản',
-          published: raw.published ?? true,
+          published: raw.status === 'published' || Boolean(raw.published),
           instructor_name: raw.instructor_name || 'VERIDU Team',
           instructor_title: raw.instructor_title || 'Hội Đồng Khảo Cứu Thần Học',
           instructor_avatar: raw.instructor_avatar || 'https://lh3.googleusercontent.com/d/1iRz6nIRhfEoV_fbxVTCwW0ApQ87IqHK5',
@@ -283,7 +314,7 @@ export default function VisualCourseStudioPage() {
   }, [selectedNode, currentCourse.lessons]);
 
   // Handle Save Course to Supabase
-  const handleSaveCourse = async () => {
+  const handleSaveCourse = async (overrideStatus?: 'draft' | 'pending' | 'published') => {
     try {
       setSaving(true);
       setStatusMessage(null);
@@ -296,16 +327,29 @@ export default function VisualCourseStudioPage() {
         }
       }
 
+      const targetStatus = overrideStatus || currentCourse.status || (isAdmin ? 'published' : 'draft');
+      const courseToSave = {
+        ...currentCourse,
+        author_id: currentCourse.author_id || (user?.id ? String(user.id) : undefined),
+        status: targetStatus,
+        published: targetStatus === 'published'
+      };
+
       const res = await fetch('/api/courses/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ course: currentCourse })
+        body: JSON.stringify({ course: courseToSave })
       });
 
       const data = await res.json();
       if (data.success) {
         setHasUnsavedChanges(false);
-        setStatusMessage({ text: 'Đã lưu và đồng bộ toàn bộ khóa học vào Supabase thành công!', type: 'success' });
+        const msg = targetStatus === 'pending'
+          ? 'Đã gửi khóa học lên Ban Quản Trị phê duyệt thành công!'
+          : targetStatus === 'published'
+          ? 'Đã lưu và xuất bản khóa học công khai thành công!'
+          : 'Đã lưu bản nháp khóa học thành công!';
+        setStatusMessage({ text: msg, type: 'success' });
         
         // Refresh courses list and reload
         const listRes = await fetch('/api/courses/list');
@@ -499,9 +543,25 @@ export default function VisualCourseStudioPage() {
 
         {/* Right Actions */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Status Badge */}
+          <span className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${
+            currentCourse.status === 'published'
+              ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+              : currentCourse.status === 'pending'
+              ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30 animate-pulse'
+              : 'bg-stone-800 text-stone-400 border border-stone-700'
+          }`}>
+            {currentCourse.status === 'published' ? '🟢 Đã Xuất Bản' : currentCourse.status === 'pending' ? '🟡 Chờ Phê Duyệt' : '⚪ Bản Nháp'}
+          </span>
+
           <button
             onClick={() => {
-              setCurrentCourse(DEFAULT_NEW_COURSE);
+              setCurrentCourse({
+                ...DEFAULT_NEW_COURSE,
+                author_id: user?.id ? String(user.id) : undefined,
+                status: 'draft',
+                published: false
+              });
               setSelectedNode({ type: 'course' });
               setHasUnsavedChanges(true);
             }}
@@ -524,23 +584,55 @@ export default function VisualCourseStudioPage() {
             </Link>
           )}
 
+          {/* Save Draft */}
           <button
-            onClick={handleSaveCourse}
+            onClick={() => handleSaveCourse('draft')}
             disabled={saving}
-            className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-stone-950 text-xs sm:text-sm font-bold shadow-lg shadow-amber-500/20 transition-all active:scale-95"
+            className="px-3.5 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300 hover:text-white border border-stone-700 text-xs font-bold transition-all"
+            title="Lưu bản nháp khóa học"
           >
-            {saving ? (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                <span>Đang lưu...</span>
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                <span>Lưu Thay Đổi</span>
-              </>
-            )}
+            Lưu Nháp
           </button>
+
+          {/* Admin Publish vs Instructor Submit */}
+          {isAdmin ? (
+            <button
+              onClick={() => handleSaveCourse('published')}
+              disabled={saving}
+              className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-stone-950 text-xs sm:text-sm font-bold shadow-lg shadow-amber-500/20 transition-all active:scale-95"
+            >
+              {saving ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Đang lưu...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  <span>Lưu &amp; Xuất Bản</span>
+                </>
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={() => handleSaveCourse('pending')}
+              disabled={saving || currentCourse.status === 'pending'}
+              className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-stone-950 text-xs sm:text-sm font-bold shadow-lg shadow-amber-500/20 transition-all active:scale-95"
+              title="Gửi khóa học lên Ban Quản Trị phê duyệt"
+            >
+              {saving ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Đang gửi...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  <span>{currentCourse.status === 'pending' ? 'Đã Gửi Duyệt' : 'Gửi Phê Duyệt'}</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </header>
 
@@ -1581,5 +1673,19 @@ export default function VisualCourseStudioPage() {
       />
 
     </div>
+  );
+}
+
+export default function VisualCourseStudioPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-stone-950 flex items-center justify-center text-amber-500">
+          <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <VisualCourseStudioContent />
+    </Suspense>
   );
 }

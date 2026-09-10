@@ -20,7 +20,9 @@ import {
   Sparkles,
   Award,
   Check,
-  X
+  X,
+  GraduationCap,
+  Edit3
 } from 'lucide-react';
 import { getStoredUser, UserProfile } from '@/lib/auth';
 
@@ -28,12 +30,14 @@ export default function AuthorDashboardPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<any[]>([]);
   const [resources, setResources] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Admin moderation queue state
   const [pendingPosts, setPendingPosts] = useState<any[]>([]);
   const [pendingResources, setPendingResources] = useState<any[]>([]);
   const [pendingApplications, setPendingApplications] = useState<any[]>([]);
+  const [pendingCourses, setPendingCourses] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'my_content' | 'admin_moderation'>('my_content');
   const [modMessage, setModMessage] = useState<string | null>(null);
 
@@ -51,6 +55,7 @@ export default function AuthorDashboardPage() {
       .then(data => {
         if (data.posts) setPosts(data.posts);
         if (data.resources) setResources(data.resources);
+        if (data.courses) setCourses(data.courses);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -63,12 +68,13 @@ export default function AuthorDashboardPage() {
           if (data.posts) setPendingPosts(data.posts);
           if (data.resources) setPendingResources(data.resources);
           if (data.applications) setPendingApplications(data.applications);
+          if (data.courses) setPendingCourses(data.courses);
         })
         .catch(() => {});
     }
   }, []);
 
-  const handleModerate = async (targetType: 'post' | 'resource' | 'application', targetId: number | string, action: 'approve' | 'reject') => {
+  const handleModerate = async (targetType: 'post' | 'resource' | 'application' | 'course', targetId: number | string, action: 'approve' | 'reject') => {
     try {
       const res = await fetch('/api/admin/moderation', {
         method: 'POST',
@@ -89,6 +95,7 @@ export default function AuthorDashboardPage() {
         if (targetType === 'post') setPendingPosts(prev => prev.filter(p => p.id !== targetId));
         if (targetType === 'resource') setPendingResources(prev => prev.filter(r => r.id !== targetId));
         if (targetType === 'application') setPendingApplications(prev => prev.filter(a => a.id !== targetId));
+        if (targetType === 'course') setPendingCourses(prev => prev.filter(c => c.id !== targetId));
       }
     } catch (e) {}
   };
@@ -165,6 +172,14 @@ export default function AuthorDashboardPage() {
             </div>
             <div className="font-serif font-black text-2xl text-[var(--text-main)]">{totalDownloads}</div>
           </div>
+
+          <div className="p-5 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-md space-y-1">
+            <div className="flex items-center justify-between text-stone-500">
+              <span className="text-xs font-bold font-serif">Khóa Học</span>
+              <GraduationCap className="w-4 h-4 text-amber-500" />
+            </div>
+            <div className="font-serif font-black text-2xl text-[var(--text-main)]">{courses.length}</div>
+          </div>
         </div>
 
         {/* Tab Navigation if Admin */}
@@ -185,7 +200,7 @@ export default function AuthorDashboardPage() {
               }`}
             >
               <ShieldCheck className="w-4 h-4" />
-              <span>Hàng Đợi Duyệt Bài ({pendingPosts.length + pendingResources.length + pendingApplications.length})</span>
+              <span>Hàng Đợi Duyệt Bài ({pendingPosts.length + pendingResources.length + pendingApplications.length + pendingCourses.length})</span>
             </button>
           </div>
         )}
@@ -280,6 +295,88 @@ export default function AuthorDashboardPage() {
                 </div>
               ) : (
                 <p className="text-xs font-serif text-[var(--text-muted)] py-4 text-center">Bạn chưa chia sẻ tài liệu nào.</p>
+              )}
+            </div>
+
+            {/* My Courses Section */}
+            <div className="p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] space-y-4 shadow-xl">
+              <div className="flex items-center justify-between border-b border-[var(--border-card)] pb-3">
+                <h3 className="font-serif font-bold text-lg text-[var(--text-main)] flex items-center gap-2">
+                  <GraduationCap className="w-5 h-5 text-amber-500" />
+                  <span>Khóa Học Đã Soạn Thảo ({courses.length})</span>
+                </h3>
+                <Link 
+                  href="/admin/khoa-hoc?action=new" 
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-serif font-bold text-xs shadow-md shadow-amber-500/20 hover:scale-105 transition"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Soạn Khóa Học Mới</span>
+                </Link>
+              </div>
+
+              {courses.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {courses.map(c => (
+                    <div key={c.id} className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] flex flex-col justify-between gap-3 hover:border-amber-500/40 transition">
+                      <div className="flex items-start gap-3">
+                        {c.thumbnail && (
+                          <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-[var(--border-card)]">
+                            <img src={c.thumbnail} alt={c.title} className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <div className="space-y-1 min-w-0 flex-1">
+                          <h4 className="font-serif font-bold text-sm text-[var(--text-main)] truncate" title={c.title}>
+                            {c.title}
+                          </h4>
+                          <div className="flex items-center gap-2 text-[11px] text-[var(--text-muted)]">
+                            <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 font-bold">{c.category}</span>
+                            <span>• {c.level}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-[var(--border-card)] text-xs">
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
+                          c.status === 'published' 
+                            ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/30' 
+                            : c.status === 'pending'
+                            ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30 animate-pulse'
+                            : 'bg-stone-800 text-stone-400 border border-stone-700'
+                        }`}>
+                          {c.status === 'published' ? 'Đã Xuất Bản' : c.status === 'pending' ? 'Chờ Phê Duyệt' : 'Bản Nháp'}
+                        </span>
+
+                        <div className="flex items-center gap-1.5">
+                          <Link 
+                            href={`/khoa-hoc/${c.slug}`} 
+                            target="_blank"
+                            className="p-1.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-card)] text-stone-400 hover:text-amber-400 text-xs transition"
+                            title="Xem thử học viên"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </Link>
+                          <Link 
+                            href={`/admin/khoa-hoc?edit=${c.id}`} 
+                            className="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold transition flex items-center gap-1"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                            <span>Soạn Thảo</span>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-[var(--text-muted)] text-xs font-serif space-y-2">
+                  <p>Bạn chưa khởi tạo khóa học nào.</p>
+                  <Link 
+                    href="/admin/khoa-hoc?action=new" 
+                    className="inline-block text-amber-500 hover:underline font-bold"
+                  >
+                    Bắt đầu soạn thảo khóa học đầu tiên tại Studio &rarr;
+                  </Link>
+                </div>
               )}
             </div>
 
@@ -415,6 +512,58 @@ export default function AuthorDashboardPage() {
                 </div>
               ) : (
                 <p className="text-xs font-serif text-[var(--text-muted)] py-4 text-center">Không có tài nguyên nào chờ duyệt.</p>
+              )}
+            </div>
+
+            {/* Pending Courses Moderation */}
+            <div className="p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] space-y-4 shadow-xl">
+              <h3 className="font-serif font-bold text-lg text-[var(--text-main)] flex items-center gap-2 border-b border-[var(--border-card)] pb-3">
+                <GraduationCap className="w-5 h-5 text-amber-500" />
+                <span>Khóa Học Đang Chờ Phê Duyệt ({pendingCourses.length})</span>
+              </h3>
+
+              {pendingCourses.length > 0 ? (
+                <div className="space-y-3">
+                  {pendingCourses.map(c => (
+                    <div key={c.id} className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <h4 className="font-serif font-bold text-sm text-[var(--text-main)]">
+                          {c.title}
+                        </h4>
+                        <div className="flex items-center gap-2 text-[11px] text-[var(--text-muted)]">
+                          <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 font-bold">{c.category}</span>
+                          <span>• Giảng viên: <strong>{c.instructor_name || 'Chưa rõ'}</strong></span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Link
+                          href={`/admin/khoa-hoc?edit=${c.id}`}
+                          className="px-3 py-1.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs text-stone-300 hover:text-amber-400 font-bold flex items-center gap-1 transition"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Kiểm Tra &amp; Sửa</span>
+                        </Link>
+                        <button
+                          onClick={() => handleModerate('course', c.id, 'approve')}
+                          className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1 shadow-sm"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Duyệt &amp; Xuất Bản</span>
+                        </button>
+                        <button
+                          onClick={() => handleModerate('course', c.id, 'reject')}
+                          className="px-3.5 py-1.5 rounded-xl bg-rose-900/50 hover:bg-rose-900 text-rose-300 border border-rose-700/50 text-xs font-bold transition flex items-center gap-1"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          <span>Trả Lại</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs font-serif text-[var(--text-muted)] py-4 text-center">Không có khóa học nào đang chờ phê duyệt.</p>
               )}
             </div>
 

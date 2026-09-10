@@ -190,8 +190,13 @@ export default function LiturgicalHeader() {
   // Gamification Level
   const levelInfo = calculateLevelInfo(user?.points || 100, (user as any)?.selected_title || (user as any)?.current_title);
 
-  // Hide global header in dedicated document reader or storybook reader
-  if (pathname?.startsWith('/thu-vien/doc/') || (pathname !== '/sach-tranh' && pathname?.startsWith('/sach-tranh/'))) {
+  // Hide global header in dedicated studios, document reader or storybook reader
+  if (
+    pathname?.startsWith('/thu-vien/doc/') || 
+    (pathname !== '/sach-tranh' && pathname?.startsWith('/sach-tranh/')) ||
+    pathname?.startsWith('/admin/khoa-hoc') ||
+    pathname?.startsWith('/khoa-hoc/studio')
+  ) {
     return null;
   }
 

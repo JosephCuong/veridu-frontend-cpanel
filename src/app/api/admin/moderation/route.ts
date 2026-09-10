@@ -24,10 +24,18 @@ export async function GET(request: NextRequest) {
       .eq('status', 'pending')
       .order('created_at', { ascending: false });
 
+    // 4. Pending Courses
+    const { data: pendingCourses } = await supabase
+      .from('courses')
+      .select('id, slug, title, category, level, instructor_name, author_id, status, created_at')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+
     return NextResponse.json({
       posts: pendingPosts || [],
       resources: pendingResources || [],
-      applications: pendingApplications || []
+      applications: pendingApplications || [],
+      courses: pendingCourses || []
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -49,6 +57,12 @@ export async function POST(request: NextRequest) {
       await supabase.from('posts').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', target_id);
     } else if (target_type === 'resource') {
       await supabase.from('library_items').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', target_id);
+    } else if (target_type === 'course') {
+      const courseStatus = action === 'approve' ? 'published' : 'draft';
+      await supabase.from('courses').update({ 
+        status: courseStatus, 
+        published: action === 'approve' 
+      }).eq('id', target_id);
     } else if (target_type === 'application') {
       const appStatus = action === 'approve' ? 'approved' : 'rejected';
       const { data: app } = await supabase.from('author_applications').update({ 
@@ -57,16 +71,36 @@ export async function POST(request: NextRequest) {
         updated_at: new Date().toISOString() 
       }).eq('id', target_id).select().single();
 
-      // If approved, upgrade profile role
+      // If approved, upgrade profile role & sync with user_roles table
       if (action === 'approve' && app && app.user_id) {
+        const rawRole = (app.role_applied || '').toLowerCase();
+        let roleId = 'author';
+        let roleDisplayName = 'Tác Giả / Học Giả';
+
+        if (rawRole.includes('giảng') || rawRole.includes('instructor')) {
+          roleId = 'instructor';
+          roleDisplayName = 'Giảng Viên Thần Học';
+        } else if (rawRole.includes('giáo lý') || rawRole.includes('catechist')) {
+          roleId = 'catechist';
+          roleDisplayName = 'Giáo Lý Viên';
+        }
+
         await supabase.from('profiles').update({
-          role: app.role_applied || 'author',
+          role: roleDisplayName,
           is_verified_author: true,
           bio: app.bio,
           specialty: app.specialty,
           parish: app.parish || undefined,
           diocese: app.diocese || undefined
         }).eq('id', app.user_id);
+
+        await supabase.from('user_roles').upsert({
+          user_id: app.user_id,
+          role_id: roleId,
+          is_primary: true,
+          granted_at: new Date().toISOString(),
+          granted_by: admin_id || null
+        }, { onConflict: 'user_id,role_id' });
       }
     }
 
