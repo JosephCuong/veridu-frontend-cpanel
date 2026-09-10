@@ -186,7 +186,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // 5. Dynamic Courses
     const { data: courses } = await supabase
       .from('courses')
-      .select('slug, updated_at, created_at');
+      .select('slug, updated_at, created_at')
+      .eq('published', true);
 
     if (courses) {
       courses.forEach((c) => {

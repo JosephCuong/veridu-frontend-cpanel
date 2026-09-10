@@ -406,7 +406,7 @@ export async function getLibraryArticleBySlug(slug: string): Promise<Article | n
       .select('*')
       .eq('slug', slug)
       .eq('status', 'published')
-      .single();
+      .maybeSingle();
 
     if (error || !data) return null;
 
@@ -1257,7 +1257,7 @@ export async function fetchBibleChapter(
       .from('bible_books')
       .select('id, name')
       .eq('code', bookSlug)
-      .single();
+      .maybeSingle();
 
     if (!book) return null;
 

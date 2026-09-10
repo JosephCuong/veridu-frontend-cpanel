@@ -21,11 +21,15 @@ export async function GET(request: Request) {
       query = query.eq('slug', slug);
     }
 
-    const { data, error } = await query.single();
+    const { data, error } = await query.maybeSingle();
 
     if (error) {
       console.error('Supabase get post error:', error);
-      return NextResponse.json({ error: error.message }, { status: 404 });
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    if (!data) {
+      return NextResponse.json({ error: 'Bài viết không tồn tại' }, { status: 404 });
     }
 
     return NextResponse.json({ post: data });

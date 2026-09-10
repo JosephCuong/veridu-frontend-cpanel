@@ -232,7 +232,7 @@ export default function BibleReader({
         .from('bible_books')
         .select('id')
         .eq('code', selectedBook.slug)
-        .single();
+        .maybeSingle();
 
       if (bookData?.id) {
         const { data: verseRows } = await supabase
