@@ -112,6 +112,14 @@ export default async function CoursesPage({
               <Award className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>Cấp Chứng Nhận VERIDU</span>
             </div>
+
+            <Link
+              href="/admin/khoa-hoc"
+              className="px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-serif font-bold text-xs shadow-md shadow-amber-500/20 transition-all flex items-center gap-1.5"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Studio Soạn Khóa Học</span>
+            </Link>
           </div>
         </div>
       </section>

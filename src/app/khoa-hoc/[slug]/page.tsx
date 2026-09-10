@@ -8,7 +8,7 @@ import {
   Video, Headphones, ChevronLeft, ChevronRight, Award, Loader2, Book,
   FileText, HelpCircle, Lock, Download, Maximize2, ShieldCheck,
   RotateCcw, Sparkles, Check, ChevronDown, Eye, PanelLeftClose, PanelLeft,
-  AlertTriangle, RefreshCw, Volume2, ExternalLink
+  AlertTriangle, RefreshCw, Volume2, ExternalLink, Settings
 } from 'lucide-react';
 import { 
   fetchCourseBySlug, 
@@ -400,6 +400,15 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
               <span className="hidden md:inline">Nhận Chứng Chỉ</span>
             </button>
           )}
+
+          {/* Studio Quick Link */}
+          <Link
+            href="/admin/khoa-hoc"
+            className="p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-muted)] hover:text-amber-400 hover:border-amber-500/50 transition shadow-xs shrink-0"
+            title="Mở Studio Soạn Thảo & Quản Lý Khóa Học"
+          >
+            <Settings className="w-4 h-4 text-amber-500/80" />
+          </Link>
         </div>
       </header>
 

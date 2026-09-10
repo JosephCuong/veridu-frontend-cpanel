@@ -14,8 +14,10 @@ const AUTH_REQUIRED_ROUTES = [
 const ADMIN_REQUIRED_ROUTES = [
   '/admin/quiz-bank',
   '/admin/sach-tranh',
+  '/admin/khoa-hoc',
   '/quiz/studio',
-  '/sach-tranh/studio'
+  '/sach-tranh/studio',
+  '/khoa-hoc/studio'
 ];
 
 export async function middleware(request: NextRequest) {
@@ -27,7 +29,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/wp-admin') ||
     (pathname.startsWith('/admin') && 
      pathname !== '/admin/sach-tranh' && 
-     pathname !== '/admin/quiz-bank')
+     pathname !== '/admin/quiz-bank' &&
+     !pathname.startsWith('/admin/khoa-hoc'))
   ) {
     return NextResponse.redirect(new URL('/', request.url), { status: 301 });
   }
