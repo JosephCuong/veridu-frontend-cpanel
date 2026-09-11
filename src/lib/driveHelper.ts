@@ -51,6 +51,14 @@ export function resolveMediaUrl(url: string, type: 'image' | 'audio' = 'image'):
   if (!url) return '';
   const trimmed = url.trim();
 
+  // If legacy local path to migrated assets, point to cPanel CDN
+  if (trimmed.startsWith('/storybooks/')) {
+    return `https://media.thapgia.com${trimmed}`;
+  }
+  if (trimmed.startsWith('/models/')) {
+    return `https://media.thapgia.com${trimmed}`;
+  }
+
   // If local static path or data URL
   if (trimmed.startsWith('/') || trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
     return trimmed;

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
@@ -236,7 +236,7 @@ export default function Hero3DSection() {
             /* @ts-ignore - Google <model-viewer> Custom Element */
             <model-viewer
               ref={modelRef}
-              src="https://media.thapgia.com/models/bible_3d_model.glb"
+              src="/models/bible_3d_model.glb"
               alt="Mô hình Kinh Thánh 3D VERIDU"
               camera-controls
               auto-rotate

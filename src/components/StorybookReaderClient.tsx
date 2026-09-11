@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
@@ -592,6 +592,7 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
                   alt={currentPage.caption || `Trang ${currentPage.page_number}`}
                   fill
                   priority
+                  unoptimized
                   className="object-contain transition-opacity duration-300"
                   sizes="(max-width: 1280px) 100vw, 1280px"
                 />

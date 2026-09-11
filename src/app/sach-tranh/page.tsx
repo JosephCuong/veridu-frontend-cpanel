@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
@@ -109,6 +109,7 @@ export default async function StorybooksLibraryPage() {
                   src={resolveMediaUrl(book.cover_image || 'https://media.thapgia.com/storybooks/cong-trinh-sang-tao/page_1.png', 'image')}
                   alt={book.title}
                   fill
+                  unoptimized
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 
