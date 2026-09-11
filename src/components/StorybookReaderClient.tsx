@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
@@ -86,7 +86,7 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
 
   const currentPage = pages[currentPageIndex] || {
     page_number: currentPageIndex + 1,
-    image_url: `/storybooks/cong-trinh-sang-tao/page_${currentPageIndex + 1}.png`,
+    image_url: `https://media.thapgia.com/storybooks/cong-trinh-sang-tao/page_${currentPageIndex + 1}.png`,
     text_script: '',
     estimated_duration: 15
   };
@@ -818,3 +818,4 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
     </div>
   );
 }
+

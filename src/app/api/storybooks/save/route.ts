@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
 import { extractYouTubeVideoId } from '@/lib/driveHelper';
 
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       slug: slug.trim(),
       title: title.trim(),
       subtitle: subtitle || '',
-      cover_image: cover_image || '/storybooks/cong-trinh-sang-tao/page_1.png',
+      cover_image: cover_image || 'https://media.thapgia.com/storybooks/cong-trinh-sang-tao/page_1.png',
       testament: testament || 'old_testament',
       target_age: target_age || '4-10 tuổi',
       total_pages: Number(total_pages) || (pages_data ? pages_data.length : 10),
@@ -100,3 +100,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: error.message || 'Lỗi xử lý yêu cầu' }, { status: 500 });
   }
 }
+
