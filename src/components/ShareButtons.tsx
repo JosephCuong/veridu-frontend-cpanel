@@ -68,7 +68,7 @@ export default function ShareButtons({ url, title }: ShareButtonsProps) {
           target="_blank"
           rel="noopener noreferrer"
           className={`${buttonClass} bg-blue-600/10 text-blue-700 dark:text-blue-400 border-blue-600/30 hover:bg-blue-600 hover:text-white hover:border-blue-600 font-bold text-xs shrink-0`}
-          aria-label="Chia sẻ lên Facebook"
+          aria-label="FB - Chia sẻ lên Facebook"
         >
           FB
         </a>

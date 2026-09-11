@@ -291,12 +291,12 @@
     <li id="fn-1" class="footnote-item">
       <span class="footnote-num">[1]</span>
       <span class="footnote-text">Thánh Tôma Aquinô, <em>Summa Theologiae</em>, I, q. 2, a. 3.</span>
-      <a href="#fnref-1" class="footnote-backref" title="Quay lại đoạn văn">↩</a>
+      <a href="#fnref-1" class="footnote-backref" title="Quay lại đoạn văn"><span aria-hidden="true">&#x21A9;&#xFE0E;</span><span class="sr-only">Quay lại vị trí vừa đọc [1]</span></a>
     </li>
     <li id="fn-2" class="footnote-item">
       <span class="footnote-num">[2]</span>
       <span class="footnote-text">Giáo lý Hội Thánh Công Giáo (GLHTCG), số 464.</span>
-      <a href="#fnref-2" class="footnote-backref" title="Quay lại đoạn văn">↩</a>
+      <a href="#fnref-2" class="footnote-backref" title="Quay lại đoạn văn"><span aria-hidden="true">&#x21A9;&#xFE0E;</span><span class="sr-only">Quay lại vị trí vừa đọc [2]</span></a>
     </li>
   </ol>
 </div>

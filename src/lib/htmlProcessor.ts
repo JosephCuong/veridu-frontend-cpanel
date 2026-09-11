@@ -420,6 +420,14 @@ function mapElementClasses(el: Element): void {
         if (/#fnref/i.test(href) || el.classList.contains('footnote-backref') || el.classList.contains('footnote-back')) {
           el.classList.add('footnote-backref');
           el.classList.remove('text-amber-600', 'text-amber-500', 'text-amber-400', 'dark:text-amber-400', 'hover:underline');
+          el.removeAttribute('aria-label'); // Fix WCAG 2.5.3 (Label in Name)
+          const numMatch = href.match(/#fnref[-_:]?(\d+)/i);
+          const num = numMatch ? numMatch[1] : '';
+          const labelText = num ? `Quay lại vị trí vừa đọc [${num}]` : 'Quay lại vị trí vừa đọc';
+          el.setAttribute('title', labelText);
+          if (!el.innerHTML.includes('sr-only')) {
+            el.innerHTML = `<span aria-hidden="true">&#x21A9;&#xFE0E;</span><span class="sr-only">${labelText}</span>`;
+          }
           break;
         }
         if (!el.classList.contains('text-amber-600')) {
@@ -637,7 +645,7 @@ export function normalizeFootnotesInHtml(html: string): string {
         cleanBody = cleanBody.replace(/^\s*\[(\d+)\]/, '<span class="footnote-num font-mono font-bold mr-2">[$1]</span>');
       }
 
-      const backref = `<a href="#fnref-${num}" class="footnote-backref" title="Quay lại vị trí vừa đọc [${num}]" aria-label="Quay lại vị trí vừa đọc [${num}]">&#x21A9;&#xFE0E;</a>`;
+      const backref = `<a href="#fnref-${num}" class="footnote-backref" title="Quay lại vị trí vừa đọc [${num}]"><span aria-hidden="true">&#x21A9;&#xFE0E;</span><span class="sr-only">Quay lại vị trí vừa đọc [${num}]</span></a>`;
       return `<p${attrs}>${cleanBody} ${backref}</p>`;
     }
   );
@@ -653,7 +661,7 @@ export function normalizeFootnotesInHtml(html: string): string {
         cleanBody = cleanBody.replace(/^\s*\[(\d+)\]/, '<span class="footnote-num font-mono font-bold mr-2">[$1]</span>');
       }
 
-      const backref = `<a href="#fnref-${num}" class="footnote-backref" title="Quay lại vị trí vừa đọc [${num}]" aria-label="Quay lại vị trí vừa đọc [${num}]">&#x21A9;&#xFE0E;</a>`;
+      const backref = `<a href="#fnref-${num}" class="footnote-backref" title="Quay lại vị trí vừa đọc [${num}]"><span aria-hidden="true">&#x21A9;&#xFE0E;</span><span class="sr-only">Quay lại vị trí vừa đọc [${num}]</span></a>`;
       return `<li${attrs}>${cleanBody} ${backref}</li>`;
     }
   );
