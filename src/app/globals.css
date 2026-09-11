@@ -677,17 +677,61 @@ figcaption {
 
 .veridu-embed-audio {
   width: 100%;
-  margin: 2rem 0;
-  padding: 1.25rem 1.5rem;
+  margin: 2.25rem 0;
+  padding: 1.4rem 1.6rem;
   background: var(--bg-card);
   border: 1px solid var(--border-card);
   border-radius: 1.5rem;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: relative;
+  overflow: hidden;
+}
+
+.veridu-embed-audio.mini {
+  padding: 1rem 1.4rem;
+  margin: 1.75rem 0;
+  background: linear-gradient(135deg, var(--gold-light), var(--bg-card));
+  border: 1px solid var(--gold-border, var(--border-card));
+  border-radius: 1.25rem;
+}
+
+.audio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.85rem;
+  font-family: var(--font-sans, system-ui);
+}
+
+.audio-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--gold-primary, #f59e0b);
+}
+
+.audio-badge {
+  font-size: 0.72rem;
+  font-family: var(--font-mono, monospace);
+  font-weight: 600;
+  padding: 0.2rem 0.65rem;
+  color: var(--text-muted);
+  background: var(--bg-card-subtle, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--border-color, var(--border-card));
+  border-radius: 9999px;
 }
 
 .veridu-embed-audio audio {
   width: 100%;
-  border-radius: 9999px;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  outline: none;
 }
 
 /* ─── 8. HỘP LƯU Ý & CẢNH BÁO GIÁO LÝ (CATECHETICAL CALLOUT - 4 LEVELS) ──── */

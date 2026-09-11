@@ -19,7 +19,7 @@ import AdminEditFloatingButton from '@/components/AdminEditFloatingButton';
 import ArticleAuthorCard from '@/components/ArticleAuthorCard';
 import ArticleRelatedContent from '@/components/ArticleRelatedContent';
 import ArticleCitationAndLicense from '@/components/ArticleCitationAndLicense';
-import { BookOpen, Heart, ArrowLeft, Cross, Calendar, Clock, User, Tag } from 'lucide-react';
+import { BookOpen, Heart, ArrowLeft, Cross, Calendar, Clock, User, Tag, Headphones, Video } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600; // 1-hour Edge CDN caching with on-demand revalidation
@@ -117,6 +117,26 @@ const MetaDataRow = ({ article }: { article: any }) => {
           <Tag className="w-3.5 h-3.5 text-amber-500" />
           <span>{article.category}</span>
         </div>
+      )}
+      {(article.audio_url || article.contentHtml?.includes('<audio') || article.interactiveHtml?.includes('<audio')) && (
+        <a 
+          href="#podcast-audio" 
+          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-300 font-bold border border-amber-500/30 transition-all cursor-pointer group"
+          title="Nhấp để nghe bản Audio Podcast"
+        >
+          <Headphones className="w-3.5 h-3.5 text-amber-500 group-hover:scale-110 transition-transform" />
+          <span>🎧 Có Podcast Audio</span>
+        </a>
+      )}
+      {(article.video_url || article.contentHtml?.includes('veridu-embed-video') || article.interactiveHtml?.includes('veridu-embed-video')) && (
+        <a 
+          href="#video-embed" 
+          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-300 font-bold border border-rose-500/30 transition-all cursor-pointer group"
+          title="Nhấp để xem Video phụ đề"
+        >
+          <Video className="w-3.5 h-3.5 text-rose-500 group-hover:scale-110 transition-transform" />
+          <span>🎬 Có Video Phụ Đề</span>
+        </a>
       )}
     </div>
   );

@@ -295,22 +295,44 @@ export const CATHOLIC_BLOCK_TEMPLATES: CatholicBlockTemplate[] = [
   <iframe 
     src="https://www.youtube.com/embed/VIDEO_ID" 
     class="w-full h-full border-none" 
-    title="Video Phụng Vụ VERIDU"
+    title="Video Phụng Vụ VERIDU" 
     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
     allowfullscreen>
   </iframe>
 </div>`
       },
       {
-        name: 'Trình Phát Âm Thanh (.veridu-embed-audio)',
-        description: 'Khung nghe Thánh Ca / Bài Giảng Audio',
-        snippet: `<div class="veridu-embed-audio my-8 p-5 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-lg not-prose">
-  <div class="text-xs font-bold text-amber-600 dark:text-amber-400 font-serif mb-2 flex items-center gap-1.5">
-    <span>🎵</span> THÁNH CA SUY NIỆM
+        name: 'Podcast Mini Player (.veridu-embed-audio.mini)',
+        description: 'Bản nghe audio podcast mở đầu bài viết (nhỏ gọn, viền vàng hổ phách)',
+        snippet: `<div class="veridu-embed-audio mini my-6 p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--gold-border)] shadow-md not-prose">
+  <div class="audio-header flex justify-between items-center mb-2 font-sans">
+    <span class="audio-label text-xs font-bold text-amber-500 uppercase flex items-center gap-1.5">
+      <span>🎧</span> BẢN NGHE AUDIO PODCAST HỌC THUẬT
+    </span>
+    <span class="audio-badge text-xs font-mono text-[var(--text-muted)] border border-[var(--border-card)] px-2.5 py-0.5 rounded-full">Thời lượng: 12 phút</span>
   </div>
-  <audio controls class="w-full">
-    <source src="https://example.com/audio.mp3" type="audio/mpeg">
-    Trình duyệt không hỗ trợ phát âm thanh.
+  <audio controls class="w-full h-10 rounded-lg">
+    <source src="https://example.com/podcast.mp3" type="audio/mpeg">
+    Trình duyệt của bạn không hỗ trợ phát âm thanh trực tiếp.
+  </audio>
+</div>`
+      },
+      {
+        name: 'Podcast Đầy Đủ (.veridu-embed-audio)',
+        description: 'Khung nghe Podcast học thuật chi tiết kèm số tập (Ep) và phần mô tả',
+        snippet: `<div class="veridu-embed-audio my-8 p-5 sm:p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl not-prose">
+  <div class="audio-header flex justify-between items-center mb-3 font-sans">
+    <div class="audio-label text-xs sm:text-sm font-bold text-amber-500 flex items-center gap-2 uppercase">
+      <span>🎙️</span> PODCAST HỌC THUẬT: CHUYÊN ĐỀ PHỤNG VỤ
+    </div>
+    <span class="audio-badge text-xs font-mono text-[var(--text-muted)] border border-[var(--border-card)] px-3 py-1 rounded-full">Ep #01 • 15:00 • VERIDU Audio</span>
+  </div>
+  <p class="text-xs sm:text-sm text-[var(--text-muted)] mb-3 leading-relaxed">
+    Lắng nghe bản đọc diễn cảm học thuật và đối thoại sâu sắc về chủ đề này cùng Ban Biên Tập VERIDU.
+  </p>
+  <audio controls class="w-full h-11 rounded-lg">
+    <source src="https://example.com/podcast.mp3" type="audio/mpeg">
+    Trình duyệt của bạn không hỗ trợ phát âm thanh trực tiếp.
   </audio>
 </div>`
       }

@@ -234,6 +234,56 @@ export function convertGoogleDriveImagesInHtml(html: string): string {
 }
 
 /**
+ * Automatically detects and converts Google Drive audio URLs inside HTML
+ * (<source src="..."> or <audio src="...">) to direct high-speed audio streaming links.
+ */
+export function convertGoogleDriveAudioInHtml(html: string): string {
+  if (!html || typeof html !== 'string') return '';
+  return html.replace(
+    /(<(?:source|audio)\s+[^>]*?src=["'])(https?:\/\/(?:drive|docs)\.google\.com\/[^"']+)(["'][^>]*>)/gi,
+    (match, prefix, driveUrl, suffix) => {
+      const idMatch = driveUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) ||
+                      driveUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/) ||
+                      driveUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (idMatch && idMatch[1]) {
+        return `${prefix}https://docs.google.com/uc?export=download&id=${idMatch[1]}${suffix}`;
+      }
+      return match;
+    }
+  );
+}
+
+/**
+ * Extracts the primary audio URL from HTML (<source src="..."> or <audio src="...">).
+ */
+export function extractAudioUrlFromHtml(html: string): string | null {
+  if (!html || typeof html !== 'string') return null;
+  const match = html.match(/<(?:source|audio)\s+[^>]*?src=["']([^"']+)["']/i);
+  return match && match[1] ? match[1].trim() : null;
+}
+
+/**
+ * Extracts the primary video URL from HTML (<iframe>, <video>, or .mp4/.webm sources).
+ */
+export function extractVideoUrlFromHtml(html: string): string | null {
+  if (!html || typeof html !== 'string') return null;
+  const match = html.match(/<iframe\s+[^>]*?src=["']([^"']+)["']/i) ||
+                html.match(/<video\s+[^>]*?src=["']([^"']+)["']/i) ||
+                html.match(/<source\s+[^>]*?src=["']([^"']+\.(?:mp4|webm))["']/i);
+  return match && match[1] ? match[1].trim() : null;
+}
+
+/**
+ * Safely replaces all occurrences of a specific audio source in HTML with a new URL.
+ */
+export function replaceAudioSrcInHtml(html: string, oldSrc: string, newSrc: string): string {
+  if (!html || !oldSrc || !newSrc) return html;
+  const escaped = oldSrc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(<(?:source|audio)\\s+[^>]*?src=["'])${escaped}(["'])`, 'gi');
+  return html.replace(regex, `$1${newSrc}$2`);
+}
+
+/**
  * Strips layout-breaking inline styles (width, max-width, margins, absolute colors)
  */
 function cleanInlineStyle(styleAttr: string): string {
@@ -406,8 +456,8 @@ export function normalizeAndSyncHtml(
     return html.trim();
   }
 
-  // Universally convert Google Drive image links and ensure styling tokens before DOMParser or SSR regex cleaners
-  let cleanHtml = convertGoogleDriveImagesInHtml(html);
+  // Universally convert Google Drive image & audio links and ensure styling tokens before DOMParser or SSR regex cleaners
+  let cleanHtml = convertGoogleDriveAudioInHtml(convertGoogleDriveImagesInHtml(html));
 
   // DOMParser path (Browser Environment)
   if (typeof window !== 'undefined' && typeof DOMParser !== 'undefined') {
@@ -464,6 +514,28 @@ export function normalizeAndSyncHtml(
             parent.insertBefore(wrapper, iframe);
             wrapper.appendChild(iframe);
           }
+        }
+      });
+
+      // 6b. Style & Normalize <audio> embeds
+      const audioElements = doc.querySelectorAll('audio');
+      audioElements.forEach((audio) => {
+        if (!audio.hasAttribute('controls')) {
+          audio.setAttribute('controls', '');
+        }
+        audio.classList.add('w-full', 'rounded-lg');
+
+        const parent = audio.parentElement;
+        const hasAudioWrapper = parent && (
+          parent.classList.contains('veridu-embed-audio') || 
+          parent.closest('.veridu-embed-audio')
+        );
+
+        if (!hasAudioWrapper && parent) {
+          const wrapper = doc.createElement('div');
+          wrapper.className = 'veridu-embed-audio my-8 p-5 sm:p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl not-prose';
+          parent.insertBefore(wrapper, audio);
+          wrapper.appendChild(audio);
         }
       });
 

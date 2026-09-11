@@ -83,6 +83,8 @@ export interface Article {
   prayerText?: string;
   status?: string;
   published_at?: string;
+  audio_url?: string;
+  video_url?: string;
 }
 
 export interface AuthorProfile {
@@ -392,6 +394,8 @@ export async function getLibraryArticles(): Promise<Article[]> {
       reading_time: item.reading_time || calculateReadingTime(item.content),
       views: item.views || 0,
       likes: item.likes || 0,
+      audio_url: item.audio_url || '',
+      video_url: item.video_url || '',
     }));
   } catch (e) {
     console.error('getLibraryArticles error:', e);
@@ -439,6 +443,8 @@ export async function getLibraryArticleBySlug(slug: string): Promise<Article | n
       reading_time: calculatedTime,
       views: data.views || 0,
       likes: data.likes || 0,
+      audio_url: data.audio_url || '',
+      video_url: data.video_url || '',
     };
   } catch (e) {
     console.error('getLibraryArticleBySlug error:', e);

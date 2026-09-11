@@ -177,6 +177,24 @@ export default function VisualArticleRenderer({
       img.addEventListener('error', handleImageError);
     });
 
+    // 4b. Audio Playback Optimization & Fallback
+    const audioElements = containerRef.current.querySelectorAll('audio');
+    audioElements.forEach((audio) => {
+      audio.addEventListener('error', () => {
+        const source = audio.querySelector('source');
+        const src = source?.getAttribute('src') || audio.getAttribute('src') || '';
+        if (src && !src.startsWith('http')) {
+          const parent = audio.closest('.veridu-embed-audio');
+          if (parent && !parent.querySelector('.audio-error-notice')) {
+            const notice = document.createElement('div');
+            notice.className = 'audio-error-notice p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-600 dark:text-amber-400 mt-2 font-sans flex items-center gap-2';
+            notice.innerHTML = `<span>⚠️</span> <span>Tệp âm thanh (${src}) chưa được liên kết với nguồn phát trực tuyến. Vui lòng cập nhật URL âm thanh đám mây trong bài viết.</span>`;
+            parent.appendChild(notice);
+          }
+        }
+      });
+    });
+
     // 5. Footnote Normalization & Bidirectional Return Links (Vòng đỏ & Nút quay lại ↩)
     const footnoteLinks = containerRef.current.querySelectorAll<HTMLAnchorElement>(
       'a[href*="#fn"], a[href*="#footnote"], a.footnote-ref, sup.veridu-footnote a'

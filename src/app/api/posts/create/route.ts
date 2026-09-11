@@ -25,7 +25,9 @@ export async function POST(request: Request) {
       author_id,
       author_name,
       reading_time,
-      published_at
+      published_at,
+      audio_url,
+      video_url
     } = body;
 
     if (!title || !content) {
@@ -72,6 +74,12 @@ export async function POST(request: Request) {
     const finalPublishedAt = (published_at && typeof published_at === 'string' && published_at.trim())
       ? new Date(published_at).toISOString()
       : new Date().toISOString();
+    const finalAudioUrl = (audio_url && typeof audio_url === 'string' && audio_url.trim())
+      ? audio_url.trim()
+      : null;
+    const finalVideoUrl = (video_url && typeof video_url === 'string' && video_url.trim())
+      ? video_url.trim()
+      : null;
 
     const { data, error } = await supabase
       .from('posts')
@@ -88,7 +96,9 @@ export async function POST(request: Request) {
           author_id: validAuthorId,
           author_name: finalAuthorName,
           reading_time: finalReadingTime,
-          published_at: finalPublishedAt
+          published_at: finalPublishedAt,
+          audio_url: finalAudioUrl,
+          video_url: finalVideoUrl
         }
       ])
       .select();

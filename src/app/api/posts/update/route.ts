@@ -41,7 +41,9 @@ export async function POST(request: Request) {
       status,
       author_name,
       reading_time,
-      published_at
+      published_at,
+      audio_url,
+      video_url
     } = body;
 
     if (!id) {
@@ -96,11 +98,18 @@ export async function POST(request: Request) {
       ? new Date(published_at).toISOString()
       : null;
 
+    const finalAudioUrl = (audio_url !== undefined)
+      ? (audio_url ? String(audio_url).trim() : null)
+      : undefined;
+    const finalVideoUrl = (video_url !== undefined)
+      ? (video_url ? String(video_url).trim() : null)
+      : undefined;
+
     let updatedPost: any = null;
 
     // 4. Tier 1: Try Postgres RPC (SECURITY INVOKER)
     try {
-      const { data: rpcData, error: rpcError } = await dbClient.rpc('update_post_content', {
+      const rpcParams: Record<string, any> = {
         p_id: numericId,
         p_title: cleanTitle,
         p_slug: finalSlug,
@@ -112,8 +121,12 @@ export async function POST(request: Request) {
         p_status: targetStatus,
         p_author_name: finalAuthorName,
         p_reading_time: finalReadingTime,
-        p_published_at: finalPublishedAt
-      });
+        p_published_at: finalPublishedAt,
+      };
+      if (finalAudioUrl !== undefined) rpcParams.p_audio_url = finalAudioUrl;
+      if (finalVideoUrl !== undefined) rpcParams.p_video_url = finalVideoUrl;
+
+      const { data: rpcData, error: rpcError } = await dbClient.rpc('update_post_content', rpcParams);
 
       if (!rpcError && rpcData && rpcData.length > 0) {
         updatedPost = rpcData[0];
@@ -141,6 +154,12 @@ export async function POST(request: Request) {
       };
       if (finalPublishedAt) {
         updatePayload.published_at = finalPublishedAt;
+      }
+      if (finalAudioUrl !== undefined) {
+        updatePayload.audio_url = finalAudioUrl;
+      }
+      if (finalVideoUrl !== undefined) {
+        updatePayload.video_url = finalVideoUrl;
       }
 
       const { data: updateData, error: updateError } = await dbClient

@@ -49,7 +49,10 @@ import {
   Compass,
   MapPin,
   Clock,
-  X
+  X,
+  Headphones,
+  Radio,
+  Volume2
 } from 'lucide-react';
 import { getStoredUser, UserProfile } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
@@ -59,7 +62,10 @@ import {
   extractExcerptFromHtml, 
   extractFeaturedImageFromHtml, 
   formatImageUrl,
-  normalizeAndSyncHtml 
+  normalizeAndSyncHtml,
+  extractAudioUrlFromHtml,
+  extractVideoUrlFromHtml,
+  replaceAudioSrcInHtml
 } from '@/lib/htmlProcessor';
 import VisualArticleRenderer from '@/components/VisualArticleRenderer';
 import FloatingFormatToolbar from '@/components/editor/FloatingFormatToolbar';
@@ -128,6 +134,17 @@ function DangBaiContent() {
   const [isReadingTimeManual, setIsReadingTimeManual] = useState(false);
   const [contentHtml, setContentHtml] = useState<string>(editId ? '' : DEFAULT_INITIAL_CONTENT);
   const [existingStatus, setExistingStatus] = useState<string>('published');
+
+  // Media (Audio Podcast & Video Embed) State
+  const [audioUrl, setAudioUrl] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
+  const [detectedLocalAudioPath, setDetectedLocalAudioPath] = useState<string | null>(null);
+  const [showMediaModal, setShowMediaModal] = useState(false);
+  const [mediaModalType, setMediaModalType] = useState<'audio_mini' | 'audio_full' | 'video'>('audio_mini');
+  const [mediaModalUrl, setMediaModalUrl] = useState('');
+  const [mediaModalTitle, setMediaModalTitle] = useState('');
+  const [mediaModalBadge, setMediaModalBadge] = useState('Thời lượng: 12 phút');
+  const [mediaModalDesc, setMediaModalDesc] = useState('');
 
   // File Upload & Diagnostics Metadata State
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
@@ -263,6 +280,15 @@ function DangBaiContent() {
           const html = p.content || '';
           setContentHtml(html);
           setExistingStatus(p.status || 'published');
+          setAudioUrl(p.audio_url || '');
+          setVideoUrl(p.video_url || '');
+
+          // Check if article content has local audio path
+          const localAudioMatch = html.match(/<(?:source|audio)\s+[^>]*?src=["'](audio\/[^"']+)["']/i);
+          if (localAudioMatch && localAudioMatch[1]) {
+            setDetectedLocalAudioPath(localAudioMatch[1]);
+          }
+
           const rTime = p.reading_time || calculateReadingTime(html);
           setReadingTime(rTime);
           setIsReadingTimeManual(!!p.reading_time);
@@ -687,6 +713,104 @@ function DangBaiContent() {
     setTimeout(() => setMessage(null), 3000);
   };
 
+  // Open Interactive Media Inserter Modal
+  const handleOpenMediaModal = (type: 'audio_mini' | 'audio_full' | 'video' = 'audio_mini') => {
+    setMediaModalType(type);
+    if (type === 'video') {
+      setMediaModalUrl(videoUrl || '');
+      setMediaModalTitle('Video Phụng Vụ & Chuyên Đề VERIDU');
+      setMediaModalBadge('16:9 • HD');
+    } else if (type === 'audio_mini') {
+      setMediaModalUrl(audioUrl || '');
+      setMediaModalTitle('BẢN NGHE AUDIO PODCAST HỌC THUẬT');
+      setMediaModalBadge(readingTime ? `Thời lượng: ${readingTime}` : 'Thời lượng: 12 phút');
+    } else {
+      setMediaModalUrl(audioUrl || '');
+      setMediaModalTitle(title ? `PODCAST HỌC THUẬT: ${title}` : 'PODCAST HỌC THUẬT VERIDU');
+      setMediaModalBadge('Ep #01 • 15:00 • VERIDU Audio');
+      setMediaModalDesc('Lắng nghe bản đọc diễn cảm học thuật và đối thoại sâu sắc về chủ đề này cùng Ban Biên Tập VERIDU.');
+    }
+    setShowMediaModal(true);
+  };
+
+  const handleExecuteInsertMedia = () => {
+    let finalUrl = mediaModalUrl.trim();
+    if (!finalUrl) {
+      setMessage({ type: 'error', text: 'Vui lòng nhập đường dẫn URL cho tệp Media!' });
+      return;
+    }
+
+    // Auto-transform Google Drive link if applicable
+    if (finalUrl.includes('drive.google.com') || finalUrl.includes('docs.google.com')) {
+      const match = finalUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) ||
+                    finalUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/) ||
+                    finalUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        if (mediaModalType === 'video') {
+          finalUrl = `https://drive.google.com/file/d/${match[1]}/preview`;
+        } else {
+          finalUrl = `https://docs.google.com/uc?export=download&id=${match[1]}`;
+        }
+      }
+    }
+
+    // Auto-transform YouTube link to embed format
+    if (mediaModalType === 'video') {
+      if (finalUrl.includes('youtube.com') || finalUrl.includes('youtu.be')) {
+        const ytMatch = finalUrl.match(/(?:watch\?v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+        if (ytMatch && ytMatch[1]) {
+          finalUrl = `https://www.youtube-nocookie.com/embed/${ytMatch[1]}`;
+        }
+      }
+      if (!videoUrl) setVideoUrl(finalUrl);
+    } else {
+      if (!audioUrl) setAudioUrl(finalUrl);
+    }
+
+    let snippet = '';
+    if (mediaModalType === 'video') {
+      snippet = `<div class="veridu-embed-video w-full aspect-video rounded-3xl shadow-2xl overflow-hidden border border-[var(--border-card)] my-8 bg-black relative z-10 not-prose">
+  <iframe 
+    src="${finalUrl}" 
+    class="w-full h-full border-none" 
+    title="${mediaModalTitle || 'Video Phụng Vụ VERIDU'}" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+  </iframe>
+</div>`;
+    } else if (mediaModalType === 'audio_mini') {
+      snippet = `<div class="veridu-embed-audio mini my-6 p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--gold-border)] shadow-md not-prose">
+  <div class="audio-header flex justify-between items-center mb-2 font-sans">
+    <span class="audio-label text-xs font-bold text-amber-500 uppercase flex items-center gap-1.5">
+      <span>🎧</span> ${mediaModalTitle || 'BẢN NGHE AUDIO PODCAST HỌC THUẬT'}
+    </span>
+    <span class="audio-badge text-xs font-mono text-[var(--text-muted)] border border-[var(--border-card)] px-2.5 py-0.5 rounded-full">${mediaModalBadge || 'Thời lượng: 12 phút'}</span>
+  </div>
+  <audio controls class="w-full h-10 rounded-lg">
+    <source src="${finalUrl}" type="audio/mpeg">
+    Trình duyệt không hỗ trợ phát âm thanh trực tiếp.
+  </audio>
+</div>`;
+    } else {
+      snippet = `<div class="veridu-embed-audio my-8 p-5 sm:p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl not-prose">
+  <div class="audio-header flex justify-between items-center mb-3 font-sans">
+    <div class="audio-label text-xs sm:text-sm font-bold text-amber-500 flex items-center gap-2 uppercase">
+      <span>🎙️</span> ${mediaModalTitle || 'PODCAST HỌC THUẬT: CHUYÊN ĐỀ PHỤNG VỤ'}
+    </div>
+    <span class="audio-badge text-xs font-mono text-[var(--text-muted)] border border-[var(--border-card)] px-3 py-1 rounded-full">${mediaModalBadge || 'Ep #01 • 15:00 • VERIDU Audio'}</span>
+  </div>
+  ${mediaModalDesc ? `<p class="text-xs sm:text-sm text-[var(--text-muted)] mb-3 leading-relaxed">${mediaModalDesc}</p>` : ''}
+  <audio controls class="w-full h-11 rounded-lg">
+    <source src="${finalUrl}" type="audio/mpeg">
+    Trình duyệt không hỗ trợ phát âm thanh trực tiếp.
+  </audio>
+</div>`;
+    }
+
+    handleInsertCatholicBlock(snippet);
+    setShowMediaModal(false);
+  };
+
   // Process Uploaded HTML File with Full Clean Ingestion
   const processHtmlFile = (file: File) => {
     const reader = new FileReader();
@@ -712,6 +836,8 @@ function DangBaiContent() {
       if (/footnotes-section|footnote-ref|footnote-item|<sup/i.test(rawText)) features.push('Chú Thích Chân Trang');
       if (/<img/i.test(rawText)) features.push('Hình Ảnh');
       if (/<iframe|<video/i.test(rawText)) features.push('Media Nhúng');
+      if (/<audio|veridu-embed-audio|\.mp3|\.wav|\.m4a/i.test(rawText)) features.push('🎧 Audio Podcast');
+      if (/<iframe|veridu-embed-video|youtube\.com|youtu\.be|<video/i.test(rawText)) features.push('🎬 Video Nhúng');
 
       // Detect 3D Interactive application vs Standard article
       const is3DInteractive = 
@@ -749,18 +875,86 @@ function DangBaiContent() {
         setFeaturedImage(extractedImg);
       }
 
-      // 4. Clean HTML & Load into Canvas
+      // 4. Auto-extract Audio & Video
+      const extractedAudio = extractAudioUrlFromHtml(rawText);
+      if (extractedAudio) {
+        setAudioUrl(extractedAudio);
+        if (!extractedAudio.startsWith('http://') && !extractedAudio.startsWith('https://') && !extractedAudio.startsWith('//')) {
+          setDetectedLocalAudioPath(extractedAudio);
+        } else {
+          setDetectedLocalAudioPath(null);
+        }
+      } else {
+        const localAudio = rawText.match(/<(?:source|audio)\s+[^>]*?src=["'](audio\/[^"']+)["']/i);
+        if (localAudio && localAudio[1]) {
+          setDetectedLocalAudioPath(localAudio[1]);
+          setAudioUrl(localAudio[1]);
+        }
+      }
+
+      const extractedVideo = extractVideoUrlFromHtml(rawText);
+      if (extractedVideo) {
+        setVideoUrl(extractedVideo);
+      }
+
+      // 5. Clean HTML & Load into Canvas
       const cleanHtml = normalizeAndSyncHtml(rawText);
       setContentHtml(cleanHtml);
       if (visualCanvasRef.current) {
         visualCanvasRef.current.innerHTML = cleanHtml;
       }
 
-      setAnalysisNotice(`Đã nạp file "${file.name}" (${(file.size / 1024).toFixed(1)} KB): Trích xuất tiêu đề, chuẩn hóa mã HTML và áp dụng phong cách Stained-Glass của VERIDU.`);
+      setAnalysisNotice(`Đã nạp file "${file.name}" (${(file.size / 1024).toFixed(1)} KB): Trích xuất tiêu đề, âm thanh, chuẩn hóa mã HTML và áp dụng phong cách Stained-Glass của VERIDU.`);
       setMessage({ type: 'success', text: `Nạp thành công tệp: ${file.name}` });
     };
 
     reader.readAsText(file);
+  };
+
+  // 1-Click Replacer for local audio paths (e.g. audio/podcast.mp3 -> cloud stream URL)
+  const handleReplaceLocalAudioPath = () => {
+    if (!detectedLocalAudioPath) return;
+    const targetUrl = audioUrl.trim();
+    if (!targetUrl || targetUrl === detectedLocalAudioPath) {
+      setMessage({ 
+        type: 'error', 
+        text: 'Vui lòng nhập đường dẫn URL âm thanh mới (MP3 hoặc Google Drive) vào ô Audio URL trước khi thay thế!' 
+      });
+      return;
+    }
+
+    let finalResolvedUrl = targetUrl;
+    // Resolve Google Drive link if applicable
+    if (finalResolvedUrl.includes('drive.google.com') || finalResolvedUrl.includes('docs.google.com')) {
+      const match = finalResolvedUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) ||
+                    finalResolvedUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/) ||
+                    finalResolvedUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        finalResolvedUrl = `https://docs.google.com/uc?export=download&id=${match[1]}`;
+        setAudioUrl(finalResolvedUrl);
+      }
+    }
+
+    // Replace in state contentHtml
+    const updatedHtml = replaceAudioSrcInHtml(contentHtml, detectedLocalAudioPath, finalResolvedUrl);
+    setContentHtml(updatedHtml);
+
+    // Replace in visual canvas DOM
+    if (visualCanvasRef.current) {
+      visualCanvasRef.current.innerHTML = replaceAudioSrcInHtml(
+        visualCanvasRef.current.innerHTML, 
+        detectedLocalAudioPath, 
+        finalResolvedUrl
+      );
+    }
+
+    const replacedPath = detectedLocalAudioPath;
+    setDetectedLocalAudioPath(null);
+    setMessage({ 
+      type: 'success', 
+      text: `Đã thay thế "${replacedPath}" bằng URL âm thanh trực tuyến thành công trên toàn bộ bài viết!` 
+    });
+    setTimeout(() => setMessage(null), 4000);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -838,7 +1032,9 @@ function DangBaiContent() {
         status: postStatus,
         author_name: authorName.trim() || user?.fullName || user?.displayName || 'Ban Biên Tập VERIDU',
         reading_time: readingTime.trim() || calculateReadingTime(finalHtml),
-        published_at: publishedDate ? new Date(publishedDate).toISOString() : new Date().toISOString()
+        published_at: publishedDate ? new Date(publishedDate).toISOString() : new Date().toISOString(),
+        audio_url: audioUrl ? audioUrl.trim() : null,
+        video_url: videoUrl ? videoUrl.trim() : null
       };
 
       if (isEdit) {
@@ -1073,6 +1269,74 @@ function DangBaiContent() {
             placeholder="Tóm tắt ngắn gọn nội dung cốt lõi của bài viết để hiển thị trên thẻ bài và kết quả tìm kiếm..."
             className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs outline-none focus:border-amber-500 resize-y"
           />
+        </div>
+
+        {/* MEDIA SECTION: PODCAST AUDIO & VIDEO */}
+        <div className="p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="font-bold text-[var(--text-main)] flex items-center gap-1.5 text-xs">
+              <Headphones className="w-3.5 h-3.5 text-amber-500" />
+              <span>Audio Podcast &amp; Video</span>
+            </span>
+            {(audioUrl || videoUrl) && (
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold">
+                Đã gán
+              </span>
+            )}
+          </div>
+
+          <div>
+            <label className="font-bold text-[var(--text-muted)] block mb-1 text-[11px]">
+              Link Audio Podcast (MP3 / Google Drive)
+            </label>
+            <input
+              type="url"
+              value={audioUrl}
+              onChange={(e) => setAudioUrl(e.target.value)}
+              placeholder="https://... hoặc link Google Drive âm thanh"
+              className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] font-mono text-[11px] outline-none focus:border-amber-500"
+            />
+            <p className="text-[10px] text-[var(--text-muted)] mt-1">
+              Hỗ trợ link MP3 trực tiếp, Google Drive (hệ thống tự động chuyển thành stream URL).
+            </p>
+          </div>
+
+          {/* Alert for relative/local audio path */}
+          {detectedLocalAudioPath && (
+            <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/40 space-y-2 text-[11px]">
+              <div className="flex items-start gap-1.5 text-amber-700 dark:text-amber-300 font-bold">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-500" />
+                <span>Phát hiện đường dẫn audio cục bộ:</span>
+              </div>
+              <code className="block p-1.5 rounded-lg bg-amber-950/40 text-amber-300 font-mono text-[10px] break-all border border-amber-500/30">
+                {detectedLocalAudioPath}
+              </code>
+              <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
+                Đường dẫn nội bộ này sẽ không phát được khi xem trên web. Nhập link MP3 hoặc Google Drive công khai vào ô ở trên và bấm nút bên dưới:
+              </p>
+              <button
+                type="button"
+                onClick={handleReplaceLocalAudioPath}
+                className="w-full py-1.5 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>⚡ Thay Thế Link Nhanh Cho Toàn Bài</span>
+              </button>
+            </div>
+          )}
+
+          <div>
+            <label className="font-bold text-[var(--text-muted)] block mb-1 text-[11px]">
+              Link Video Phụ Đề (YouTube / Vimeo)
+            </label>
+            <input
+              type="url"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=..."
+              className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] font-mono text-[11px] outline-none focus:border-amber-500"
+            />
+          </div>
         </div>
 
         {/* EXPANDABLE: BẢN ĐỒ & DÒNG THỜI GIAN BỔ TRỢ */}
@@ -1422,6 +1686,21 @@ function DangBaiContent() {
             Nhấp vào bất kỳ khối nào bên dưới để chèn mẫu chuẩn vào vị trí con trỏ:
           </p>
 
+          {/* Quick Custom Media Inserter Trigger */}
+          <button
+            type="button"
+            onClick={() => handleOpenMediaModal('audio_mini')}
+            className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-indigo-500/10 hover:from-amber-500/30 hover:to-indigo-500/20 border border-amber-500/40 flex items-center justify-between text-xs font-bold text-[var(--text-main)] transition shadow-sm cursor-pointer group"
+          >
+            <span className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+              <Headphones className="w-4 h-4" />
+              <span>🎵 Tùy Chỉnh Chèn Audio / Video...</span>
+            </span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-300 font-mono">
+              Mở Hộp Thoại
+            </span>
+          </button>
+
           <div className="space-y-2">
             {[
               {
@@ -1461,10 +1740,22 @@ function DangBaiContent() {
                 action: () => handleInsertCatholicBlock(`<figure class="veridu-image-block my-8 mx-auto text-center not-prose"><img src="https://images.unsplash.com/photo-1548625361-1959728b4e87?auto=format&fit=crop&w=1200&q=80" alt="Nghệ Thuật Thánh Đường" data-lightbox="true" referrerpolicy="no-referrer" class="max-w-full h-auto rounded-3xl shadow-2xl mx-auto block cursor-zoom-in hover:scale-[1.01] transition-transform duration-300 border border-[var(--border-card)]" /><figcaption class="mt-3 text-xs italic text-[var(--text-muted)] font-serif max-w-xl mx-auto">Bích họa Nghệ Thuật Thánh Đường Công Giáo — Kiệt tác nghệ thuật phụng vụ.</figcaption></figure>`)
               },
               {
-                name: '7. Video Nhúng 16:9',
+                name: '7a. Video Nhúng 16:9',
                 desc: 'Khung video YouTube/Vimeo tỷ lệ vàng 16:9',
                 icon: <Video className="w-4 h-4 text-rose-500" />,
                 action: () => handleInsertCatholicBlock(`<div class="veridu-embed-video w-full aspect-video rounded-3xl shadow-2xl overflow-hidden border border-[var(--border-card)] my-8 bg-black relative z-10 not-prose"><iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" class="w-full h-full border-none" title="Video Phụng Vụ VERIDU" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`)
+              },
+              {
+                name: '7b. Podcast Mini-Player',
+                desc: 'Khung nghe âm thanh nhỏ gọn mở đầu bài viết',
+                icon: <Headphones className="w-4 h-4 text-amber-500" />,
+                action: () => handleInsertCatholicBlock(`<div class="veridu-embed-audio mini my-6 p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--gold-border)] shadow-md not-prose"><div class="audio-header flex justify-between items-center mb-2 font-sans"><span class="audio-label text-xs font-bold text-amber-500 uppercase flex items-center gap-1.5"><span>🎧</span> BẢN NGHE AUDIO PODCAST HỌC THUẬT</span><span class="audio-badge text-xs font-mono text-[var(--text-muted)] border border-[var(--border-card)] px-2.5 py-0.5 rounded-full">Thời lượng: 12 phút</span></div><audio controls class="w-full h-10 rounded-lg"><source src="${audioUrl || 'https://example.com/podcast.mp3'}" type="audio/mpeg">Trình duyệt không hỗ trợ phát âm thanh trực tiếp.</audio></div>`)
+              },
+              {
+                name: '7c. Podcast Full-Player',
+                desc: 'Khung nghe Podcast học thuật chi tiết kèm mô tả & số tập',
+                icon: <Radio className="w-4 h-4 text-indigo-500" />,
+                action: () => handleInsertCatholicBlock(`<div class="veridu-embed-audio my-8 p-5 sm:p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl not-prose"><div class="audio-header flex justify-between items-center mb-3 font-sans"><div class="audio-label text-xs sm:text-sm font-bold text-amber-500 flex items-center gap-2 uppercase"><span>🎙️</span> PODCAST HỌC THUẬT: CHUYÊN ĐỀ PHỤNG VỤ</div><span class="audio-badge text-xs font-mono text-[var(--text-muted)] border border-[var(--border-card)] px-3 py-1 rounded-full">Ep #01 • 15:00 • VERIDU Audio</span></div><p class="text-xs sm:text-sm text-[var(--text-muted)] mb-3 leading-relaxed">Lắng nghe bản đọc diễn cảm học thuật và đối thoại sâu sắc về chủ đề này cùng Ban Biên Tập VERIDU.</p><audio controls class="w-full h-11 rounded-lg"><source src="${audioUrl || 'https://example.com/podcast.mp3'}" type="audio/mpeg">Trình duyệt không hỗ trợ phát âm thanh trực tiếp.</audio></div>`)
               },
               {
                 name: '8. Hộp Lưu Ý & Cảnh Báo',
@@ -2198,6 +2489,159 @@ function DangBaiContent() {
         onClose={() => setShowBlockModal(false)}
         onInsertHtml={handleInsertCatholicBlock}
       />
+
+      {/* 🌟 INTERACTIVE CUSTOM MEDIA INSERTER MODAL */}
+      {showMediaModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-[var(--bg-card)] rounded-3xl max-w-xl w-full p-6 sm:p-7 border border-amber-500/40 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-[var(--border-card)] pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center border border-amber-500/30">
+                  {mediaModalType === 'video' ? <Video className="w-5 h-5 text-rose-500" /> : <Headphones className="w-5 h-5 text-amber-500" />}
+                </div>
+                <div>
+                  <h3 className="font-serif font-bold text-base text-[var(--text-main)]">
+                    Chèn Khối Media Trực Quan
+                  </h3>
+                  <p className="text-[11px] text-[var(--text-muted)]">
+                    Tùy biến URL, tiêu đề và số tập trước khi chèn vào bài viết
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowMediaModal(false)}
+                className="p-1.5 rounded-lg hover:bg-[var(--bg-main)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Type selector */}
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => handleOpenMediaModal('audio_mini')}
+                className={`p-2.5 rounded-xl border text-left transition flex flex-col gap-1 cursor-pointer ${
+                  mediaModalType === 'audio_mini'
+                    ? 'bg-amber-500/15 border-amber-500 text-amber-600 dark:text-amber-400 shadow-xs'
+                    : 'bg-[var(--bg-main)] border-[var(--border-card)] text-[var(--text-muted)] hover:border-amber-500/40'
+                }`}
+              >
+                <Headphones className="w-4 h-4 text-amber-500" />
+                <span className="font-bold text-xs">Podcast Mini</span>
+                <span className="text-[9px] opacity-75">Mở đầu bài</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleOpenMediaModal('audio_full')}
+                className={`p-2.5 rounded-xl border text-left transition flex flex-col gap-1 cursor-pointer ${
+                  mediaModalType === 'audio_full'
+                    ? 'bg-indigo-500/15 border-indigo-500 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                    : 'bg-[var(--bg-main)] border-[var(--border-card)] text-[var(--text-muted)] hover:border-indigo-500/40'
+                }`}
+              >
+                <Radio className="w-4 h-4 text-indigo-500" />
+                <span className="font-bold text-xs">Podcast Đầy Đủ</span>
+                <span className="text-[9px] opacity-75">Cuối bài • Kèm Ep</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleOpenMediaModal('video')}
+                className={`p-2.5 rounded-xl border text-left transition flex flex-col gap-1 cursor-pointer ${
+                  mediaModalType === 'video'
+                    ? 'bg-rose-500/15 border-rose-500 text-rose-600 dark:text-rose-400 shadow-xs'
+                    : 'bg-[var(--bg-main)] border-[var(--border-card)] text-[var(--text-muted)] hover:border-rose-500/40'
+                }`}
+              >
+                <Video className="w-4 h-4 text-rose-500" />
+                <span className="font-bold text-xs">Video 16:9</span>
+                <span className="text-[9px] opacity-75">YouTube / Vimeo</span>
+              </button>
+            </div>
+
+            {/* Form Fields */}
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="font-bold text-[var(--text-muted)] block mb-1">
+                  {mediaModalType === 'video' ? 'Đường Dẫn Video (YouTube / Vimeo / URL)' : 'Đường Dẫn Audio (MP3 / Google Drive / URL)'} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="url"
+                  value={mediaModalUrl}
+                  onChange={(e) => setMediaModalUrl(e.target.value)}
+                  placeholder={mediaModalType === 'video' ? 'https://www.youtube.com/watch?v=...' : 'https://.../podcast.mp3 hoặc link Drive'}
+                  className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] font-mono text-xs outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="font-bold text-[var(--text-muted)] block mb-1">
+                    Tiêu Đề Khối
+                  </label>
+                  <input
+                    type="text"
+                    value={mediaModalTitle}
+                    onChange={(e) => setMediaModalTitle(e.target.value)}
+                    placeholder="Tiêu đề hiển thị..."
+                    className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-[var(--text-muted)] block mb-1">
+                    Huy Hiệu / Thời Lượng
+                  </label>
+                  <input
+                    type="text"
+                    value={mediaModalBadge}
+                    onChange={(e) => setMediaModalBadge(e.target.value)}
+                    placeholder="Thời lượng: 12 phút / Ep #01"
+                    className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+
+              {mediaModalType === 'audio_full' && (
+                <div>
+                  <label className="font-bold text-[var(--text-muted)] block mb-1">
+                    Đoạn Giới Thiệu Ngắn (Description)
+                  </label>
+                  <textarea
+                    value={mediaModalDesc}
+                    onChange={(e) => setMediaModalDesc(e.target.value)}
+                    rows={2}
+                    placeholder="Mô tả tóm lược nội dung podcast..."
+                    className="w-full p-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs outline-none focus:border-amber-500"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[var(--border-card)]">
+              <button
+                type="button"
+                onClick={() => setShowMediaModal(false)}
+                className="px-4 py-2 rounded-xl bg-[var(--bg-main)] hover:bg-[var(--border-card)] text-[var(--text-muted)] text-xs font-bold transition cursor-pointer"
+              >
+                Hủy Bỏ
+              </button>
+              <button
+                type="button"
+                onClick={handleExecuteInsertMedia}
+                className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition shadow-md shadow-amber-500/20 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <span>Chèn Vào Bài Viết</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 🌟 SUCCESS PUBLISH / UPDATE MODAL */}
       {showSuccessModal && (

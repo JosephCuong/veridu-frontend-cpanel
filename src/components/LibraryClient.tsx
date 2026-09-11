@@ -15,7 +15,9 @@ import {
   Gamepad2,
   X,
   Calendar,
-  ChevronRight
+  ChevronRight,
+  Headphones,
+  Video
 } from 'lucide-react';
 import { formatImageUrl } from '@/lib/htmlProcessor';
 
@@ -193,7 +195,7 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
                             </div>
                           )}
 
-                          {/* Category Badge Overlay (Only show category, NO reading format badge) */}
+                          {/* Category Badge Overlay */}
                           {article.category && (
                             <div className="absolute top-3 left-3 pointer-events-none">
                               <span className="inline-flex items-center text-[10px] font-serif font-bold text-amber-300 bg-slate-950/85 px-3 py-1 rounded-full border border-amber-500/30 backdrop-blur-md shadow-md">
@@ -201,6 +203,22 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
                               </span>
                             </div>
                           )}
+
+                          {/* Media Badges Overlay (Podcast & Video) */}
+                          <div className="absolute top-3 right-3 flex items-center gap-1.5 pointer-events-none">
+                            {(article.audio_url || article.contentHtml?.includes('<audio') || article.interactiveHtml?.includes('<audio')) && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-sans font-bold text-amber-200 bg-slate-950/85 px-2.5 py-0.5 rounded-full border border-amber-500/40 backdrop-blur-md shadow-md">
+                                <Headphones className="w-3 h-3 text-amber-400" />
+                                <span>Podcast</span>
+                              </span>
+                            )}
+                            {(article.video_url || article.contentHtml?.includes('veridu-embed-video') || article.interactiveHtml?.includes('veridu-embed-video')) && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-sans font-bold text-rose-200 bg-slate-950/85 px-2.5 py-0.5 rounded-full border border-rose-500/40 backdrop-blur-md shadow-md">
+                                <Video className="w-3 h-3 text-rose-400" />
+                                <span>Video</span>
+                              </span>
+                            )}
+                          </div>
                         </Link>
 
                         {/* Article Information Body */}
