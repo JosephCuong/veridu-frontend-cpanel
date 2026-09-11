@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { normalizeAndSyncHtml } from '@/lib/htmlProcessor';
 import { X } from 'lucide-react';
+import ScriptureQuickPeekModal, { ScripturePeekTarget } from '@/components/ScriptureQuickPeekModal';
 
 interface VisualArticleRendererProps {
   contentHtml: string;
@@ -16,6 +17,8 @@ export default function VisualArticleRenderer({
   const containerRef = useRef<HTMLDivElement>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [lightboxAlt, setLightboxAlt] = useState<string>('');
+  const [scriptureTarget, setScriptureTarget] = useState<ScripturePeekTarget | null>(null);
+  const [isScriptureModalOpen, setIsScriptureModalOpen] = useState(false);
 
   // Sanitize and clean HTML to seamlessly blend into the VERIDU design system
   const safeHtml = normalizeAndSyncHtml(contentHtml || '');
@@ -317,6 +320,52 @@ export default function VisualArticleRenderer({
           }
         }
       }
+
+      // C. Holy Scripture superlink or quote badge clicked -> Open Stained-Glass Quick Peek Modal
+      const scriptureLink = link.classList.contains('scripture-superlink')
+        ? link
+        : (link.closest('.scripture-superlink, a[data-book]') as HTMLAnchorElement | null);
+
+      if (scriptureLink) {
+        const book = scriptureLink.getAttribute('data-book');
+        const chapter = parseInt(scriptureLink.getAttribute('data-chapter') || '1', 10);
+        const verse = parseInt(scriptureLink.getAttribute('data-verse') || '1', 10);
+        const verseEnd = parseInt(scriptureLink.getAttribute('data-verse-end') || `${verse}`, 10);
+        const bookName = scriptureLink.getAttribute('data-book-name') || undefined;
+        const rawRef = scriptureLink.getAttribute('data-raw-ref') || scriptureLink.textContent || '';
+
+        if (book && !isNaN(chapter)) {
+          e.preventDefault();
+          setScriptureTarget({
+            bookSlug: book,
+            bookName,
+            chapter,
+            verseStart: verse,
+            verseEnd,
+            rawRef
+          });
+          setIsScriptureModalOpen(true);
+          return;
+        }
+      }
+
+      // D. Any /kinh-thanh/[book]/[chapter] link clicked -> Open Quick Peek Modal
+      const bibleHrefMatch = href.match(/^\/kinh-thanh\/([a-z0-9\-_]+)\/(\d+)/i);
+      if (bibleHrefMatch) {
+        e.preventDefault();
+        const bookSlug = bibleHrefMatch[1];
+        const chapter = parseInt(bibleHrefMatch[2], 10);
+        const hashMatch = href.match(/#v(?:erse-?)?(\d+)/i);
+        const verse = hashMatch ? parseInt(hashMatch[1], 10) : 1;
+        setScriptureTarget({
+          bookSlug,
+          chapter,
+          verseStart: verse,
+          rawRef: link.textContent?.trim() || `${bookSlug} ${chapter}`
+        });
+        setIsScriptureModalOpen(true);
+        return;
+      }
     };
 
     const containerEl = containerRef.current;
@@ -379,6 +428,13 @@ export default function VisualArticleRenderer({
           </div>
         </div>
       )}
+
+      {/* 📖 STAINED-GLASS SCRIPTURE QUICK PEEK MODAL */}
+      <ScriptureQuickPeekModal
+        target={scriptureTarget}
+        isOpen={isScriptureModalOpen}
+        onClose={() => setIsScriptureModalOpen(false)}
+      />
     </>
   );
 }

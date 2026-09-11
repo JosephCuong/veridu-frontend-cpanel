@@ -63,7 +63,7 @@ export const CATHOLIC_BLOCK_TEMPLATES: CatholicBlockTemplate[] = [
         “Ngài phải nổi bật lên, còn tôi phải lu mờ đi.”
       </blockquote>
       <div class="flex items-center gap-2 pt-1">
-        <a href="/kinh-thanh/ga/3" target="_blank" rel="noopener noreferrer" title="Tra cứu Lời Chúa trong Kinh Thánh VERIDU" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-900 dark:text-amber-300 font-mono text-xs font-bold border border-amber-500/30 transition-all shadow-xs group">
+        <a href="/kinh-thanh/gio-an/3?t=ntt#v30" target="_blank" rel="noopener noreferrer" data-book="gio-an" data-book-name="Gio-an" data-chapter="3" data-verse="30" data-verse-end="30" data-raw-ref="Ga 3:30" title="Tra cứu Lời Chúa: Ga 3:30" class="scripture-superlink scripture-badge inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-900 dark:text-amber-300 font-mono text-xs font-bold border border-amber-500/30 transition-all shadow-xs group cursor-pointer">
           <span>Ga 3:30</span>
           <span class="text-[10px] text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform">↗</span>
         </a>

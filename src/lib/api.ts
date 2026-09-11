@@ -1,6 +1,7 @@
 // Updated api.ts with status = 'published' filter for public endpoints
 import { supabase } from './supabaseClient';
 import { formatImageUrl } from './htmlProcessor';
+import { getCanonicalBookSlug } from './bibleData';
 export { supabase };
 
 // In-Memory Cache Layer with TTL and Safe Execution to prevent timeout bottlenecks
@@ -1259,10 +1260,11 @@ export async function fetchBibleChapter(
   secondTranslationSlug?: string
 ) {
   try {
+    const canonicalSlug = getCanonicalBookSlug(bookSlug) || bookSlug;
     const { data: book } = await supabase
       .from('bible_books')
       .select('id, name')
-      .eq('code', bookSlug)
+      .eq('code', canonicalSlug)
       .maybeSingle();
 
     if (!book) return null;

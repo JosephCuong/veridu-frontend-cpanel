@@ -1119,4 +1119,45 @@ div[id^="fn"]:target,
   border-width: 0 !important;
 }
 
+/* ─── 📖 SCRIPTURE SUPERLINKS (STAINED-GLASS INTERACTIVE CITATIONS) ─────── */
+a.scripture-superlink {
+  color: #b45309;
+  font-weight: 600;
+  text-decoration: underline dotted 1.5px rgba(217, 119, 6, 0.7);
+  text-underline-offset: 3px;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0.5px 3px;
+  margin: -0.5px -3px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline;
+}
+
+html.dark a.scripture-superlink {
+  color: #fbbf24;
+  text-decoration-color: rgba(251, 191, 36, 0.7);
+}
+
+a.scripture-superlink:hover {
+  color: #92400e;
+  background-color: rgba(245, 158, 11, 0.15);
+  text-decoration-style: solid;
+  text-decoration-color: #d97706;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+}
+
+html.dark a.scripture-superlink:hover {
+  color: #fef08a;
+  background-color: rgba(245, 158, 11, 0.22);
+  text-decoration-color: #fbbf24;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
+}
+
+/* Badge variant inside liturgical quote blocks override plain text underline */
+a.scripture-superlink.scripture-badge {
+  text-decoration: none !important;
+  display: inline-flex;
+}
+
+
 

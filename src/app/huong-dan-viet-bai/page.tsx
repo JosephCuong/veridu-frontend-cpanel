@@ -43,7 +43,7 @@ const SNIPPETS_DATA: SnippetItem[] = [
     code: `<div class="sacred-scripture veridu-scripture-quote">
   <div class="scripture-badge">
     <span>✝ Lời Chúa</span>
-    <a href="/kinh-thanh/ga/3" target="_blank" class="scripture-ref-link">Ga 3:30 ↗</a>
+    <a href="/kinh-thanh/gio-an/3?t=ntt#v30" target="_blank" class="scripture-superlink scripture-ref-link" data-book="gio-an" data-book-name="Gio-an" data-chapter="3" data-verse="30" data-raw-ref="Ga 3:30">Ga 3:30 ↗</a>
   </div>
   <blockquote class="scripture-verse">
     "Người phải lớn lên, còn thầy phải nhỏ lại."

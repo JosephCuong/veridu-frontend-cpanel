@@ -2,6 +2,8 @@ import React from 'react';
 import type { Metadata } from 'next';
 import BibleReader from '@/components/BibleReader';
 import { fetchBibleChapter, fetchBibleMetadata } from '@/lib/api';
+import { getCanonicalBookSlug } from '@/lib/bibleData';
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
 export const revalidate = 86400; // 24 hours Edge CDN cache for Holy Scripture
@@ -16,16 +18,17 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolvedParams = await params;
-  const bookSlug = resolvedParams.bookSlug || 'st';
+  const rawBookSlug = resolvedParams.bookSlug || 'sang-the';
+  const canonicalBookSlug = getCanonicalBookSlug(rawBookSlug) || rawBookSlug;
   const chapterStr = resolvedParams.chapter || '1';
   const chapterNumber = parseInt(chapterStr, 10) || 1;
 
   const metadata = await fetchBibleMetadata();
-  const book = metadata.books.find(b => b.slug.toLowerCase() === bookSlug.toLowerCase()) || { nameVi: 'Kinh Thánh' };
+  const book = metadata.books.find(b => b.slug.toLowerCase() === canonicalBookSlug.toLowerCase()) || { nameVi: 'Kinh Thánh' };
   
   const title = `Sách ${book.nameVi} — Chương ${chapterNumber} | Kinh Thánh VERIDU`;
   const description = `Đọc, nghiên cứu và suy niệm Sách ${book.nameVi} Chương ${chapterNumber} trọn bộ 73 Sách Cựu Ước & Tân Ước với bản dịch chuẩn xác, hệ thống chú giải phụng vụ và đối chiếu Lời Chúa trên VERIDU.`;
-  const pageUrl = `https://www.thapgia.com/kinh-thanh/${bookSlug}/${chapterNumber}`;
+  const pageUrl = `https://www.thapgia.com/kinh-thanh/${canonicalBookSlug}/${chapterNumber}?t=ntt`;
 
   return {
     title,
@@ -60,19 +63,26 @@ export default async function KinhThanhPage({ params, searchParams }: PageProps)
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
   
-  const bookSlug = resolvedParams.bookSlug || 'sang-the';
+  const rawBookSlug = resolvedParams.bookSlug || 'sang-the';
+  const canonicalBookSlug = getCanonicalBookSlug(rawBookSlug) || rawBookSlug;
   const chapterStr = resolvedParams.chapter || '1';
   const chapterNumber = parseInt(chapterStr, 10) || 1;
   const translationSlug = (resolvedSearchParams.t as string) || 'ntt';
 
+  // If the book slug is an abbreviation/alias (e.g. 1-sm, sm, st) or translation query ?t= is missing,
+  // 301 redirect to canonical slug with ?t=ntt
+  if (canonicalBookSlug !== rawBookSlug || !resolvedSearchParams.t) {
+    redirect(`/kinh-thanh/${canonicalBookSlug}/${chapterNumber}?t=${translationSlug}`);
+  }
+
   const [metadata, data] = await Promise.all([
     fetchBibleMetadata(),
-    fetchBibleChapter(translationSlug, bookSlug, chapterNumber)
+    fetchBibleChapter(translationSlug, canonicalBookSlug, chapterNumber)
   ]);
 
-  const currentBook = metadata.books.find(b => b.slug.toLowerCase() === bookSlug.toLowerCase());
+  const currentBook = metadata.books.find(b => b.slug.toLowerCase() === canonicalBookSlug.toLowerCase());
   const bookNameVi = currentBook ? currentBook.nameVi : 'Kinh Thánh';
-  const pageUrl = `https://www.thapgia.com/kinh-thanh/${bookSlug}/${chapterNumber}`;
+  const pageUrl = `https://www.thapgia.com/kinh-thanh/${canonicalBookSlug}/${chapterNumber}?t=${translationSlug}`;
 
   // Structured Data (JSON-LD) for Bible Breadcrumb & Book
   const bibleJsonLd = {
@@ -98,7 +108,7 @@ export default async function KinhThanhPage({ params, searchParams }: PageProps)
             "@type": "ListItem",
             "position": 3,
             "name": `Sách ${bookNameVi}`,
-            "item": `https://www.thapgia.com/kinh-thanh/${bookSlug}/1`
+            "item": `https://www.thapgia.com/kinh-thanh/${canonicalBookSlug}/1?t=${translationSlug}`
           },
           {
             "@type": "ListItem",
@@ -122,7 +132,7 @@ export default async function KinhThanhPage({ params, searchParams }: PageProps)
       <main className="max-w-[1600px] mx-auto px-2 sm:px-4 lg:px-6 py-6 space-y-6 flex-1 w-full">
         {metadata.books && metadata.books.length > 0 ? (
           <BibleReader
-            initialBookSlug={bookSlug}
+            initialBookSlug={canonicalBookSlug}
             initialChapter={chapterNumber}
             initialTranslation={translationSlug}
             books={metadata.books}

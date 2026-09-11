@@ -19,92 +19,28 @@ import {
   ChevronDown
 } from 'lucide-react';
 
+import { parseScriptureReference, formatScriptureUrl } from '@/lib/bibleData';
+
 interface FloatingFormatToolbarProps {
   editorRef: React.RefObject<HTMLElement>;
   onContentChange?: () => void;
 }
 
-// Map common Vietnamese Catholic bible book prefixes to canonical URL slugs
-const BIBLE_BOOK_SLUG_MAP: Record<string, string> = {
-  'st': 'st', 'sangthe': 'st', 'sáng thế': 'st',
-  'xh': 'xh', 'xuathanh': 'xh', 'xuất hành': 'xh',
-  'lv': 'lv', 'levy': 'lv', 'lêvi': 'lv',
-  'ds': 'ds', 'danso': 'ds', 'dân số': 'ds',
-  'dnl': 'dnl', 'dnlv': 'dnl', 'deunhi': 'dnl', 'đệ nhị luật': 'dnl',
-  'gs': 'gs', 'gie-su': 'gs', 'giô-suê': 'gs',
-  'tl': 'tl', 'thu-lanh': 'tl', 'thủ lãnh': 'tl',
-  'rt': 'rt', 'rut': 'rt',
-  '1sm': '1sm', '2sm': '2sm',
-  '1v': '1v', '2v': '2v', '1vr': '1v', '2vr': '2v',
-  '1sb': '1sb', '2sb': '2sb',
-  'ezr': 'ezr', 'ne': 'ne', 'tb': 'tb', 'jdt': 'jdt', 'est': 'est',
-  '1mcb': '1mcb', '2mcb': '2mcb',
-  'jb': 'jb', 'giop': 'jb',
-  'tv': 'tv', 'thanhvinh': 'tv', 'thánh vịnh': 'tv',
-  'cn': 'cn', 'chamngon': 'cn', 'châm ngôn': 'cn',
-  'ggh': 'ggh', 'giangvien': 'ggh', 'giảng viên': 'ggh',
-  'dc': 'dc', 'diemca': 'dc', 'diễm ca': 'dc',
-  'kn': 'kn', 'khonngoan': 'kn', 'khôn ngoan': 'kn',
-  'hc': 'hc', 'huan-ca': 'hc', 'huấn ca': 'hc',
-  'is': 'is', 'isaia': 'is',
-  'gr': 'gr', 'gieremia': 'gr',
-  'tc': 'tc', 'thanca': 'tc',
-  'br': 'br', 'baruc': 'br',
-  'ez': 'ez', 'ezekiel': 'ez',
-  'dn': 'dn', 'danien': 'dn',
-  'hs': 'hs', 'hose': 'hs',
-  'ge': 'ge', 'gioel': 'ge',
-  'am': 'am', 'amos': 'am',
-  'ob': 'ob', 'obadia': 'ob',
-  'gn': 'gn', 'giona': 'gn',
-  'mi': 'mi', 'mikha': 'mi',
-  'na': 'na', 'nakhum': 'na',
-  'kk': 'kk', 'khabacuc': 'kk',
-  'xp': 'xp', 'xophonia': 'xp',
-  'hg': 'hg', 'khang-gai': 'hg',
-  'zc': 'zc', 'daccaria': 'zc',
-  'ml': 'ml', 'malakhi': 'ml',
-  // Tân Ước
-  'mt': 'mt', 'mattheu': 'mt', 'mátthêu': 'mt',
-  'mc': 'mc', 'macco': 'mc', 'mác-cô': 'mc',
-  'lc': 'lc', 'luca': 'lc',
-  'ga': 'ga', 'gioan': 'ga', 'gio-an': 'ga',
-  'cv': 'cv', 'tvd': 'cv', 'tongdocongvu': 'cv', 'công vụ': 'cv',
-  'rm': 'rm', 'roma': 'rm', 'rô-ma': 'rm',
-  '1cr': '1cr', '2cr': '2cr', '1corinto': '1cr', '2corinto': '2cr',
-  'gl': 'gl', 'galata': 'gl',
-  'ep': 'ep', 'epheso': 'ep', 'êphêsô': 'ep',
-  'pl': 'pl', 'philipphe': 'pl', 'philípphê': 'pl',
-  'cl': 'cl', 'colose': 'cl', 'côlôsê': 'cl',
-  '1ts': '1ts', '2ts': '2ts', '1thessalonica': '1ts', '2thessalonica': '2ts',
-  '1tm': '1tm', '2tm': '2tm', '1timothe': '1tm', '2timothe': '2tm',
-  'tt': 'tt', 'tito': 'tt', 'titô': 'tt',
-  'pm': 'pm', 'philemon': 'pm',
-  'dt': 'dt', 'dothai': 'dt', 'do thái': 'dt',
-  'gc': 'gc', 'giacobe': 'gc', 'giacôbê': 'gc',
-  '1pr': '1pr', '2pr': '2pr', '1phero': '1pr', '2phero': '2pr',
-  '1ga': '1ga', '2ga': '2ga', '3ga': '3ga',
-  'gd': 'gd', 'giuda': 'gd',
-  'kh': 'kh', 'khai-huyen': 'kh', 'khải huyền': 'kh'
-};
-
 function parseBibleReferenceToUrl(refText: string): { href: string; label: string } | null {
   const clean = refText.trim();
   if (!clean) return null;
 
-  // Match pattern like "Ga 3,16", "Ga 3:16", "1Cr 13,1-13", "Tv 23", "Mt 5:1-12"
-  const match = clean.match(/^([0-3]?[a-zA-ZÀ-ỹđĐ]+)\s*(\d+)[\s,:._-]?([\d,-]*)/i);
-  if (!match) return null;
+  const parsed = parseScriptureReference(clean);
+  if (!parsed) return null;
 
-  const rawBook = match[1].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').trim();
-  const chapter = match[2];
-  const verses = match[3] ? match[3].replace(/,/g, ':').trim() : '';
+  const href = formatScriptureUrl(parsed.bookSlug, parsed.chapter, parsed.verseStart, 'ntt');
+  const label = parsed.verseStart
+    ? (parsed.verseEnd && parsed.verseEnd !== parsed.verseStart
+        ? `${parsed.bookName} ${parsed.chapter}:${parsed.verseStart}-${parsed.verseEnd}`
+        : `${parsed.bookName} ${parsed.chapter}:${parsed.verseStart}`)
+    : `${parsed.bookName} ${parsed.chapter}`;
 
-  const bookSlug = BIBLE_BOOK_SLUG_MAP[rawBook] || rawBook;
-  const href = `/kinh-thanh/${bookSlug}/${chapter}${verses ? `#verse-${verses.split(/[:-]/)[0]}` : ''}`;
-  
-  const displayLabel = verses ? `${match[1]} ${chapter}:${verses}` : `${match[1]} ${chapter}`;
-  return { href, label: displayLabel };
+  return { href, label };
 }
 
 export default function FloatingFormatToolbar({
