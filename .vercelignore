@@ -1,0 +1,10 @@
+﻿# Files and directories to ignore when uploading and deploying to Vercel
+.git
+.github
+.agents
+scratch
+*.log
+*.tmp
+*.bak
+test_*.js
+test_*.ts
