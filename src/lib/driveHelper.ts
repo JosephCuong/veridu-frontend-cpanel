@@ -51,12 +51,15 @@ export function resolveMediaUrl(url: string, type: 'image' | 'audio' = 'image'):
   if (!url) return '';
   const trimmed = url.trim();
 
-  // If legacy local path to migrated assets, point to cPanel CDN
-  if (trimmed.startsWith('/storybooks/')) {
-    return `https://media.thapgia.com${trimmed}`;
+  // Ensure storybooks and models use same-origin proxy rewrites to bypass client DNS/SSL/CORS issues
+  if (trimmed.startsWith('https://media.thapgia.com/storybooks/')) {
+    return trimmed.replace('https://media.thapgia.com', '');
   }
-  if (trimmed.startsWith('/models/')) {
-    return `https://media.thapgia.com${trimmed}`;
+  if (trimmed.startsWith('https://media.thapgia.com/models/')) {
+    return trimmed.replace('https://media.thapgia.com', '');
+  }
+  if (trimmed.startsWith('/storybooks/') || trimmed.startsWith('/models/')) {
+    return trimmed;
   }
 
   // If local static path or data URL

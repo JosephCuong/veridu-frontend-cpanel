@@ -106,7 +106,7 @@ export default async function StorybooksLibraryPage() {
             >
               <Link href={`/sach-tranh/${book.slug}`} className="relative aspect-[4/3] w-full overflow-hidden bg-stone-900 block">
                 <Image
-                  src={resolveMediaUrl(book.cover_image || 'https://media.thapgia.com/storybooks/cong-trinh-sang-tao/page_1.png', 'image')}
+                  src={resolveMediaUrl(book.cover_image || '/storybooks/cong-trinh-sang-tao/page_1.png', 'image')}
                   alt={book.title}
                   fill
                   unoptimized

@@ -186,7 +186,7 @@ export default function AdminStorybookStudioPage() {
     const newPageNum = current.length + 1;
     const newPage: StorybookPage = {
       page_number: newPageNum,
-      image_url: `https://media.thapgia.com/storybooks/cong-trinh-sang-tao/page_${newPageNum}.png`,
+      image_url: `/storybooks/cong-trinh-sang-tao/page_${newPageNum}.png`,
       text_script: '',
       caption: `Trang ${newPageNum}`,
       audio_url: '',
@@ -517,7 +517,7 @@ export default function AdminStorybookStudioPage() {
 
                 <div className="aspect-[4/3] w-full rounded-2xl overflow-hidden bg-stone-900 border border-[var(--border-card)] relative">
                   <Image
-                    src={resolveMediaUrl(activeBook.cover_image || 'https://media.thapgia.com/storybooks/cong-trinh-sang-tao/page_1.png', 'image')}
+                    src={resolveMediaUrl(activeBook.cover_image || '/storybooks/cong-trinh-sang-tao/page_1.png', 'image')}
                     alt="Ảnh bìa"
                     fill
                     className="object-cover"
@@ -531,7 +531,7 @@ export default function AdminStorybookStudioPage() {
                     value={activeBook.cover_image || ''}
                     onChange={e => setActiveBook(prev => ({ ...prev, cover_image: e.target.value }))}
                     className="w-full px-3 py-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs font-mono focus:border-amber-500 outline-none"
-                    placeholder="https://media.thapgia.com/storybooks/cong-trinh-sang-tao/page_1.png"
+                    placeholder="/storybooks/cong-trinh-sang-tao/page_1.png"
                   />
                 </div>
               </div>
@@ -944,4 +944,5 @@ export default function AdminStorybookStudioPage() {
     </div>
   );
 }
+
 

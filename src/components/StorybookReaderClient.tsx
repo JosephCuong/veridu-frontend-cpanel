@@ -84,9 +84,17 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
 
   const youtubeId = book.youtube_video_id || (book.youtube_url ? extractYouTubeVideoId(book.youtube_url) : null);
 
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    setImageLoading(true);
+    setImgError(false);
+  }, [currentPageIndex]);
+
   const currentPage = pages[currentPageIndex] || {
     page_number: currentPageIndex + 1,
-    image_url: `https://media.thapgia.com/storybooks/cong-trinh-sang-tao/page_${currentPageIndex + 1}.png`,
+    image_url: `/storybooks/cong-trinh-sang-tao/page_${currentPageIndex + 1}.png`,
     text_script: '',
     estimated_duration: 15
   };
@@ -586,16 +594,48 @@ export default function StorybookReaderClient({ book }: StorybookProps) {
               
               <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-12 bg-gradient-to-r from-transparent via-stone-950/25 to-transparent pointer-events-none z-10" />
 
-              <div className="relative w-full flex-1 overflow-hidden">
-                <Image
-                  src={resolvedImageSrc}
-                  alt={currentPage.caption || `Trang ${currentPage.page_number}`}
-                  fill
-                  priority
-                  unoptimized
-                  className="object-contain transition-opacity duration-300"
-                  sizes="(max-width: 1280px) 100vw, 1280px"
-                />
+              <div className="relative w-full flex-1 overflow-hidden flex items-center justify-center bg-stone-950">
+                {imageLoading && !imgError && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-stone-950/80 backdrop-blur-sm z-20">
+                    <div className="w-10 h-10 rounded-full border-2 border-amber-500/20 border-t-amber-400 animate-spin mb-3" />
+                    <p className="text-xs font-serif text-amber-300/80 tracking-wide animate-pulse">Đang mở trang sách...</p>
+                  </div>
+                )}
+
+                {imgError ? (
+                  <div className="p-8 text-center max-w-lg z-10 flex flex-col items-center justify-center animate-in fade-in">
+                    <div className="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4 shadow-lg shadow-amber-500/10">
+                      <BookOpen className="w-8 h-8" />
+                    </div>
+                    <h3 className="font-serif font-bold text-lg text-amber-300 mb-2">
+                      {currentPage.caption || `Trang ${currentPage.page_number}`}
+                    </h3>
+                    <p className="text-sm font-serif text-stone-300 leading-relaxed italic mb-6">
+                      "{currentPage.text_script}"
+                    </p>
+                    <button
+                      onClick={() => { setImgError(false); setImageLoading(true); }}
+                      className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-xs transition shadow-lg shadow-amber-500/20 cursor-pointer"
+                    >
+                      Thử Tải Lại Trang
+                    </button>
+                  </div>
+                ) : (
+                  <Image
+                    src={resolvedImageSrc}
+                    alt={currentPage.caption || `Trang ${currentPage.page_number}`}
+                    fill
+                    priority
+                    unoptimized
+                    onLoadingComplete={() => setImageLoading(false)}
+                    onError={() => {
+                      setImgError(true);
+                      setImageLoading(false);
+                    }}
+                    className={`object-contain transition-all duration-500 ${imageLoading ? 'opacity-0 scale-98' : 'opacity-100 scale-100'}`}
+                    sizes="(max-width: 1280px) 100vw, 1280px"
+                  />
+                )}
               </div>
 
               {/* DYNAMIC AUDIO PROGRESS BAR */}
