@@ -70,6 +70,9 @@ import {
 import VisualArticleRenderer from '@/components/VisualArticleRenderer';
 import FloatingFormatToolbar from '@/components/editor/FloatingFormatToolbar';
 import CatholicBlockInserterModal from '@/components/editor/CatholicBlockInserterModal';
+import CatholicBlockConfigModal, { ConfigurableBlockType } from '@/components/editor/CatholicBlockConfigModal';
+import VisualBlockToolbarOverlay from '@/components/editor/VisualBlockToolbarOverlay';
+import { parseVideoUrl, generateVideoBlockHtml } from '@/lib/videoHelper';
 import ResourceSubmissionModal from '@/components/ResourceSubmissionModal';
 
 function slugifyVietnamese(str: string): string {
@@ -226,9 +229,27 @@ function DangBaiContent() {
   const [showResourceModal, setShowResourceModal] = useState(false);
   const [showBlockModal, setShowBlockModal] = useState(false);
 
+  // Dedicated Block Configurator Modal State
+  const [configModalOpen, setConfigModalOpen] = useState(false);
+  const [configModalBlockType, setConfigModalBlockType] = useState<ConfigurableBlockType>('video');
+  const [configModalMode, setConfigModalMode] = useState<'insert' | 'edit'>('insert');
+  const [configModalInitialData, setConfigModalInitialData] = useState<Record<string, any>>({});
+  const [editingTargetElement, setEditingTargetElement] = useState<HTMLElement | null>(null);
+
+  // Undo Delete Block State (5 seconds notification)
+  interface UndoItem {
+    html: string;
+    nextSibling: Node | null;
+    parentNode: Node;
+    label: string;
+  }
+  const [undoItem, setUndoItem] = useState<UndoItem | null>(null);
+  const undoTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
   const visualCanvasRef = useRef<HTMLDivElement>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
   const isUpdatingDomFromState = useRef(false);
 
   // Geo & Timeline Attachment State
@@ -711,6 +732,89 @@ function DangBaiContent() {
 
     setMessage({ type: 'success', text: 'Đã chèn khối Công giáo chuẩn tắc vào bài viết!' });
     setTimeout(() => setMessage(null), 3000);
+  };
+
+  // Open Dedicated Block Config Modal
+  const handleOpenConfigModal = (
+    type: ConfigurableBlockType, 
+    initialData: Record<string, any> = {}, 
+    mode: 'insert' | 'edit' = 'insert', 
+    targetEl: HTMLElement | null = null
+  ) => {
+    setConfigModalBlockType(type);
+    setConfigModalInitialData(initialData);
+    setConfigModalMode(mode);
+    setEditingTargetElement(targetEl);
+    setConfigModalOpen(true);
+  };
+
+  // Confirm and Save from Dedicated Block Config Modal
+  const handleConfirmBlockConfig = (htmlSnippet: string) => {
+    if (configModalMode === 'edit' && editingTargetElement) {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = htmlSnippet;
+      const newEl = tempDiv.firstElementChild || tempDiv.firstChild;
+      if (newEl && editingTargetElement.parentNode) {
+        editingTargetElement.parentNode.replaceChild(newEl, editingTargetElement);
+        handleCanvasInput();
+        setMessage({ type: 'success', text: 'Đã cập nhật thông số khối thành công!' });
+        setTimeout(() => setMessage(null), 3000);
+      }
+      setEditingTargetElement(null);
+    } else {
+      handleInsertCatholicBlock(htmlSnippet);
+    }
+  };
+
+  // Handle Edit Block from Visual Overlay (Toolbar button ⚙️)
+  const handleEditBlockFromOverlay = (targetEl: HTMLElement, type: ConfigurableBlockType, data: Record<string, any>) => {
+    handleOpenConfigModal(type, data, 'edit', targetEl);
+  };
+
+  // Handle Delete Block from Visual Overlay (Toolbar button ✕)
+  const handleDeleteBlockFromOverlay = (targetEl: HTMLElement, label: string) => {
+    if (!targetEl || !visualCanvasRef.current) return;
+    const nextSibling = targetEl.nextSibling;
+    const parentNode = targetEl.parentNode || visualCanvasRef.current;
+    const outerHtml = targetEl.outerHTML;
+
+    // Save to undo state
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    setUndoItem({
+      html: outerHtml,
+      nextSibling,
+      parentNode,
+      label
+    });
+
+    // Auto clear undo notice after 5 seconds
+    undoTimerRef.current = setTimeout(() => {
+      setUndoItem(null);
+    }, 5000);
+
+    // Remove element from DOM immediately
+    targetEl.remove();
+    handleCanvasInput();
+  };
+
+  // Handle 1-Click Undo Delete Block
+  const handleUndoDelete = () => {
+    if (!undoItem) return;
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = undoItem.html;
+    const restoredEl = tempDiv.firstElementChild || tempDiv.firstChild;
+    if (restoredEl) {
+      if (undoItem.nextSibling && undoItem.parentNode.contains(undoItem.nextSibling)) {
+        undoItem.parentNode.insertBefore(restoredEl, undoItem.nextSibling);
+      } else {
+        undoItem.parentNode.appendChild(restoredEl);
+      }
+      handleCanvasInput();
+      setMessage({ type: 'success', text: `Đã hoàn tác khôi phục ${undoItem.label}!` });
+      setTimeout(() => setMessage(null), 3000);
+    }
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    setUndoItem(null);
   };
 
   // Open Interactive Media Inserter Modal
@@ -1707,13 +1811,13 @@ function DangBaiContent() {
                 name: '1. Lời Chúa Soi Đường',
                 desc: 'Trích dẫn Lời Chúa viền vàng & tra cứu Kinh Thánh',
                 icon: <BookOpen className="w-4 h-4 text-amber-500" />,
-                action: () => handleInsertCatholicBlock(`<div class="sacred-scripture veridu-scripture-quote my-8 p-6 sm:p-7 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-l-4 border-amber-500 shadow-lg backdrop-blur-sm relative overflow-hidden not-prose"><div class="flex items-start gap-4"><div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5 border border-amber-500/30"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg></div><div class="space-y-2.5 flex-1"><blockquote class="font-serif italic text-lg sm:text-xl text-amber-950 dark:text-amber-100 leading-relaxed m-0 p-0 border-0 bg-transparent">“Ngài phải nổi bật lên, còn tôi phải lu mờ đi.”</blockquote><div class="flex items-center gap-2 pt-1"><a href="/kinh-thanh/gio-an/3?t=ntt#v30" target="_blank" rel="noopener noreferrer" data-book="gio-an" data-book-name="Gio-an" data-chapter="3" data-verse="30" data-verse-end="30" data-raw-ref="Ga 3:30" title="Tra cứu Lời Chúa: Ga 3:30" class="scripture-superlink scripture-badge inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-900 dark:text-amber-300 font-mono text-xs font-bold border border-amber-500/30 transition-all shadow-xs group cursor-pointer"><span>Ga 3:30</span><span class="text-[10px] text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform">↗</span></a></div></div></div></div>`)
+                action: () => handleOpenConfigModal('scripture')
               },
               {
                 name: '2. Thơ & Lời Nguyện Kính',
                 desc: 'Lời cầu nguyện sốt mến sắc tím & Amen',
                 icon: <Heart className="w-4 h-4 text-indigo-500" />,
-                action: () => handleInsertCatholicBlock(`<div class="prayer-block my-8 p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent border border-indigo-500/30 shadow-xl backdrop-blur-md not-prose"><div class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-2 font-serif mb-3"><span>🕊️</span> LỜI NGUYỆN KÍNH PHỤNG VỤ</div><p class="font-serif italic text-indigo-950 dark:text-indigo-100 text-base sm:text-lg leading-relaxed m-0">“Lạy Chúa Giêsu Thánh Thể, xin ngự vào tâm hồn chúng con, ban cho chúng con ơn bình an, đức tin kiên vững và lòng nhiệt thành phụng sự Hội Thánh...”</p><div class="prayer-amen text-right font-serif font-bold text-amber-600 dark:text-amber-400 text-sm mt-3">Amen.</div></div>`)
+                action: () => handleOpenConfigModal('prayer')
               },
               {
                 name: '3. Tóm Tắt Nghiên Cứu Thần Học',
@@ -1735,33 +1839,33 @@ function DangBaiContent() {
               },
               {
                 name: '6. Hình Ảnh Nghệ Thuật Thánh',
-                desc: 'Ảnh kèm chú thích & hỗ trợ Lightbox phóng to',
+                desc: 'Ảnh Drive/URL kèm chú thích & Lightbox',
                 icon: <ImageIcon className="w-4 h-4 text-emerald-500" />,
-                action: () => handleInsertCatholicBlock(`<figure class="veridu-image-block my-8 mx-auto text-center not-prose"><img src="https://images.unsplash.com/photo-1548625361-1959728b4e87?auto=format&fit=crop&w=1200&q=80" alt="Nghệ Thuật Thánh Đường" data-lightbox="true" referrerpolicy="no-referrer" class="max-w-full h-auto rounded-3xl shadow-2xl mx-auto block cursor-zoom-in hover:scale-[1.01] transition-transform duration-300 border border-[var(--border-card)]" /><figcaption class="mt-3 text-xs italic text-[var(--text-muted)] font-serif max-w-xl mx-auto">Bích họa Nghệ Thuật Thánh Đường Công Giáo — Kiệt tác nghệ thuật phụng vụ.</figcaption></figure>`)
+                action: () => handleOpenConfigModal('image')
               },
               {
-                name: '7a. Video Nhúng 16:9',
-                desc: 'Khung video YouTube/Vimeo tỷ lệ vàng 16:9',
+                name: '7a. Video Nhúng Đa Nền Tảng',
+                desc: 'Nhập link YouTube, Facebook, Drive, Vimeo...',
                 icon: <Video className="w-4 h-4 text-rose-500" />,
-                action: () => handleInsertCatholicBlock(`<div class="veridu-embed-video w-full aspect-video rounded-3xl shadow-2xl overflow-hidden border border-[var(--border-card)] my-8 bg-black relative z-10 not-prose"><iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" class="w-full h-full border-none" title="Video Phụng Vụ VERIDU" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`)
+                action: () => handleOpenConfigModal('video')
               },
               {
                 name: '7b. Podcast Mini-Player',
                 desc: 'Khung nghe âm thanh nhỏ gọn mở đầu bài viết',
                 icon: <Headphones className="w-4 h-4 text-amber-500" />,
-                action: () => handleInsertCatholicBlock(`<div class="veridu-embed-audio mini my-6 p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--gold-border)] shadow-md not-prose"><div class="audio-header flex justify-between items-center mb-2 font-sans"><span class="audio-label text-xs font-bold text-amber-500 uppercase flex items-center gap-1.5"><span>🎧</span> BẢN NGHE AUDIO PODCAST HỌC THUẬT</span><span class="audio-badge text-xs font-mono text-[var(--text-muted)] border border-[var(--border-card)] px-2.5 py-0.5 rounded-full">Thời lượng: 12 phút</span></div><audio controls class="w-full h-10 rounded-lg"><source src="${audioUrl || 'https://example.com/podcast.mp3'}" type="audio/mpeg">Trình duyệt không hỗ trợ phát âm thanh trực tiếp.</audio></div>`)
+                action: () => handleOpenConfigModal('audio', { playerType: 'audio_mini' })
               },
               {
                 name: '7c. Podcast Full-Player',
                 desc: 'Khung nghe Podcast học thuật chi tiết kèm mô tả & số tập',
                 icon: <Radio className="w-4 h-4 text-indigo-500" />,
-                action: () => handleInsertCatholicBlock(`<div class="veridu-embed-audio my-8 p-5 sm:p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl not-prose"><div class="audio-header flex justify-between items-center mb-3 font-sans"><div class="audio-label text-xs sm:text-sm font-bold text-amber-500 flex items-center gap-2 uppercase"><span>🎙️</span> PODCAST HỌC THUẬT: CHUYÊN ĐỀ PHỤNG VỤ</div><span class="audio-badge text-xs font-mono text-[var(--text-muted)] border border-[var(--border-card)] px-3 py-1 rounded-full">Ep #01 • 15:00 • VERIDU Audio</span></div><p class="text-xs sm:text-sm text-[var(--text-muted)] mb-3 leading-relaxed">Lắng nghe bản đọc diễn cảm học thuật và đối thoại sâu sắc về chủ đề này cùng Ban Biên Tập VERIDU.</p><audio controls class="w-full h-11 rounded-lg"><source src="${audioUrl || 'https://example.com/podcast.mp3'}" type="audio/mpeg">Trình duyệt không hỗ trợ phát âm thanh trực tiếp.</audio></div>`)
+                action: () => handleOpenConfigModal('audio', { playerType: 'audio_full' })
               },
               {
                 name: '8. Hộp Lưu Ý & Cảnh Báo',
                 desc: 'Hộp nhấn mạnh giáo lý 4 cấp phụng vụ',
                 icon: <AlertTriangle className="w-4 h-4 text-amber-500" />,
-                action: () => handleInsertCatholicBlock(`<div class="catechetical-callout callout-important my-6 p-5 sm:p-6 border-l-4 border-amber-500 rounded-r-2xl bg-amber-500/10 text-amber-900 dark:text-amber-200 backdrop-blur-md shadow-md space-y-1.5 not-prose"><div class="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5"><span>⭐</span> QUAN TRỌNG: TÍN LÝ HỘI THÁNH</div><div class="text-xs sm:text-sm leading-relaxed font-serif text-[var(--text-main)]">Tín điều về Bí tích Thánh Thể là trung tâm và tột đỉnh của toàn bộ đời sống Kitô hữu (Lumen Gentium, 11).</div></div>`)
+                action: () => handleOpenConfigModal('callout')
               }
             ].map((item, idx) => (
               <button
@@ -2244,7 +2348,10 @@ function DangBaiContent() {
                 </div>
 
                 {/* Stained-Glass Visual Editor Container */}
-                <div className="relative rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-2xl overflow-hidden p-6 sm:p-10 md:p-12 transition-all">
+                <div 
+                  ref={canvasContainerRef}
+                  className="relative rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-2xl p-6 sm:p-10 md:p-12 transition-all"
+                >
                   
                   {/* Article Category & Title Header in Canvas */}
                   <div className="border-b border-[var(--border-card)] pb-6 mb-8 text-center space-y-3">
@@ -2263,6 +2370,14 @@ function DangBaiContent() {
 
                   {/* 🌟 FLOATING FORMAT TOOLBAR */}
                   <FloatingFormatToolbar editorRef={visualCanvasRef} onContentChange={handleCanvasInput} />
+
+                  {/* 🌟 VISUAL BLOCK FLOATING ACTION OVERLAY (SETTINGS & X DELETE) */}
+                  <VisualBlockToolbarOverlay
+                    editorRef={visualCanvasRef}
+                    containerRef={canvasContainerRef}
+                    onEditBlock={handleEditBlockFromOverlay}
+                    onDeleteBlock={handleDeleteBlockFromOverlay}
+                  />
 
                   {/* 🌟 WYSIWYG CONTENTEDITABLE CANVAS */}
                   <div
@@ -2488,6 +2603,17 @@ function DangBaiContent() {
         isOpen={showBlockModal}
         onClose={() => setShowBlockModal(false)}
         onInsertHtml={handleInsertCatholicBlock}
+        onOpenConfigModal={(type) => handleOpenConfigModal(type)}
+      />
+
+      {/* 🌟 DEDICATED CATHOLIC BLOCK CONFIGURATOR MODAL */}
+      <CatholicBlockConfigModal
+        isOpen={configModalOpen}
+        onClose={() => setConfigModalOpen(false)}
+        blockType={configModalBlockType}
+        initialData={configModalInitialData}
+        mode={configModalMode}
+        onConfirm={handleConfirmBlockConfig}
       />
 
       {/* 🌟 INTERACTIVE CUSTOM MEDIA INSERTER MODAL */}
@@ -2689,6 +2815,32 @@ function DangBaiContent() {
               </Link>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* 🌟 5-SECOND UNDO DELETE BLOCK TOAST */}
+      {undoItem && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl bg-slate-950/95 border border-amber-500/50 shadow-2xl backdrop-blur-md flex items-center gap-3 text-xs text-slate-200 animate-in slide-in-from-bottom duration-200">
+          <span className="flex items-center gap-2">
+            <Trash2 className="w-4 h-4 text-red-400" />
+            <span>Đã xóa <strong>{undoItem.label}</strong></span>
+          </span>
+          <div className="h-4 w-px bg-slate-800" />
+          <button
+            type="button"
+            onClick={handleUndoDelete}
+            className="px-3 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 hover:text-amber-300 font-bold border border-amber-500/30 transition flex items-center gap-1 cursor-pointer active:scale-95"
+          >
+            <span>Hoàn tác ↩</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setUndoItem(null)}
+            className="p-1 text-slate-500 hover:text-slate-300 transition cursor-pointer"
+            title="Đóng thông báo"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 

@@ -21,7 +21,9 @@ import {
   Star,
   Sun,
   Moon,
-  ExternalLink
+  ExternalLink,
+  Sliders,
+  Settings
 } from 'lucide-react';
 
 export interface CatholicBlockTemplate {
@@ -473,12 +475,14 @@ interface CatholicBlockInserterModalProps {
   isOpen: boolean;
   onClose: () => void;
   onInsertHtml: (htmlSnippet: string) => void;
+  onOpenConfigModal?: (type: 'video' | 'image' | 'scripture' | 'audio' | 'callout' | 'prayer') => void;
 }
 
 export default function CatholicBlockInserterModal({
   isOpen,
   onClose,
-  onInsertHtml
+  onInsertHtml,
+  onOpenConfigModal
 }: CatholicBlockInserterModalProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -819,6 +823,35 @@ export default function CatholicBlockInserterModal({
                     </>
                   )}
                 </button>
+
+                {/* Optional Custom Configurator Button */}
+                {onOpenConfigModal && (() => {
+                  let configType: 'video' | 'image' | 'scripture' | 'audio' | 'callout' | 'prayer' | null = null;
+                  if (currentBlock.id === 'sacred-scripture') configType = 'scripture';
+                  else if (currentBlock.id === 'poetry-prayer') configType = 'prayer';
+                  else if (currentBlock.id === 'liturgical-art-image') configType = 'image';
+                  else if (currentBlock.id === 'media-embed') {
+                    const variantName = currentBlock.variants?.[selectedVariantIdx]?.name || '';
+                    configType = variantName.includes('Podcast') ? 'audio' : 'video';
+                  } else if (currentBlock.id === 'catechetical-callout') configType = 'callout';
+
+                  if (!configType) return null;
+
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        onOpenConfigModal(configType!);
+                      }}
+                      className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-md"
+                      title="Mở bảng nhập liệu riêng (Link YouTube, Facebook, Drive, Lời Chúa...)"
+                    >
+                      <Sliders className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Tùy Chỉnh Thông Số ⚙️</span>
+                    </button>
+                  );
+                })()}
 
                 {/* 1-Click Insert into Live Editor */}
                 <button
