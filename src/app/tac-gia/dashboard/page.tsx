@@ -49,6 +49,14 @@ export default function AuthorDashboardPage() {
     }
     setUser(current);
 
+    // Read ?tab=admin_moderation from URL query params
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('tab') === 'admin_moderation') {
+        setActiveTab('admin_moderation');
+      }
+    }
+
     // Fetch author's own content
     fetch(`/api/authors/my-content?userId=${current.id}`)
       .then(res => res.json())
@@ -126,6 +134,15 @@ export default function AuthorDashboardPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="px-4 py-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 font-serif font-bold text-xs flex items-center gap-1.5 hover:bg-amber-500/25 transition"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>Trung Tâm Quản Trị</span>
+              </Link>
+            )}
             <Link
               href="/dang-bai"
               className="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-serif font-bold text-xs flex items-center gap-1.5 shadow-md hover:bg-amber-400 transition"

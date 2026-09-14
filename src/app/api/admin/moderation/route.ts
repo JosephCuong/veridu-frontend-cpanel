@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
+import { sendAuthorApprovalNotice } from '@/lib/emailService';
 
 export async function GET(request: NextRequest) {
   try {
@@ -101,6 +102,23 @@ export async function POST(request: NextRequest) {
           granted_at: new Date().toISOString(),
           granted_by: admin_id || null
         }, { onConflict: 'user_id,role_id' });
+      }
+
+      // Gửi email chúc mừng và thông báo phê duyệt tới tác giả (non-blocking)
+      if (action === 'approve' && app && app.email) {
+        sendAuthorApprovalNotice({
+          id: app.id,
+          full_name: app.full_name,
+          christian_name: app.christian_name,
+          email: app.email,
+          phone: app.phone,
+          diocese: app.diocese,
+          parish: app.parish,
+          role_applied: app.role_applied,
+          bio: app.bio,
+          specialty: app.specialty,
+          sample_work_url: app.sample_work_url
+        }).catch(err => console.error('[API moderation] Lỗi gửi email phê duyệt tới tác giả:', err));
       }
     }
 

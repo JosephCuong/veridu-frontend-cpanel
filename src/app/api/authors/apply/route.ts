@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
+import { sendAdminNewApplicationAlert } from '@/lib/emailService';
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,6 +46,21 @@ export async function POST(request: NextRequest) {
       console.error('Lỗi khi nộp đơn tác giả:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    // Gửi email thông báo cho Quản Trị Viên (non-blocking)
+    sendAdminNewApplicationAlert({
+      id: data?.id,
+      full_name: data?.full_name || full_name,
+      christian_name: data?.christian_name || christian_name,
+      email: data?.email || email,
+      phone: data?.phone || phone,
+      diocese: data?.diocese || diocese,
+      parish: data?.parish || parish,
+      role_applied: data?.role_applied || role_applied,
+      bio: data?.bio || bio,
+      specialty: data?.specialty || specialty,
+      sample_work_url: data?.sample_work_url || sample_work_url
+    }).catch(err => console.error('[API apply] Lỗi gửi email cảnh báo cho Admin:', err));
 
     return NextResponse.json({ 
       success: true, 

@@ -12,6 +12,7 @@ const AUTH_REQUIRED_ROUTES = [
 
 // Routes strictly requiring administrator role
 const ADMIN_REQUIRED_ROUTES = [
+  '/admin',
   '/admin/quiz-bank',
   '/admin/sach-tranh',
   '/admin/khoa-hoc',
@@ -24,10 +25,11 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const cleanPath = pathname.replace(/\/$/, '') || '/';
 
-  // 1. Redirect legacy wp-admin or general admin paths (except allowed admin studios)
+  // 1. Redirect legacy wp-admin or general admin paths (except allowed admin dashboard and studios)
   if (
     pathname.startsWith('/wp-admin') ||
     (pathname.startsWith('/admin') && 
+     pathname !== '/admin' &&
      pathname !== '/admin/sach-tranh' && 
      pathname !== '/admin/quiz-bank' &&
      !pathname.startsWith('/admin/khoa-hoc'))

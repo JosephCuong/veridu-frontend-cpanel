@@ -30,8 +30,27 @@ export default function LiturgicalHeader() {
   // Auth & Profile Menu state
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState<number>(0);
   const desktopUserMenuRef = useRef<HTMLDivElement>(null);
   const tabletUserMenuRef = useRef<HTMLDivElement>(null);
+
+  const isAdmin = user?.role === 'Quản Trị Viên' || user?.role === 'admin';
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetch('/api/admin/moderation')
+        .then(res => res.json())
+        .then(data => {
+          const count = 
+            (data.applications?.length || 0) + 
+            (data.posts?.length || 0) + 
+            (data.resources?.length || 0) + 
+            (data.courses?.length || 0);
+          setPendingCount(count);
+        })
+        .catch(() => {});
+    }
+  }, [user, isAdmin]);
 
   useEffect(() => {
     const currentUser = getStoredUser();
@@ -228,15 +247,34 @@ export default function LiturgicalHeader() {
           <span>Cài Đặt</span>
         </Link>
 
-        {/* 3. Đăng Bài (Admin) */}
-        {user.role === 'Quản Trị Viên' && (
+        {/* 3. Trung Tâm Quản Trị (Admin) */}
+        {isAdmin && (
+          <Link 
+            href="/admin" 
+            onClick={() => setIsUserMenuOpen(false)}
+            className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-serif font-bold text-amber-400 hover:bg-amber-500/15 transition-colors group cursor-pointer"
+          >
+            <span className="flex items-center gap-2.5">
+              <Shield className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+              <span>Trung Tâm Quản Trị</span>
+            </span>
+            {pendingCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-red-500 text-white font-mono text-[10px] font-black">
+                {pendingCount}
+              </span>
+            )}
+          </Link>
+        )}
+
+        {/* 4. Đăng Bài (Admin) */}
+        {isAdmin && (
           <Link 
             href="/dang-bai" 
             onClick={() => setIsUserMenuOpen(false)}
             className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-amber-400 hover:bg-amber-500/15 transition-colors group cursor-pointer"
           >
             <FileText className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
-            <span>Đăng Bài</span>
+            <span>Phòng Soạn Thảo</span>
           </Link>
         )}
 
@@ -314,6 +352,23 @@ export default function LiturgicalHeader() {
             {user ? (
               <div className="flex items-center gap-2">
                 
+                {/* Admin Quick Launcher */}
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 font-serif font-bold text-xs shadow-xs transition-all hover:scale-105 group cursor-pointer"
+                    title="Trung Tâm Quản Trị & Kiểm Duyệt"
+                  >
+                    <Shield className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
+                    <span>Quản Trị</span>
+                    {pendingCount > 0 && (
+                      <span className="px-1.5 py-0.2 rounded-full bg-red-500 text-white font-mono text-[10px] font-black animate-pulse">
+                        {pendingCount}
+                      </span>
+                    )}
+                  </Link>
+                )}
+
                 {/* Streak Badge */}
                 <div 
                   title={`Chuỗi học tập liên tục: ${user.streak || 1} ngày`}
@@ -869,6 +924,22 @@ export default function LiturgicalHeader() {
         {/* Right: Streamlined Utilities */}
         <div className="flex items-center gap-2 shrink-0">
           
+          {/* Admin Quick Launcher (Tablet) */}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 font-serif font-bold text-xs shadow-xs transition-all hover:scale-105 group cursor-pointer"
+              title="Trung Tâm Quản Trị"
+            >
+              <Shield className="w-3.5 h-3.5 text-amber-400" />
+              {pendingCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full bg-red-500 text-white font-mono text-[10px] font-black">
+                  {pendingCount}
+                </span>
+              )}
+            </Link>
+          )}
+
           {/* Compact Streak Pill */}
           {user && (
             <div 
@@ -1167,9 +1238,25 @@ export default function LiturgicalHeader() {
                 <Link href="/cai-dat" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-xs font-bold text-slate-200 hover:text-amber-400">
                   <Settings className="w-4 h-4 text-indigo-400" /> Cài Đặt
                 </Link>
-                {user.role === 'Quản Trị Viên' && (
+                {isAdmin && (
+                  <Link 
+                    href="/admin" 
+                    onClick={() => setIsMobileMenuOpen(false)} 
+                    className="flex items-center justify-between py-2 text-xs font-bold text-amber-400 hover:text-amber-300"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-amber-400" /> Trung Tâm Quản Trị
+                    </span>
+                    {pendingCount > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-red-500 text-white font-mono text-[10px] font-black">
+                        {pendingCount} cần duyệt
+                      </span>
+                    )}
+                  </Link>
+                )}
+                {isAdmin && (
                   <Link href="/dang-bai" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-xs font-bold text-amber-400 hover:text-amber-300">
-                    <FileText className="w-4 h-4 text-amber-400" /> Đăng Bài
+                    <PenTool className="w-4 h-4 text-amber-400" /> Phòng Soạn Thảo
                   </Link>
                 )}
                 <button type="button" onClick={() => { setIsMobileMenuOpen(false); logout(); }} className="w-full text-left flex items-center gap-2 py-2 text-xs font-bold text-red-400 cursor-pointer">

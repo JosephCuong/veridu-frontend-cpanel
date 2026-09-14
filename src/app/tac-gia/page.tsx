@@ -167,6 +167,16 @@ export default function AuthorsLandingPage() {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
+            {(currentUser?.role === 'Quản Trị Viên' || currentUser?.role === 'admin') && (
+              <Link
+                href="/admin"
+                className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 text-slate-950 font-serif font-black text-xs flex items-center gap-2 transition-all shadow-xl shadow-amber-500/30 hover:scale-105 border border-amber-300"
+              >
+                <Shield className="w-4 h-4 text-slate-950" />
+                <span>🛡️ Trung Tâm Quản Trị &amp; Duyệt Đơn</span>
+              </Link>
+            )}
+
             <a
               href="#form-dang-ky"
               className="px-6 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-xs flex items-center gap-2 transition-all shadow-xl shadow-amber-500/25 hover:scale-105"
@@ -337,6 +347,21 @@ export default function AuthorsLandingPage() {
               Điền thông tin của bạn để Ban Quản Trị VERIDU xét duyệt và cấp quyền truy cập Creator Studio đăng bài &amp; gửi tài liệu.
             </p>
           </div>
+
+          {(currentUser?.role === 'Quản Trị Viên' || currentUser?.role === 'admin') && (
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-serif flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 shrink-0 text-amber-500" />
+                <span>Bạn đang đăng nhập bằng tài khoản <strong>Quản Trị Viên</strong>. Bạn có thể xem và duyệt các đơn ứng tuyển của các ứng viên tại Trung Tâm Quản Trị.</span>
+              </div>
+              <Link
+                href="/admin"
+                className="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-[11px] hover:bg-amber-400 transition shrink-0 whitespace-nowrap shadow-sm"
+              >
+                Vào Duyệt Đơn &rarr;
+              </Link>
+            </div>
+          )}
 
           {statusMessage && (
             <div className={`p-4 rounded-2xl text-xs font-serif flex items-center gap-2 ${
