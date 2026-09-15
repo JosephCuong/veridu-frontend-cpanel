@@ -26,12 +26,20 @@ import {
   Info,
   CheckCircle,
   AlertCircle,
-  LayoutGrid
+  LayoutGrid,
+  Columns
 } from 'lucide-react';
+import { 
+  compileFlexboxContainerHtml, 
+  parseFlexboxContainerHtml, 
+  FlexboxLayout, 
+  FlexboxBgStyle, 
+  FlexboxGap 
+} from './VeriduFlexboxContainer';
 
 export interface VeriduBlock {
   id: string;
-  type: 'heading' | 'paragraph' | 'image' | 'video' | 'pullquote' | 'scripture' | 'dictionary' | 'divider' | 'alert' | 'gallery' | 'quiz' | 'table';
+  type: 'heading' | 'paragraph' | 'image' | 'video' | 'pullquote' | 'scripture' | 'dictionary' | 'divider' | 'alert' | 'gallery' | 'quiz' | 'table' | 'container';
   level?: 'h2' | 'h3' | 'h4';
   content?: string;
   url?: string;
@@ -48,6 +56,10 @@ export interface VeriduBlock {
   tableRows?: string[][];
   items?: Array<{ claim: string; refs: string }>;
   terms?: Array<{ term: string; definition: string }>;
+  containerLayout?: FlexboxLayout;
+  containerBgStyle?: FlexboxBgStyle;
+  containerGap?: FlexboxGap;
+  columns?: string[];
 }
 
 interface VeriduBlockEditorProps {
@@ -179,6 +191,15 @@ export function compileBlocksToHtml(blocks: VeriduBlock[]): string {
       case 'divider': {
         return `<hr class="my-8 border-t border-[var(--border-card)]">`;
       }
+      case 'container': {
+        return compileFlexboxContainerHtml({
+          layout: block.containerLayout || '2-col-equal',
+          bgStyle: block.containerBgStyle || 'amber-glass',
+          gap: block.containerGap || 'md',
+          title: block.content || undefined,
+          columnsHtml: block.columns
+        });
+      }
       default:
         return '';
     }
@@ -207,6 +228,17 @@ export function parseHtmlToBlocks(html: string): VeriduBlock[] {
 
         if (tag === 'h2' || tag === 'h3' || tag === 'h4') {
           blocks.push({ id: `b-${idCounter++}`, type: 'heading', level: tag as 'h2' | 'h3' | 'h4', content: el.textContent || '' });
+        } else if (el.classList.contains('veridu-container-block') || (el.hasAttribute('data-veridu-block') && el.getAttribute('data-veridu-block') === 'container')) {
+          const parsed = parseFlexboxContainerHtml(el.outerHTML);
+          blocks.push({
+            id: `b-${idCounter++}`,
+            type: 'container',
+            containerLayout: parsed.layout,
+            containerBgStyle: parsed.bgStyle,
+            containerGap: parsed.gap,
+            content: parsed.title,
+            columns: parsed.columnsHtml
+          });
         } else if (tag === 'p') {
           blocks.push({ id: `b-${idCounter++}`, type: 'paragraph', content: el.innerHTML || '' });
         } else if (tag === 'figure' || tag === 'img') {
@@ -299,7 +331,11 @@ export default function VeriduBlockEditor({ blocks, onChange, onSelectBlock }: V
       tableHeaders: type === 'table' ? ['Thuộc Tính', 'Ý Nghĩa', 'Tham Chiếu'] : undefined,
       tableRows: type === 'table' ? [['Tháp Đavít', 'Bảo vệ thành', 'Dc 4,4']] : undefined,
       items: type === 'scripture' ? [{ claim: 'Nền tảng Kinh Thánh:', refs: 'Xuất Hành 40,34-35; Luca 1,35' }] : undefined,
-      terms: type === 'dictionary' ? [{ term: 'Typology', definition: 'Biểu tượng học Kinh Thánh...' }] : undefined
+      terms: type === 'dictionary' ? [{ term: 'Typology', definition: 'Biểu tượng học Kinh Thánh...' }] : undefined,
+      containerLayout: type === 'container' ? '2-col-equal' : undefined,
+      containerBgStyle: type === 'container' ? 'amber-glass' : undefined,
+      containerGap: type === 'container' ? 'md' : undefined,
+      columns: type === 'container' ? ['<p>Nội dung cột trái...</p>', '<p>Nội dung cột phải...</p>'] : undefined
     };
 
     const updated = [...blocks];
@@ -419,6 +455,7 @@ export default function VeriduBlockEditor({ blocks, onChange, onSelectBlock }: V
                   {block.type === 'scripture' && 'Tham chiếu Kinh Thánh'}
                   {block.type === 'dictionary' && 'Thuật ngữ Thần học'}
                   {block.type === 'divider' && 'Đường kẻ ngang'}
+                  {block.type === 'container' && 'Vùng Chứa Phân Cột (Section Container)'}
                 </span>
               </div>
 
@@ -580,6 +617,60 @@ export default function VeriduBlockEditor({ blocks, onChange, onSelectBlock }: V
                 </div>
               )}
 
+              {block.type === 'container' && (
+                <div className="space-y-4 p-4 rounded-2xl bg-cyan-500/5 border border-cyan-500/20">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-cyan-400 flex items-center gap-1.5">
+                      <Columns className="w-4 h-4" /> Vùng Chứa Phân Cột Flexbox
+                    </span>
+                    <div className="flex items-center gap-1">
+                      {(['1-col', '2-col-equal', '2-col-left-wide', '2-col-right-wide', '3-col-equal'] as FlexboxLayout[]).map((layout) => (
+                        <button
+                          key={layout}
+                          type="button"
+                          onClick={() => updateBlock(block.id, { containerLayout: layout })}
+                          className={`px-2 py-0.5 rounded-lg text-[10px] font-bold cursor-pointer transition ${
+                            (block.containerLayout || '2-col-equal') === layout
+                              ? 'bg-cyan-500 text-slate-950 shadow-xs'
+                              : 'bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-muted)] hover:text-cyan-400'
+                          }`}
+                        >
+                          {layout}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <input
+                      type="text"
+                      value={block.content || ''}
+                      onChange={(e) => updateBlock(block.id, { content: e.target.value })}
+                      placeholder="Tiêu đề vùng chứa (Tùy chọn)..."
+                      className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs text-amber-500 font-bold outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {(block.columns || ['<p>Nội dung cột trái...</p>', '<p>Nội dung cột phải...</p>']).map((colHtml, colIdx) => (
+                      <div key={colIdx} className="space-y-1 p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)]">
+                        <span className="text-[10px] font-mono font-bold text-cyan-400 uppercase">Cột #{colIdx + 1}</span>
+                        <textarea
+                          value={colHtml}
+                          onChange={(e) => {
+                            const newCols = [...(block.columns || ['<p></p>', '<p></p>'])];
+                            newCols[colIdx] = e.target.value;
+                            updateBlock(block.id, { columns: newCols });
+                          }}
+                          rows={4}
+                          className="w-full p-2 rounded-lg bg-[var(--bg-main)] font-serif text-xs leading-relaxed outline-none border border-transparent focus:border-cyan-500/50"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             </div>
           </React.Fragment>
         ))}
@@ -603,7 +694,7 @@ export default function VeriduBlockEditor({ blocks, onChange, onSelectBlock }: V
           <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[var(--border-card)] pb-4">
               <h3 className="font-bold text-lg text-amber-500 flex items-center gap-2 font-serif">
-                <LayoutGrid className="w-5 h-5 text-amber-500" /> Thư Viện 12 Khối Trình Bày VERIDU
+                <LayoutGrid className="w-5 h-5 text-amber-500" /> Thư Viện Khối Trình Bày VERIDU
               </h3>
               <button onClick={() => setShowBlockDrawer(false)} className="text-[var(--text-muted)] hover:text-[var(--text-main)]">
                 <X className="w-5 h-5" />
@@ -618,6 +709,10 @@ export default function VeriduBlockEditor({ blocks, onChange, onSelectBlock }: V
               <button type="button" onClick={() => addBlock('paragraph', insertIndex)} className="p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500 hover:bg-amber-500/10 transition text-left space-y-1.5 group cursor-pointer">
                 <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center"><Type className="w-4 h-4" /></div>
                 <div className="font-bold text-xs">Đoạn Văn</div>
+              </button>
+              <button type="button" onClick={() => addBlock('container', insertIndex)} className="p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-cyan-500 hover:bg-cyan-500/10 transition text-left space-y-1.5 group cursor-pointer">
+                <div className="w-7 h-7 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center"><Columns className="w-4 h-4" /></div>
+                <div className="font-bold text-xs">Vùng Chứa (Section)</div>
               </button>
               <button type="button" onClick={() => addBlock('image', insertIndex)} className="p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500 hover:bg-amber-500/10 transition text-left space-y-1.5 group cursor-pointer">
                 <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center"><ImageIcon className="w-4 h-4" /></div>

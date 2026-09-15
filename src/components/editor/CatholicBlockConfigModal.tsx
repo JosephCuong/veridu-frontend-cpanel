@@ -19,11 +19,21 @@ import {
   AlignCenter,
   AlignRight,
   Maximize2,
-  Smartphone
+  Smartphone,
+  Columns,
+  Grid
 } from 'lucide-react';
 import { parseVideoUrl, generateVideoBlockHtml } from '@/lib/videoHelper';
+import { 
+  FlexboxLayout, 
+  FlexboxBgStyle, 
+  FlexboxGap, 
+  compileFlexboxContainerHtml, 
+  getBgStyleClass, 
+  getLayoutGridClass 
+} from './VeriduFlexboxContainer';
 
-export type ConfigurableBlockType = 'video' | 'image' | 'scripture' | 'audio' | 'callout' | 'prayer';
+export type ConfigurableBlockType = 'video' | 'image' | 'scripture' | 'audio' | 'callout' | 'prayer' | 'container';
 
 export interface CatholicBlockConfigModalProps {
   isOpen: boolean;
@@ -87,6 +97,12 @@ export default function CatholicBlockConfigModal({
   const [prayerText, setPrayerText] = useState('');
   const [prayerAmen, setPrayerAmen] = useState('Amen.');
 
+  // ─── 7. CONTAINER (FLEXBOX / SECTION) STATE ──────────────────────────────────
+  const [containerLayout, setContainerLayout] = useState<FlexboxLayout>('2-col-equal');
+  const [containerBgStyle, setContainerBgStyle] = useState<FlexboxBgStyle>('amber-glass');
+  const [containerGap, setContainerGap] = useState<FlexboxGap>('md');
+  const [containerTitle, setContainerTitle] = useState('');
+
   // Initialize or prefill state whenever modal opens or blockType changes
   useEffect(() => {
     if (!isOpen) return;
@@ -118,6 +134,11 @@ export default function CatholicBlockConfigModal({
       setPrayerTitle(initialData?.title || '🕊️ LỜI NGUYỆN KÍNH PHỤNG VỤ');
       setPrayerText(initialData?.text || 'Lạy Chúa Giêsu Thánh Thể, xin ngự vào tâm hồn chúng con, ban cho chúng con ơn bình an, đức tin kiên vững và lòng nhiệt thành phụng sự Hội Thánh...');
       setPrayerAmen(initialData?.amen || 'Amen.');
+    } else if (blockType === 'container') {
+      setContainerLayout(initialData?.layout || '2-col-equal');
+      setContainerBgStyle(initialData?.bgStyle || 'amber-glass');
+      setContainerGap(initialData?.gap || 'md');
+      setContainerTitle(initialData?.title || '');
     }
   }, [isOpen, blockType, initialData]);
 
@@ -282,6 +303,15 @@ export default function CatholicBlockConfigModal({
   <div class="prayer-amen text-right font-serif font-bold text-amber-600 dark:text-amber-400 text-sm mt-3">${amen}</div>
 </div>`;
       }
+
+      case 'container': {
+        return compileFlexboxContainerHtml({
+          layout: containerLayout,
+          bgStyle: containerBgStyle,
+          gap: containerGap,
+          title: containerTitle.trim() || undefined
+        });
+      }
     }
   };
 
@@ -305,6 +335,7 @@ export default function CatholicBlockConfigModal({
               {blockType === 'audio' && <Headphones className="w-5 h-5 text-indigo-500" />}
               {blockType === 'callout' && <AlertTriangle className="w-5 h-5 text-amber-500" />}
               {blockType === 'prayer' && <Heart className="w-5 h-5 text-purple-500" />}
+              {blockType === 'container' && <Columns className="w-5 h-5 text-cyan-400" />}
             </div>
             <div>
               <h3 className="font-serif font-bold text-base text-[var(--text-main)] flex items-center gap-2">
@@ -835,6 +866,178 @@ export default function CatholicBlockConfigModal({
                   placeholder="Amen."
                   className="w-32 p-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] font-serif font-bold text-xs text-amber-500 outline-none"
                 />
+              </div>
+            </div>
+          )}
+
+          {/* 🔲 7. CONTAINER (FLEXBOX / SECTION) CONFIGURATION */}
+          {blockType === 'container' && (
+            <div className="space-y-4 text-xs">
+              <div>
+                <label className="font-bold text-[var(--text-muted)] block mb-1">
+                  Bố Cục Phân Cột (Responsive Multi-Column Layout)
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {[
+                    { id: '1-col', name: '1 Cột (Full Section)', desc: 'Khung đơn 1 cột' },
+                    { id: '2-col-equal', name: '2 Cột Cân Đối (50 - 50)', desc: 'Đối chiếu song song' },
+                    { id: '2-col-left-wide', name: '2 Cột (60 - 40)', desc: 'Nội dung + Cột phụ' },
+                    { id: '2-col-right-wide', name: '2 Cột (40 - 60)', desc: 'Ảnh/Trích dẫn + Nội dung' },
+                    { id: '3-col-equal', name: '3 Cột Đều (33 - 33 - 33)', desc: 'Bộ ba tín lý / 3 đức tin' }
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setContainerLayout(item.id as FlexboxLayout)}
+                      className={`p-2.5 rounded-xl border text-left transition flex flex-col justify-between cursor-pointer ${
+                        containerLayout === item.id
+                          ? 'bg-cyan-500/20 border-cyan-500 text-cyan-300 font-bold'
+                          : 'bg-[var(--bg-main)] border-[var(--border-card)] text-[var(--text-muted)] hover:border-cyan-500/40'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <Columns className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                        <span className="text-[11px] truncate">{item.name}</span>
+                      </div>
+                      <span className="text-[10px] opacity-75">{item.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-[var(--text-muted)] block mb-1">
+                    Phong Cách Nền Stained-Glass
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { id: 'amber-glass', name: 'Kính Hổ Phách', color: 'text-amber-400' },
+                      { id: 'indigo-glass', name: 'Kính Lam Sẫm', color: 'text-indigo-400' },
+                      { id: 'gold-card', name: 'Thẻ Viền Vàng', color: 'text-amber-300' },
+                      { id: 'transparent', name: 'Trong Suốt', color: 'text-slate-300' }
+                    ].map((theme) => (
+                      <button
+                        key={theme.id}
+                        type="button"
+                        onClick={() => setContainerBgStyle(theme.id as FlexboxBgStyle)}
+                        className={`p-2 rounded-xl border text-xs text-left transition cursor-pointer ${
+                          containerBgStyle === theme.id
+                            ? 'bg-amber-500/20 border-amber-500 font-bold text-[var(--text-main)]'
+                            : 'bg-[var(--bg-main)] border-[var(--border-card)] text-[var(--text-muted)]'
+                        }`}
+                      >
+                        <span className={`block truncate ${theme.color}`}>{theme.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="font-bold text-[var(--text-muted)] block mb-1">
+                    Khoảng Cách Giữa Các Cột (Gap)
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'sm', name: 'Gọn (16px)' },
+                      { id: 'md', name: 'Chuẩn (24px)' },
+                      { id: 'lg', name: 'Rộng (32px)' }
+                    ].map((g) => (
+                      <button
+                        key={g.id}
+                        type="button"
+                        onClick={() => setContainerGap(g.id as FlexboxGap)}
+                        className={`p-2 rounded-xl border text-xs text-center transition cursor-pointer ${
+                          containerGap === g.id
+                            ? 'bg-cyan-500/20 border-cyan-500 font-bold text-cyan-300'
+                            : 'bg-[var(--bg-main)] border-[var(--border-card)] text-[var(--text-muted)]'
+                        }`}
+                      >
+                        {g.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-[var(--text-muted)] block mb-1">
+                  Tiêu Đề Vùng Chứa (Tùy chọn)
+                </label>
+                <input
+                  type="text"
+                  value={containerTitle}
+                  onChange={(e) => setContainerTitle(e.target.value)}
+                  placeholder="Ví dụ: TỌA ĐỘ LỊCH SỬ & ĐỐI CHIẾU THẦN HỌC..."
+                  className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs outline-none focus:border-cyan-500"
+                />
+              </div>
+
+              {/* Wireframe Live Preview */}
+              <div className="p-3.5 bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl space-y-2">
+                <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider block">
+                  Mô Hình Khung Cột Xem Trước (Wireframe):
+                </span>
+                <div className={`p-4 rounded-2xl border ${getBgStyleClass(containerBgStyle)}`}>
+                  {containerTitle && (
+                    <div className="text-xs font-serif font-bold text-amber-500 uppercase tracking-wider mb-3">
+                      {containerTitle}
+                    </div>
+                  )}
+                  <div className={`grid gap-2 ${getLayoutGridClass(containerLayout)}`}>
+                    {containerLayout === '1-col' && (
+                      <div className="p-3 rounded-xl border border-dashed border-cyan-500/40 text-center text-[10px] text-cyan-300 font-mono">
+                        Cột 1: Toàn Chiều Rộng (100%)
+                      </div>
+                    )}
+                    {containerLayout === '2-col-equal' && (
+                      <>
+                        <div className="p-3 rounded-xl border border-dashed border-cyan-500/40 text-center text-[10px] text-cyan-300 font-mono">
+                          Cột 1 (50%)
+                        </div>
+                        <div className="p-3 rounded-xl border border-dashed border-cyan-500/40 text-center text-[10px] text-cyan-300 font-mono">
+                          Cột 2 (50%)
+                        </div>
+                      </>
+                    )}
+                    {containerLayout === '2-col-left-wide' && (
+                      <>
+                        <div className="p-3 rounded-xl border border-dashed border-cyan-500/40 text-center text-[10px] text-cyan-300 font-mono">
+                          Cột Chính (60%)
+                        </div>
+                        <div className="p-3 rounded-xl border border-dashed border-cyan-500/40 text-center text-[10px] text-cyan-300 font-mono">
+                          Cột Phụ (40%)
+                        </div>
+                      </>
+                    )}
+                    {containerLayout === '2-col-right-wide' && (
+                      <>
+                        <div className="p-3 rounded-xl border border-dashed border-cyan-500/40 text-center text-[10px] text-cyan-300 font-mono">
+                          Cột Phụ (40%)
+                        </div>
+                        <div className="p-3 rounded-xl border border-dashed border-cyan-500/40 text-center text-[10px] text-cyan-300 font-mono">
+                          Cột Chính (60%)
+                        </div>
+                      </>
+                    )}
+                    {containerLayout === '3-col-equal' && (
+                      <>
+                        <div className="p-3 rounded-xl border border-dashed border-cyan-500/40 text-center text-[10px] text-cyan-300 font-mono">
+                          Cột 1 (33%)
+                        </div>
+                        <div className="p-3 rounded-xl border border-dashed border-cyan-500/40 text-center text-[10px] text-cyan-300 font-mono">
+                          Cột 2 (33%)
+                        </div>
+                        <div className="p-3 rounded-xl border border-dashed border-cyan-500/40 text-center text-[10px] text-cyan-300 font-mono">
+                          Cột 3 (33%)
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <p className="text-[10px] text-[var(--text-muted)] italic">
+                  * Trên điện thoại di động, các cột sẽ tự động xếp chồng (stacking) mượt mà để tránh tràn lề ngang.
+                </p>
               </div>
             </div>
           )}

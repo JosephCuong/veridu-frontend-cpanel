@@ -6,6 +6,7 @@ const AUTH_REQUIRED_ROUTES = [
   '/ho-so',
   '/cai-dat',
   '/dang-bai',
+  '/soan-bai',
   '/tac-gia/dashboard',
   '/quiz/control'
 ];
