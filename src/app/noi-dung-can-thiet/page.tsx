@@ -1021,7 +1021,7 @@ export default function ResearchLandingPage() {
 
               {/* Link to Creator Studio if author wants to write on their own */}
               <Link
-                href={`/dang-bai?topic=${encodeURIComponent(synthesizedProposal.title)}`}
+                href={`/soan-bai?topic=${encodeURIComponent(synthesizedProposal.title)}`}
                 className="text-xs font-serif text-[var(--text-muted)] hover:text-amber-500 flex items-center gap-1 transition"
               >
                 <span>Soạn thảo bài viết độc lập</span>
@@ -1317,7 +1317,7 @@ export default function ResearchLandingPage() {
                       </div>
 
                       <Link
-                        href={`/dang-bai?topic=${encodeURIComponent(topic.title)}&category=${encodeURIComponent(topic.categoryName)}`}
+                        href={`/soan-bai?topic=${encodeURIComponent(topic.title)}&category=${encodeURIComponent(topic.categoryName)}`}
                         className="text-xs font-serif text-[var(--text-muted)] hover:text-amber-500 flex items-center gap-1 transition"
                       >
                         <span>Soạn bài độc lập</span>

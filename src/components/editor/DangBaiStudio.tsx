@@ -801,6 +801,16 @@ function DangBaiContent() {
     handleCanvasInput();
   };
 
+  // Handle Duplicate Block from Visual Overlay (Toolbar button 📋)
+  const handleDuplicateBlockFromOverlay = (targetEl: HTMLElement, label: string) => {
+    if (!targetEl || !visualCanvasRef.current) return;
+    const cloneEl = targetEl.cloneNode(true) as HTMLElement;
+    targetEl.after(cloneEl);
+    handleCanvasInput();
+    setMessage({ type: 'success', text: `Đã nhân bản ${label} thành công!` });
+    setTimeout(() => setMessage(null), 3000);
+  };
+
   // Handle 1-Click Undo Delete Block
   const handleUndoDelete = () => {
     if (!undoItem) return;
@@ -2417,12 +2427,13 @@ function DangBaiContent() {
                   {/* 🌟 FLOATING FORMAT TOOLBAR */}
                   <FloatingFormatToolbar editorRef={visualCanvasRef} onContentChange={handleCanvasInput} />
 
-                  {/* 🌟 VISUAL BLOCK FLOATING ACTION OVERLAY (SETTINGS & X DELETE) */}
+                  {/* 🌟 VISUAL BLOCK FLOATING ACTION OVERLAY (SETTINGS, DUPLICATE & X DELETE) */}
                   <VisualBlockToolbarOverlay
                     editorRef={visualCanvasRef}
                     containerRef={canvasContainerRef}
                     onEditBlock={handleEditBlockFromOverlay}
                     onDeleteBlock={handleDeleteBlockFromOverlay}
+                    onDuplicateBlock={handleDuplicateBlockFromOverlay}
                   />
 
                   {/* 🌟 WYSIWYG CONTENTEDITABLE CANVAS */}

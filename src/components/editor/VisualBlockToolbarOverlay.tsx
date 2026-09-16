@@ -5,6 +5,8 @@ import {
   X, 
   Settings, 
   Trash2, 
+  Copy,
+  Layout,
   Video, 
   Image as ImageIcon, 
   BookOpen, 
@@ -24,6 +26,7 @@ interface VisualBlockToolbarOverlayProps {
   containerRef: React.RefObject<HTMLDivElement | null>;
   onEditBlock: (targetEl: HTMLElement, type: ConfigurableBlockType, data: Record<string, any>) => void;
   onDeleteBlock: (targetEl: HTMLElement, label: string) => void;
+  onDuplicateBlock?: (targetEl: HTMLElement, label: string) => void;
 }
 
 interface HoveredBlockInfo {
@@ -40,6 +43,7 @@ interface HoveredBlockInfo {
 }
 
 const BLOCK_SELECTOR = [
+  '.veridu-section-container',
   '.veridu-embed-video',
   '.veridu-image-block',
   'figure',
@@ -60,13 +64,23 @@ export default function VisualBlockToolbarOverlay({
   editorRef,
   containerRef,
   onEditBlock,
-  onDeleteBlock
+  onDeleteBlock,
+  onDuplicateBlock
 }: VisualBlockToolbarOverlayProps) {
   const [activeBlock, setActiveBlock] = useState<HoveredBlockInfo | null>(null);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Tracking refs to eliminate layout thrashing and unnecessary re-renders
+  const currentBlockElRef = useRef<HTMLElement | null>(null);
+  const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const rafIdRef = useRef<number | null>(null);
 
   // Identify block type and label from DOM element
   const identifyBlock = useCallback((el: HTMLElement): { label: string; icon: React.ReactNode; type: ConfigurableBlockType | 'generic' } => {
+    // 0. Flexbox Section Container
+    if (el.classList.contains('veridu-section-container') || el.getAttribute('data-veridu-block') === 'container') {
+      return { label: 'Vùng Chứa Flexbox', icon: <Layout className="w-3.5 h-3.5 text-indigo-400" />, type: 'container' };
+    }
+
     // 1. Video Block
     if (el.classList.contains('veridu-embed-video') || el.hasAttribute('data-video-url') || el.querySelector('iframe, video') || el.getAttribute('data-veridu-block') === 'video') {
       return { label: 'Khối Video', icon: <Video className="w-3.5 h-3.5 text-rose-500" />, type: 'video' };
@@ -118,7 +132,11 @@ export default function VisualBlockToolbarOverlay({
   const extractDataFromElement = useCallback((el: HTMLElement, type: ConfigurableBlockType | 'generic'): Record<string, any> => {
     const data: Record<string, any> = {};
 
-    if (type === 'video') {
+    if (type === 'container') {
+      data.layout = el.getAttribute('data-container-layout') || '1col';
+      data.theme = el.getAttribute('data-container-theme') || 'amber-glass';
+      data.gap = el.getAttribute('data-container-gap') || 'normal';
+    } else if (type === 'video') {
       const rawUrlAttr = el.getAttribute('data-video-url');
       if (rawUrlAttr) {
         data.videoUrl = decodeURIComponent(rawUrlAttr);
@@ -174,8 +192,8 @@ export default function VisualBlockToolbarOverlay({
     return data;
   }, []);
 
-  // Update overlay position based on hovered element
-  const updateOverlayPosition = useCallback((targetEl: HTMLElement) => {
+  // Update overlay position with requestAnimationFrame to eliminate Layout Thrashing
+  const calculatePosition = useCallback((targetEl: HTMLElement) => {
     if (!containerRef.current) return;
     const containerRect = containerRef.current.getBoundingClientRect();
     const targetRect = targetEl.getBoundingClientRect();
@@ -188,7 +206,7 @@ export default function VisualBlockToolbarOverlay({
       icon,
       type,
       rect: {
-        top: targetRect.top - containerRect.top + containerRef.current.scrollTop,
+        top: targetRect.top - containerRect.top + (containerRef.current.scrollTop || 0),
         left: targetRect.left - containerRect.left,
         width: targetRect.width,
         height: targetRect.height
@@ -196,7 +214,31 @@ export default function VisualBlockToolbarOverlay({
     });
   }, [containerRef, identifyBlock]);
 
-  // Listen to mouseover inside editor
+  // Request update with RAF
+  const requestPositionUpdate = useCallback((targetEl: HTMLElement) => {
+    if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+    rafIdRef.current = requestAnimationFrame(() => {
+      calculatePosition(targetEl);
+    });
+  }, [calculatePosition]);
+
+  // Clear hover state with debounce
+  const scheduleLeave = useCallback(() => {
+    if (leaveTimeoutRef.current) clearTimeout(leaveTimeoutRef.current);
+    leaveTimeoutRef.current = setTimeout(() => {
+      currentBlockElRef.current = null;
+      setActiveBlock(null);
+    }, 280);
+  }, []);
+
+  const cancelLeave = useCallback(() => {
+    if (leaveTimeoutRef.current) {
+      clearTimeout(leaveTimeoutRef.current);
+      leaveTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Set up listeners once without resetting on every activeBlock change
   useEffect(() => {
     const editor = editorRef.current;
     if (!editor) return;
@@ -205,38 +247,45 @@ export default function VisualBlockToolbarOverlay({
       const target = e.target as HTMLElement;
       if (!target) return;
 
-      // Check if target is inside a block
       const blockEl = target.closest(BLOCK_SELECTOR) as HTMLElement;
       if (blockEl && editor.contains(blockEl)) {
-        if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-        updateOverlayPosition(blockEl);
+        cancelLeave();
+
+        // 🌟 KEY OPTIMIZATION: If cursor is moving inside the SAME block, DO NOTHING!
+        // This eliminates 99% of forced layout recalculations and React re-renders.
+        if (currentBlockElRef.current === blockEl) {
+          return;
+        }
+
+        currentBlockElRef.current = blockEl;
+        requestPositionUpdate(blockEl);
       }
     };
 
-    const handleMouseLeave = (e: MouseEvent) => {
-      // Small debounce to avoid flicker when moving into the toolbar itself
-      hoverTimeoutRef.current = setTimeout(() => {
-        setActiveBlock(null);
-      }, 350);
+    const handleMouseLeave = () => {
+      scheduleLeave();
     };
 
-    const handleScroll = () => {
-      if (activeBlock?.element && document.body.contains(activeBlock.element)) {
-        updateOverlayPosition(activeBlock.element);
+    const handleScrollOrResize = () => {
+      if (currentBlockElRef.current && document.body.contains(currentBlockElRef.current)) {
+        requestPositionUpdate(currentBlockElRef.current);
       }
     };
 
     editor.addEventListener('mouseover', handleMouseOver);
     editor.addEventListener('mouseleave', handleMouseLeave);
-    window.addEventListener('scroll', handleScroll, true);
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
 
     return () => {
       editor.removeEventListener('mouseover', handleMouseOver);
       editor.removeEventListener('mouseleave', handleMouseLeave);
-      window.removeEventListener('scroll', handleScroll, true);
-      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
+      if (leaveTimeoutRef.current) clearTimeout(leaveTimeoutRef.current);
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
     };
-  }, [editorRef, activeBlock, updateOverlayPosition]);
+  }, [editorRef, cancelLeave, scheduleLeave, requestPositionUpdate]);
 
   if (!activeBlock || !document.body.contains(activeBlock.element)) {
     return null;
@@ -251,11 +300,20 @@ export default function VisualBlockToolbarOverlay({
     }
   };
 
+  const handleDuplicateClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onDuplicateBlock) {
+      onDuplicateBlock(activeBlock.element, activeBlock.label);
+    }
+  };
+
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const el = activeBlock.element;
     const label = activeBlock.label;
+    currentBlockElRef.current = null;
     setActiveBlock(null);
     onDeleteBlock(el, label);
   };
@@ -263,12 +321,8 @@ export default function VisualBlockToolbarOverlay({
   return (
     <div
       contentEditable={false}
-      onMouseEnter={() => {
-        if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-      }}
-      onMouseLeave={() => {
-        hoverTimeoutRef.current = setTimeout(() => setActiveBlock(null), 300);
-      }}
+      onMouseEnter={cancelLeave}
+      onMouseLeave={scheduleLeave}
       style={{
         position: 'absolute',
         top: `${activeBlock.rect.top}px`,
@@ -278,12 +332,21 @@ export default function VisualBlockToolbarOverlay({
         pointerEvents: 'none',
         zIndex: 35
       }}
-      className="border-2 border-amber-500/40 rounded-3xl transition-all duration-150 animate-fadeIn"
+      className="border-2 border-amber-500/40 rounded-3xl transition-opacity duration-150"
     >
-      {/* FLOATING ACTION TOOLBAR AT TOP-RIGHT */}
+      {/* 🌟 INVISIBLE HOVER BRIDGE: Connects the block's top edge to the floating toolbar above */}
       <div 
+        className="absolute -top-5 left-0 right-0 h-6 pointer-events-auto cursor-default"
+        onMouseEnter={cancelLeave}
+        onMouseLeave={scheduleLeave}
+      />
+
+      {/* 🌟 FLOATING ACTION TOOLBAR AT TOP-RIGHT */}
+      <div 
+        onMouseEnter={cancelLeave}
+        onMouseLeave={scheduleLeave}
         style={{ pointerEvents: 'auto' }}
-        className="absolute -top-3 right-4 flex items-center gap-1.5 p-1 rounded-2xl bg-slate-950/95 border border-amber-500/50 shadow-2xl backdrop-blur-md text-xs animate-in zoom-in-90 duration-150 select-none z-40"
+        className="absolute -top-3.5 right-4 flex items-center gap-1.5 p-1 rounded-2xl bg-slate-950/95 border border-amber-500/50 shadow-2xl backdrop-blur-md text-xs select-none z-40"
       >
         {/* Block Badge */}
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/15 text-amber-500 font-bold text-[11px] font-serif border border-amber-500/30">
@@ -305,6 +368,17 @@ export default function VisualBlockToolbarOverlay({
             <span className="hidden sm:inline">Sửa</span>
           </button>
         )}
+
+        {/* 📋 Nhân bản khối (Duplicate) */}
+        <button
+          type="button"
+          onClick={handleDuplicateClick}
+          className="p-1.5 px-2.5 rounded-xl bg-slate-900 hover:bg-amber-500/20 text-slate-300 hover:text-amber-400 border border-slate-800 hover:border-amber-500/40 font-bold text-[11px] transition flex items-center gap-1 cursor-pointer"
+          title="Nhân bản khối này ngay bên dưới"
+        >
+          <Copy className="w-3.5 h-3.5 text-amber-500" />
+          <span className="hidden sm:inline">Nhân Bản</span>
+        </button>
 
         {/* ✕ Xóa nguyên khối (Dấu 'X' nổi bật màu đỏ) */}
         <button

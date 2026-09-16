@@ -614,7 +614,7 @@ export default function StyleGuidePage() {
               </h4>
 
               <Link
-                href="/dang-bai"
+                href="/soan-bai"
                 className="w-full py-3 px-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm"
               >
                 <PenTool className="w-3.5 h-3.5" />

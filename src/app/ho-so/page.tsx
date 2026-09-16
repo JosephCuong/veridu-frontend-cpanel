@@ -920,7 +920,7 @@ function ProfileDashboardContent() {
                     </h2>
                     <p className="text-xs text-[var(--text-muted)] font-serif mt-1">Danh sách bài viết và chuyên khảo của bạn trên hệ thống VERIDU.</p>
                   </div>
-                  <Link href="/dang-bai" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-amber-500 text-slate-950 font-serif font-bold text-xs shadow-md hover:bg-amber-400 transition shrink-0">
+                  <Link href="/soan-bai" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-amber-500 text-slate-950 font-serif font-bold text-xs shadow-md hover:bg-amber-400 transition shrink-0">
                     <PenTool className="w-3.5 h-3.5" />
                     <span>+ Soạn Bài Viết Mới</span>
                   </Link>
@@ -934,7 +934,7 @@ function ProfileDashboardContent() {
                   <div className="text-center py-12 text-[var(--text-muted)] space-y-3">
                     <FileText className="w-10 h-10 mx-auto opacity-40" />
                     <p className="font-serif text-sm">Bạn chưa có bài viết nào.</p>
-                    <Link href="/dang-bai" className="inline-block px-5 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs font-serif">
+                    <Link href="/soan-bai" className="inline-block px-5 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs font-serif">
                       Bắt Đầu Soạn Bài
                     </Link>
                   </div>
@@ -958,7 +958,7 @@ function ProfileDashboardContent() {
                           <h4 className="font-serif font-bold text-sm text-[var(--text-main)] line-clamp-1">{post.title}</h4>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <Link href={`/dang-bai?edit=${post.id}`} className="px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-serif font-bold hover:bg-amber-500/25 transition">
+                          <Link href={`/soan-bai?edit=${post.id}`} className="px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-serif font-bold hover:bg-amber-500/25 transition">
                             Sửa Bài
                           </Link>
                           <Link href={`/${post.slug}`} className="px-3 py-1.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs font-serif font-bold hover:text-amber-500 transition">

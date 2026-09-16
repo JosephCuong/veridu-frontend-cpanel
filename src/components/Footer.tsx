@@ -87,7 +87,7 @@ export default function Footer() {
     ? '/images/veridu_logo_light.png' 
     : '/images/veridu_logo_dark.png';
 
-  if (pathname?.startsWith('/thu-vien/doc/') || pathname === '/dang-bai' || pathname?.startsWith('/dang-bai/')) {
+  if (pathname?.startsWith('/thu-vien/doc/') || pathname === '/dang-bai' || pathname?.startsWith('/dang-bai/') || pathname === '/soan-bai' || pathname?.startsWith('/soan-bai/')) {
     return null;
   }
 
@@ -233,9 +233,9 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/dang-bai" className="text-[var(--text-muted)] hover:text-amber-500 transition-colors flex items-center gap-2 group">
+                <Link href="/soan-bai" className="text-[var(--text-muted)] hover:text-amber-500 transition-colors flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 group-hover:scale-125 transition-transform"></span>
-                  <span>Đăng Tải Bài Viết</span>
+                  <span>Soạn Thảo Bài Viết</span>
                 </Link>
               </li>
             </ul>

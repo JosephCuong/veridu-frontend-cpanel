@@ -5,7 +5,6 @@ import type { NextRequest } from 'next/server';
 const AUTH_REQUIRED_ROUTES = [
   '/ho-so',
   '/cai-dat',
-  '/dang-bai',
   '/soan-bai',
   '/tac-gia/dashboard',
   '/quiz/control'
@@ -46,7 +45,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/lich-su', request.url), { status: 301 });
   }
   if (cleanPath === '/thu-vien/dang-bai') {
-    return NextResponse.redirect(new URL('/dang-bai', request.url), { status: 301 });
+    return NextResponse.redirect(new URL('/soan-bai', request.url), { status: 301 });
+  }
+  if (cleanPath === '/dang-bai' || cleanPath.startsWith('/dang-bai/')) {
+    const search = request.nextUrl.search;
+    const subPath = cleanPath.replace(/^\/dang-bai/, '');
+    return NextResponse.redirect(new URL(`/soan-bai${subPath}${search}`, request.url), { status: 301 });
   }
   if (cleanPath === '/courses') {
     return NextResponse.redirect(new URL('/khoa-hoc', request.url), { status: 301 });

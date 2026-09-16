@@ -144,7 +144,7 @@ export default function AuthorDashboardPage() {
               </Link>
             )}
             <Link
-              href="/dang-bai"
+              href="/soan-bai"
               className="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-serif font-bold text-xs flex items-center gap-1.5 shadow-md hover:bg-amber-400 transition"
             >
               <Plus className="w-4 h-4" />
@@ -239,7 +239,7 @@ export default function AuthorDashboardPage() {
                   <FileText className="w-4 h-4 text-amber-500" />
                   <span>Bài Viết &amp; Khảo Cứu ({posts.length})</span>
                 </h3>
-                <Link href="/dang-bai" className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline">
+                <Link href="/soan-bai" className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline">
                   + Viết bài mới
                 </Link>
               </div>
@@ -264,7 +264,7 @@ export default function AuthorDashboardPage() {
                         }`}>
                           {p.status === 'published' ? 'Đã Xuất Bản' : 'Đang Chờ Duyệt'}
                         </span>
-                        <Link href={`/dang-bai?edit=${p.id}`} className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-card)] text-xs text-[var(--text-muted)] hover:text-amber-500">
+                        <Link href={`/soan-bai?edit=${p.id}`} className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-card)] text-xs text-[var(--text-muted)] hover:text-amber-500">
                           Sửa
                         </Link>
                       </div>
@@ -283,7 +283,7 @@ export default function AuthorDashboardPage() {
                   <UploadCloud className="w-4 h-4 text-indigo-500" />
                   <span>Sách &amp; Tài Liệu Đã Chia Sẻ ({resources.length})</span>
                 </h3>
-                <Link href="/dang-bai" className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline">
+                <Link href="/soan-bai" className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline">
                   + Gửi tài liệu mới
                 </Link>
               </div>

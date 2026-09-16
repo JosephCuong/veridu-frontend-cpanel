@@ -186,7 +186,7 @@ export default function AuthorsLandingPage() {
             </a>
 
             <Link
-              href="/dang-bai"
+              href="/soan-bai"
               className="px-6 py-3.5 rounded-2xl bg-[var(--bg-card)] hover:bg-amber-500/10 text-amber-800 dark:text-amber-300 font-serif font-bold text-xs border-2 border-amber-500/30 hover:border-amber-500 backdrop-blur-md transition-all flex items-center gap-2 hover:scale-105 shadow-md"
             >
               <UploadCloud className="w-4 h-4 text-amber-500" />

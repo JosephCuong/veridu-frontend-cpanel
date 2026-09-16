@@ -27,7 +27,7 @@ export default function AdminEditFloatingButton({ articleId }: AdminEditFloating
 
   return (
     <Link
-      href={`/dang-bai?edit=${articleId}`}
+      href={`/soan-bai?edit=${articleId}`}
       style={{ contain: 'layout paint' }}
       className="fixed bottom-20 right-6 z-40 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-full shadow-2xl transition-colors duration-200 flex items-center gap-2 border border-amber-300/40 cursor-pointer backdrop-blur-md"
       title="Chỉnh sửa bài viết trực tiếp bằng Elementor Block Editor"

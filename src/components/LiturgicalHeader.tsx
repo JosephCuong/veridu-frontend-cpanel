@@ -269,7 +269,7 @@ export default function LiturgicalHeader() {
         {/* 4. Đăng Bài (Admin) */}
         {isAdmin && (
           <Link 
-            href="/dang-bai" 
+            href="/soan-bai" 
             onClick={() => setIsUserMenuOpen(false)}
             className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-amber-400 hover:bg-amber-500/15 transition-colors group cursor-pointer"
           >
@@ -300,7 +300,7 @@ export default function LiturgicalHeader() {
   const isCoursePlayer = (pathname !== '/khoa-hoc' && !!pathname?.startsWith('/khoa-hoc/')) || 
                          (pathname !== '/courses' && !!pathname?.startsWith('/courses/'));
 
-  if (pathname === '/dang-bai' || pathname?.startsWith('/dang-bai/') || isCoursePlayer) {
+  if (pathname === '/soan-bai' || pathname?.startsWith('/soan-bai/') || pathname === '/dang-bai' || pathname?.startsWith('/dang-bai/') || isCoursePlayer) {
     return null;
   }
 
@@ -579,7 +579,7 @@ export default function LiturgicalHeader() {
               <Link 
                 href="/dong-gop" 
                 className={`flex items-center gap-1.5 py-1 text-slate-200 hover:text-amber-400 transition-colors drop-shadow-xs ${
-                  pathname === '/dong-gop' || pathname === '/noi-dung-can-thiet' || pathname === '/huong-dan-viet-bai' || pathname === '/dieu-khoan-tac-gia' || pathname === '/dang-bai' || pathname === '/tac-gia' || pathname?.startsWith('/tac-gia/')
+                  pathname === '/dong-gop' || pathname === '/noi-dung-can-thiet' || pathname === '/huong-dan-viet-bai' || pathname === '/dieu-khoan-tac-gia' || pathname === '/soan-bai' || pathname === '/dang-bai' || pathname === '/tac-gia' || pathname?.startsWith('/tac-gia/')
                     ? 'text-amber-400 font-black border-b-2 border-amber-400 pb-0.5' 
                     : ''
                 }`}
@@ -640,7 +640,7 @@ export default function LiturgicalHeader() {
                     </div>
                   </Link>
 
-                  <Link href="/dang-bai" className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 group transition-colors">
+                  <Link href="/soan-bai" className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 group transition-colors">
                     <div className="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center shrink-0">
                       <PenTool className="w-4 h-4" />
                     </div>
@@ -815,7 +815,7 @@ export default function LiturgicalHeader() {
             <Link 
               href="/dong-gop" 
               className={`flex items-center gap-1 py-1 text-slate-200 hover:text-amber-400 transition-colors ${
-                pathname === '/dong-gop' || pathname === '/noi-dung-can-thiet' || pathname === '/huong-dan-viet-bai' || pathname === '/dieu-khoan-tac-gia' || pathname === '/dang-bai' || pathname === '/tac-gia' || pathname?.startsWith('/tac-gia/')
+                pathname === '/dong-gop' || pathname === '/noi-dung-can-thiet' || pathname === '/huong-dan-viet-bai' || pathname === '/dieu-khoan-tac-gia' || pathname === '/soan-bai' || pathname === '/dang-bai' || pathname === '/tac-gia' || pathname?.startsWith('/tac-gia/')
                   ? 'text-amber-400 font-black' 
                   : ''
               }`}
@@ -846,7 +846,7 @@ export default function LiturgicalHeader() {
                   <Scale className="w-4 h-4 text-rose-400 shrink-0" />
                   <span className="font-bold text-xs text-slate-100 group-hover:text-rose-400">Điều Khoản Tác Giả</span>
                 </Link>
-                <Link href="/dang-bai" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 group transition-colors border border-amber-500/20">
+                <Link href="/soan-bai" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 group transition-colors border border-amber-500/20">
                   <PenTool className="w-4 h-4 text-amber-400 shrink-0" />
                   <span className="font-bold text-xs font-black">Phòng Soạn Thảo</span>
                 </Link>
@@ -1206,7 +1206,7 @@ export default function LiturgicalHeader() {
                 <Link href="/dieu-khoan-tac-gia" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-rose-400">
                   <Scale className="w-3.5 h-3.5 text-rose-400" /> Điều Khoản Tác Giả
                 </Link>
-                <Link href="/dang-bai" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-amber-400 font-bold hover:text-amber-300">
+                <Link href="/soan-bai" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-amber-400 font-bold hover:text-amber-300">
                   <PenTool className="w-3.5 h-3.5 text-amber-400" /> Phòng Soạn Thảo
                 </Link>
               </div>
@@ -1255,7 +1255,7 @@ export default function LiturgicalHeader() {
                   </Link>
                 )}
                 {isAdmin && (
-                  <Link href="/dang-bai" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-xs font-bold text-amber-400 hover:text-amber-300">
+                  <Link href="/soan-bai" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-xs font-bold text-amber-400 hover:text-amber-300">
                     <PenTool className="w-4 h-4 text-amber-400" /> Phòng Soạn Thảo
                   </Link>
                 )}

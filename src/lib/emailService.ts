@@ -252,7 +252,7 @@ export async function sendAuthorApprovalNotice(app: AuthorApplicationEmailData) 
           </div>
 
           <div class="btn-grid">
-            <a href="https://www.thapgia.com/dang-bai" class="btn-primary" target="_blank">
+            <a href="https://www.thapgia.com/soan-bai" class="btn-primary" target="_blank">
               ✍️ Vào Phòng Soạn Thảo Đăng Bài
             </a>
             <a href="https://www.thapgia.com/tac-gia/dashboard" class="btn-secondary" target="_blank">

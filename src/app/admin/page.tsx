@@ -202,7 +202,7 @@ export default function AdminHubPage() {
               <span>Làm Mới</span>
             </button>
             <Link
-              href="/dang-bai"
+              href="/soan-bai"
               className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-xs flex items-center gap-1.5 transition shadow-md hover:scale-105"
             >
               <PenTool className="w-3.5 h-3.5" />

@@ -259,7 +259,7 @@ export default async function CoursesPage({
                 format="horizontal"
                 customTitle="Ủng Hộ Dự Án Giáo Dục Đức Tin VERIDU"
                 customSubtitle="Cùng chung tay số hóa tài liệu, giáo án và xây dựng nền tảng học tập trực tuyến phụng sự cộng đồng Dân Chúa."
-                customLink="/thu-vien/dang-bai"
+                customLink="/soan-bai"
               />
             </div>
 

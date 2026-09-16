@@ -8,7 +8,7 @@ export default function BackToTop() {
   const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(false);
 
-  const isExcludedRoute = pathname === '/dang-bai' || pathname?.startsWith('/dang-bai/');
+  const isExcludedRoute = pathname === '/soan-bai' || pathname?.startsWith('/soan-bai/') || pathname === '/dang-bai' || pathname?.startsWith('/dang-bai/');
 
   useEffect(() => {
     let ticking = false;

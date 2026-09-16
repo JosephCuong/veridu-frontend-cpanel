@@ -177,7 +177,7 @@ export default function AuthorLegalTermsPage() {
               </span>
 
               <Link
-                href="/dang-bai"
+                href="/soan-bai"
                 className="w-full py-3 px-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm"
               >
                 <PenTool className="w-3.5 h-3.5" />
@@ -254,7 +254,7 @@ export default function AuthorLegalTermsPage() {
               </p>
               <div className="pt-2">
                 <Link
-                  href="/dang-bai"
+                  href="/soan-bai"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-xs sm:text-sm shadow-md transition"
                 >
                   <PenTool className="w-4 h-4" />

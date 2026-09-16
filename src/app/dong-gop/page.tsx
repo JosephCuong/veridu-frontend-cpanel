@@ -130,7 +130,7 @@ export default function ContributePage() {
 
           <div className="flex flex-wrap items-center justify-center gap-3.5">
             <Link
-              href="/dang-bai"
+              href="/soan-bai"
               className="px-6 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-sm shadow-xl shadow-amber-500/20 transition-all flex items-center gap-2 hover:scale-105 active:scale-95"
             >
               <PenTool className="w-4 h-4" />
@@ -300,7 +300,7 @@ export default function ContributePage() {
 
               <div className="pt-4 border-t border-[var(--border-card)] space-y-2.5">
                 <Link
-                  href="/dang-bai"
+                  href="/soan-bai"
                   className="w-full py-3.5 px-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-sm shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <PenTool className="w-4 h-4" />

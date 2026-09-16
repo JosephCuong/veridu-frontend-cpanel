@@ -492,7 +492,7 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
             format="rectangle"
             customTitle="Ủng Hộ Dự Án Số Hóa Giáo Lý VERIDU"
             customSubtitle="Cùng chung tay lan tỏa Lời Chúa và kho tàng tri thức Huấn Quyền Công Giáo đến hàng triệu tín hữu."
-            customLink="/thu-vien/dang-bai"
+            customLink="/soan-bai"
           />
 
           {/* Block 4: Educational Shortcuts */}
