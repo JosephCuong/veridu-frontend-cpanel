@@ -669,6 +669,16 @@ figcaption {
   z-index: 10;
 }
 
+/* Modern container with inner aspect wrapper and figcaption */
+.veridu-embed-video:has(> [class*="aspect-"]) {
+  aspect-ratio: auto;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+  border: none;
+  background-color: transparent;
+}
+
 .veridu-embed-video iframe {
   width: 100%;
   height: 100%;

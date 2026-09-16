@@ -21,7 +21,10 @@ import {
   Maximize2,
   Smartphone,
   Columns,
-  Grid
+  Grid,
+  ShieldCheck,
+  Globe,
+  FileCheck
 } from 'lucide-react';
 import { parseVideoUrl, generateVideoBlockHtml } from '@/lib/videoHelper';
 import { 
@@ -44,6 +47,17 @@ export interface CatholicBlockConfigModalProps {
   onConfirm: (htmlSnippet: string) => void;
   onInsertDefault?: () => void;
 }
+
+export const LICENSE_PRESETS = [
+  { label: 'Phạm vi công cộng (Public Domain / Hết bản quyền)', value: 'Public Domain', url: 'https://creativecommons.org/publicdomain/mark/1.0/' },
+  { label: 'CC0 1.0 (Hiến tặng cộng đồng)', value: 'CC0 1.0', url: 'https://creativecommons.org/publicdomain/zero/1.0/' },
+  { label: 'CC BY 4.0 (Ghi nhận công tác giả)', value: 'CC BY 4.0', url: 'https://creativecommons.org/licenses/by/4.0/' },
+  { label: 'CC BY-SA 4.0 (Ghi công - Chia sẻ tương tự)', value: 'CC BY-SA 4.0', url: 'https://creativecommons.org/licenses/by-sa/4.0/' },
+  { label: 'CC BY-NC 4.0 (Ghi công - Phi thương mại)', value: 'CC BY-NC 4.0', url: 'https://creativecommons.org/licenses/by-nc/4.0/' },
+  { label: 'CC BY-NC-SA 4.0 (Phi thương mại - Chia sẻ tương tự)', value: 'CC BY-NC-SA 4.0', url: 'https://creativecommons.org/licenses/by-nc-sa/4.0/' },
+  { label: 'Bản quyền tác giả / Có phép sử dụng', value: 'Copyrighted / Có phép', url: '' },
+  { label: 'Tùy chỉnh khác...', value: 'custom', url: '' },
+];
 
 function convertGoogleDriveImgUrl(url: string): string {
   if (!url) return '';
@@ -68,12 +82,20 @@ export default function CatholicBlockConfigModal({
   const [videoUrl, setVideoUrl] = useState('');
   const [videoCaption, setVideoCaption] = useState('');
   const [videoAspectRatio, setVideoAspectRatio] = useState<'16:9' | '9:16'>('16:9');
+  const [videoAuthor, setVideoAuthor] = useState('');
+  const [videoSourceUrl, setVideoSourceUrl] = useState('');
+  const [videoLicense, setVideoLicense] = useState('');
+  const [videoLicenseUrl, setVideoLicenseUrl] = useState('');
 
   // ─── 2. IMAGE STATE ──────────────────────────────────────────────────────────
   const [imageUrl, setImageUrl] = useState('');
   const [imageCaption, setImageCaption] = useState('');
   const [imageAlign, setImageAlign] = useState<'center' | 'left' | 'right'>('center');
   const [imageLightbox, setImageLightbox] = useState(true);
+  const [imageAuthor, setImageAuthor] = useState('');
+  const [imageSourceUrl, setImageSourceUrl] = useState('');
+  const [imageLicense, setImageLicense] = useState('Public Domain');
+  const [imageLicenseUrl, setImageLicenseUrl] = useState('https://creativecommons.org/publicdomain/mark/1.0/');
 
   // ─── 3. SCRIPTURE STATE ──────────────────────────────────────────────────────
   const [scriptureQuote, setScriptureQuote] = useState('');
@@ -85,6 +107,9 @@ export default function CatholicBlockConfigModal({
   const [audioTitle, setAudioTitle] = useState('');
   const [audioBadge, setAudioBadge] = useState('');
   const [audioDesc, setAudioDesc] = useState('');
+  const [audioAuthor, setAudioAuthor] = useState('');
+  const [audioSourceUrl, setAudioSourceUrl] = useState('');
+  const [audioLicense, setAudioLicense] = useState('');
 
   // ─── 5. CALLOUT STATE ────────────────────────────────────────────────────────
   const [calloutLevel, setCalloutLevel] = useState<'note' | 'tip' | 'important' | 'warning'>('important');
@@ -111,11 +136,19 @@ export default function CatholicBlockConfigModal({
       setVideoUrl(initialData?.videoUrl || initialData?.url || '');
       setVideoCaption(initialData?.caption || initialData?.videoCaption || '');
       setVideoAspectRatio(initialData?.aspectRatio || '16:9');
+      setVideoAuthor(initialData?.author || '');
+      setVideoSourceUrl(initialData?.sourceUrl || '');
+      setVideoLicense(initialData?.license || '');
+      setVideoLicenseUrl(initialData?.licenseUrl || '');
     } else if (blockType === 'image') {
       setImageUrl(initialData?.imageUrl || initialData?.url || 'https://images.unsplash.com/photo-1548625361-1959728b4e87?auto=format&fit=crop&w=1200&q=80');
       setImageCaption(initialData?.caption || 'Bích họa Nghệ Thuật Thánh Đường Công Giáo — Kiệt tác nghệ thuật phụng vụ.');
       setImageAlign(initialData?.align || 'center');
       setImageLightbox(initialData?.lightbox !== false);
+      setImageAuthor(initialData?.author || '');
+      setImageSourceUrl(initialData?.sourceUrl || '');
+      setImageLicense(initialData?.license || 'Public Domain');
+      setImageLicenseUrl(initialData?.licenseUrl || 'https://creativecommons.org/publicdomain/mark/1.0/');
     } else if (blockType === 'scripture') {
       setScriptureQuote(initialData?.quote || initialData?.scriptureQuote || 'Ngài phải nổi bật lên, còn tôi phải lu mờ đi.');
       setScriptureRef(initialData?.rawRef || initialData?.scriptureRef || 'Ga 3:30');
@@ -125,6 +158,9 @@ export default function CatholicBlockConfigModal({
       setAudioTitle(initialData?.title || (initialData?.playerType === 'audio_full' ? 'PODCAST HỌC THUẬT: CHUYÊN ĐỀ PHỤNG VỤ' : 'BẢN NGHE AUDIO PODCAST HỌC THUẬT'));
       setAudioBadge(initialData?.badge || (initialData?.playerType === 'audio_full' ? 'Ep #01 • 15:00 • VERIDU Audio' : 'Thời lượng: 12 phút'));
       setAudioDesc(initialData?.desc || 'Lắng nghe bản đọc diễn cảm học thuật và đối thoại sâu sắc về chủ đề này cùng Ban Biên Tập VERIDU.');
+      setAudioAuthor(initialData?.author || '');
+      setAudioSourceUrl(initialData?.sourceUrl || '');
+      setAudioLicense(initialData?.license || '');
     } else if (blockType === 'callout') {
       setCalloutLevel(initialData?.level || 'important');
       setCalloutTitle(initialData?.title || '⭐ QUAN TRỌNG: TÍN LÝ HỘI THÁNH');
@@ -158,7 +194,11 @@ export default function CatholicBlockConfigModal({
         return generateVideoBlockHtml({
           url: urlToUse,
           caption: videoCaption.trim(),
-          aspectRatio: videoAspectRatio
+          aspectRatio: videoAspectRatio,
+          author: videoAuthor.trim(),
+          sourceUrl: videoSourceUrl.trim(),
+          license: videoLicense.trim(),
+          licenseUrl: videoLicenseUrl.trim()
         });
       }
 
@@ -168,11 +208,23 @@ export default function CatholicBlockConfigModal({
         if (imageAlign === 'left') alignClass = 'float-left mr-6 mb-4 max-w-sm';
         if (imageAlign === 'right') alignClass = 'float-right ml-6 mb-4 max-w-sm';
 
-        const captionHtml = imageCaption.trim()
-          ? `<figcaption class="mt-3 text-center text-xs italic text-[var(--text-muted)] font-serif max-w-xl mx-auto">${imageCaption.trim()}</figcaption>`
-          : '';
+        const hasAttribution = Boolean(imageAuthor.trim() || imageSourceUrl.trim() || (imageLicense.trim() && imageLicense !== 'none'));
+        let captionHtml = '';
 
-        return `<figure class="veridu-image-block my-8 ${alignClass} not-prose" data-veridu-block="image" data-image-url="${encodeURIComponent(imageUrl)}" data-align="${imageAlign}" data-caption="${encodeURIComponent(imageCaption)}">
+        if (imageCaption.trim() || hasAttribution) {
+          captionHtml = `<figcaption class="mt-3 text-center text-xs font-serif text-[var(--text-muted)] space-y-1.5 max-w-xl mx-auto">
+  ${imageCaption.trim() ? `<span class="block text-slate-300 font-medium italic">${imageCaption.trim()}</span>` : ''}
+  ${hasAttribution ? `<span class="inline-flex items-center justify-center flex-wrap gap-1.5 text-[11px] text-[var(--text-muted)] opacity-85">
+    ${imageAuthor.trim() ? `<span>Tác giả / Nghệ sĩ: <strong class="text-amber-500/90 font-semibold">${imageAuthor.trim()}</strong></span>` : ''}
+    ${imageAuthor.trim() && ((imageLicense.trim() && imageLicense !== 'none') || imageSourceUrl.trim()) ? `<span>•</span>` : ''}
+    ${imageLicense.trim() && imageLicense !== 'none' ? `<a href="${imageLicenseUrl.trim() || '#'}" target="_blank" rel="noopener noreferrer" class="hover:text-amber-400 font-mono text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-500">${imageLicense.trim()}</a>` : ''}
+    ${(imageLicense.trim() && imageLicense !== 'none') && imageSourceUrl.trim() ? `<span>•</span>` : ''}
+    ${imageSourceUrl.trim() ? `<a href="${imageSourceUrl.trim()}" target="_blank" rel="noopener noreferrer" class="hover:text-amber-400 inline-flex items-center gap-0.5 text-slate-400 hover:underline"><span>Nguồn gốc ảnh</span><span class="text-[10px]">↗</span></a>` : ''}
+  </span>` : ''}
+</figcaption>`;
+        }
+
+        return `<figure class="veridu-image-block my-8 ${alignClass} not-prose" data-veridu-block="image" data-image-url="${encodeURIComponent(imageUrl)}" data-align="${imageAlign}" data-caption="${encodeURIComponent(imageCaption)}"${imageAuthor.trim() ? ` data-author="${encodeURIComponent(imageAuthor.trim())}"` : ''}${imageSourceUrl.trim() ? ` data-source-url="${encodeURIComponent(imageSourceUrl.trim())}"` : ''}${imageLicense.trim() ? ` data-license="${encodeURIComponent(imageLicense.trim())}"` : ''}${imageLicenseUrl.trim() ? ` data-license-url="${encodeURIComponent(imageLicenseUrl.trim())}"` : ''}>
   <img src="${finalUrl}" alt="${imageCaption.trim() || 'Nghệ Thuật Thánh Đường'}" ${imageLightbox ? 'data-lightbox="true"' : ''} referrerpolicy="no-referrer" class="max-w-full h-auto rounded-3xl shadow-2xl mx-auto block cursor-zoom-in hover:scale-[1.01] transition-transform duration-300 border border-[var(--border-card)]" />
   ${captionHtml}
 </figure>`;
@@ -425,15 +477,128 @@ export default function CatholicBlockConfigModal({
 
                 <div>
                   <label className="font-bold text-[var(--text-muted)] block mb-1">
-                    Chú Thích / Nguồn Video (Tùy chọn)
+                    Chú Thích Chân Video (Tùy chọn)
                   </label>
                   <input
                     type="text"
                     value={videoCaption}
                     onChange={(e) => setVideoCaption(e.target.value)}
-                    placeholder="Ví dụ: Nguồn: Vatican News / Kênh Phụng Vụ..."
+                    placeholder="Ví dụ: Lễ Nghi Phụng Vụ tại Vương Cung Thánh Đường..."
                     className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs outline-none focus:border-rose-500"
                   />
+                </div>
+              </div>
+
+              {/* 🛡️ Bản Quyền & Nguồn Gốc Video */}
+              <div className="p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-[var(--text-main)] flex items-center gap-1.5 text-xs">
+                    <ShieldCheck className="w-3.5 h-3.5 text-rose-500" />
+                    Bản Quyền & Kênh Phát Hành (Tùy chọn)
+                  </span>
+                  <span className="text-[10px] text-[var(--text-muted)] font-mono">
+                    Attribution & Source
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-medium text-[var(--text-muted)] block mb-1">
+                      Kênh / Đạo Diễn / Nguồn Video
+                    </label>
+                    <input
+                      type="text"
+                      value={videoAuthor}
+                      onChange={(e) => setVideoAuthor(e.target.value)}
+                      placeholder="Ví dụ: Vatican News, HĐGM Việt Nam..."
+                      className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs outline-none focus:border-rose-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-medium text-[var(--text-muted)] block mb-1">
+                      Link Nguồn Gốc Video (Trang chủ / Kênh)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="url"
+                        value={videoSourceUrl}
+                        onChange={(e) => setVideoSourceUrl(e.target.value)}
+                        placeholder="https://vaticannews.va/..."
+                        className="w-full p-2.5 pr-8 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs font-mono outline-none focus:border-rose-500"
+                      />
+                      {videoSourceUrl && (
+                        <a
+                          href={videoSourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500"
+                          title="Mở link nguồn"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-medium text-[var(--text-muted)] block mb-1">
+                      Giấy Phép Bản Quyền Video
+                    </label>
+                    <select
+                      value={LICENSE_PRESETS.some(p => p.value === videoLicense) ? videoLicense : (videoLicense ? 'custom' : '')}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'custom') {
+                          setVideoLicense('Tùy chỉnh');
+                        } else {
+                          setVideoLicense(val);
+                          const preset = LICENSE_PRESETS.find(p => p.value === val);
+                          if (preset && preset.url) {
+                            setVideoLicenseUrl(preset.url);
+                          } else if (preset && !preset.url) {
+                            setVideoLicenseUrl('');
+                          }
+                        }
+                      }}
+                      className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs outline-none focus:border-rose-500 text-[var(--text-main)] cursor-pointer"
+                    >
+                      <option value="">-- Không ghi giấy phép --</option>
+                      {LICENSE_PRESETS.map((p) => (
+                        <option key={p.value} value={p.value}>
+                          {p.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-medium text-[var(--text-muted)] block mb-1">
+                      Link Giấy Phép
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="url"
+                        value={videoLicenseUrl}
+                        onChange={(e) => setVideoLicenseUrl(e.target.value)}
+                        placeholder="https://creativecommons.org/..."
+                        className="w-full p-2.5 pr-8 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs font-mono outline-none focus:border-rose-500"
+                      />
+                      {videoLicenseUrl && (
+                        <a
+                          href={videoLicenseUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500"
+                          title="Mở link giấy phép"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -456,10 +621,25 @@ export default function CatholicBlockConfigModal({
                     <span>Dán link video ở trên để xem trước trực tiếp</span>
                   </div>
                 )}
-                {videoCaption && (
-                  <p className="text-[11px] italic text-center text-[var(--text-muted)] font-serif pt-1">
-                    {videoCaption}
-                  </p>
+                {(videoCaption || videoAuthor || videoLicense || videoSourceUrl) && (
+                  <div className="text-[11px] text-center text-[var(--text-muted)] font-serif pt-1 space-y-1">
+                    {videoCaption && <p className="italic text-slate-300 font-medium">{videoCaption}</p>}
+                    {(videoAuthor || videoLicense || videoSourceUrl) && (
+                      <div className="inline-flex items-center justify-center flex-wrap gap-1.5 text-[11px] text-[var(--text-muted)] opacity-85">
+                        {videoAuthor && <span>Nguồn/Kênh: <strong className="text-amber-500 font-semibold">{videoAuthor}</strong></span>}
+                        {videoAuthor && (videoLicense || videoSourceUrl) && <span>•</span>}
+                        {videoLicense && (
+                          <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-500">{videoLicense}</span>
+                        )}
+                        {videoLicense && videoSourceUrl && <span>•</span>}
+                        {videoSourceUrl && (
+                          <span className="text-amber-500/80 underline inline-flex items-center gap-0.5">
+                            <span>Nguồn gốc</span><span className="text-[10px]">↗</span>
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -547,19 +727,160 @@ export default function CatholicBlockConfigModal({
                 </div>
               </div>
 
+              {/* 🛡️ Bản Quyền & Nguồn Gốc Ảnh */}
+              <div className="p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-[var(--text-main)] flex items-center gap-1.5 text-xs">
+                    <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
+                    Bản Quyền & Nguồn Gốc Ảnh (Tùy chọn)
+                  </span>
+                  <span className="text-[10px] text-[var(--text-muted)] font-mono">
+                    Creative Commons / Nguồn mở
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-medium text-[var(--text-muted)] block mb-1">
+                      Tác Giả / Nghệ Sĩ / Nhiếp Ảnh Gia
+                    </label>
+                    <input
+                      type="text"
+                      value={imageAuthor}
+                      onChange={(e) => setImageAuthor(e.target.value)}
+                      placeholder="Ví dụ: Fra Angelico, Leonardo da Vinci, Unsplash..."
+                      className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-medium text-[var(--text-muted)] block mb-1">
+                      Link Trang Nguồn Gốc Ảnh
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="url"
+                        value={imageSourceUrl}
+                        onChange={(e) => setImageSourceUrl(e.target.value)}
+                        placeholder="https://commons.wikimedia.org/... hoặc Unsplash"
+                        className="w-full p-2.5 pr-8 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs font-mono outline-none focus:border-amber-500"
+                      />
+                      {imageSourceUrl && (
+                        <a
+                          href={imageSourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500"
+                          title="Mở link nguồn"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-medium text-[var(--text-muted)] block mb-1">
+                      Giấy Phép Bản Quyền (License)
+                    </label>
+                    <select
+                      value={LICENSE_PRESETS.some(p => p.value === imageLicense) ? imageLicense : (imageLicense ? 'custom' : '')}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'custom') {
+                          setImageLicense('Tùy chỉnh');
+                        } else {
+                          setImageLicense(val);
+                          const preset = LICENSE_PRESETS.find(p => p.value === val);
+                          if (preset && preset.url) {
+                            setImageLicenseUrl(preset.url);
+                          } else if (preset && !preset.url) {
+                            setImageLicenseUrl('');
+                          }
+                        }
+                      }}
+                      className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs outline-none focus:border-amber-500 text-[var(--text-main)] cursor-pointer"
+                    >
+                      <option value="">-- Không ghi giấy phép --</option>
+                      {LICENSE_PRESETS.map((p) => (
+                        <option key={p.value} value={p.value}>
+                          {p.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-medium text-[var(--text-muted)] block mb-1">
+                      Link Giấy Phép / Quy Định Sử Dụng
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="url"
+                        value={imageLicenseUrl}
+                        onChange={(e) => setImageLicenseUrl(e.target.value)}
+                        placeholder="https://creativecommons.org/..."
+                        className="w-full p-2.5 pr-8 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs font-mono outline-none focus:border-amber-500"
+                      />
+                      {imageLicenseUrl && (
+                        <a
+                          href={imageLicenseUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500"
+                          title="Mở link giấy phép"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Live Preview */}
               {resolvedImageUrl && (
-                <div className="p-3 bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl text-center">
-                  <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider block mb-2 text-left">
-                    Xem Trước Ảnh:
+                <div className="p-4 bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl text-center space-y-2">
+                  <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider block text-left">
+                    Xem Trước Khối Ảnh:
                   </span>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={resolvedImageUrl}
                     alt={imageCaption || 'Xem trước'}
                     referrerPolicy="no-referrer"
-                    className="max-h-44 mx-auto rounded-xl shadow-lg object-contain"
+                    className="max-h-48 mx-auto rounded-2xl shadow-lg object-contain border border-[var(--border-card)]"
                   />
+                  {(imageCaption || imageAuthor || imageLicense || imageSourceUrl) && (
+                    <div className="pt-2 text-xs font-serif text-[var(--text-muted)] space-y-1 max-w-lg mx-auto">
+                      {imageCaption && (
+                        <p className="italic text-[var(--text-main)] font-medium">
+                          {imageCaption}
+                        </p>
+                      )}
+                      {(imageAuthor || imageLicense || imageSourceUrl) && (
+                        <div className="inline-flex items-center justify-center flex-wrap gap-1.5 text-[11px] text-[var(--text-muted)] opacity-85">
+                          {imageAuthor && (
+                            <span>Tác giả / Nghệ sĩ: <strong className="text-amber-500 font-semibold">{imageAuthor}</strong></span>
+                          )}
+                          {imageAuthor && (imageLicense || imageSourceUrl) && <span>•</span>}
+                          {imageLicense && (
+                            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-500">
+                              {imageLicense}
+                            </span>
+                          )}
+                          {imageLicense && imageSourceUrl && <span>•</span>}
+                          {imageSourceUrl && (
+                            <span className="text-amber-500/80 underline inline-flex items-center gap-0.5">
+                              <span>Nguồn gốc ảnh</span><span className="text-[10px]">↗</span>
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -15,6 +15,10 @@ export interface VideoBlockOptions {
   url: string;
   caption?: string;
   aspectRatio?: '16:9' | '9:16';
+  author?: string;
+  sourceUrl?: string;
+  license?: string;
+  licenseUrl?: string;
 }
 
 /**
@@ -103,7 +107,7 @@ export function parseVideoUrl(rawUrl: string): ParsedVideo {
  * Sinh mã HTML chuẩn Stained-Glass của VERIDU cho khối Video
  */
 export function generateVideoBlockHtml(options: VideoBlockOptions): string {
-  const { url, caption = '', aspectRatio = '16:9' } = options;
+  const { url, caption = '', aspectRatio = '16:9', author = '', sourceUrl = '', license = '', licenseUrl = '' } = options;
   const parsed = parseVideoUrl(url);
 
   if (!parsed.embedUrl) {
@@ -120,11 +124,23 @@ export function generateVideoBlockHtml(options: VideoBlockOptions): string {
     innerMedia = `<iframe src="${parsed.embedUrl}" class="w-full h-full border-none rounded-3xl" title="${caption || 'Video Phụng Vụ VERIDU'}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>`;
   }
 
-  const captionHtml = caption
-    ? `<figcaption class="mt-3 text-center text-xs italic text-[var(--text-muted)] font-serif max-w-xl mx-auto">${caption}</figcaption>`
-    : '';
+  const hasAttribution = Boolean(author.trim() || sourceUrl.trim() || license.trim());
+  let captionHtml = '';
 
-  return `<div class="veridu-embed-video my-8 not-prose" data-veridu-block="video" data-video-url="${encodeURIComponent(url)}" data-aspect-ratio="${isVertical ? '9:16' : '16:9'}" data-caption="${encodeURIComponent(caption)}">
+  if (caption.trim() || hasAttribution) {
+    captionHtml = `<figcaption class="mt-3 text-center text-xs font-serif text-[var(--text-muted)] space-y-1.5 max-w-xl mx-auto">
+    ${caption.trim() ? `<span class="block text-slate-300 font-medium italic">${caption.trim()}</span>` : ''}
+    ${hasAttribution ? `<span class="inline-flex items-center justify-center flex-wrap gap-1.5 text-[11px] text-[var(--text-muted)] opacity-85">
+      ${author.trim() ? `<span>Nguồn/Kênh: <strong class="text-amber-500/90 font-semibold">${author.trim()}</strong></span>` : ''}
+      ${author.trim() && (license.trim() || sourceUrl.trim()) ? `<span>•</span>` : ''}
+      ${license.trim() ? `<a href="${licenseUrl.trim() || '#'}" target="_blank" rel="noopener noreferrer" class="hover:text-amber-400 font-mono text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-500">${license.trim()}</a>` : ''}
+      ${license.trim() && sourceUrl.trim() ? `<span>•</span>` : ''}
+      ${sourceUrl.trim() ? `<a href="${sourceUrl.trim()}" target="_blank" rel="noopener noreferrer" class="hover:text-amber-400 inline-flex items-center gap-0.5 text-slate-400 hover:underline"><span>Nguồn gốc</span><span class="text-[10px]">↗</span></a>` : ''}
+    </span>` : ''}
+  </figcaption>`;
+  }
+
+  return `<div class="veridu-embed-video my-8 not-prose" data-veridu-block="video" data-video-url="${encodeURIComponent(url)}" data-aspect-ratio="${isVertical ? '9:16' : '16:9'}" data-caption="${encodeURIComponent(caption)}"${author ? ` data-author="${encodeURIComponent(author)}"` : ''}${sourceUrl ? ` data-source-url="${encodeURIComponent(sourceUrl)}"` : ''}${license ? ` data-license="${encodeURIComponent(license)}"` : ''}${licenseUrl ? ` data-license-url="${encodeURIComponent(licenseUrl)}"` : ''}>
   <div class="${containerAspectClass} rounded-3xl shadow-2xl overflow-hidden border border-[var(--border-card)] bg-black relative z-10 transition-all">
     ${innerMedia}
   </div>

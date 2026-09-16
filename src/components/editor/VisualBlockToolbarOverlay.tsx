@@ -156,6 +156,14 @@ export default function VisualBlockToolbarOverlay({
       if (aspectAttr) {
         data.aspectRatio = aspectAttr;
       }
+      const authorAttr = el.getAttribute('data-author');
+      if (authorAttr) data.author = decodeURIComponent(authorAttr);
+      const sourceUrlAttr = el.getAttribute('data-source-url');
+      if (sourceUrlAttr) data.sourceUrl = decodeURIComponent(sourceUrlAttr);
+      const licenseAttr = el.getAttribute('data-license');
+      if (licenseAttr) data.license = decodeURIComponent(licenseAttr);
+      const licenseUrlAttr = el.getAttribute('data-license-url');
+      if (licenseUrlAttr) data.licenseUrl = decodeURIComponent(licenseUrlAttr);
     } else if (type === 'image') {
       const img = el.querySelector('img');
       const rawUrlAttr = el.getAttribute('data-image-url');
@@ -164,6 +172,14 @@ export default function VisualBlockToolbarOverlay({
       const figcaption = el.querySelector('figcaption');
       data.caption = rawCapAttr ? decodeURIComponent(rawCapAttr) : figcaption?.textContent || img?.getAttribute('alt') || '';
       data.align = el.getAttribute('data-align') || (el.classList.contains('float-left') ? 'left' : el.classList.contains('float-right') ? 'right' : 'center');
+      const authorAttr = el.getAttribute('data-author');
+      if (authorAttr) data.author = decodeURIComponent(authorAttr);
+      const sourceUrlAttr = el.getAttribute('data-source-url');
+      if (sourceUrlAttr) data.sourceUrl = decodeURIComponent(sourceUrlAttr);
+      const licenseAttr = el.getAttribute('data-license');
+      if (licenseAttr) data.license = decodeURIComponent(licenseAttr);
+      const licenseUrlAttr = el.getAttribute('data-license-url');
+      if (licenseUrlAttr) data.licenseUrl = decodeURIComponent(licenseUrlAttr);
     } else if (type === 'scripture') {
       const quoteAttr = el.getAttribute('data-quote');
       const bquote = el.querySelector('blockquote');
@@ -178,6 +194,12 @@ export default function VisualBlockToolbarOverlay({
       data.title = el.getAttribute('data-audio-title') ? decodeURIComponent(el.getAttribute('data-audio-title')!) : el.querySelector('.audio-label')?.textContent || '';
       data.badge = el.getAttribute('data-audio-badge') ? decodeURIComponent(el.getAttribute('data-audio-badge')!) : el.querySelector('.audio-badge')?.textContent || '';
       data.desc = el.getAttribute('data-audio-desc') ? decodeURIComponent(el.getAttribute('data-audio-desc')!) : el.querySelector('p')?.textContent || '';
+      const authorAttr = el.getAttribute('data-author');
+      if (authorAttr) data.author = decodeURIComponent(authorAttr);
+      const sourceUrlAttr = el.getAttribute('data-source-url');
+      if (sourceUrlAttr) data.sourceUrl = decodeURIComponent(sourceUrlAttr);
+      const licenseAttr = el.getAttribute('data-license');
+      if (licenseAttr) data.license = decodeURIComponent(licenseAttr);
     } else if (type === 'callout') {
       data.level = el.getAttribute('data-callout-level') || (el.classList.contains('callout-note') ? 'note' : el.classList.contains('callout-tip') ? 'tip' : el.classList.contains('callout-warning') ? 'warning' : 'important');
       data.title = el.getAttribute('data-callout-title') ? decodeURIComponent(el.getAttribute('data-callout-title')!) : el.querySelector('.uppercase')?.textContent || '';
