@@ -192,28 +192,24 @@ export const CATHOLIC_BLOCK_TEMPLATES: CatholicBlockTemplate[] = [
     badge: 'Từ Điển Tín Lý',
     description: 'Khối giải nghĩa thuật ngữ chuyên ngành có từ nguyên Hy Lạp/Latin và định nghĩa tín lý chuẩn xác.',
     guidance: 'Dùng khi bài viết xuất hiện các thuật ngữ chuyên sâu (Theotokos, Transubstantiatio, Hypostatic Union...) giúp giáo dân dễ dàng hiểu đúng nghĩa tín lý.',
-    htmlSnippet: `<div class="dictionary-meta my-8 p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-4 not-prose">
-  <div class="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-serif font-black text-sm uppercase tracking-wider border-b border-[var(--border-card)] pb-3">
-    <span>📚</span> THUẬT NGỮ GIÁO LÝ & THẦN HỌC
+    htmlSnippet: `<div class="dictionary-meta my-8 p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-2 not-prose">
+  <div class="dictionary-title flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-serif font-black text-sm uppercase tracking-wider border-b border-[var(--border-card)] pb-3">
+    <span>📚</span> TRA CỨU THUẬT NGỮ GIÁO LÝ & THẦN HỌC
   </div>
-  <div class="space-y-3">
-    <div class="p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] space-y-1">
-      <div class="font-bold text-xs text-amber-600 dark:text-amber-400 flex items-center gap-2">
-        <span>Theotokos</span>
-        <span class="text-[10px] font-mono text-[var(--text-muted)] font-normal">(Hy Lạp: Θεοτόκος)</span>
-      </div>
-      <p class="text-xs text-[var(--text-main)] leading-relaxed m-0">
+  <div class="space-y-1">
+    <div class="dictionary-entry py-3 border-b border-dashed border-[var(--border-card)]">
+      <span class="term-keyword font-bold text-amber-600 dark:text-amber-400">Theotokos</span>
+      <span class="term-lang italic text-[var(--text-muted)] text-xs">(Hy Lạp: Θεοτόκος)</span>:
+      <span class="term-definition text-[var(--text-main)] text-xs sm:text-sm leading-relaxed">
         Tước hiệu Mẹ Thiên Chúa, được tuyên tín tại Công đồng Êphêsô (431) nhằm khẳng định Đức Kitô là Thiên Chúa thật và con người thật.
-      </p>
+      </span>
     </div>
-    <div class="p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] space-y-1">
-      <div class="font-bold text-xs text-amber-600 dark:text-amber-400 flex items-center gap-2">
-        <span>Hypostatic Union</span>
-        <span class="text-[10px] font-mono text-[var(--text-muted)] font-normal">(Latin: Unio Hypostatica)</span>
-      </div>
-      <p class="text-xs text-[var(--text-main)] leading-relaxed m-0">
+    <div class="dictionary-entry py-3">
+      <span class="term-keyword font-bold text-amber-600 dark:text-amber-400">Hypostatic Union</span>
+      <span class="term-lang italic text-[var(--text-muted)] text-xs">(Latin: Unio Hypostatica)</span>:
+      <span class="term-definition text-[var(--text-main)] text-xs sm:text-sm leading-relaxed">
         Hiệp nhất Ngôi vị: Hai bản tính thần tính và nhân tính kết hợp trọn vẹn trong duy nhất Ngôi Hai Thiên Chúa.
-      </p>
+      </span>
     </div>
   </div>
 </div>`,
@@ -221,19 +217,17 @@ export const CATHOLIC_BLOCK_TEMPLATES: CatholicBlockTemplate[] = [
       {
         name: 'Hộp Từ Điển (.dictionary-meta)',
         description: 'Thẻ danh mục thuật ngữ kèm từ nguyên',
-        snippet: `<div class="dictionary-meta my-8 p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-4 not-prose">
-  <div class="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-serif font-black text-sm uppercase tracking-wider border-b border-[var(--border-card)] pb-3">
-    <span>📚</span> THUẬT NGỮ GIÁO LÝ & THẦN HỌC
+        snippet: `<div class="dictionary-meta my-8 p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-2 not-prose">
+  <div class="dictionary-title flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-serif font-black text-sm uppercase tracking-wider border-b border-[var(--border-card)] pb-3">
+    <span>📚</span> TRA CỨU THUẬT NGỮ GIÁO LÝ & THẦN HỌC
   </div>
-  <div class="space-y-3">
-    <div class="p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] space-y-1">
-      <div class="font-bold text-xs text-amber-600 dark:text-amber-400 flex items-center gap-2">
-        <span>Theotokos</span>
-        <span class="text-[10px] font-mono text-[var(--text-muted)] font-normal">(Hy Lạp: Θεοτόκος)</span>
-      </div>
-      <p class="text-xs text-[var(--text-main)] leading-relaxed m-0">
+  <div class="space-y-1">
+    <div class="dictionary-entry py-3 border-b border-dashed border-[var(--border-card)]">
+      <span class="term-keyword font-bold text-amber-600 dark:text-amber-400">Theotokos</span>
+      <span class="term-lang italic text-[var(--text-muted)] text-xs">(Hy Lạp: Θεοτόκος)</span>:
+      <span class="term-definition text-[var(--text-main)] text-xs sm:text-sm leading-relaxed">
         Tước hiệu Mẹ Thiên Chúa, được tuyên tín tại Công đồng Êphêsô (431) nhằm khẳng định Đức Kitô là Thiên Chúa thật.
-      </p>
+      </span>
     </div>
   </div>
 </div>`

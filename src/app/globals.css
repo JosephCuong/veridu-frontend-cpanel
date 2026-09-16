@@ -592,7 +592,98 @@ html.dark .scripture-refs {
   box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
 }
 
-.veridu-term {
+.dictionary-meta .dictionary-title {
+  font-family: var(--font-lora), Georgia, serif;
+  font-weight: 800;
+  font-size: 0.925rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #4f46e5;
+  border-bottom: 1px solid var(--border-card);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+html.dark .dictionary-meta .dictionary-title {
+  color: #818cf8;
+}
+
+/* Các mục thuật ngữ trong khối từ điển (.dictionary-entry, .dictionary-item, hoặc .veridu-term lồng bên trong) */
+.dictionary-meta .dictionary-entry,
+.dictionary-meta .dictionary-item,
+.dictionary-meta > .veridu-term,
+.dictionary-meta .space-y-3 > .veridu-term,
+.dictionary-meta div > .veridu-term {
+  display: block !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+  cursor: default !important;
+  padding: 0.75rem 0 !important;
+  margin: 0 !important;
+  font-weight: 400 !important;
+  line-height: 1.75 !important;
+  color: var(--text-main) !important;
+  border-bottom: 1px dashed var(--border-card) !important;
+  transform: none !important;
+}
+
+.dictionary-meta .dictionary-entry:last-child,
+.dictionary-meta .dictionary-item:last-child,
+.dictionary-meta > .veridu-term:last-child,
+.dictionary-meta .space-y-3 > .veridu-term:last-child,
+.dictionary-meta div > .veridu-term:last-child {
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+}
+
+.dictionary-meta .term-keyword {
+  font-weight: 700;
+  color: #b45309;
+  display: inline;
+  cursor: text;
+  transition: color 0.2s ease;
+}
+
+html.dark .dictionary-meta .term-keyword {
+  color: #fbbf24;
+}
+
+.dictionary-meta .term-keyword:hover {
+  color: #d97706;
+}
+
+html.dark .dictionary-meta .term-keyword:hover {
+  color: #fde68a;
+}
+
+.dictionary-meta .term-lang {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 0.875em;
+  margin-left: 0.25rem;
+  margin-right: 0.15rem;
+}
+
+.dictionary-meta .term-definition {
+  font-weight: 400 !important;
+  font-style: normal !important;
+  color: var(--text-main) !important;
+  text-decoration: none !important;
+  display: inline;
+}
+
+/* Thuật ngữ lồng trong dòng thân bài (<dfn class="veridu-term"> hoặc p .veridu-term) */
+:not(.dictionary-meta) > .veridu-term,
+p .veridu-term,
+span .veridu-term,
+dfn.veridu-term {
   display: inline-block;
   font-weight: 700;
   color: #b45309;
@@ -605,13 +696,19 @@ html.dark .scripture-refs {
   transition: all 0.2s ease;
 }
 
-html.dark .veridu-term {
+html.dark :not(.dictionary-meta) > .veridu-term,
+html.dark p .veridu-term,
+html.dark span .veridu-term,
+html.dark dfn.veridu-term {
   color: #fbbf24;
   text-decoration-color: #fbbf24;
   background: rgba(245, 158, 11, 0.15);
 }
 
-.veridu-term:hover {
+:not(.dictionary-meta) > .veridu-term:hover,
+p .veridu-term:hover,
+span .veridu-term:hover,
+dfn.veridu-term:hover {
   background: rgba(245, 158, 11, 0.22);
   transform: translateY(-1px);
 }
