@@ -25,6 +25,7 @@ import {
   Info
 } from 'lucide-react';
 import { fetchTimelineEvents, TimelineEventData } from '@/lib/api';
+import { parseScriptureReferences } from '@/lib/bibleReferenceParser';
 
 export default function SalvationTimeline() {
   const [events, setEvents] = useState<TimelineEventData[]>([]);
@@ -446,39 +447,80 @@ export default function SalvationTimeline() {
                       </div>
                     )}
 
-                    {/* Library Article if exists */}
-                    {evt.article_slug && (
-                      <div className="space-y-1.5 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30">
-                        <span className="font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider text-[10px] flex items-center gap-1">
-                          <BookOpen className="w-3 h-3 text-amber-500" /> Chuyên khảo nghiên cứu
-                        </span>
-                        <div>
-                          <Link
-                            href={`/${evt.article_slug}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-900 dark:text-amber-100 hover:text-slate-950 font-bold text-xs transition-all shadow-sm"
-                          >
-                            <span>Đọc Chuyên Khảo</span>
-                            <ArrowRight className="w-3 h-3" />
-                          </Link>
+                    {/* Library Articles (Multi-article Support) */}
+                    {(() => {
+                      const slugs: string[] = (evt.article_slugs && evt.article_slugs.length > 0)
+                        ? evt.article_slugs
+                        : (evt.article_slug ? [evt.article_slug] : []);
+                      if (slugs.length === 0) return null;
+                      return (
+                        <div className="space-y-2 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30">
+                          <span className="font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider text-[10px] flex items-center gap-1">
+                            <BookOpen className="w-3 h-3 text-amber-500" /> Chuyên khảo nghiên cứu ({slugs.length})
+                          </span>
+                          <div className="space-y-1.5">
+                            {slugs.map((slug, sIdx) => (
+                              <Link
+                                key={sIdx}
+                                href={`/${slug}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500 text-amber-900 dark:text-amber-100 hover:text-slate-950 font-bold text-xs transition-all shadow-sm group"
+                              >
+                                <span className="truncate">{slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</span>
+                                <ArrowRight className="w-3 h-3 flex-shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                              </Link>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
 
                   </div>
 
-                  {/* Anchors & Historical Verification (if available) */}
-                  {(evt.biblical_anchor || evt.archaeological_anchor) && (
+                  {/* Anchors & Historical Verification (with Clickable Bible Links) */}
+                  {((evt.biblical_anchor || (evt.bible_references && evt.bible_references.length > 0)) || evt.archaeological_anchor) && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[var(--border-card)]">
-                      {evt.biblical_anchor && (
-                        <div className="p-3 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-1">
+                      {(evt.biblical_anchor || (evt.bible_references && evt.bible_references.length > 0)) && (
+                        <div className="p-3 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-2">
                           <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
                             <BookOpen className="w-3 h-3 text-amber-500" /> Căn Cứ Kinh Thánh
                           </span>
-                          <p className="font-serif text-xs text-[var(--text-main)]">
-                            {evt.biblical_anchor}
-                          </p>
+                          {(() => {
+                            const rawRefs = [evt.biblical_anchor, ...(evt.bible_references || [])].filter(Boolean) as string[];
+                            const parsedRefs = parseScriptureReferences(rawRefs);
+                            if (parsedRefs.length > 0) {
+                              return (
+                                <div className="space-y-1.5">
+                                  <div className="flex flex-wrap gap-1.5 pt-0.5">
+                                    {parsedRefs.map((pr, pIdx) => (
+                                      <Link
+                                        key={pIdx}
+                                        href={pr.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="group inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500 text-amber-700 dark:text-amber-300 hover:text-slate-950 font-mono text-[11px] font-bold transition-all shadow-sm"
+                                        title={`Đọc ${pr.label} trong Kinh Thánh`}
+                                      >
+                                        <span>📖 {pr.label}</span>
+                                        <ExternalLink className="w-2.5 h-2.5 opacity-60 group-hover:opacity-100" />
+                                      </Link>
+                                    ))}
+                                  </div>
+                                  {parsedRefs.filter(p => p.note).map((p, nIdx) => (
+                                    <p key={nIdx} className="text-[11px] text-[var(--text-muted)] font-serif italic pl-2 border-l border-amber-500/40">
+                                      <strong className="text-amber-600 dark:text-amber-400">{p.label}:</strong> {p.note}
+                                    </p>
+                                  ))}
+                                </div>
+                              );
+                            }
+                            return (
+                              <p className="font-serif text-xs text-[var(--text-main)]">
+                                {evt.biblical_anchor}
+                              </p>
+                            );
+                          })()}
                         </div>
                       )}
                       {evt.archaeological_anchor && (
@@ -602,17 +644,24 @@ export default function SalvationTimeline() {
                             👤 {item.key_figures.map(f => f.name).join(', ')}
                           </span>
                         )}
-                        {item.article_slug && (
-                          <Link
-                            href={`/${item.article_slug}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:text-amber-500 flex items-center gap-1 bg-amber-500/15 px-2.5 py-1 rounded-full border border-amber-500/30 transition-all hover:bg-amber-500 hover:text-slate-950"
-                          >
-                            <span>Đọc bài</span>
-                            <ArrowRight className="w-3 h-3" />
-                          </Link>
-                        )}
+                        {(() => {
+                          const slugs: string[] = (item.article_slugs && item.article_slugs.length > 0)
+                            ? item.article_slugs
+                            : (item.article_slug ? [item.article_slug] : []);
+                          if (slugs.length === 0) return null;
+                          return (
+                            <Link
+                              href={`/${slugs[0]}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:text-amber-500 flex items-center gap-1 bg-amber-500/15 px-2.5 py-1 rounded-full border border-amber-500/30 transition-all hover:bg-amber-500 hover:text-slate-950"
+                              title={slugs.length > 1 ? `${slugs.length} chuyên khảo nghiên cứu` : 'Đọc chuyên khảo'}
+                            >
+                              <span>{slugs.length > 1 ? `${slugs.length} bài viết` : 'Đọc bài'}</span>
+                              <ArrowRight className="w-3 h-3" />
+                            </Link>
+                          );
+                        })()}
                       </div>
                     </div>
                   );
@@ -723,16 +772,41 @@ export default function SalvationTimeline() {
                       )}
 
                       {/* Anchors in Horizontal View */}
-                      {(activeEvt.biblical_anchor || activeEvt.archaeological_anchor) && (
+                      {((activeEvt.biblical_anchor || (activeEvt.bible_references && activeEvt.bible_references.length > 0)) || activeEvt.archaeological_anchor) && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {activeEvt.biblical_anchor && (
-                            <div className="p-3 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-1">
+                          {(activeEvt.biblical_anchor || (activeEvt.bible_references && activeEvt.bible_references.length > 0)) && (
+                            <div className="p-3 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-2">
                               <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
                                 <BookOpen className="w-3 h-3 text-amber-500" /> Căn Cứ Kinh Thánh
                               </span>
-                              <p className="font-serif text-xs text-[var(--text-main)]">
-                                {activeEvt.biblical_anchor}
-                              </p>
+                              {(() => {
+                                const rawRefs = [activeEvt.biblical_anchor, ...(activeEvt.bible_references || [])].filter(Boolean) as string[];
+                                const parsedRefs = parseScriptureReferences(rawRefs);
+                                if (parsedRefs.length > 0) {
+                                  return (
+                                    <div className="flex flex-wrap gap-1.5 pt-0.5">
+                                      {parsedRefs.map((pr, pIdx) => (
+                                        <Link
+                                          key={pIdx}
+                                          href={pr.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="group inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500 text-amber-700 dark:text-amber-300 hover:text-slate-950 font-mono text-[11px] font-bold transition-all shadow-sm"
+                                          title={`Đọc ${pr.label} trong Kinh Thánh`}
+                                        >
+                                          <span>📖 {pr.label}</span>
+                                          <ExternalLink className="w-2.5 h-2.5 opacity-60 group-hover:opacity-100" />
+                                        </Link>
+                                      ))}
+                                    </div>
+                                  );
+                                }
+                                return (
+                                  <p className="font-serif text-xs text-[var(--text-main)]">
+                                    {activeEvt.biblical_anchor}
+                                  </p>
+                                );
+                              })()}
                             </div>
                           )}
                           {activeEvt.archaeological_anchor && (
@@ -748,24 +822,35 @@ export default function SalvationTimeline() {
                         </div>
                       )}
 
-                      {/* Attached Article in Horizontal View */}
-                      {activeEvt.article_slug && (
-                        <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-2">
-                            <BookOpen className="w-4 h-4 text-amber-500" />
-                            <span className="text-xs font-bold text-[var(--text-main)]">Chuyên khảo nghiên cứu đính kèm</span>
+                      {/* Attached Articles in Horizontal View (Multi-article) */}
+                      {(() => {
+                        const slugs: string[] = (activeEvt.article_slugs && activeEvt.article_slugs.length > 0)
+                          ? activeEvt.article_slugs
+                          : (activeEvt.article_slug ? [activeEvt.article_slug] : []);
+                        if (slugs.length === 0) return null;
+                        return (
+                          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <BookOpen className="w-4 h-4 text-amber-500" />
+                              <span className="text-xs font-bold text-[var(--text-main)]">Chuyên khảo nghiên cứu đính kèm ({slugs.length})</span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {slugs.map((slug, sIdx) => (
+                                <Link
+                                  key={sIdx}
+                                  href={`/${slug}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-950 dark:text-amber-100 hover:text-slate-950 font-bold text-xs transition shadow-sm group"
+                                >
+                                  <span className="truncate">{slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</span>
+                                  <ArrowRight className="w-3.5 h-3.5 flex-shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                                </Link>
+                              ))}
+                            </div>
                           </div>
-                          <Link
-                            href={`/${activeEvt.article_slug}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 transition shadow-sm"
-                          >
-                            <span>Đọc Chuyên Khảo</span>
-                            <ArrowRight className="w-3 h-3" />
-                          </Link>
-                        </div>
-                      )}
+                        );
+                      })()}
                     </div>
                   </div>
 

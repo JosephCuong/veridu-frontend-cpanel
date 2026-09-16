@@ -25,6 +25,37 @@ interface TimelinePayload {
   significance?: string;
 }
 
+function calculateHaversineDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function normalizeSearchText(str: string): string {
+  return (str || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function areNamesSimilar(nameA: string, nameB: string): boolean {
+  const a = normalizeSearchText(nameA);
+  const b = normalizeSearchText(nameB);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  if (a.includes(b) || b.includes(a)) return true;
+  return false;
+}
+
 function determineEraAndCategory(year: number): { era_id: string; era_name: string; category: string } {
   if (year <= -2000) {
     return { era_id: 'era-1', era_name: 'Khởi Nguyên Sáng Tạo & Tiền Lịch Sử', category: 'cuu-uoc' };
@@ -56,8 +87,14 @@ export async function POST(request: Request) {
     const processedTimeline: any[] = [];
 
     // ─────────────────────────────────────────────────────────────
-    // 1. XỬ LÝ ĐỊA DANH (MAP LOCATIONS) VỚI SMART MERGE
+    // 1. XỬ LÝ ĐỊA DANH (MAP LOCATIONS) VỚI SMART HAVERSINE DEDUPLICATION
     // ─────────────────────────────────────────────────────────────
+    const { data: existingLocationsData } = await supabase
+      .from('map_locations')
+      .select('*');
+
+    const existingLocations: any[] = existingLocationsData || [];
+
     for (const rawLoc of locations as any[]) {
       const locName = rawLoc.name || rawLoc.title;
       const lat = typeof rawLoc.latitude === 'number' ? rawLoc.latitude : Number(rawLoc.lat);
@@ -67,7 +104,7 @@ export async function POST(request: Request) {
         continue;
       }
 
-      const biblicalRefs = Array.isArray(rawLoc.biblical_references) 
+      const biblicalRefs: string[] = Array.isArray(rawLoc.biblical_references) 
         ? rawLoc.biblical_references 
         : Array.isArray(rawLoc.bible_references) 
           ? rawLoc.bible_references 
@@ -81,37 +118,39 @@ export async function POST(request: Request) {
       const archEvidence = rawLoc.archaeological_evidence || rawLoc.archaeology || '';
 
       // Tìm xem địa danh đã tồn tại chưa:
-      // Tiêu chí 1: Trùng tọa độ trong bán kính ~1.5km (sai số 0.015 độ)
-      // Tiêu chí 2: Trùng slug hoặc tên
-      const { data: existingList } = await supabase
-        .from('map_locations')
-        .select('*');
+      // Tiêu chí 1: Khoảng cách Haversine < 3km (cùng tọa độ địa lý đồi/thành cổ)
+      // Tiêu chí 2: Trùng slug
+      // Tiêu chí 3: Trùng tên/cổ danh/bí danh (aliases) trong phạm vi < 20km
+      const matchedLoc = existingLocations.find((dbItem: any) => {
+        const distKm = calculateHaversineDistanceKm(Number(dbItem.latitude), Number(dbItem.longitude), lat, lng);
+        if (distKm < 3.0) return true;
 
-      let matchedLoc = null;
-      if (existingList && existingList.length > 0) {
-        matchedLoc = existingList.find((dbItem: any) => {
-          const latDiff = Math.abs(Number(dbItem.latitude) - lat);
-          const lngDiff = Math.abs(Number(dbItem.longitude) - lng);
-          const isCoordClose = latDiff < 0.02 && lngDiff < 0.02;
-          const isSlugMatch = rawLoc.id && dbItem.slug === rawLoc.id;
-          const isNameMatch = dbItem.name && dbItem.name.toLowerCase().includes(locName.toLowerCase().split(' ')[0]);
-          return isCoordClose || isSlugMatch || (isNameMatch && latDiff < 0.05 && lngDiff < 0.05);
-        });
-      }
+        const isSlugMatch = rawLoc.id && dbItem.slug === rawLoc.id;
+        if (isSlugMatch) return true;
+
+        const aliasList: string[] = Array.isArray(dbItem.aliases) ? dbItem.aliases : [];
+        const allNames = [dbItem.name, dbItem.name_en, dbItem.ancient_name, ...aliasList].filter(Boolean);
+        const nameMatched = allNames.some(n => areNamesSimilar(n, locName));
+        if (nameMatched && distKm < 20.0) return true;
+
+        return false;
+      });
 
       if (matchedLoc) {
         // SMART MERGE: Địa danh đã tồn tại -> Gộp thêm article_slug và biblical_references
         const currentSlugs: string[] = Array.isArray(matchedLoc.article_slugs) ? matchedLoc.article_slugs : [];
-        if (!currentSlugs.includes(article_slug)) {
-          currentSlugs.push(article_slug);
-        }
+        const updatedSlugs = Array.from(new Set([...currentSlugs, article_slug])).filter(Boolean);
 
         const currentRefs: string[] = Array.isArray(matchedLoc.bible_references) ? matchedLoc.bible_references : [];
-        const mergedRefs = Array.from(new Set([...currentRefs, ...biblicalRefs]));
+        const mergedRefs = Array.from(new Set([...currentRefs, ...biblicalRefs])).filter(Boolean);
+
+        const currentAliases: string[] = Array.isArray(matchedLoc.aliases) ? matchedLoc.aliases : [];
+        const updatedAliases = Array.from(new Set([...currentAliases, locName])).filter(Boolean);
 
         const updatePayload: any = {
-          article_slugs: currentSlugs,
+          article_slugs: updatedSlugs,
           bible_references: mergedRefs,
+          aliases: updatedAliases
         };
 
         if (ancientName && !matchedLoc.ancient_name) updatePayload.ancient_name = ancientName;
@@ -121,12 +160,17 @@ export async function POST(request: Request) {
             ? `${matchedLoc.archaeological_evidence} | ${archEvidence}`
             : archEvidence;
         }
+        if (description && (!matchedLoc.description || description.length > matchedLoc.description.length)) {
+          updatePayload.description = description;
+        }
 
         await supabase
           .from('map_locations')
           .update(updatePayload)
           .eq('id', matchedLoc.id);
 
+        // Update local cache
+        Object.assign(matchedLoc, updatePayload);
         processedLocations.push({ id: matchedLoc.id, action: 'merged', name: matchedLoc.name });
       } else {
         // CREATE NEW LOCATION
@@ -142,6 +186,7 @@ export async function POST(request: Request) {
           description: description,
           summary: description,
           article_slugs: [article_slug],
+          aliases: [locName],
           importance_level: 2,
           region: rawLoc.region || 'Thánh Địa (Holy Land)',
           testament: rawLoc.testament || (lat < 30 ? 'cuu-uoc' : 'tan-uoc'),
@@ -154,13 +199,22 @@ export async function POST(request: Request) {
           .select()
           .maybeSingle();
 
+        if (newLoc) {
+          existingLocations.push(newLoc);
+        }
         processedLocations.push({ id: newLoc?.id || 'new', action: 'created', name: locName });
       }
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 2. XỬ LÝ DÒNG THỜI GIAN (TIMELINE EVENTS)
+    // 2. XỬ LÝ DÒNG THỜI GIAN (TIMELINE EVENTS) VỚI SMART DEDUPLICATION
     // ─────────────────────────────────────────────────────────────
+    const { data: existingEventsData } = await supabase
+      .from('timeline_events')
+      .select('*');
+
+    const existingEvents: any[] = existingEventsData || [];
+
     for (const rawEvt of timeline_events as any[]) {
       const title = rawEvt.event_title || rawEvt.title;
       const year = typeof rawEvt.year_bce_ce === 'number' 
@@ -177,7 +231,7 @@ export async function POST(request: Request) {
 
       const eraInfo = determineEraAndCategory(year);
       const eraName = rawEvt.era_name || rawEvt.period || eraInfo.era_name;
-      const eventSlug = rawEvt.id || rawEvt.slug || `evt-${Math.abs(year)}-${title.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 30)}`;
+      const eventSlug = rawEvt.id || rawEvt.slug || `evt-${Math.abs(year)}-${normalizeSearchText(title).slice(0, 30)}`;
 
       const displayDate = rawEvt.display_date || rawEvt.year_label || (year < 0 ? `${Math.abs(year)} TCN` : `${year} SCN`);
       const biblicalAnchor = rawEvt.biblical_anchor || rawEvt.scripture || '';
@@ -185,44 +239,96 @@ export async function POST(request: Request) {
       const significance = rawEvt.significance || rawEvt.theology || rawEvt.summary || '';
       const description = rawEvt.description || archAnchor || significance || '';
 
-      // Kiểm tra xem sự kiện đã có chưa (theo slug hoặc cùng bài viết + năm)
-      const { data: existingEvt } = await supabase
-        .from('timeline_events')
-        .select('id, slug')
-        .eq('slug', eventSlug)
-        .maybeSingle();
+      // Kiểm tra sự kiện đã tồn tại chưa:
+      // Tiêu chí 1: Trùng slug
+      // Tiêu chí 2: Trùng năm (±2 năm nếu Cựu Ước/BCE, chính xác nếu Tân Ước/SCN) VÀ Tiêu đề tương đồng
+      const matchedEvt = existingEvents.find((dbItem: any) => {
+        if (rawEvt.id && dbItem.slug === rawEvt.id) return true;
+        if (eventSlug && dbItem.slug === eventSlug) return true;
 
-      const timelinePayload: any = {
-        slug: eventSlug,
-        order_year: year,
-        year_label: displayDate,
-        title: title,
-        subtitle: rawEvt.subtitle || biblicalAnchor || '',
-        biblical_anchor: biblicalAnchor,
-        archaeological_anchor: archAnchor,
-        significance: significance,
-        summary: significance || title,
-        description: description,
-        content: significance || description,
-        theology: rawEvt.theology || significance,
-        article_slug: article_slug,
-        era_id: eraInfo.era_id,
-        era_name: eraName,
-        category: rawEvt.category || eraInfo.category,
-      };
+        const dbYear = Number(dbItem.order_year);
+        const isBce = year < 0;
+        const isYearMatch = isBce ? Math.abs(dbYear - year) <= 2 : dbYear === year;
 
-      if (existingEvt) {
+        if (isYearMatch) {
+          if (areNamesSimilar(dbItem.title, title)) return true;
+          if (biblicalAnchor && dbItem.biblical_anchor && areNamesSimilar(dbItem.biblical_anchor, biblicalAnchor)) return true;
+        }
+
+        return false;
+      });
+
+      if (matchedEvt) {
+        // SMART MERGE: Gộp article_slugs và bible_references
+        const currentSlugs: string[] = Array.isArray(matchedEvt.article_slugs) ? matchedEvt.article_slugs : [];
+        if (matchedEvt.article_slug) currentSlugs.push(matchedEvt.article_slug);
+        const updatedSlugs = Array.from(new Set([...currentSlugs, article_slug])).filter(Boolean);
+
+        const currentRefs: string[] = Array.isArray(matchedEvt.bible_references) ? matchedEvt.bible_references : [];
+        if (biblicalAnchor && !currentRefs.includes(biblicalAnchor)) {
+          currentRefs.push(biblicalAnchor);
+        }
+        const updatedRefs = Array.from(new Set(currentRefs)).filter(Boolean);
+
+        const updatePayload: any = {
+          article_slugs: updatedSlugs,
+          bible_references: updatedRefs
+        };
+
+        if (biblicalAnchor && (!matchedEvt.biblical_anchor || matchedEvt.biblical_anchor === '')) {
+          updatePayload.biblical_anchor = biblicalAnchor;
+        }
+        if (archAnchor && (!matchedEvt.archaeological_anchor || matchedEvt.archaeological_anchor === '')) {
+          updatePayload.archaeological_anchor = archAnchor;
+        }
+        if (significance && (!matchedEvt.significance || significance.length > matchedEvt.significance.length)) {
+          updatePayload.significance = significance;
+        }
+        if (description && (!matchedEvt.description || description.length > matchedEvt.description.length)) {
+          updatePayload.description = description;
+          updatePayload.content = description;
+        }
+
         await supabase
           .from('timeline_events')
-          .update(timelinePayload)
-          .eq('id', existingEvt.id);
-        processedTimeline.push({ id: existingEvt.id, action: 'updated', title });
+          .update(updatePayload)
+          .eq('id', matchedEvt.id);
+
+        Object.assign(matchedEvt, updatePayload);
+        processedTimeline.push({ id: matchedEvt.id, action: 'merged', title: matchedEvt.title });
       } else {
+        // CREATE NEW TIMELINE EVENT
+        const timelinePayload: any = {
+          slug: eventSlug,
+          order_year: year,
+          year_label: displayDate,
+          title: title,
+          subtitle: rawEvt.subtitle || biblicalAnchor || '',
+          biblical_anchor: biblicalAnchor,
+          archaeological_anchor: archAnchor,
+          significance: significance,
+          summary: significance || title,
+          description: description,
+          content: significance || description,
+          theology: rawEvt.theology || significance,
+          article_slug: article_slug,
+          article_slugs: [article_slug],
+          bible_references: biblicalAnchor ? [biblicalAnchor] : [],
+          aliases: [title],
+          era_id: eraInfo.era_id,
+          era_name: eraName,
+          category: rawEvt.category || eraInfo.category,
+        };
+
         const { data: newEvt } = await supabase
           .from('timeline_events')
           .insert(timelinePayload)
           .select()
           .maybeSingle();
+
+        if (newEvt) {
+          existingEvents.push(newEvt);
+        }
         processedTimeline.push({ id: newEvt?.id || 'new', action: 'created', title });
       }
     }

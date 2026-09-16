@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { MapLocation, TimelineEventData } from '@/lib/api';
+import { parseScriptureReferences } from '@/lib/bibleReferenceParser';
 import { 
   MapPin, 
   Clock, 
@@ -324,12 +325,35 @@ export default function ArticleGeoTimelineWidget({
                       ⏳ {evt.year_label}
                     </span>
 
-                    {evt.biblical_anchor && (
-                      <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 font-mono font-bold text-xs flex items-center gap-1">
-                        <BookOpen className="w-3 h-3" />
-                        <span>{evt.biblical_anchor}</span>
-                      </span>
-                    )}
+                    {evt.biblical_anchor && (() => {
+                      const parsed = parseScriptureReferences(evt.biblical_anchor);
+                      if (parsed.length > 0) {
+                        return (
+                          <div className="flex flex-wrap gap-1">
+                            {parsed.map((p, pIdx) => (
+                              <Link
+                                key={pIdx}
+                                href={p.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-2.5 py-0.5 rounded-full bg-indigo-500/15 hover:bg-indigo-500 text-indigo-400 hover:text-slate-950 border border-indigo-500/30 font-mono font-bold text-xs flex items-center gap-1 transition-all"
+                                title={`Đọc ${p.label} trong Kinh Thánh`}
+                              >
+                                <BookOpen className="w-3 h-3" />
+                                <span>{p.label}</span>
+                                <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                              </Link>
+                            ))}
+                          </div>
+                        );
+                      }
+                      return (
+                        <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 font-mono font-bold text-xs flex items-center gap-1">
+                          <BookOpen className="w-3 h-3" />
+                          <span>{evt.biblical_anchor}</span>
+                        </span>
+                      );
+                    })()}
                   </div>
 
                   {/* Title */}

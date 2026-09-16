@@ -249,6 +249,9 @@ export interface TimelineEventData {
   locations?: TimelineEventEntity[];
   scriptures?: TimelineEventScripture[];
   article_slug?: string;
+  article_slugs?: string[];
+  aliases?: string[];
+  bible_references?: string[];
   biblical_anchor?: string;
   archaeological_anchor?: string;
   significance?: string;
@@ -293,6 +296,7 @@ export interface MapLocation {
   archaeological_evidence?: string;
   bible_references?: string[];
   article_slugs?: string[];
+  aliases?: string[];
   created_at?: string;
 }
 
@@ -906,6 +910,11 @@ export async function fetchTimelineEvents(): Promise<TimelineEventData[]> {
       locations: t.locations || [],
       scriptures: t.scriptures || [],
       article_slug: t.article_slug || '',
+      article_slugs: Array.isArray(t.article_slugs) && t.article_slugs.length > 0 
+        ? t.article_slugs 
+        : (t.article_slug ? [t.article_slug] : []),
+      aliases: Array.isArray(t.aliases) ? t.aliases : [],
+      bible_references: Array.isArray(t.bible_references) ? t.bible_references : [],
       biblical_anchor: t.biblical_anchor || '',
       archaeological_anchor: t.archaeological_anchor || '',
       significance: t.significance || '',
@@ -951,6 +960,11 @@ export async function fetchTimelineEventBySlug(slug: string): Promise<TimelineEv
       locations: data.locations || [],
       scriptures: data.scriptures || [],
       article_slug: data.article_slug || '',
+      article_slugs: Array.isArray(data.article_slugs) && data.article_slugs.length > 0 
+        ? data.article_slugs 
+        : (data.article_slug ? [data.article_slug] : []),
+      aliases: Array.isArray(data.aliases) ? data.aliases : [],
+      bible_references: Array.isArray(data.bible_references) ? data.bible_references : [],
       biblical_anchor: data.biblical_anchor || '',
       archaeological_anchor: data.archaeological_anchor || '',
       significance: data.significance || '',
@@ -1140,7 +1154,7 @@ export async function fetchArticleGeoAndTimeline(articleSlug: string): Promise<{
       supabase
         .from('timeline_events')
         .select('*')
-        .eq('article_slug', articleSlug)
+        .or(`article_slug.eq.${articleSlug},article_slugs.cs.{${articleSlug}}`)
         .order('order_year', { ascending: true })
     ]);
 
@@ -1168,6 +1182,7 @@ export async function fetchArticleGeoAndTimeline(articleSlug: string): Promise<{
       historical_period: item.historical_period || '',
       archaeological_evidence: item.archaeological_evidence || '',
       article_slugs: item.article_slugs || [],
+      aliases: item.aliases || [],
       created_at: item.created_at
     }));
 
@@ -1189,6 +1204,11 @@ export async function fetchArticleGeoAndTimeline(articleSlug: string): Promise<{
       archaeological_anchor: t.archaeological_anchor || '',
       significance: t.significance || '',
       article_slug: t.article_slug || '',
+      article_slugs: Array.isArray(t.article_slugs) && t.article_slugs.length > 0
+        ? t.article_slugs
+        : (t.article_slug ? [t.article_slug] : []),
+      aliases: Array.isArray(t.aliases) ? t.aliases : [],
+      bible_references: Array.isArray(t.bible_references) ? t.bible_references : [],
       created_at: t.created_at
     }));
 

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { MapLocation } from '@/lib/api';
+import { parseScriptureReferences } from '@/lib/bibleReferenceParser';
 import { 
   MapPin, 
   Compass, 
@@ -544,6 +545,12 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
                     <strong className="font-sans font-bold">Cổ danh / Khảo cổ:</strong> {selectedLocation.ancient_name}
                   </p>
                 )}
+                {selectedLocation.aliases && selectedLocation.aliases.length > 0 && (
+                  <p className="font-serif text-xs text-[var(--text-muted)] flex items-center gap-1.5 flex-wrap pt-0.5">
+                    <strong className="font-sans font-semibold text-amber-600 dark:text-amber-400">Tên gọi khác:</strong>
+                    <span>{selectedLocation.aliases.join(' • ')}</span>
+                  </p>
+                )}
                 {selectedLocation.meaning && (
                   <p className="text-xs text-[var(--text-main)] pt-1">
                     <strong className="text-amber-500">Ý nghĩa danh xưng:</strong> {selectedLocation.meaning}
@@ -582,40 +589,76 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
                 </div>
               )}
 
-              {/* Scripture Treasury Quotes */}
-              {selectedLocation.scriptures && selectedLocation.scriptures.length > 0 && (
+              {/* Scripture References & Citations */}
+              {((selectedLocation.scriptures && selectedLocation.scriptures.length > 0) || 
+                (selectedLocation.bible_references && selectedLocation.bible_references.length > 0)) && (
                 <div className="space-y-3 pt-3 border-t border-[var(--border-card)]">
                   <div className="flex items-center justify-between">
                     <h4 className="font-serif font-bold text-sm text-[var(--text-main)] flex items-center gap-1.5">
                       <BookOpen className="w-4 h-4 text-amber-500" />
-                      <span>Trích Đoạn Kinh Thánh</span>
+                      <span>Căn Cứ &amp; Trích Đoạn Kinh Thánh</span>
                     </h4>
                   </div>
 
-                  <div className="space-y-3">
-                    {selectedLocation.scriptures.map((sc, index) => {
-                      const readerUrl = `/doc-kinh-thanh/${sc.book_slug}/${sc.chapter}`;
-                      return (
-                        <div key={index} className="p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-2">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-[11px] font-black px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 font-mono">
-                              {sc.reference}
-                            </span>
+                  {/* Dynamic Clickable Badges from bible_references */}
+                  {selectedLocation.bible_references && selectedLocation.bible_references.length > 0 && (() => {
+                    const parsedList = parseScriptureReferences(selectedLocation.bible_references);
+                    if (parsedList.length === 0) return null;
+                    return (
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap gap-1.5">
+                          {parsedList.map((ps, pIdx) => (
                             <Link
-                              href={readerUrl}
-                              className="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:text-amber-500 hover:underline flex items-center gap-1 transition"
+                              key={pIdx}
+                              href={ps.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500 text-amber-700 dark:text-amber-300 hover:text-slate-950 border border-amber-500/25 hover:border-amber-500 font-mono text-[11px] font-bold transition-all shadow-sm"
+                              title={`Đọc ${ps.label} trong Kinh Thánh`}
                             >
-                              <span>Đọc Kinh Thánh</span>
-                              <ExternalLink className="w-3 h-3" />
+                              <span>📖 {ps.label}</span>
+                              <ExternalLink className="w-2.5 h-2.5 opacity-70 group-hover:opacity-100" />
                             </Link>
-                          </div>
-                          <p className="font-serif italic text-xs text-[var(--text-main)] leading-relaxed">
-                            &ldquo;{sc.text}&rdquo;
-                          </p>
+                          ))}
                         </div>
-                      );
-                    })}
-                  </div>
+                        {parsedList.filter(p => p.note).map((p, nIdx) => (
+                          <p key={nIdx} className="text-[11px] text-[var(--text-muted)] font-serif italic pl-2 border-l border-amber-500/40">
+                            <strong className="text-amber-600 dark:text-amber-400">{p.label}:</strong> {p.note}
+                          </p>
+                        ))}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Quoted Scriptures */}
+                  {selectedLocation.scriptures && selectedLocation.scriptures.length > 0 && (
+                    <div className="space-y-3 pt-1">
+                      {selectedLocation.scriptures.map((sc, index) => {
+                        const readerUrl = `/doc-kinh-thanh/${sc.book_slug}/${sc.chapter}`;
+                        return (
+                          <div key={index} className="p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[11px] font-black px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 font-mono">
+                                {sc.reference}
+                              </span>
+                              <Link
+                                href={readerUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:text-amber-500 hover:underline flex items-center gap-1 transition"
+                              >
+                                <span>Đọc Kinh Thánh</span>
+                                <ExternalLink className="w-3 h-3" />
+                              </Link>
+                            </div>
+                            <p className="font-serif italic text-xs text-[var(--text-main)] leading-relaxed">
+                              &ldquo;{sc.text}&rdquo;
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
 
