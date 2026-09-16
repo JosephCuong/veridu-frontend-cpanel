@@ -6,6 +6,30 @@ import {
   BookOpen, Compass, Clock, Award, PlayCircle, ArrowRight, MapPin
 } from 'lucide-react';
 
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'model-viewer': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+        src?: string;
+        alt?: string;
+        'camera-controls'?: boolean;
+        'auto-rotate'?: boolean;
+        'rotation-per-second'?: string;
+        'disable-zoom'?: boolean;
+        'shadow-intensity'?: string;
+        'environment-image'?: string;
+        exposure?: string;
+        'interaction-prompt'?: string;
+        'camera-orbit'?: string;
+        'field-of-view'?: string;
+        loading?: string;
+        reveal?: string;
+        [key: string]: any;
+      };
+    }
+  }
+}
+
 interface ThemeConfig {
   id: string;
   name: string;
@@ -93,6 +117,7 @@ const THEMES: Record<string, ThemeConfig> = {
 export default function Hero3DSection() {
   const [activeTheme, setActiveTheme] = useState<string>('gold');
   const [isScriptLoaded, setIsScriptLoaded] = useState<boolean>(false);
+  const [hasModelError, setHasModelError] = useState<boolean>(false);
   const modelRef = useRef<any>(null);
   const auraRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -113,8 +138,26 @@ export default function Hero3DSection() {
     script.type = 'module';
     script.src = 'https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js';
     script.onload = () => setIsScriptLoaded(true);
+    script.onerror = () => {
+      console.warn('Failed to load model-viewer script from unpkg, switching to graceful fallback');
+      setHasModelError(true);
+    };
     document.head.appendChild(script);
   }, []);
+
+  // Listen for 3D model load errors
+  useEffect(() => {
+    const el = modelRef.current;
+    if (!el) return;
+    const handleError = () => {
+      console.warn('3D Model failed to render, switching to graceful fallback card');
+      setHasModelError(true);
+    };
+    el.addEventListener('error', handleError);
+    return () => {
+      el.removeEventListener('error', handleError);
+    };
+  }, [isScriptLoaded]);
 
   // 2. High-Performance Mouse Parallax (0 React re-renders via RAF & Direct DOM ref)
   useEffect(() => {
@@ -232,7 +275,7 @@ export default function Hero3DSection() {
             style={{ transform: 'translate3d(0, 0, 0)' }}
           />
 
-          {isScriptLoaded ? (
+          {isScriptLoaded && !hasModelError ? (
             /* @ts-ignore - Google <model-viewer> Custom Element */
             <model-viewer
               ref={modelRef}
@@ -248,6 +291,8 @@ export default function Hero3DSection() {
               interaction-prompt="none"
               camera-orbit={currentConfig.modelOrbit}
               field-of-view="30deg"
+              loading="eager"
+              reveal="auto"
               style={{
                 width: '100%',
                 height: '450px',
@@ -255,16 +300,38 @@ export default function Hero3DSection() {
                 filter: `drop-shadow(0 25px 50px ${currentConfig.glowColor})`
               }}
             >
-              {/* @ts-ignore */}
+              {/* @ts-ignore - Poster slot displayed while 3D GLB is loading */}
+              <div 
+                slot="poster" 
+                className="w-full h-full flex flex-col items-center justify-center pointer-events-none select-none animate-pulse"
+              >
+                <div className="relative w-44 h-56 rounded-2xl bg-gradient-to-br from-amber-500/20 via-slate-900/70 to-amber-950/40 border border-amber-400/40 backdrop-blur-xl p-5 flex flex-col items-center justify-center text-center shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                  <div className="w-16 h-16 rounded-2xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-300 mb-3 shadow-lg shadow-amber-500/20">
+                    <BookOpen className="w-8 h-8 text-amber-300" />
+                  </div>
+                  <span className="font-serif font-bold text-sm text-amber-200 tracking-wide">VERIDU 3D</span>
+                  <span className="text-[11px] text-slate-300 mt-1 font-sans">Đang nạp Thánh Kinh...</span>
+                  <div className="w-24 h-1 bg-white/10 rounded-full mt-3 overflow-hidden">
+                    <div className="w-full h-full bg-gradient-to-r from-amber-500 via-amber-300 to-amber-500 animate-pulse" />
+                  </div>
+                </div>
+              </div>
             </model-viewer>
           ) : (
             /* Fallback 3D Sacred Scriptures Glass Card with SVG */
-            <div className="w-72 h-96 rounded-3xl bg-white/10 border border-white/30 backdrop-blur-2xl p-6 flex flex-col items-center justify-center text-center space-y-4 shadow-2xl animate-pulse">
-              <div className="w-20 h-20 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center">
+            <div className="w-72 h-96 rounded-3xl bg-white/10 border border-white/30 backdrop-blur-2xl p-6 flex flex-col items-center justify-center text-center space-y-4 shadow-2xl animate-in fade-in duration-500">
+              <div className="w-20 h-20 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center shadow-lg shadow-amber-500/30">
                 <BookOpen className="w-10 h-10" />
               </div>
               <h3 className="font-serif font-bold text-xl text-white">Kinh Thánh 73 Sách</h3>
-              <p className="text-xs text-slate-300">Đang nạp không gian Thánh Kinh...</p>
+              <p className="text-xs text-slate-300 max-w-[200px]">Trọn bộ Cựu Ước & Tân Ước chuẩn bản dịch Cố LM. Nguyễn Thế Thuấn</p>
+              <Link 
+                href="/kinh-thanh" 
+                className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-xs flex items-center gap-1.5 transition-all shadow-md hover:scale-105 cursor-pointer"
+              >
+                <span>Đọc Kinh Thánh</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
           )}
         </div>

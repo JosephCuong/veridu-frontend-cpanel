@@ -689,9 +689,9 @@ export default function LiturgicalHeader() {
       </div>
 
       {/* ========================================================
-          2. TABLET & LAPTOP (md to xl: 768px - 1279px): SLEEK 1-ROW
+          2. LAPTOP & MEDIUM DESKTOP (lg to xl: 1024px - 1279px): SLEEK 1-ROW
       ======================================================== */}
-      <div className="hidden md:flex xl:hidden w-full h-16 px-4 lg:px-8 items-center justify-between border-b border-white/10">
+      <div className="hidden lg:flex xl:hidden w-full h-16 px-6 lg:px-8 items-center justify-between border-b border-white/10">
         
         {/* Left: Brand Logo */}
         <div className="shrink-0 flex items-center">
@@ -710,7 +710,7 @@ export default function LiturgicalHeader() {
         </div>
 
         {/* Center: High-Contrast Navigation */}
-        <nav className="flex items-center gap-3 lg:gap-5 text-xs uppercase font-serif font-bold tracking-wider">
+        <nav className="flex items-center gap-4 lg:gap-5 text-xs uppercase font-serif font-bold tracking-wider">
           
           {/* 1. KINH THÁNH */}
           <div 
@@ -832,7 +832,7 @@ export default function LiturgicalHeader() {
                 </Link>
                 <Link href="/tac-gia" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-sky-500/15 group transition-colors">
                   <Users className="w-4 h-4 text-sky-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-sky-400">Đội Ngũ Tác Giả</span>
+                  <span className="font-bold text-xs text-sky-400">Đội Ngũ Tác Giả</span>
                 </Link>
                 <Link href="/noi-dung-can-thiet" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-emerald-500/15 group transition-colors">
                   <ClipboardList className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -854,81 +854,46 @@ export default function LiturgicalHeader() {
             )}
           </div>
 
-          {/* 6. ON LAPTOP (>= 1024px): SHOW ALL DIRECT LINKS */}
+          {/* 6. SÁCH TRANH */}
           <Link 
             href="/sach-tranh" 
-            className={`hidden lg:inline py-1 text-slate-200 hover:text-amber-400 transition-colors ${
+            className={`py-1 text-slate-200 hover:text-amber-400 transition-colors ${
               pathname.startsWith('/sach-tranh') ? 'text-amber-400 font-black' : ''
             }`}
           >
             Sách Tranh
           </Link>
 
+          {/* 7. ĐẤU TRƯỜNG */}
           <Link 
             href="/quiz" 
-            className={`hidden lg:inline py-1 text-slate-200 hover:text-amber-400 transition-colors ${
+            className={`py-1 text-slate-200 hover:text-amber-400 transition-colors ${
               pathname.startsWith('/quiz') ? 'text-amber-400 font-black' : ''
             }`}
           >
             Đấu Trường
           </Link>
 
+          {/* 8. GAME */}
           <Link 
             href="/game" 
-            className={`hidden lg:inline py-1 text-slate-200 hover:text-amber-400 transition-colors ${
+            className={`py-1 text-slate-200 hover:text-amber-400 transition-colors ${
               pathname.startsWith('/game') ? 'text-amber-400 font-black' : ''
             }`}
           >
             Game
           </Link>
 
-          {/* 6. ON TABLET (< 1024px): COMPACT "KHÁC" DROPDOWN */}
-          <div 
-            className="lg:hidden relative py-2"
-            onMouseEnter={() => handleMouseEnter('khac-tab')}
-            onMouseLeave={handleMouseLeave}
-          >
-            <button 
-              type="button"
-              onClick={() => setOpenDropdown(openDropdown === 'khac-tab' ? null : 'khac-tab')}
-              className={`flex items-center gap-1 py-1 text-slate-200 hover:text-amber-400 transition-colors cursor-pointer ${
-                pathname.startsWith('/sach-tranh') || pathname.startsWith('/quiz') || pathname.startsWith('/game')
-                  ? 'text-amber-400 font-black' 
-                  : ''
-              }`}
-            >
-              <span>Khác</span>
-              <ChevronDown className="w-3 h-3 text-amber-400/80 transition-transform group-hover:rotate-180" />
-            </button>
-
-            {openDropdown === 'khac-tab' && (
-              <div className="absolute top-full right-0 w-56 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl p-2 space-y-1 z-50 backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-200">
-                <Link href="/sach-tranh" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-amber-500/15 group transition-colors">
-                  <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-amber-400">Sách Tranh Thiếu Nhi</span>
-                </Link>
-                <Link href="/quiz" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-amber-500/15 group transition-colors">
-                  <Flame className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-amber-400">Đấu Trường Quiz</span>
-                </Link>
-                <Link href="/game" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-amber-500/15 group transition-colors">
-                  <Gamepad2 className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-amber-400">Cổng Game Giáo Lý</span>
-                </Link>
-              </div>
-            )}
-          </div>
-
         </nav>
 
         {/* Right: Streamlined Utilities */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2.5 shrink-0">
           
-          {/* Admin Quick Launcher (Tablet) */}
+          {/* Admin Quick Launcher */}
           {isAdmin && (
             <Link
               href="/admin"
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 font-serif font-bold text-xs shadow-xs transition-all hover:scale-105 group cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 font-serif font-bold text-xs shadow-xs transition-all hover:scale-105 group cursor-pointer"
               title="Trung Tâm Quản Trị"
             >
               <Shield className="w-3.5 h-3.5 text-amber-400" />
@@ -980,7 +945,7 @@ export default function LiturgicalHeader() {
           ) : (
             <Link
               href="/dang-nhap"
-              className="flex items-center gap-1 px-3 py-1.5 bg-amber-500 text-slate-950 rounded-full font-bold text-xs shadow-sm hover:bg-amber-400 transition-all"
+              className="flex items-center gap-1 px-3.5 py-1.5 bg-amber-500 text-slate-950 rounded-full font-bold text-xs shadow-sm hover:bg-amber-400 transition-all"
             >
               <LogIn className="w-3.5 h-3.5" />
               <span>Đăng Nhập</span>
@@ -997,14 +962,116 @@ export default function LiturgicalHeader() {
             {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
           </button>
 
-          {/* Tablet Drawer Button */}
+        </div>
+
+      </div>
+
+      {/* ========================================================
+          3. TABLET DEDICATED (md to lg: 768px - 1023px): ELEGANT & SPACIOUS
+      ======================================================== */}
+      <div className="hidden md:flex lg:hidden w-full h-16 px-5 sm:px-6 items-center justify-between border-b border-white/10">
+        
+        {/* Left: Brand Logo */}
+        <div className="shrink-0 flex items-center">
+          <Link href="/" className="group flex items-center transition-transform hover:scale-105">
+            <div className="relative h-9 w-32 flex items-center">
+              <Image 
+                src={logoSrc} 
+                alt="VERIDU Logo" 
+                width={140} 
+                height={40}
+                priority
+                className="object-contain max-h-9 w-auto transition-opacity duration-300 drop-shadow-md"
+              />
+            </div>
+          </Link>
+        </div>
+
+        {/* Right: Clean Utilities & Hamburger Menu */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          
+          {/* Admin Badge (Tablet) */}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 font-serif font-bold text-xs shadow-xs transition-all hover:scale-105 group cursor-pointer"
+              title="Trung Tâm Quản Trị"
+            >
+              <Shield className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Admin</span>
+              {pendingCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full bg-red-500 text-white font-mono text-[10px] font-black">
+                  {pendingCount}
+                </span>
+              )}
+            </Link>
+          )}
+
+          {/* Streak Pill */}
+          {user && (
+            <div 
+              title={`Chuỗi học tập liên tục: ${user.streak || 1} ngày`}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/15 border border-amber-500/30 rounded-full text-amber-400 font-bold text-xs shadow-xs"
+            >
+              <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-400 animate-pulse" />
+              <span>{user.streak || 1}</span>
+            </div>
+          )}
+
+          {/* User Profile Pill or Login */}
+          {user ? (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center gap-1.5 p-1 pl-1 pr-2 rounded-full bg-slate-900/80 hover:bg-slate-850 border border-slate-700/60 hover:border-amber-500/50 text-slate-100 transition-all text-xs font-bold shadow-md cursor-pointer group"
+                title={`${user.christianName || ''} ${user.displayName || ''}`}
+              >
+                <div className="relative w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-serif text-xs font-black overflow-hidden border border-amber-500/30">
+                  {user.avatar ? (
+                    <Image src={user.avatar} alt="Avatar" fill className="object-cover" sizes="28px" />
+                  ) : (
+                    user.christianName ? user.christianName[0] : '✝'
+                  )}
+                </div>
+
+                <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-400 font-mono font-black text-[10px] uppercase border border-amber-500/30">
+                  CẤP {levelInfo.level}
+                </span>
+
+                <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180 text-amber-400' : 'group-hover:text-amber-400'}`} />
+              </button>
+
+              {renderUserMenuDropdown()}
+            </div>
+          ) : (
+            <Link
+              href="/dang-nhap"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-500 text-slate-950 rounded-full font-bold text-xs shadow-sm hover:bg-amber-400 transition-all"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Đăng Nhập</span>
+            </Link>
+          )}
+
+          {/* Theme Toggle Button */}
+          <button 
+            onClick={toggleTheme}
+            aria-label="Chuyển đổi giao diện Sáng / Tối"
+            className="p-2 rounded-full bg-slate-900/80 hover:bg-slate-850 border border-slate-700/60 text-amber-400 hover:border-amber-500/50 transition-all shadow-md cursor-pointer"
+            title={isDarkMode ? 'Chế độ Tối (Nhấp để chuyển sang Sáng)' : 'Chế độ Sáng (Nhấp để chuyển sang Tối)'}
+          >
+            {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
+          </button>
+
+          {/* Tablet Menu Hamburger Button (Min 44x44px touch target) */}
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="Mở menu đầy đủ"
-            className="lg:hidden p-2 rounded-xl bg-slate-900/80 border border-slate-700/60 text-slate-200 hover:text-amber-400 shadow-sm cursor-pointer"
+            aria-label="Mở menu danh mục"
+            className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-amber-500/20 border border-slate-700/60 hover:border-amber-500/50 text-slate-200 hover:text-amber-400 shadow-sm transition-all cursor-pointer flex items-center justify-center"
             title="Mở toàn bộ danh mục"
           >
-            {isMobileMenuOpen ? <X className="w-4 h-4 text-amber-400" /> : <Menu className="w-4 h-4" />}
+            {isMobileMenuOpen ? <X className="w-5 h-5 text-amber-400" /> : <Menu className="w-5 h-5" />}
           </button>
 
         </div>
@@ -1012,7 +1079,7 @@ export default function LiturgicalHeader() {
       </div>
 
       {/* ========================================================
-          3. MOBILE (< 768px): COMPACT 1-ROW HEADER
+          4. MOBILE (< 768px): COMPACT 1-ROW HEADER
       ======================================================== */}
       <div className="md:hidden w-full h-16 px-4 flex items-center justify-between border-b border-white/10">
         
@@ -1077,10 +1144,10 @@ export default function LiturgicalHeader() {
       </div>
 
       {/* ========================================================
-          4. ADAPTIVE MENU DRAWER (Mobile & Tablet)
+          5. ADAPTIVE MENU DRAWER (Mobile & Tablet: < 1024px)
       ======================================================== */}
       {isMobileMenuOpen && (
-        <div className="xl:hidden border-t border-slate-800 bg-slate-950/98 p-5 space-y-4 shadow-2xl backdrop-blur-2xl max-h-[85vh] overflow-y-auto animate-in slide-in-from-top-4 duration-300 text-slate-200">
+        <div className="lg:hidden border-t border-slate-800 bg-slate-950/98 p-5 sm:p-6 space-y-4 shadow-2xl backdrop-blur-2xl max-h-[85vh] overflow-y-auto animate-in slide-in-from-top-4 duration-300 text-slate-200">
           
           {/* User Profile Card Summary */}
           {user && (
