@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { X, Download, Copy, Check, Sparkles, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { X, Download, Copy, Check, BookOpen, Cross, Image as ImageIcon, Eye } from 'lucide-react';
 
 interface QuoteCardModalProps {
   isOpen: boolean;
@@ -10,6 +10,7 @@ interface QuoteCardModalProps {
   initialTitle?: string;
   initialAuthor?: string;
   category?: string;
+  imageUrl?: string;
 }
 
 type AspectRatio = '1:1' | '9:16' | '16:9';
@@ -27,30 +28,30 @@ const THEMES: Record<ThemeMode, ThemeDef> = {
   gold: {
     name: 'Vàng Kim Phục Sinh',
     bg1: '#070a12',
-    bg2: '#1a1306',
+    bg2: '#1c1407',
     accent: '#f59e0b',
-    border: 'rgba(245, 158, 11, 0.4)',
+    border: 'rgba(245, 158, 11, 0.45)',
   },
   emerald: {
     name: 'Lục Bảo Thường Niên',
     bg1: '#05110d',
-    bg2: '#0b2319',
+    bg2: '#0b261a',
     accent: '#10b981',
-    border: 'rgba(168, 85, 247, 0.4)',
+    border: 'rgba(16, 185, 129, 0.45)',
   },
   purple: {
     name: 'Tím Mùa Vọng & Chay',
     bg1: '#0e0717',
-    bg2: '#200d33',
+    bg2: '#230e36',
     accent: '#a855f7',
-    border: 'rgba(168, 85, 247, 0.4)',
+    border: 'rgba(168, 85, 247, 0.45)',
   },
   ruby: {
     name: 'Đỏ Thánh Thần Tử Đạo',
     bg1: '#140507',
-    bg2: '#2b090f',
+    bg2: '#2e0a10',
     accent: '#ef4444',
-    border: 'rgba(239, 68, 68, 0.4)',
+    border: 'rgba(239, 68, 68, 0.45)',
   },
 };
 
@@ -59,35 +60,83 @@ export default function QuoteCardModal({
   onClose,
   initialQuote = '„Lời Chúa là ngọn đèn soi cho con bước, là ánh sáng chỉ đường con đi.”',
   initialTitle = 'Thánh Vịnh 119, 105',
-  initialAuthor = 'Lời Chúa Hằng Ngày',
-  category = 'Thánh Vịnh & Linh Đạo'
+  initialAuthor = 'Học Viện Thần Học VERIDU',
+  category = 'Thánh Kinh & Thần Học',
+  imageUrl
 }: QuoteCardModalProps) {
   const [quote, setQuote] = useState(initialQuote);
   const [title, setTitle] = useState(initialTitle);
   const [author, setAuthor] = useState(initialAuthor);
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('1:1');
   const [theme, setTheme] = useState<ThemeMode>('gold');
+  const [useBgImage, setUseBgImage] = useState<boolean>(true);
   const [copied, setCopied] = useState(false);
   const [isRendering, setIsRendering] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const loadedBgImageRef = useRef<HTMLImageElement | null>(null);
+  const loadedLogoImageRef = useRef<HTMLImageElement | null>(null);
 
+  // Sync initial props
   useEffect(() => {
     if (isOpen) {
       setQuote(initialQuote);
       setTitle(initialTitle);
       setAuthor(initialAuthor);
+      setUseBgImage(!!imageUrl);
     }
-  }, [isOpen, initialQuote, initialTitle, initialAuthor]);
+  }, [isOpen, initialQuote, initialTitle, initialAuthor, imageUrl]);
 
+  // Preload logo image
   useEffect(() => {
-    if (isOpen) {
-      renderCard();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, quote, title, author, aspectRatio, theme]);
+    const logo = new Image();
+    logo.crossOrigin = 'anonymous';
+    logo.src = '/images/veridu_logo_light.png';
+    logo.onload = () => {
+      loadedLogoImageRef.current = logo;
+      if (isOpen) renderCard();
+    };
+  }, [isOpen]);
 
-  const renderCard = () => {
+  // Preload background image if available
+  useEffect(() => {
+    if (!imageUrl) {
+      loadedBgImageRef.current = null;
+      return;
+    }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = imageUrl;
+    img.onload = () => {
+      loadedBgImageRef.current = img;
+      if (isOpen) renderCard();
+    };
+    img.onerror = () => {
+      loadedBgImageRef.current = null;
+    };
+  }, [imageUrl, isOpen]);
+
+  // Wrap text helper
+  const wrapText = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] => {
+    const words = (text || '').trim().split(/\s+/);
+    const lines: string[] = [];
+    let currentLine = '';
+
+    for (const word of words) {
+      const testLine = currentLine ? (currentLine + ' ' + word) : word;
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxWidth && currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine) lines.push(currentLine);
+    return lines;
+  };
+
+  const renderCard = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -109,153 +158,237 @@ export default function QuoteCardModal({
 
     const currentTheme = THEMES[theme];
 
-    // Background gradient
-    const bgGrad = ctx.createRadialGradient(width / 2, height / 2, 50, width / 2, height / 2, Math.max(width, height) / 1.2);
-    bgGrad.addColorStop(0, currentTheme.bg2);
-    bgGrad.addColorStop(1, currentTheme.bg1);
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, width, height);
+    // ── 1. BACKGROUND RENDERING ──
+    const bgImg = loadedBgImageRef.current;
+    if (useBgImage && bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
+      // Draw image cover
+      const imgRatio = bgImg.naturalWidth / bgImg.naturalHeight;
+      const canvasRatio = width / height;
+      let drawW = width;
+      let drawH = height;
+      let offsetX = 0;
+      let offsetY = 0;
 
-    // Subtle texture grid
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.015)';
-    for (let x = 0; x < width; x += 40) {
-      ctx.fillRect(x, 0, 1, height);
-    }
-    for (let y = 0; y < height; y += 40) {
-      ctx.fillRect(0, y, width, 1);
+      if (imgRatio > canvasRatio) {
+        drawW = height * imgRatio;
+        offsetX = -(drawW - width) / 2;
+      } else {
+        drawH = width / imgRatio;
+        offsetY = -(drawH - height) / 2;
+      }
+
+      ctx.save();
+      ctx.filter = 'blur(16px) brightness(0.45)';
+      ctx.drawImage(bgImg, offsetX - 20, offsetY - 20, drawW + 40, drawH + 40);
+      ctx.restore();
+
+      // Dark liturgical radial vignette overlay
+      const overlayGrad = ctx.createRadialGradient(width / 2, height / 2, 60, width / 2, height / 2, Math.max(width, height) / 1.15);
+      overlayGrad.addColorStop(0, 'rgba(6, 10, 20, 0.72)');
+      overlayGrad.addColorStop(1, 'rgba(14, 9, 5, 0.94)');
+      ctx.fillStyle = overlayGrad;
+      ctx.fillRect(0, 0, width, height);
+    } else {
+      // Pure liturgical radial gradient
+      const bgGrad = ctx.createRadialGradient(width / 2, height / 2, 60, width / 2, height / 2, Math.max(width, height) / 1.15);
+      bgGrad.addColorStop(0, currentTheme.bg2);
+      bgGrad.addColorStop(1, currentTheme.bg1);
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      // Fine sacred parchment texture
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.012)';
+      for (let x = 0; x < width; x += 36) {
+        ctx.fillRect(x, 0, 1, height);
+      }
+      for (let y = 0; y < height; y += 36) {
+        ctx.fillRect(0, y, width, 1);
+      }
     }
 
-    // Outer double border
+    // ── 2. SACRED CHI-RHO WATERMARK (CENTER BACKGROUND) ──
+    ctx.save();
+    ctx.font = 'bold 360px "Times New Roman", serif';
+    ctx.fillStyle = 'rgba(245, 158, 11, 0.055)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('☧', width / 2, height / 2 + 10);
+    ctx.restore();
+
+    // ── 3. DOUBLE PHỤNG VỤ BORDER & ORNATE CORNERS ──
+    // Outer border
     ctx.strokeStyle = currentTheme.border;
-    ctx.lineWidth = 14;
-    ctx.strokeRect(30, 30, width - 60, height - 60);
+    ctx.lineWidth = 12;
+    ctx.strokeRect(28, 28, width - 56, height - 56);
 
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(48, 48, width - 96, height - 96);
+    // Inner hairline border
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(44, 44, width - 88, height - 88);
 
     // Ornate Corners
-    const cornerSize = 40;
+    const cornerSize = 44;
     ctx.strokeStyle = currentTheme.accent;
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 3.5;
 
     // Top-left
     ctx.beginPath();
-    ctx.moveTo(35, 35 + cornerSize);
-    ctx.lineTo(35, 35);
-    ctx.lineTo(35 + cornerSize, 35);
+    ctx.moveTo(34, 34 + cornerSize);
+    ctx.lineTo(34, 34);
+    ctx.lineTo(34 + cornerSize, 34);
     ctx.stroke();
 
     // Top-right
     ctx.beginPath();
-    ctx.moveTo(width - 35 - cornerSize, 35);
-    ctx.lineTo(width - 35, 35);
-    ctx.lineTo(width - 35, 35 + cornerSize);
+    ctx.moveTo(width - 34 - cornerSize, 34);
+    ctx.lineTo(width - 34, 34);
+    ctx.lineTo(width - 34, 34 + cornerSize);
     ctx.stroke();
 
     // Bottom-left
     ctx.beginPath();
-    ctx.moveTo(35, height - 35 - cornerSize);
-    ctx.lineTo(35, height - 35);
-    ctx.lineTo(35 + cornerSize, height - 35);
+    ctx.moveTo(34, height - 34 - cornerSize);
+    ctx.lineTo(34, height - 34);
+    ctx.lineTo(34 + cornerSize, height - 34);
     ctx.stroke();
 
     // Bottom-right
     ctx.beginPath();
-    ctx.moveTo(width - 35 - cornerSize, height - 35);
-    ctx.lineTo(width - 35, height - 35);
-    ctx.lineTo(width - 35, height - 35 - cornerSize);
+    ctx.moveTo(width - 34 - cornerSize, height - 34);
+    ctx.lineTo(width - 34, height - 34);
+    ctx.lineTo(width - 34, height - 34 - cornerSize);
     ctx.stroke();
 
-    // Top Brand & Category Header
-    const topY = aspectRatio === '9:16' ? 180 : 120;
+    // ── 4. HEADER: OFFICIAL WEBSITE LOGO & CATEGORY PILL ──
+    const topY = aspectRatio === '9:16' ? 160 : (aspectRatio === '16:9' ? 90 : 110);
+    const logoImg = loadedLogoImageRef.current;
+
+    if (logoImg && logoImg.complete && logoImg.naturalWidth > 0) {
+      // Draw official logo image
+      const logoW = 200;
+      const logoH = (logoW / logoImg.naturalWidth) * logoImg.naturalHeight;
+      ctx.drawImage(logoImg, width / 2 - logoW / 2, topY - 35, logoW, logoH);
+    } else {
+      // Sacred Cross Insignia Fallback
+      ctx.font = 'bold 36px serif';
+      ctx.fillStyle = currentTheme.accent;
+      ctx.textAlign = 'center';
+      ctx.fillText('☩', width / 2, topY - 20);
+
+      ctx.font = 'bold 24px serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.fillText('VERIDU', width / 2, topY + 14);
+    }
+
+    // Category Pill
+    const catY = topY + 45;
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillStyle = currentTheme.accent;
     ctx.textAlign = 'center';
-
-    // Cross icon
-    ctx.font = 'bold 36px serif';
-    ctx.fillStyle = currentTheme.accent;
-    ctx.fillText('☩', width / 2, topY - 30);
-
-    // Brand Name
-    ctx.font = 'bold 26px serif';
-    ctx.fillStyle = '#ffffff';
-    ctx.letterSpacing = '4px';
-    ctx.fillText('VERIDU', width / 2, topY + 10);
-
-    // Category Tag
-    ctx.font = '500 16px sans-serif';
-    ctx.fillStyle = currentTheme.accent;
-    ctx.fillText((category || 'THÁNH KINH & THẦN HỌC').toUpperCase(), width / 2, topY + 42);
+    ctx.fillText((category || 'THÁNH KINH & LINH ĐẠO').toUpperCase(), width / 2, catY);
 
     // Header Divider Line
     ctx.beginPath();
     ctx.strokeStyle = currentTheme.border;
-    ctx.lineWidth = 2;
-    ctx.moveTo(width / 2 - 120, topY + 65);
-    ctx.lineTo(width / 2 + 120, topY + 65);
+    ctx.lineWidth = 1.5;
+    ctx.moveTo(width / 2 - 140, catY + 18);
+    ctx.lineTo(width / 2 + 140, catY + 18);
     ctx.stroke();
 
-    // Center Quote Text
-    const centerY = height / 2;
-    const maxTextWidth = width - 220;
-    const fontSize = aspectRatio === '16:9' ? 36 : (aspectRatio === '9:16' ? 44 : 40);
-    ctx.font = 'italic ' + fontSize + 'px "Lora", "Merriweather", "Times New Roman", serif';
+    // ── 5. CENTER QUOTE TEXT (ELEGANT SERIF & PROPORTIONAL) ──
+    const maxTextWidth = width - 240;
+    const quoteFontSize = aspectRatio === '16:9' ? 34 : (aspectRatio === '9:16' ? 42 : 38);
+    ctx.font = 'italic ' + quoteFontSize + 'px "Lora", "Merriweather", "Times New Roman", serif';
     ctx.fillStyle = '#f8fafc';
     ctx.textAlign = 'center';
 
-    // Word wrapping function
-    const words = quote.split(' ');
-    let lines: string[] = [];
-    let currentLine = '';
-
-    for (const word of words) {
-      const testLine = currentLine ? (currentLine + ' ' + word) : word;
-      const metrics = ctx.measureText(testLine);
-      if (metrics.width > maxTextWidth && currentLine) {
-        lines.push(currentLine);
-        currentLine = word;
-      } else {
-        currentLine = testLine;
-      }
-    }
-    if (currentLine) lines.push(currentLine);
-
-    if (lines.length > 7) {
-      lines = lines.slice(0, 6);
-      lines[5] += '...';
+    let quoteLines = wrapText(ctx, quote, maxTextWidth);
+    if (quoteLines.length > 7) {
+      quoteLines = quoteLines.slice(0, 6);
+      quoteLines[5] += '...';
     }
 
-    const lineHeight = fontSize * 1.5;
-    const startQuoteY = centerY - ((lines.length * lineHeight) / 2) + 20;
+    const quoteLineHeight = quoteFontSize * 1.55;
+    const totalQuoteH = quoteLines.length * quoteLineHeight;
+    const centerY = height / 2 - 20;
+    const startQuoteY = centerY - (totalQuoteH / 2);
 
-    lines.forEach((line, index) => {
-      ctx.fillText(line, width / 2, startQuoteY + (index * lineHeight));
+    quoteLines.forEach((line, index) => {
+      ctx.fillText(line, width / 2, startQuoteY + (index * quoteLineHeight));
     });
 
-    // Reference Title & Author
-    const refY = startQuoteY + (lines.length * lineHeight) + 40;
-    ctx.font = 'bold 24px serif';
-    ctx.fillStyle = currentTheme.accent;
-    ctx.fillText('— ' + title + ' —', width / 2, refY);
+    // ── 6. REFERENCE / TITLE AUTO-WRAPPED (PREVENT OVERFLOW) ──
+    const maxTitleWidth = width - 260;
+    let titleFontSize = 24;
+    ctx.font = 'bold ' + titleFontSize + 'px "Lora", "Merriweather", serif';
+    let titleLines = wrapText(ctx, title, maxTitleWidth);
 
-    if (author && author !== title) {
-      ctx.font = '16px sans-serif';
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillText(author, width / 2, refY + 30);
+    // Auto-scale if title is long
+    if (titleLines.length > 2) {
+      titleFontSize = 20;
+      ctx.font = 'bold ' + titleFontSize + 'px "Lora", "Merriweather", serif';
+      titleLines = wrapText(ctx, title, maxTitleWidth);
     }
 
-    // Bottom Footer
+    const titleLineHeight = titleFontSize * 1.45;
+    const startTitleY = startQuoteY + totalQuoteH + 45;
+
+    ctx.fillStyle = currentTheme.accent;
+    ctx.textAlign = 'center';
+
+    if (titleLines.length === 1) {
+      ctx.fillText('— ' + titleLines[0] + ' —', width / 2, startTitleY);
+    } else {
+      titleLines.slice(0, 3).forEach((line, idx) => {
+        const textToDraw = idx === 0 ? ('— ' + line) : (idx === titleLines.length - 1 ? (line + ' —') : line);
+        ctx.fillText(textToDraw, width / 2, startTitleY + (idx * titleLineHeight));
+      });
+    }
+
+    // Author
+    const finalAuthorY = startTitleY + (Math.min(titleLines.length, 3) * titleLineHeight) + 14;
+    if (author && author !== title) {
+      ctx.font = '500 15px sans-serif';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText(author, width / 2, finalAuthorY);
+    }
+
+    // ── 7. FOOTER: THAPGIA.COM & SACRED COPYRIGHT ──
     const botY = height - (aspectRatio === '9:16' ? 140 : 80);
-    ctx.font = '14px sans-serif';
+
+    // Thin footer divider
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.lineWidth = 1;
+    ctx.moveTo(width / 2 - 180, botY - 32);
+    ctx.lineTo(width / 2 + 180, botY - 32);
+    ctx.stroke();
+
+    // Brand Link & Website
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillStyle = currentTheme.accent;
+    ctx.letterSpacing = '2px';
+    ctx.fillText('✦ THAPGIA.COM • VERIDU.NET ✦', width / 2, botY - 8);
+
+    // Subtitle
+    ctx.font = '12px sans-serif';
     ctx.fillStyle = '#64748b';
-    ctx.fillText('Nền tảng Thần học & Văn hóa Công giáo • thapgia.com', width / 2, botY);
-  };
+    ctx.letterSpacing = '0.5px';
+    ctx.fillText('Nền Tảng Thần Học & Văn Hóa Công Giáo', width / 2, botY + 16);
+  }, [aspectRatio, author, category, quote, theme, title, useBgImage]);
+
+  useEffect(() => {
+    if (isOpen) {
+      renderCard();
+    }
+  }, [isOpen, quote, title, author, aspectRatio, theme, useBgImage, renderCard]);
 
   const handleDownload = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const link = document.createElement('a');
-    link.download = 'VERIDU_TheAnh_' + Date.now() + '.png';
+    link.download = 'VERIDU_TheLoiChua_' + Date.now() + '.png';
     link.href = canvas.toDataURL('image/png');
     link.click();
   };
@@ -306,11 +439,11 @@ export default function QuoteCardModal({
           <div className="relative w-full h-full flex items-center justify-center">
             <canvas
               ref={canvasRef}
-              className="max-w-full max-h-[460px] object-contain rounded-xl shadow-2xl border border-amber-500/20"
+              className="max-w-full max-h-[460px] object-contain rounded-xl shadow-2xl border border-amber-500/25"
             />
           </div>
           <p className="text-[11px] text-[var(--text-muted)] mt-2 font-serif">
-            Xem trước ảnh xuất bản HD (1080p)
+            Ảnh xuất bản độ nét cao (HD 1080p) • Nền watermark Chi-Rho ☧
           </p>
         </div>
 
@@ -319,13 +452,36 @@ export default function QuoteCardModal({
           <div className="space-y-4">
             <div>
               <div className="flex items-center gap-2 text-amber-500 font-serif font-bold text-sm">
-                <Sparkles className="w-4 h-4" />
-                <span>Tạo Thẻ Ảnh Lời Chúa</span>
+                <BookOpen className="w-4 h-4" />
+                <span>Trích Xuất Thẻ Lời Chúa & Châm Ngôn</span>
               </div>
               <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                Chia sẻ Lời Chúa & Châm ngôn lên mạng xã hội
+                Chia sẻ Lời Chúa & tri thức lên mạng xã hội với phong cách Công giáo
               </p>
             </div>
+
+            {/* Background Image Toggle (if article image available) */}
+            {imageUrl && (
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="w-4 h-4 text-amber-400" />
+                  <span className="text-xs font-semibold text-[var(--text-main)]">Nền mờ ảnh bài viết</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUseBgImage(!useBgImage)}
+                  className={'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ' + (
+                    useBgImage ? 'bg-amber-500' : 'bg-slate-700'
+                  )}
+                >
+                  <span
+                    className={'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ' + (
+                      useBgImage ? 'translate-x-4' : 'translate-x-0'
+                    )}
+                  />
+                </button>
+              </div>
+            )}
 
             {/* Aspect Ratio Selector */}
             <div>
@@ -395,14 +551,14 @@ export default function QuoteCardModal({
             {/* Reference Title */}
             <div>
               <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-1.5">
-                Nguồn / Xuất Xứ
+                Nguồn / Tiêu Đề Bài Viết
               </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-2.5 py-1.5 text-xs text-[var(--text-main)] focus:outline-none focus:border-amber-500 font-serif"
-                placeholder="VD: Ga 8, 32"
+                placeholder="VD: Ga 8, 32 hoặc Tiêu đề bài viết..."
               />
             </div>
           </div>

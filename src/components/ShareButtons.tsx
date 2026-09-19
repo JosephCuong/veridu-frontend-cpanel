@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Link as LinkIcon, Share2, Check, Sparkles, Send } from 'lucide-react';
+import { Link as LinkIcon, Share2, Check, BookOpen, Send } from 'lucide-react';
 import QuoteCardModal from './QuoteCardModal';
 
 interface ShareButtonsProps {
@@ -10,9 +10,10 @@ interface ShareButtonsProps {
   quote?: string;
   category?: string;
   author?: string;
+  imageUrl?: string;
 }
 
-export default function ShareButtons({ url, title, quote, category, author }: ShareButtonsProps) {
+export default function ShareButtons({ url, title, quote, category, author, imageUrl }: ShareButtonsProps) {
   const [copied, setCopied] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
@@ -51,31 +52,31 @@ export default function ShareButtons({ url, title, quote, category, author }: Sh
   return (
     <>
       <aside
-        aria-label="Chia sẻ bài viết & tài liệu"
+        aria-label="Chia sẻ bài viết & tài liệu phụng vụ"
         style={{ contain: 'layout paint' }}
-        className={'fixed z-40 bottom-6 left-1/2 -translate-x-1/2 lg:bottom-1/2 lg:left-6 lg:translate-x-0 lg:-translate-y-1/2 transition-opacity duration-200 ease-out ' + (
+        className={'fixed z-40 transition-opacity duration-200 ease-out ' + (
           isSticky
             ? 'opacity-100 pointer-events-auto visible'
             : 'opacity-0 pointer-events-none invisible'
-        )}
+        ) + ' bottom-6 left-1/2 -translate-x-1/2 lg:bottom-auto lg:translate-x-0 lg:left-6 lg:top-[max(140px,calc(50vh-180px))]'}
       >
         <div className="flex lg:flex-col items-center gap-2 p-2 rounded-full bg-[var(--bg-card)]/95 border border-[var(--border-card)] shadow-2xl backdrop-blur-xl">
           <div
             className="w-10 h-10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-400 bg-slate-500/10 border border-slate-500/20 shrink-0"
-            title="Cổng chia sẻ đa kênh"
+            title="Cổng chia sẻ phụng vụ"
             aria-hidden="true"
           >
             <Share2 className="w-4 h-4" />
           </div>
 
-          {/* Trigger Quote Card Generator Modal */}
+          {/* Trigger Quote Card Generator Modal - Sacred BookOpen Icon */}
           <button
             onClick={() => setIsQuoteModalOpen(true)}
-            className={buttonClass + ' bg-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-slate-950 border-amber-500/40'}
-            title="Tạo thẻ ảnh Lời Chúa & Châm ngôn"
+            className={buttonClass + ' bg-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-slate-950 border-amber-500/40 shadow-amber-500/10'}
+            title="Trích xuất Thẻ Lời Chúa & Châm Ngôn (Sách Thánh Kinh)"
             aria-label="Tạo thẻ ảnh Lời Chúa"
           >
-            <Sparkles className="w-4 h-4" />
+            <BookOpen className="w-4 h-4" />
           </button>
 
           {/* Facebook */}
@@ -146,6 +147,7 @@ export default function ShareButtons({ url, title, quote, category, author }: Sh
         initialTitle={title}
         initialAuthor={author || 'Học Viện Thần Học VERIDU'}
         category={category || 'Thần Học & Thánh Kinh'}
+        imageUrl={imageUrl}
       />
     </>
   );

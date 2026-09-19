@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
-  Megaphone, Share2, Copy, Check, ExternalLink, Sparkles, 
+  Megaphone, Share2, Copy, Check, ExternalLink, BookOpen, 
   Send, MessageCircle, Mail, Globe, Layers, ArrowLeft, RefreshCw,
   Search, CheckCircle2, Bookmark, Flame
 } from 'lucide-react';
@@ -18,6 +18,8 @@ interface PostItem {
   category: string;
   author_name?: string;
   created_at?: string;
+  thumbnail?: string;
+  featured_image?: string;
 }
 
 type Channel = 'facebook' | 'zalo' | 'telegram' | 'email';
@@ -50,7 +52,7 @@ export default function SocialCampaignAdminPage() {
     try {
       const { data, error } = await supabase
         .from('posts')
-        .select('id, title, slug, excerpt, category, author_name, created_at')
+        .select('id, title, slug, excerpt, category, author_name, created_at, featured_image, thumbnail')
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -191,8 +193,8 @@ export default function SocialCampaignAdminPage() {
               onClick={() => setIsQuoteModalOpen(true)}
               className="px-4 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-500 text-xs font-serif font-bold transition-all flex items-center gap-2 cursor-pointer"
             >
-              <Sparkles className="w-4 h-4" />
-              <span>Tạo Thẻ Ảnh</span>
+              <BookOpen className="w-4 h-4" />
+              <span>Tạo Thẻ Ảnh Lời Chúa</span>
             </button>
             <button
               onClick={fetchPosts}
@@ -401,6 +403,7 @@ export default function SocialCampaignAdminPage() {
           initialTitle={cleanTitle}
           initialAuthor={author}
           category={category}
+          imageUrl={selectedPost.thumbnail || selectedPost.featured_image}
         />
       )}
 

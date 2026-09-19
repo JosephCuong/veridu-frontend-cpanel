@@ -383,6 +383,7 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
         quote={article.excerpt ? article.excerpt.replace(/<[^>]+>/g, '').substring(0, 180) : cleanTitle}
         category={article.category || 'Thần Học & Thánh Kinh'}
         author={authorProfile.christian_name ? `${authorProfile.christian_name} ${authorProfile.full_name}` : (article.author_name || article.author || 'Ban Học Vụ VERIDU')}
+        imageUrl={coverImage || defaultImage}
       />
       <AdminEditFloatingButton articleId={article.id} />
     </div>
