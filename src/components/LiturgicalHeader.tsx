@@ -9,7 +9,7 @@ import { calculateLevelInfo } from '@/lib/gamification';
 import { 
   Flame, Moon, Sun, Menu, X, User, LogOut, LogIn, ChevronDown, 
   BookOpen, MapPin, Clock, Users, FileText, Library, Award, Shield, Cross, Sparkles,
-  Zap, Droplets, Settings, Gamepad2, Scroll, MoreHorizontal, Feather, ClipboardList, Scale, PenTool
+  Zap, Droplets, Settings, Gamepad2, Scroll, MoreHorizontal, Feather, ClipboardList, Scale, PenTool, Megaphone
 } from 'lucide-react';
 
 export default function LiturgicalHeader() {
@@ -275,6 +275,18 @@ export default function LiturgicalHeader() {
           >
             <FileText className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
             <span>Phòng Soạn Thảo</span>
+          </Link>
+        )}
+
+        {/* 5. Chiến Dịch Quảng Bá (Admin) */}
+        {isAdmin && (
+          <Link 
+            href="/admin/quang-ba" 
+            onClick={() => setIsUserMenuOpen(false)}
+            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-amber-400 hover:bg-amber-500/15 transition-colors group cursor-pointer"
+          >
+            <Megaphone className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+            <span>Chiến Dịch Quảng Bá</span>
           </Link>
         )}
 
@@ -1324,6 +1336,11 @@ export default function LiturgicalHeader() {
                 {isAdmin && (
                   <Link href="/soan-bai" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-xs font-bold text-amber-400 hover:text-amber-300">
                     <PenTool className="w-4 h-4 text-amber-400" /> Phòng Soạn Thảo
+                  </Link>
+                )}
+                {isAdmin && (
+                  <Link href="/admin/quang-ba" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-xs font-bold text-amber-400 hover:text-amber-300">
+                    <Megaphone className="w-4 h-4 text-amber-400" /> Chiến Dịch Quảng Bá
                   </Link>
                 )}
                 <button type="button" onClick={() => { setIsMobileMenuOpen(false); logout(); }} className="w-full text-left flex items-center gap-2 py-2 text-xs font-bold text-red-400 cursor-pointer">

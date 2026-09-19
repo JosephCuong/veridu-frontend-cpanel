@@ -43,9 +43,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return { title: 'Không tìm thấy bài viết | VERIDU' };
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thapgia.com';
   const defaultTitle = typeof article.title === 'string' ? article.title.replace(/<[^>]+>/g, '') : 'Bài Viết VERIDU';
   const defaultDesc = article.excerpt ? article.excerpt.replace(/<[^>]+>/g, '').substring(0, 160) : 'Khám phá thư viện tài liệu Công giáo trên VERIDU.';
-  const defaultImage = article.thumbnail || article.featured_image || 'https://www.thapgia.com/default-og-image.jpg';
+  const ogDynamicUrl = `${siteUrl}/api/og?title=${encodeURIComponent(defaultTitle)}&category=${encodeURIComponent(article.category || 'Thần Học & Thánh Kinh')}&author=${encodeURIComponent(article.author_name || article.author || 'Ban Học Vụ VERIDU')}`;
+  const defaultImage = (article.thumbnail && !article.thumbnail.includes('default-og-image')) ? article.thumbnail : ((article.featured_image && !article.featured_image.includes('default-og-image')) ? article.featured_image : ogDynamicUrl);
 
   const seo = article.seo || {};
 
@@ -202,7 +204,8 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
   const articleUrl = `https://www.thapgia.com/${resolvedParams.slug}`;
   const cleanTitle = titleText.replace(/<[^>]+>/g, '');
   const defaultDesc = article.excerpt ? article.excerpt.replace(/<[^>]+>/g, '').substring(0, 160) : 'Khám phá thư viện tài liệu Công giáo trên VERIDU.';
-  const defaultImage = article.thumbnail || article.featured_image || 'https://www.thapgia.com/default-og-image.jpg';
+  const ogDynamicUrl = `https://www.thapgia.com/api/og?title=${encodeURIComponent(cleanTitle)}&category=${encodeURIComponent(article.category || 'Thần Học & Thánh Kinh')}&author=${encodeURIComponent(article.author_name || article.author || 'Ban Học Vụ VERIDU')}`;
+  const defaultImage = (article.thumbnail && !article.thumbnail.includes('default-og-image')) ? article.thumbnail : ((article.featured_image && !article.featured_image.includes('default-og-image')) ? article.featured_image : ogDynamicUrl);
 
   // Structured Data (JSON-LD) for Article & Breadcrumb
   const articleJsonLd = {
@@ -374,7 +377,13 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
         </div>
       </div>
 
-      <ShareButtons url={articleUrl} title={cleanTitle} />
+      <ShareButtons 
+        url={articleUrl} 
+        title={cleanTitle} 
+        quote={article.excerpt ? article.excerpt.replace(/<[^>]+>/g, '').substring(0, 180) : cleanTitle}
+        category={article.category || 'Thần Học & Thánh Kinh'}
+        author={authorProfile.christian_name ? `${authorProfile.christian_name} ${authorProfile.full_name}` : (article.author_name || article.author || 'Ban Học Vụ VERIDU')}
+      />
       <AdminEditFloatingButton articleId={article.id} />
     </div>
   );

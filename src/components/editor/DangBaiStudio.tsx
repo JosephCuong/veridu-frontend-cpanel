@@ -408,8 +408,16 @@ function DangBaiContent() {
           }
         } else if (typeof cur === 'object' && cur !== null) {
           if (Array.isArray(cur.locations)) existingLocs = cur.locations;
+          else if (Array.isArray(cur.places)) existingLocs = cur.places;
+          else if (Array.isArray(cur.map_locations)) existingLocs = cur.map_locations;
+          else if (Array.isArray(cur.points_of_interest)) existingLocs = cur.points_of_interest;
+          else if (Array.isArray(cur.poi)) existingLocs = cur.poi;
+          else if (Array.isArray(cur.markers)) existingLocs = cur.markers;
+
           if (Array.isArray(cur.timeline_events)) existingEvts = cur.timeline_events;
           else if (Array.isArray(cur.events)) existingEvts = cur.events;
+          else if (Array.isArray(cur.timeline)) existingEvts = cur.timeline;
+          else if (Array.isArray(cur.timeline_items)) existingEvts = cur.timeline_items;
         }
       } catch {}
     }
@@ -493,10 +501,15 @@ function DangBaiContent() {
         if (Array.isArray(parsed.locations)) incomingLocs = parsed.locations;
         else if (Array.isArray(parsed.places)) incomingLocs = parsed.places;
         else if (Array.isArray(parsed.map_locations)) incomingLocs = parsed.map_locations;
+        else if (Array.isArray(parsed.points_of_interest)) incomingLocs = parsed.points_of_interest;
+        else if (Array.isArray(parsed.poi)) incomingLocs = parsed.poi;
+        else if (Array.isArray(parsed.markers)) incomingLocs = parsed.markers;
+        else if (Array.isArray(parsed.points)) incomingLocs = parsed.points;
 
         if (Array.isArray(parsed.timeline_events)) incomingEvts = parsed.timeline_events;
         else if (Array.isArray(parsed.events)) incomingEvts = parsed.events;
         else if (Array.isArray(parsed.timeline)) incomingEvts = parsed.timeline;
+        else if (Array.isArray(parsed.timeline_items)) incomingEvts = parsed.timeline_items;
       }
     }
 
@@ -519,10 +532,10 @@ function DangBaiContent() {
         name,
         latitude: lat,
         longitude: lng,
-        description: raw.description || raw.summary || '',
-        scripture_or_history: raw.scripture_or_history || (Array.isArray(raw.biblical_references) ? raw.biblical_references.join(', ') : (raw.biblical_references || '')),
+        description: raw.description || raw.summary || raw.historical_notes || raw.notes || '',
+        scripture_or_history: raw.scripture_or_history || (Array.isArray(raw.biblical_references) ? raw.biblical_references.join(', ') : (Array.isArray(raw.bible_references) ? raw.bible_references.join(', ') : (raw.biblical_references || raw.bible_references || ''))),
         ancient_name: raw.ancient_name || raw.name_original || '',
-        historical_period: raw.historical_period || raw.period || raw.era || ''
+        historical_period: raw.historical_period || raw.period || raw.era || raw.territory || raw.category || ''
       };
       finalLocsMap.set(name.toLowerCase(), normLoc);
     });
@@ -539,14 +552,22 @@ function DangBaiContent() {
     }
     sourceEvts.forEach(raw => {
       if (!raw) return;
-      const yr = typeof raw.year_bce_ce === 'number' ? raw.year_bce_ce : typeof raw.order_year === 'number' ? raw.order_year : typeof raw.year === 'number' ? raw.year : 0;
+      const yr = typeof raw.year_bce_ce === 'number' 
+        ? raw.year_bce_ce 
+        : typeof raw.year_bce === 'number' 
+          ? -Math.abs(raw.year_bce) 
+          : typeof raw.order_year === 'number' 
+            ? raw.order_year 
+            : typeof raw.year === 'number' 
+              ? raw.year 
+              : 0;
       const title = (raw.event_title || raw.title || 'Sự kiện').trim();
       const normEvt = {
         year_bce_ce: yr,
         event_title: title,
-        period: raw.period || raw.era_name || '',
+        period: raw.period || raw.era_name || raw.category || '',
         display_date: raw.display_date || raw.year_label || (yr < 0 ? `${Math.abs(yr)} TCN` : `${yr} SCN`),
-        description: raw.description || raw.archaeological_anchor || '',
+        description: raw.description || raw.archaeological_anchor || raw.summary || '',
         significance: raw.significance || raw.theology || raw.summary || ''
       };
       const key = `${yr}_${title.toLowerCase()}`;

@@ -112,9 +112,9 @@ export async function POST(request: Request) {
             ? [rawLoc.scripture_or_history] 
             : [];
 
-      const description = rawLoc.description || rawLoc.summary || '';
+      const description = rawLoc.description || rawLoc.summary || rawLoc.historical_notes || rawLoc.notes || '';
       const ancientName = rawLoc.ancient_name || rawLoc.name_original || '';
-      const historicalPeriod = rawLoc.historical_period || rawLoc.period || rawLoc.era || '';
+      const historicalPeriod = rawLoc.historical_period || rawLoc.period || rawLoc.era || rawLoc.territory || rawLoc.category || '';
       const archEvidence = rawLoc.archaeological_evidence || rawLoc.archaeology || '';
 
       // Tìm xem địa danh đã tồn tại chưa:
@@ -219,11 +219,13 @@ export async function POST(request: Request) {
       const title = rawEvt.event_title || rawEvt.title;
       const year = typeof rawEvt.year_bce_ce === 'number' 
         ? rawEvt.year_bce_ce 
-        : typeof rawEvt.order_year === 'number' 
-          ? rawEvt.order_year 
-          : typeof rawEvt.year === 'number' 
-            ? rawEvt.year 
-            : undefined;
+        : typeof rawEvt.year_bce === 'number'
+          ? -Math.abs(rawEvt.year_bce)
+          : typeof rawEvt.order_year === 'number' 
+            ? rawEvt.order_year 
+            : typeof rawEvt.year === 'number' 
+              ? rawEvt.year 
+              : undefined;
 
       if (!title || typeof year !== 'number' || isNaN(year)) {
         continue;

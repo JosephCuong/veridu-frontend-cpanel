@@ -93,6 +93,27 @@ function LoginFormContent() {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    setErrorMsg('');
+    try {
+      const redirectUrl = `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTarget)}`;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl
+        }
+      });
+      if (error) {
+        setErrorMsg('Lỗi khởi động đăng nhập Google: ' + error.message);
+        setIsLoading(false);
+      }
+    } catch (err: any) {
+      setErrorMsg('Không thể kết nối dịch vụ Google: ' + (err.message || 'Lỗi'));
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 relative overflow-hidden pt-24 sm:pt-28 md:pt-36 pb-16">
       <main className="max-w-md mx-auto px-4 relative z-10 flex flex-col justify-center">
@@ -173,7 +194,7 @@ function LoginFormContent() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-serif font-bold text-sm shadow-xl shadow-amber-600/20 transition-all flex items-center justify-center space-x-2 disabled:opacity-50 active:scale-[0.98]"
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-serif font-bold text-sm shadow-xl shadow-amber-600/20 transition-all flex items-center justify-center space-x-2 disabled:opacity-50 active:scale-[0.98] cursor-pointer"
             >
               {isLoading ? (
                 <>
@@ -188,6 +209,34 @@ function LoginFormContent() {
               )}
             </button>
           </form>
+
+          {/* Divider */}
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-[var(--border-card)]"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase font-serif">
+              <span className="bg-[var(--bg-card)] px-3 text-[var(--text-muted)] font-bold">
+                Hoặc
+              </span>
+            </div>
+          </div>
+
+          {/* Google Sign-in Button */}
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
+            className="w-full py-3 px-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-900 font-serif font-bold text-xs border border-slate-300 dark:border-slate-700 shadow-md transition-all flex items-center justify-center space-x-3 active:scale-[0.98] cursor-pointer disabled:opacity-50"
+          >
+            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+              <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/>
+              <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/>
+              <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15s.7 5.3 1.9 7.7l3.7-2.9z"/>
+              <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.8-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"/>
+            </svg>
+            <span>Đăng Nhập Nhanh Bằng Google</span>
+          </button>
 
           <div className="pt-4 text-center border-t border-[var(--border-card)] text-xs text-[var(--text-muted)] font-serif space-y-2">
             <div>

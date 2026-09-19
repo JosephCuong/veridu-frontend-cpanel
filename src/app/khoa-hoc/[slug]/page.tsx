@@ -20,6 +20,7 @@ import {
 } from '@/lib/api';
 import { getStoredUser, UserProfile } from '@/lib/auth';
 import CourseCertificateModal, { CertificateData } from '@/components/CourseCertificateModal';
+import ShareButtons from '@/components/ShareButtons';
 
 // ─── HELPER: MULTI-SOURCE VIDEO & MEDIA EMBED RESOLVER ───────────────────────
 function resolveMediaEmbedUrl(url?: string): { 
@@ -1016,6 +1017,17 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
         <CourseCertificateModal
           certificate={certificateData}
           onClose={() => setShowCertificate(false)}
+        />
+      )}
+
+      {/* ── 4. SOCIAL SHARE & QUOTE CARD GENERATOR ── */}
+      {course && (
+        <ShareButtons
+          url={typeof window !== 'undefined' ? window.location.href : `https://www.thapgia.com/khoa-hoc/${course.slug}`}
+          title={course.title}
+          quote={course.description || course.title}
+          category="Khóa Học Thần Học"
+          author={course.instructor || 'Học Viện Thần Học VERIDU'}
         />
       )}
 

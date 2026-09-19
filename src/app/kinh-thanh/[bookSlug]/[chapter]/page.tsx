@@ -5,6 +5,7 @@ import { fetchBibleChapter, fetchBibleMetadata } from '@/lib/api';
 import { getCanonicalBookSlug } from '@/lib/bibleData';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import ShareButtons from '@/components/ShareButtons';
 
 export const revalidate = 86400; // 24 hours Edge CDN cache for Holy Scripture
 
@@ -44,7 +45,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       type: 'article',
       images: [
         {
-          url: 'https://images.unsplash.com/photo-1548625361-9c8eb25c56df?q=80&w=1200&auto=format&fit=crop',
+          url: `https://www.thapgia.com/api/og?title=${encodeURIComponent(`Sách ${book.nameVi} — Chương ${chapterNumber}`)}&category=${encodeURIComponent('Kinh Thánh Trọn Bộ')}&author=${encodeURIComponent('Lời Chúa Hằng Ngày')}`,
           width: 1200,
           height: 630,
           alt: `Kinh Thánh - Sách ${book.nameVi}`,
@@ -149,6 +150,15 @@ export default async function KinhThanhPage({ params, searchParams }: PageProps)
           </div>
         )}
       </main>
+
+      {/* Cổng chia sẻ & Tạo thẻ ảnh Lời Chúa */}
+      <ShareButtons
+        url={pageUrl}
+        title={`Sách ${bookNameVi} - Chương ${chapterNumber}`}
+        quote={data?.verses?.[0]?.content ? `„${data.verses[0].content}”` : `Sách ${bookNameVi}, Chương ${chapterNumber}`}
+        category="Thánh Kinh Trọn Bộ"
+        author={`Bản dịch ${translationSlug.toUpperCase()}`}
+      />
     </div>
   );
 }
