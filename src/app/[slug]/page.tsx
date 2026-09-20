@@ -264,8 +264,8 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
   };
 
 
-  // Extract biblical/theological quotes and content images for QuoteCardModal
-  const { quotes: extractedQuotes, images: extractedImages } = extractQuotesAndImagesFromHtml(htmlContent, {
+  // Extract sacred scripture block and content images for QuoteCardModal
+  const { sacredScripture, images: extractedImages } = extractQuotesAndImagesFromHtml(htmlContent, {
     title: cleanTitle,
     featured_image: coverImage || defaultImage,
     thumbnail: article.thumbnail,
@@ -308,12 +308,12 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
         <ShareButtons 
           url={articleUrl} 
           title={cleanTitle} 
-          quote={article.excerpt ? article.excerpt.replace(/<[^>]+>/g, '').substring(0, 180) : cleanTitle}
+          quote={sacredScripture.quote}
+          quoteSource={sacredScripture.source}
           category={article.category || 'Thần Học & Thánh Kinh'}
           author={authorProfile.christian_name ? `${authorProfile.christian_name} ${authorProfile.full_name}` : (article.author_name || article.author || 'Ban Học Vụ VERIDU')}
           imageUrl={coverImage || defaultImage}
           availableImages={extractedImages}
-          extractedQuotes={extractedQuotes}
         />
       </main>
     );
@@ -398,12 +398,12 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
       <ShareButtons 
         url={articleUrl} 
         title={cleanTitle} 
-        quote={article.excerpt ? article.excerpt.replace(/<[^>]+>/g, '').substring(0, 180) : cleanTitle}
+        quote={sacredScripture.quote}
+        quoteSource={sacredScripture.source}
         category={article.category || 'Thần Học & Thánh Kinh'}
         author={authorProfile.christian_name ? `${authorProfile.christian_name} ${authorProfile.full_name}` : (article.author_name || article.author || 'Ban Học Vụ VERIDU')}
         imageUrl={coverImage || defaultImage}
         availableImages={extractedImages}
-        extractedQuotes={extractedQuotes}
       />
       <AdminEditFloatingButton articleId={article.id} />
     </div>

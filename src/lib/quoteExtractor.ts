@@ -1,21 +1,21 @@
 /**
- * Utility: Quote & Image Extractor for VERIDU Catholic Articles
- * Tự động trích xuất các câu Lời Chúa, trích dẫn thần học và hình ảnh từ bài viết
- * phục vụ tính năng tạo Thẻ Ảnh Lời Chúa (Quote Card Generator).
+ * Utility: Sacred Scripture Block & Image Extractor for VERIDU
+ * Bắt chính xác duy nhất Khối Lời Chúa Soi Đường chuẩn HTML (.sacred-scripture / .veridu-scripture-quote)
+ * trong 9 khối chuẩn của VERIDU. Nếu không có khối này, để trống hoàn toàn để người dùng tự do nhập liệu.
  */
 
-export interface ExtractedQuote {
-  text: string;
+export interface SacredScriptureData {
+  quote: string;
   source: string;
 }
 
 export interface ExtractedArticleMedia {
-  quotes: ExtractedQuote[];
+  sacredScripture: SacredScriptureData;
   images: string[];
 }
 
 /**
- * Trích xuất các câu trích dẫn và hình ảnh từ chuỗi HTML bài viết (Server & Client)
+ * Trích xuất Khối Lời Chúa chuẩn và danh sách hình ảnh từ chuỗi HTML bài viết (Server-side)
  */
 export function extractQuotesAndImagesFromHtml(
   htmlContent: string = '',
@@ -26,12 +26,10 @@ export function extractQuotesAndImagesFromHtml(
     excerpt?: string;
   }
 ): ExtractedArticleMedia {
-  const quotes: ExtractedQuote[] = [];
   const images: string[] = [];
-  const seenQuotes = new Set<string>();
   const seenImages = new Set<string>();
 
-  // 1. Thu thập hình ảnh tiêu biểu
+  // 1. Thu thập hình ảnh bìa và hình ảnh trong bài viết
   if (metadata?.featured_image && isValidImageUrl(metadata.featured_image)) {
     images.push(metadata.featured_image);
     seenImages.add(metadata.featured_image);
@@ -52,101 +50,76 @@ export function extractQuotesAndImagesFromHtml(
     }
   }
 
-  // 2. Trích xuất các khối <blockquote> (thường là câu Lời Chúa hoặc trích dẫn Giáo phụ quan trọng)
-  const blockquoteRegex = /<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi;
-  let bqMatch;
-  while ((bqMatch = blockquoteRegex.exec(htmlContent)) !== null) {
-    const rawInner = bqMatch[1];
-    // Tìm cite nếu có
-    const citeMatch = rawInner.match(/<cite[^>]*>([\s\S]*?)<\/cite>/i);
-    let source = citeMatch ? cleanHtmlText(citeMatch[1]) : (metadata?.title || 'Trích đoạn bài viết');
-    const cleanContent = cleanHtmlText(rawInner.replace(/<cite[^>]*>[\s\S]*?<\/cite>/gi, ''));
+  // 2. Bắt DUY NHẤT Khối Lời Chúa Soi Đường (.sacred-scripture hoặc .veridu-scripture-quote)
+  // Chỉ lấy khối đầu tiên tìm thấy trong bài viết
+  let sacredScripture: SacredScriptureData = { quote: '', source: '' };
 
-    if (cleanContent.length >= 15 && cleanContent.length <= 450) {
-      const quoteText = formatAsCatholicQuote(cleanContent);
-      const key = quoteText.substring(0, 50);
-      if (!seenQuotes.has(key)) {
-        seenQuotes.add(key);
-        quotes.push({
-          text: quoteText,
-          source: source
-        });
+  const blockRegex = /<div[^>]*class=["'][^"']*(?:sacred-scripture|veridu-scripture-quote)[^"']*["'][^>]*>([\s\S]*?)<\/div>/i;
+  const blockMatch = blockRegex.exec(htmlContent);
+
+  if (blockMatch) {
+    const blockInner = blockMatch[1];
+
+    // Trích xuất câu Kinh Thánh từ <blockquote class="scripture-verse"> hoặc <blockquote>
+    const verseRegex = /<blockquote[^>]*class=["'][^"']*scripture-verse[^"']*["'][^>]*>([\s\S]*?)<\/blockquote>/i;
+    const fallbackVerseRegex = /<blockquote[^>]*>([\s\S]*?)<\/blockquote>/i;
+    const vMatch = verseRegex.exec(blockInner) || fallbackVerseRegex.exec(blockInner);
+
+    if (vMatch) {
+      const cleanVerse = cleanHtmlText(vMatch[1]);
+      if (cleanVerse) {
+        sacredScripture.quote = formatAsCatholicQuote(cleanVerse);
       }
     }
-  }
 
-  // 3. Trích xuất các câu trong dấu ngoặc kép Công giáo: „...“ hoặc “...” hoặc "..."
-  const quoteMarkRegex = /[„"“]([^"”\n]{25,280})["”]/g;
-  let qmMatch;
-  while ((qmMatch = quoteMarkRegex.exec(htmlContent)) !== null) {
-    const rawQuote = cleanHtmlText(qmMatch[1]);
-    if (rawQuote.length >= 25) {
-      const formatted = formatAsCatholicQuote(rawQuote);
-      const key = formatted.substring(0, 50);
-      if (!seenQuotes.has(key)) {
-        seenQuotes.add(key);
-        quotes.push({
-          text: formatted,
-          source: metadata?.title || 'Lời Chúa & Châm ngôn'
-        });
-      }
+    // Trích xuất dẫn chứng từ scripture-ref-link hoặc data-raw-ref
+    const refDataRegex = /<a[^>]*data-raw-ref=["']([^"']+)["']/i;
+    const refLinkRegex = /<[a-z0-9]+[^>]*class=["'][^"']*scripture-ref-link[^"']*["'][^>]*>([\s\S]*?)<\/[a-z0-9]+>/i;
+    const citationRegex = /<p[^>]*class=["'][^"']*scripture-citation[^"']*["'][^>]*>([\s\S]*?)<\/p>/i;
+
+    const dataRefMatch = refDataRegex.exec(blockInner);
+    const linkMatch = refLinkRegex.exec(blockInner);
+    const citeMatch = citationRegex.exec(blockInner);
+
+    let rawRef = '';
+    if (dataRefMatch) {
+      rawRef = cleanHtmlText(dataRefMatch[1]);
+    } else if (linkMatch) {
+      // Loại bỏ mũi tên ↗ nếu có
+      rawRef = cleanHtmlText(linkMatch[1]).replace(/[↗\s]+$/g, '').trim();
+    }
+
+    let rawCitation = citeMatch ? cleanHtmlText(citeMatch[1]).replace(/^[—\-\s]+|[—\-\s]+$/g, '').trim() : '';
+
+    if (rawRef && rawCitation) {
+      sacredScripture.source = `${rawRef} • ${rawCitation}`;
+    } else if (rawRef) {
+      sacredScripture.source = rawRef;
+    } else if (rawCitation) {
+      sacredScripture.source = rawCitation;
     }
   }
 
-  // 4. Trích xuất các câu có dẫn chứng Kinh Thánh: (Ga 8, 32), (Mt 5, 3-12), (Tv 23, 1), etc.
-  const scriptureSentenceRegex = /([^.?!;:\n]{15,260}?\((?:[1-3]\s+)?[A-ZÀ-Ỹa-zà-ỹ]{1,8}\s+\d+[^)]*\))/gi;
-  let scMatch;
-  while ((scMatch = scriptureSentenceRegex.exec(htmlContent)) !== null) {
-    const rawSentence = cleanHtmlText(scMatch[1]);
-    const citeExtract = rawSentence.match(/\(([^)]+)\)$/);
-    if (citeExtract) {
-      const citation = citeExtract[1].trim();
-      const verseText = rawSentence.replace(/\([^)]+\)$/, '').trim();
-      if (verseText.length >= 18) {
-        const formatted = formatAsCatholicQuote(verseText);
-        const key = formatted.substring(0, 50);
-        if (!seenQuotes.has(key)) {
-          seenQuotes.add(key);
-          quotes.push({
-            text: formatted,
-            source: citation
-          });
-        }
-      }
-    }
-  }
-
-  // 5. Nếu chưa có câu nào hoặc chỉ có 1 câu, thêm câu trích từ Excerpt hoặc Title
-  if (quotes.length === 0 && metadata?.excerpt) {
-    const cleanExcerpt = cleanHtmlText(metadata.excerpt);
-    if (cleanExcerpt.length >= 20) {
-      quotes.push({
-        text: formatAsCatholicQuote(cleanExcerpt.substring(0, 200) + (cleanExcerpt.length > 200 ? '...' : '')),
-        source: metadata.title || 'VERIDU'
-      });
-    }
-  }
-
-  return { quotes, images };
+  return { sacredScripture, images };
 }
 
 /**
- * Trích xuất từ cây DOM trên trình duyệt (dành cho Client Component khi bài viết đã được render)
+ * Trích xuất Khối Lời Chúa từ cây DOM trên trình duyệt (Client-side)
  */
 export function extractMediaFromLiveDom(): ExtractedArticleMedia {
   if (typeof window === 'undefined' || typeof document === 'undefined') {
-    return { quotes: [], images: [] };
+    return { sacredScripture: { quote: '', source: '' }, images: [] };
   }
 
-  const quotes: ExtractedQuote[] = [];
   const images: string[] = [];
-  const seenQuotes = new Set<string>();
   const seenImages = new Set<string>();
 
   const articleEl = document.querySelector('article') || document.querySelector('.article-content') || document.body;
-  if (!articleEl) return { quotes, images };
+  if (!articleEl) {
+    return { sacredScripture: { quote: '', source: '' }, images: [] };
+  }
 
-  // 1. Quét hình ảnh
+  // 1. Quét hình ảnh minh họa
   const imgEls = articleEl.querySelectorAll('img');
   imgEls.forEach(img => {
     const src = img.currentSrc || img.src;
@@ -156,41 +129,35 @@ export function extractMediaFromLiveDom(): ExtractedArticleMedia {
     }
   });
 
-  // 2. Quét blockquote
-  const bqEls = articleEl.querySelectorAll('blockquote');
-  bqEls.forEach(bq => {
-    const text = (bq.textContent || '').trim();
-    if (text.length >= 15 && text.length <= 400) {
-      const formatted = formatAsCatholicQuote(text);
-      const key = formatted.substring(0, 50);
-      if (!seenQuotes.has(key)) {
-        seenQuotes.add(key);
-        quotes.push({
-          text: formatted,
-          source: 'Trích dẫn bài viết'
-        });
+  // 2. Tìm chính xác Khối Lời Chúa đầu tiên trong DOM
+  const scriptureBlock = articleEl.querySelector('.sacred-scripture, .veridu-scripture-quote');
+  let sacredScripture: SacredScriptureData = { quote: '', source: '' };
+
+  if (scriptureBlock) {
+    const verseEl = scriptureBlock.querySelector('.scripture-verse') || scriptureBlock.querySelector('blockquote');
+    if (verseEl) {
+      const cleanText = (verseEl.textContent || '').trim();
+      if (cleanText) {
+        sacredScripture.quote = formatAsCatholicQuote(cleanText);
       }
     }
-  });
 
-  // 3. Quét các thẻ câu Kinh Thánh đặc thù nếu có (như class .verse hoặc [data-verse])
-  const verseEls = articleEl.querySelectorAll('.verse, [data-verse]');
-  verseEls.forEach(v => {
-    const text = (v.textContent || '').trim();
-    if (text.length >= 10 && text.length <= 350) {
-      const formatted = formatAsCatholicQuote(text);
-      const key = formatted.substring(0, 50);
-      if (!seenQuotes.has(key)) {
-        seenQuotes.add(key);
-        quotes.push({
-          text: formatted,
-          source: v.getAttribute('data-verse') || 'Kinh Thánh'
-        });
-      }
+    const refLinkEl = scriptureBlock.querySelector('.scripture-ref-link');
+    const citeEl = scriptureBlock.querySelector('.scripture-citation');
+
+    const rawRef = refLinkEl?.getAttribute('data-raw-ref') || (refLinkEl?.textContent || '').replace(/[↗\s]+$/g, '').trim();
+    const rawCite = (citeEl?.textContent || '').replace(/^[—\-\s]+|[—\-\s]+$/g, '').trim();
+
+    if (rawRef && rawCite) {
+      sacredScripture.source = `${rawRef} • ${rawCite}`;
+    } else if (rawRef) {
+      sacredScripture.source = rawRef;
+    } else if (rawCite) {
+      sacredScripture.source = rawCite;
     }
-  });
+  }
 
-  return { quotes, images };
+  return { sacredScripture, images };
 }
 
 /**

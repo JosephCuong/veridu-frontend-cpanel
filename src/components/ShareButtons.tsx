@@ -3,34 +3,31 @@
 import React, { useState, useEffect } from 'react';
 import { Link as LinkIcon, Share2, Check, BookOpen, Send } from 'lucide-react';
 import QuoteCardModal from './QuoteCardModal';
-import { ExtractedQuote } from '@/lib/quoteExtractor';
 
 interface ShareButtonsProps {
   url: string;
   title: string;
   quote?: string;
+  quoteSource?: string;
   category?: string;
   author?: string;
   imageUrl?: string;
   availableImages?: string[];
-  extractedQuotes?: ExtractedQuote[];
 }
 
 export default function ShareButtons({
   url,
   title,
-  quote,
+  quote = '',
+  quoteSource = '',
   category,
   author,
   imageUrl,
   availableImages = [],
-  extractedQuotes = [],
 }: ShareButtonsProps) {
   const [copied, setCopied] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
-  const [activeQuoteText, setActiveQuoteText] = useState<string>(quote || `„${title}”`);
-  const [activeQuoteSource, setActiveQuoteSource] = useState<string>(title);
 
   const encodedUrl = encodeURIComponent(url);
   const encodedTitle = encodeURIComponent(title);
@@ -50,23 +47,6 @@ export default function ShareButtons({
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  // When opening modal, check if user highlighted/selected any text in the article
-  const handleOpenQuoteCard = () => {
-    if (typeof window !== 'undefined') {
-      const selection = window.getSelection()?.toString().trim();
-      if (selection && selection.length > 5) {
-        // Clean and wrap selected text in Catholic quotation marks
-        const cleanSelection = selection.replace(/^[„"“«]+|[”"“»]+$/g, '').trim();
-        setActiveQuoteText(`„${cleanSelection}”`);
-        setActiveQuoteSource(title || 'Trích đoạn đã chọn');
-      } else {
-        setActiveQuoteText(quote || `„${title}”`);
-        setActiveQuoteSource(title);
-      }
-    }
-    setIsQuoteModalOpen(true);
-  };
 
   const handleCopyLink = async () => {
     try {
@@ -102,9 +82,9 @@ export default function ShareButtons({
 
           {/* Trigger Quote Card Generator Modal - Sacred BookOpen Icon */}
           <button
-            onClick={handleOpenQuoteCard}
+            onClick={() => setIsQuoteModalOpen(true)}
             className={buttonClass + ' bg-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-slate-950 border-amber-500/40 shadow-amber-500/10'}
-            title="Trích xuất Thẻ Lời Chúa & Châm Ngôn (Bôi đen văn bản để trích ngay)"
+            title="Trích xuất Thẻ Lời Chúa & Châm Ngôn"
             aria-label="Tạo thẻ ảnh Lời Chúa"
           >
             <BookOpen className="w-4 h-4" />
@@ -174,13 +154,12 @@ export default function ShareButtons({
       <QuoteCardModal
         isOpen={isQuoteModalOpen}
         onClose={() => setIsQuoteModalOpen(false)}
-        initialQuote={activeQuoteText}
-        initialTitle={activeQuoteSource}
+        initialQuote={quote}
+        initialTitle={quoteSource}
         initialAuthor={author || 'Học Viện Thần Học VERIDU'}
         category={category || 'Thần Học & Thánh Kinh'}
         imageUrl={imageUrl}
         availableImages={availableImages}
-        extractedQuotes={extractedQuotes}
       />
     </>
   );

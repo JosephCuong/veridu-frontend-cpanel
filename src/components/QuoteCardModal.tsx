@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Download, Copy, Check, BookOpen, Cross, Image as ImageIcon } from 'lucide-react';
-import { ExtractedQuote, extractMediaFromLiveDom } from '@/lib/quoteExtractor';
+import { X, Download, Copy, Check, BookOpen, Cross } from 'lucide-react';
+import { extractMediaFromLiveDom } from '@/lib/quoteExtractor';
 
 export interface QuoteCardModalProps {
   isOpen: boolean;
@@ -13,7 +13,6 @@ export interface QuoteCardModalProps {
   category?: string;
   imageUrl?: string;
   availableImages?: string[];
-  extractedQuotes?: ExtractedQuote[];
 }
 
 type AspectRatio = '1:1' | '9:16' | '16:9';
@@ -40,7 +39,7 @@ const THEMES: Record<ThemeMode, ThemeDef> = {
     bg1: '#05110d',
     bg2: '#0b261a',
     accent: '#10b981',
-    border: 'rgba(16, 185, 129, 0.45)',
+    border: 'rgba(168, 85, 247, 0.45)',
   },
   purple: {
     name: 'Tím Mùa Vọng & Chay',
@@ -104,13 +103,12 @@ function getSafeImageUrl(rawUrl: string): string {
 export default function QuoteCardModal({
   isOpen,
   onClose,
-  initialQuote = '„Lời Chúa là ngọn đèn soi cho con bước, là ánh sáng chỉ đường con đi.”',
-  initialTitle = 'Thánh Vịnh 119, 105',
+  initialQuote = '',
+  initialTitle = '',
   initialAuthor = 'Học Viện Thần Học VERIDU',
   category = 'Thánh Kinh & Thần Học',
   imageUrl,
   availableImages = [],
-  extractedQuotes = [],
 }: QuoteCardModalProps) {
   const [quote, setQuote] = useState(initialQuote);
   const [title, setTitle] = useState(initialTitle);
@@ -121,8 +119,6 @@ export default function QuoteCardModal({
   // Background selection: empty string means pure liturgical color gradient
   const [selectedBgUrl, setSelectedBgUrl] = useState<string>(imageUrl || '');
   const [allAvailableImages, setAllAvailableImages] = useState<string[]>([]);
-  const [allExtractedQuotes, setAllExtractedQuotes] = useState<ExtractedQuote[]>([]);
-  const [activeQuoteIndex, setActiveQuoteIndex] = useState<number>(-1);
 
   const [copied, setCopied] = useState(false);
   const [isRendering, setIsRendering] = useState(false);
@@ -131,17 +127,28 @@ export default function QuoteCardModal({
   const loadedBgImageRef = useRef<HTMLImageElement | null>(null);
   const loadedLogoImageRef = useRef<HTMLImageElement | null>(null);
 
-  // Synchronize initial props and scan DOM if needed
+  // Synchronize initial props and check live DOM for standard Sacred Scripture block if empty
   useEffect(() => {
     if (!isOpen) return;
 
-    // 1. Initial quote & meta
-    setQuote(initialQuote);
-    setTitle(initialTitle);
-    setAuthor(initialAuthor);
+    let targetQuote = initialQuote;
+    let targetTitle = initialTitle;
+
+    // If initial props are empty, check if live DOM has the standard Sacred Scripture Callout block
+    if (!targetQuote) {
+      const liveMedia = extractMediaFromLiveDom();
+      if (liveMedia.sacredScripture.quote) {
+        targetQuote = liveMedia.sacredScripture.quote;
+        targetTitle = liveMedia.sacredScripture.source;
+      }
+    }
+
+    setQuote(targetQuote || '');
+    setTitle(targetTitle || '');
+    setAuthor(initialAuthor || 'Học Viện Thần Học VERIDU');
     setSelectedBgUrl(imageUrl || '');
 
-    // 2. Gather all images: from props + from live DOM + presets
+    // Gather all images from props + live DOM
     const imageList: string[] = [];
     const seenImgs = new Set<string>();
 
@@ -155,31 +162,10 @@ export default function QuoteCardModal({
     if (imageUrl) addImg(imageUrl);
     availableImages.forEach(addImg);
 
-    // Live DOM check
     const liveMedia = extractMediaFromLiveDom();
     liveMedia.images.forEach(addImg);
     setAllAvailableImages(imageList);
-
-    // 3. Gather all quotes: from initial + from props + from live DOM
-    const quoteList: ExtractedQuote[] = [];
-    const seenQuoteKeys = new Set<string>();
-
-    const addQuote = (q: ExtractedQuote) => {
-      const key = q.text.substring(0, 40);
-      if (!seenQuoteKeys.has(key)) {
-        seenQuoteKeys.add(key);
-        quoteList.push(q);
-      }
-    };
-
-    if (initialQuote) {
-      addQuote({ text: initialQuote, source: initialTitle });
-    }
-    extractedQuotes.forEach(addQuote);
-    liveMedia.quotes.forEach(addQuote);
-    setAllExtractedQuotes(quoteList);
-    setActiveQuoteIndex(0);
-  }, [isOpen, initialQuote, initialTitle, initialAuthor, imageUrl, availableImages, extractedQuotes]);
+  }, [isOpen, initialQuote, initialTitle, initialAuthor, imageUrl, availableImages]);
 
   // Preload logo image (VERIDU light logo)
   useEffect(() => {
@@ -384,6 +370,7 @@ export default function QuoteCardModal({
       ctx.drawImage(logoImg, width / 2 - headerLogoW / 2, topY - 32, headerLogoW, headerLogoH);
     } else {
       // Sacred Cross Fallback
+      ctx.font = 'bold 360px serif';
       ctx.font = 'bold 36px serif';
       ctx.fillStyle = currentTheme.accent;
       ctx.textAlign = 'center';
@@ -421,66 +408,77 @@ export default function QuoteCardModal({
     // ── 5. CENTER QUOTE TEXT (BALANCED & PROPORTIONAL) ──
     const maxTextWidth = width - 240;
     const quoteFontSize = aspectRatio === '16:9' ? 32 : (aspectRatio === '9:16' ? 42 : 36);
-    ctx.font = 'italic ' + quoteFontSize + 'px "Lora", "Merriweather", "Times New Roman", serif';
-    ctx.fillStyle = '#f8fafc';
-    ctx.textAlign = 'center';
-
-    let quoteLines = wrapText(ctx, quote, maxTextWidth);
-    if (quoteLines.length > 8) {
-      quoteLines = quoteLines.slice(0, 7);
-      quoteLines[6] += '...';
-    }
-
-    const quoteLineHeight = quoteFontSize * 1.58;
-    const totalQuoteH = quoteLines.length * quoteLineHeight;
     const centerY = height / 2 - 15;
-    const startQuoteY = centerY - (totalQuoteH / 2);
 
-    // Add soft text shadow for crisp legibility over any background
-    ctx.save();
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 2;
-
-    quoteLines.forEach((line, index) => {
-      ctx.fillText(line, width / 2, startQuoteY + (index * quoteLineHeight));
-    });
-    ctx.restore();
-
-    // ── 6. REFERENCE / CITATION AUTO-WRAPPED ──
-    const maxTitleWidth = width - 260;
-    let titleFontSize = 22;
-    ctx.font = 'bold ' + titleFontSize + 'px "Lora", "Merriweather", serif';
-    let titleLines = wrapText(ctx, title, maxTitleWidth);
-
-    if (titleLines.length > 2) {
-      titleFontSize = 18;
-      ctx.font = 'bold ' + titleFontSize + 'px "Lora", "Merriweather", serif';
-      titleLines = wrapText(ctx, title, maxTitleWidth);
-    }
-
-    const titleLineHeight = titleFontSize * 1.45;
-    const startTitleY = startQuoteY + totalQuoteH + 42;
-
-    ctx.fillStyle = currentTheme.accent;
-    ctx.textAlign = 'center';
-
-    if (titleLines.length === 1) {
-      ctx.fillText('— ' + titleLines[0] + ' —', width / 2, startTitleY);
+    if (!quote.trim()) {
+      // Empty state: render subtle dimmed prompt on canvas
+      ctx.font = 'italic ' + (quoteFontSize - 6) + 'px "Lora", "Merriweather", "Times New Roman", serif';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.textAlign = 'center';
+      ctx.fillText('Nhấp vào ô bên phải để nhập câu Lời Chúa hoặc châm ngôn...', width / 2, centerY);
     } else {
-      titleLines.slice(0, 3).forEach((line, idx) => {
-        const textToDraw = idx === 0 ? ('— ' + line) : (idx === titleLines.length - 1 ? (line + ' —') : line);
-        ctx.fillText(textToDraw, width / 2, startTitleY + (idx * titleLineHeight));
-      });
-    }
+      ctx.font = 'italic ' + quoteFontSize + 'px "Lora", "Merriweather", "Times New Roman", serif';
+      ctx.fillStyle = '#f8fafc';
+      ctx.textAlign = 'center';
 
-    // Author subtitle
-    const finalAuthorY = startTitleY + (Math.min(titleLines.length, 3) * titleLineHeight) + 14;
-    if (author && author !== title) {
-      ctx.font = '500 14px sans-serif';
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillText(author, width / 2, finalAuthorY);
+      let quoteLines = wrapText(ctx, quote, maxTextWidth);
+      if (quoteLines.length > 8) {
+        quoteLines = quoteLines.slice(0, 7);
+        quoteLines[6] += '...';
+      }
+
+      const quoteLineHeight = quoteFontSize * 1.58;
+      const totalQuoteH = quoteLines.length * quoteLineHeight;
+      const startQuoteY = centerY - (totalQuoteH / 2);
+
+      // Add soft text shadow for crisp legibility over any background
+      ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+      ctx.shadowBlur = 10;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 2;
+
+      quoteLines.forEach((line, index) => {
+        ctx.fillText(line, width / 2, startQuoteY + (index * quoteLineHeight));
+      });
+      ctx.restore();
+
+      // ── 6. REFERENCE / CITATION AUTO-WRAPPED (ONLY WHEN TITLE EXISTS) ──
+      if (title.trim()) {
+        const maxTitleWidth = width - 260;
+        let titleFontSize = 22;
+        ctx.font = 'bold ' + titleFontSize + 'px "Lora", "Merriweather", serif';
+        let titleLines = wrapText(ctx, title, maxTitleWidth);
+
+        if (titleLines.length > 2) {
+          titleFontSize = 18;
+          ctx.font = 'bold ' + titleFontSize + 'px "Lora", "Merriweather", serif';
+          titleLines = wrapText(ctx, title, maxTitleWidth);
+        }
+
+        const titleLineHeight = titleFontSize * 1.45;
+        const startTitleY = startQuoteY + totalQuoteH + 42;
+
+        ctx.fillStyle = currentTheme.accent;
+        ctx.textAlign = 'center';
+
+        if (titleLines.length === 1) {
+          ctx.fillText('— ' + titleLines[0] + ' —', width / 2, startTitleY);
+        } else {
+          titleLines.slice(0, 3).forEach((line, idx) => {
+            const textToDraw = idx === 0 ? ('— ' + line) : (idx === titleLines.length - 1 ? (line + ' —') : line);
+            ctx.fillText(textToDraw, width / 2, startTitleY + (idx * titleLineHeight));
+          });
+        }
+
+        // Author subtitle
+        const finalAuthorY = startTitleY + (Math.min(titleLines.length, 3) * titleLineHeight) + 14;
+        if (author && author !== title) {
+          ctx.font = '500 14px sans-serif';
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillText(author, width / 2, finalAuthorY);
+        }
+      }
     }
 
     // ── 7. FOOTER: EXACT BRANDING '* THAPGIA.COM - VERIDU *' ──
@@ -513,18 +511,6 @@ export default function QuoteCardModal({
       renderCard();
     }
   }, [isOpen, quote, title, author, aspectRatio, theme, selectedBgUrl, renderCard]);
-
-  // Handle Quick Quote selection
-  const handleSelectQuote = (index: number) => {
-    const selected = allExtractedQuotes[index];
-    if (selected) {
-      setQuote(selected.text);
-      if (selected.source) {
-        setTitle(selected.source);
-      }
-      setActiveQuoteIndex(index);
-    }
-  };
 
   const handleDownload = () => {
     const canvas = canvasRef.current;
@@ -598,40 +584,9 @@ export default function QuoteCardModal({
                 <span>Trích Xuất Thẻ Lời Chúa & Châm Ngôn</span>
               </div>
               <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                Tự động bắt Lời Chúa trong bài viết • Xuất ảnh chia sẻ mạng xã hội
+                {quote ? 'Đã bắt Khối Lời Chúa từ bài viết' : 'Nhập nội dung Lời Chúa hoặc châm ngôn để tạo thẻ'}
               </p>
             </div>
-
-            {/* Quick Quote Selector (if article quotes available) */}
-            {allExtractedQuotes.length > 0 && (
-              <div>
-                <label className="text-[11px] font-bold text-amber-500 uppercase tracking-wider block mb-1.5 flex items-center justify-between">
-                  <span>Trích đoạn có sẵn trong bài ({allExtractedQuotes.length})</span>
-                  <span className="text-[10px] text-[var(--text-muted)] lowercase font-normal">click để chọn</span>
-                </label>
-                <div className="flex gap-1.5 overflow-x-auto pb-1.5 scrollbar-thin max-h-24 flex-wrap">
-                  {allExtractedQuotes.map((q, idx) => {
-                    const isSelected = activeQuoteIndex === idx;
-                    const previewLabel = q.source || (q.text.length > 25 ? q.text.substring(0, 25) + '...' : q.text);
-                    return (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => handleSelectQuote(idx)}
-                        className={`text-[11px] px-2.5 py-1 rounded-lg border font-serif transition-all truncate max-w-[200px] cursor-pointer ${
-                          isSelected
-                            ? 'bg-amber-500/20 text-amber-400 border-amber-500/60 font-semibold shadow-sm'
-                            : 'bg-slate-900/60 text-[var(--text-muted)] border-slate-800 hover:text-[var(--text-main)] hover:border-slate-700'
-                        }`}
-                        title={q.text}
-                      >
-                        {previewLabel}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
 
             {/* Background Image Picker: Article Images + Sacred Presets */}
             <div>
@@ -773,21 +728,21 @@ export default function QuoteCardModal({
                 onChange={(e) => setQuote(e.target.value)}
                 rows={3}
                 className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl p-2.5 text-xs text-[var(--text-main)] focus:outline-none focus:border-amber-500 resize-none font-serif leading-relaxed"
-                placeholder="Nhập câu Kinh Thánh hoặc châm ngôn..."
+                placeholder="Nhập câu Kinh Thánh hoặc châm ngôn bạn muốn chia sẻ..."
               />
             </div>
 
             {/* Reference Title */}
             <div>
               <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-1.5">
-                Nguồn / Tiêu Đề Dẫn Chứng
+                Nguồn / Dẫn Chứng
               </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-2.5 py-1.5 text-xs text-[var(--text-main)] focus:outline-none focus:border-amber-500 font-serif"
-                placeholder="VD: Ga 8, 32 hoặc Tiêu đề bài viết..."
+                placeholder="VD: Ga 3, 16 hoặc để trống..."
               />
             </div>
           </div>
