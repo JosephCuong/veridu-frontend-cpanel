@@ -12,6 +12,7 @@ import { Metadata } from 'next';
 
 import VisualArticleRenderer from '@/components/VisualArticleRenderer';
 import { formatImageUrl } from '@/lib/htmlProcessor';
+import { extractQuotesAndImagesFromHtml } from '@/lib/quoteExtractor';
 import ArticleGeoTimelineWidget from '@/components/ArticleGeoTimelineWidget';
 import ShareButtons from '@/components/ShareButtons';
 import TableOfContents from '@/components/TableOfContents';
@@ -248,6 +249,14 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
   };
 
 
+  // Extract biblical/theological quotes and content images for QuoteCardModal
+  const { quotes: extractedQuotes, images: extractedImages } = extractQuotesAndImagesFromHtml(htmlContent, {
+    title: cleanTitle,
+    featured_image: coverImage || defaultImage,
+    thumbnail: article.thumbnail,
+    excerpt: article.excerpt,
+  });
+
   // ═══════════════════════════════════════════════════════════════════════════
   // 1. ĐỊNH DẠNG BÀI VIẾT TƯƠNG TÁC (Interactive Fullscreen Sandbox Takeover)
   // ═══════════════════════════════════════════════════════════════════════════
@@ -279,7 +288,16 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
           sandbox="allow-scripts allow-same-origin allow-popups"
         />
 
-        <ShareButtons url={articleUrl} title={cleanTitle} />
+        <ShareButtons 
+          url={articleUrl} 
+          title={cleanTitle} 
+          quote={article.excerpt ? article.excerpt.replace(/<[^>]+>/g, '').substring(0, 180) : cleanTitle}
+          category={article.category || 'Thần Học & Thánh Kinh'}
+          author={authorProfile.christian_name ? `${authorProfile.christian_name} ${authorProfile.full_name}` : (article.author_name || article.author || 'Ban Học Vụ VERIDU')}
+          imageUrl={coverImage || defaultImage}
+          availableImages={extractedImages}
+          extractedQuotes={extractedQuotes}
+        />
       </main>
     );
   }
@@ -401,7 +419,16 @@ export default async function LibraryArticle({ params }: { params: Promise<{ slu
         </div>
       </div>
 
-      <ShareButtons url={articleUrl} title={cleanTitle} />
+      <ShareButtons 
+        url={articleUrl} 
+        title={cleanTitle} 
+        quote={article.excerpt ? article.excerpt.replace(/<[^>]+>/g, '').substring(0, 180) : cleanTitle}
+        category={article.category || 'Thần Học & Thánh Kinh'}
+        author={authorProfile.christian_name ? `${authorProfile.christian_name} ${authorProfile.full_name}` : (article.author_name || article.author || 'Ban Học Vụ VERIDU')}
+        imageUrl={coverImage || defaultImage}
+        availableImages={extractedImages}
+        extractedQuotes={extractedQuotes}
+      />
       <AdminEditFloatingButton articleId={article.id} />
     </div>
   );

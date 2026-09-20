@@ -19,6 +19,7 @@ import ArticleRelatedContent from '@/components/ArticleRelatedContent';
 import ArticleCitationAndLicense from '@/components/ArticleCitationAndLicense';
 import { BookOpen, Heart, ArrowLeft, Cross, Calendar, Clock, User, Tag, Headphones, Video } from 'lucide-react';
 import { formatImageUrl } from '@/lib/htmlProcessor';
+import { extractQuotesAndImagesFromHtml } from '@/lib/quoteExtractor';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600; // 1-hour Edge CDN caching with on-demand revalidation
@@ -263,6 +264,14 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
   };
 
 
+  // Extract biblical/theological quotes and content images for QuoteCardModal
+  const { quotes: extractedQuotes, images: extractedImages } = extractQuotesAndImagesFromHtml(htmlContent, {
+    title: cleanTitle,
+    featured_image: coverImage || defaultImage,
+    thumbnail: article.thumbnail,
+    excerpt: article.excerpt,
+  });
+
   // 1. TEMPLATE BÀI TƯƠNG TÁC (HTML/JS Sandbox Fullscreen)
   if (articleType === 'interactive') {
     return (
@@ -296,7 +305,16 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
           sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals"
         />
 
-        <ShareButtons url={articleUrl} title={cleanTitle} />
+        <ShareButtons 
+          url={articleUrl} 
+          title={cleanTitle} 
+          quote={article.excerpt ? article.excerpt.replace(/<[^>]+>/g, '').substring(0, 180) : cleanTitle}
+          category={article.category || 'Thần Học & Thánh Kinh'}
+          author={authorProfile.christian_name ? `${authorProfile.christian_name} ${authorProfile.full_name}` : (article.author_name || article.author || 'Ban Học Vụ VERIDU')}
+          imageUrl={coverImage || defaultImage}
+          availableImages={extractedImages}
+          extractedQuotes={extractedQuotes}
+        />
       </main>
     );
   }
@@ -384,6 +402,8 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
         category={article.category || 'Thần Học & Thánh Kinh'}
         author={authorProfile.christian_name ? `${authorProfile.christian_name} ${authorProfile.full_name}` : (article.author_name || article.author || 'Ban Học Vụ VERIDU')}
         imageUrl={coverImage || defaultImage}
+        availableImages={extractedImages}
+        extractedQuotes={extractedQuotes}
       />
       <AdminEditFloatingButton articleId={article.id} />
     </div>
