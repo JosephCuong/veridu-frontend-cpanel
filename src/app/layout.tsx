@@ -3,6 +3,7 @@ import { Inter, Lora } from "next/font/google";
 import BackToTop from "@/components/BackToTop";
 import LiturgicalHeader from "@/components/LiturgicalHeader";
 import Footer from "@/components/Footer";
+import CookieConsentBanner from "@/components/CookieConsentBanner";
 import { ToastProvider } from "@/components/Toast";
 import "./globals.css";
 
@@ -147,6 +148,10 @@ export default function RootLayout({
         <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
         <link rel="dns-prefetch" href="https://cljglzhuwdniynfkzkxc.supabase.co" />
 
+        {/* Preload 3D Sacred Scripture Model & Model-Viewer Library for Instant Rendering */}
+        <link rel="preload" href="/models/bible_3d_model.glb" as="fetch" crossOrigin="anonymous" />
+        <link rel="preload" href="/vendor/model-viewer.min.js" as="script" />
+
         {/* JSON-LD Schema */}
         <script
           type="application/ld+json"
@@ -169,6 +174,7 @@ export default function RootLayout({
           </div>
           
           <Footer />
+          <CookieConsentBanner />
           <BackToTop />
         </ToastProvider>
       </body>

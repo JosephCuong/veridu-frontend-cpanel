@@ -138,13 +138,16 @@ export function saveAuthSession(tokenOrUser: string | UserProfile, userOrRemembe
     const jsonString = JSON.stringify(user);
     const encodedUser = encodeURIComponent(jsonString);
 
-    if (isRemember) {
-      Cookies.set('veridu_token', token, { expires: 30, path: '/' });
-      Cookies.set('veridu_user', encodedUser, { expires: 30, path: '/' });
-    } else {
-      Cookies.set('veridu_token', token, { path: '/' });
-      Cookies.set('veridu_user', encodedUser, { path: '/' });
-    }
+    const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+    const cookieOptions: Cookies.CookieAttributes = {
+      path: '/',
+      sameSite: 'lax',
+      secure: isHttps,
+      ...(isRemember ? { expires: 30 } : {})
+    };
+
+    Cookies.set('veridu_token', token, cookieOptions);
+    Cookies.set('veridu_user', encodedUser, cookieOptions);
 
     localStorage.setItem('veridu_token', token);
     localStorage.setItem('veridu_user_profile', jsonString);

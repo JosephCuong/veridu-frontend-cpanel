@@ -63,20 +63,21 @@ const nextConfig = {
       },
     ],
   },
-  async rewrites() {
-    return [
-      {
-        source: '/models/:path*',
-        destination: 'https://media.thapgia.com/models/:path*',
-      },
-      {
-        source: '/storybooks/:path*',
-        destination: 'https://media.thapgia.com/storybooks/:path*',
-      },
-    ];
-  },
   async headers() {
     return [
+      {
+        source: '/vendor/:path*',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
       {
         source: '/models/:path*',
         headers: [

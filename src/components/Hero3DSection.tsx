@@ -125,7 +125,7 @@ export default function Hero3DSection() {
 
   const currentConfig = THEMES[activeTheme] || THEMES.gold;
 
-  // 1. Dynamic script loader for Google <model-viewer>
+  // 1. Dynamic script loader for Google <model-viewer> (Local First -> CDN Fallback)
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -136,11 +136,19 @@ export default function Hero3DSection() {
 
     const script = document.createElement('script');
     script.type = 'module';
-    script.src = 'https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js';
+    script.src = '/vendor/model-viewer.min.js';
     script.onload = () => setIsScriptLoaded(true);
     script.onerror = () => {
-      console.warn('Failed to load model-viewer script from unpkg, switching to graceful fallback');
-      setHasModelError(true);
+      console.warn('Local /vendor/model-viewer.min.js failed, attempting Cloudflare CDN fallback');
+      const fallbackScript = document.createElement('script');
+      fallbackScript.type = 'module';
+      fallbackScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js';
+      fallbackScript.onload = () => setIsScriptLoaded(true);
+      fallbackScript.onerror = () => {
+        console.warn('All model-viewer script sources failed, switching to graceful fallback card');
+        setHasModelError(true);
+      };
+      document.head.appendChild(fallbackScript);
     };
     document.head.appendChild(script);
   }, []);
@@ -275,7 +283,23 @@ export default function Hero3DSection() {
             style={{ transform: 'translate3d(0, 0, 0)' }}
           />
 
-          {isScriptLoaded && !hasModelError ? (
+          {hasModelError ? (
+            /* Fallback 3D Sacred Scriptures Glass Card with SVG (Only on true failure) */
+            <div className="w-72 h-96 rounded-3xl bg-white/10 border border-white/30 backdrop-blur-2xl p-6 flex flex-col items-center justify-center text-center space-y-4 shadow-2xl animate-in fade-in duration-500">
+              <div className="w-20 h-20 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                <BookOpen className="w-10 h-10" />
+              </div>
+              <h3 className="font-serif font-bold text-xl text-white">Kinh Thánh 73 Sách</h3>
+              <p className="text-xs text-slate-300 max-w-[200px]">Trọn bộ Cựu Ước & Tân Ước chuẩn bản dịch Cố LM. Nguyễn Thế Thuấn</p>
+              <Link 
+                href="/kinh-thanh" 
+                className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-xs flex items-center gap-1.5 transition-all shadow-md hover:scale-105 cursor-pointer"
+              >
+                <span>Đọc Kinh Thánh</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          ) : isScriptLoaded ? (
             /* @ts-ignore - Google <model-viewer> Custom Element */
             <model-viewer
               ref={modelRef}
@@ -318,20 +342,18 @@ export default function Hero3DSection() {
               </div>
             </model-viewer>
           ) : (
-            /* Fallback 3D Sacred Scriptures Glass Card with SVG */
-            <div className="w-72 h-96 rounded-3xl bg-white/10 border border-white/30 backdrop-blur-2xl p-6 flex flex-col items-center justify-center text-center space-y-4 shadow-2xl animate-in fade-in duration-500">
-              <div className="w-20 h-20 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                <BookOpen className="w-10 h-10" />
+            /* Script Loading State (Poster) */
+            <div className="w-full h-[450px] flex flex-col items-center justify-center pointer-events-none select-none animate-pulse">
+              <div className="relative w-44 h-56 rounded-2xl bg-gradient-to-br from-amber-500/20 via-slate-900/70 to-amber-950/40 border border-amber-400/40 backdrop-blur-xl p-5 flex flex-col items-center justify-center text-center shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                <div className="w-16 h-16 rounded-2xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-300 mb-3 shadow-lg shadow-amber-500/20">
+                  <BookOpen className="w-8 h-8 text-amber-300" />
+                </div>
+                <span className="font-serif font-bold text-sm text-amber-200 tracking-wide">VERIDU 3D</span>
+                <span className="text-[11px] text-slate-300 mt-1 font-sans">Đang nạp Thánh Kinh...</span>
+                <div className="w-24 h-1 bg-white/10 rounded-full mt-3 overflow-hidden">
+                  <div className="w-full h-full bg-gradient-to-r from-amber-500 via-amber-300 to-amber-500 animate-pulse" />
+                </div>
               </div>
-              <h3 className="font-serif font-bold text-xl text-white">Kinh Thánh 73 Sách</h3>
-              <p className="text-xs text-slate-300 max-w-[200px]">Trọn bộ Cựu Ước & Tân Ước chuẩn bản dịch Cố LM. Nguyễn Thế Thuấn</p>
-              <Link 
-                href="/kinh-thanh" 
-                className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-xs flex items-center gap-1.5 transition-all shadow-md hover:scale-105 cursor-pointer"
-              >
-                <span>Đọc Kinh Thánh</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
             </div>
           )}
         </div>
