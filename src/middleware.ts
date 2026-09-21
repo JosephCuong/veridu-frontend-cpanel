@@ -16,6 +16,7 @@ const ADMIN_REQUIRED_ROUTES = [
   '/admin/quiz-bank',
   '/admin/sach-tranh',
   '/admin/khoa-hoc',
+  '/admin/quang-ba',
   '/quiz/studio',
   '/sach-tranh/studio',
   '/khoa-hoc/studio'
@@ -29,10 +30,7 @@ export async function middleware(request: NextRequest) {
   if (
     pathname.startsWith('/wp-admin') ||
     (pathname.startsWith('/admin') && 
-     pathname !== '/admin' &&
-     pathname !== '/admin/sach-tranh' && 
-     pathname !== '/admin/quiz-bank' &&
-     !pathname.startsWith('/admin/khoa-hoc'))
+     !ADMIN_REQUIRED_ROUTES.some(r => cleanPath === r || cleanPath.startsWith(`${r}/`)))
   ) {
     return NextResponse.redirect(new URL('/', request.url), { status: 301 });
   }
