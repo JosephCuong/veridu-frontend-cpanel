@@ -20,9 +20,27 @@ import ArticleCitationAndLicense from '@/components/ArticleCitationAndLicense';
 import { BookOpen, Heart, ArrowLeft, Cross, Calendar, Clock, User, Tag, Headphones, Video } from 'lucide-react';
 import { formatImageUrl } from '@/lib/htmlProcessor';
 import { extractQuotesAndImagesFromHtml } from '@/lib/quoteExtractor';
+import { supabase } from '@/lib/supabaseClient';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 3600; // 1-hour Edge CDN caching with on-demand revalidation
+export const revalidate = 3600; // 1-hour Edge CDN caching with on-demand ISR revalidation
+export const dynamicParams = true; // Allow new articles published after build time
+
+export async function generateStaticParams() {
+  try {
+    const { data: posts } = await supabase
+      .from('posts')
+      .select('slug')
+      .eq('status', 'published');
+
+    if (!posts || posts.length === 0) return [];
+    return posts.map((post) => ({
+      slug: post.slug,
+    }));
+  } catch (error) {
+    console.warn('generateStaticParams error in [slug]:', error);
+    return [];
+  }
+}
 
 const RESERVED_SLUGS = new Set([
   'admin', 'wp-admin', 'thu-vien', 'courses', 'khoa-hoc', 'doc-kinh-thanh', 

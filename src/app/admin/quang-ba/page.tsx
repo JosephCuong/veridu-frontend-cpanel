@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { 
   Megaphone, Share2, Copy, Check, ExternalLink, BookOpen, 
   Send, MessageCircle, Mail, Globe, Layers, ArrowLeft, RefreshCw,
-  Search, CheckCircle2, Bookmark, Flame
+  Search, CheckCircle2, Bookmark, Flame, Zap, ShieldCheck, ArrowUpRight, AlertTriangle
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import QuoteCardModal from '@/components/QuoteCardModal';
@@ -42,6 +42,42 @@ export default function SocialCampaignAdminPage() {
   const [copiedText, setCopiedText] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  const [isSubmittingIndex, setIsSubmittingIndex] = useState(false);
+  const [indexResult, setIndexResult] = useState<{
+    success: boolean;
+    message: string;
+    submittedUrlsCount?: number;
+    details?: string;
+  } | null>(null);
+
+  const handleTriggerIndexNow = async () => {
+    setIsSubmittingIndex(true);
+    setIndexResult(null);
+    try {
+      const res = await fetch('/api/indexnow', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setIndexResult({
+          success: true,
+          message: `Đã phát tín hiệu thành công cho ${data.submittedUrlsCount} URLs!`,
+          submittedUrlsCount: data.submittedUrlsCount,
+          details: `IndexNow API: ${data.results?.indexNow?.message || 'OK'} | Google Ping: HTTP ${data.results?.googleSitemapPing?.status || 200}`,
+        });
+      } else {
+        setIndexResult({
+          success: false,
+          message: data.error || 'Có lỗi xảy ra khi gửi tín hiệu IndexNow.',
+        });
+      }
+    } catch (err: any) {
+      setIndexResult({
+        success: false,
+        message: err?.message || 'Không thể kết nối tới máy chủ chỉ mục.',
+      });
+    } finally {
+      setIsSubmittingIndex(false);
+    }
+  };
 
   useEffect(() => {
     fetchPosts();
@@ -204,6 +240,108 @@ export default function SocialCampaignAdminPage() {
               <RefreshCw className={'w-4 h-4 ' + (isLoading ? 'animate-spin' : '')} />
             </button>
           </div>
+        </div>
+
+        {/* ── SEO & INDEXING COMMAND CENTER ── */}
+        <div className="rounded-3xl bg-[var(--bg-card)] border border-amber-500/30 p-6 sm:p-8 backdrop-blur-2xl shadow-2xl relative overflow-hidden space-y-6">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 font-serif font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5">
+                  <Zap className="w-3 h-3 text-amber-500" />
+                  Giao Thức Tăng Tốc IndexNow &amp; Google Ping
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-mono text-[10px] font-bold">
+                  Sơ đồ 195 URLs
+                </span>
+              </div>
+              <h2 className="font-serif font-black text-xl sm:text-2xl text-[var(--text-main)]">
+                Trung Tâm Chỉ Mục Tìm Kiếm &amp; SEO Đa Kênh
+              </h2>
+              <p className="text-xs sm:text-sm text-[var(--text-muted)] font-serif max-w-2xl leading-relaxed">
+                Chủ động phát tín hiệu thu thập dữ liệu tới Bing, Yandex, Googlebot và mạng lưới tìm kiếm toàn cầu ngay lập tức thay vì chờ đợi thụ động nhiều tuần.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+              <a
+                href="https://search.google.com/search-console"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-3 rounded-2xl bg-[var(--bg-main)] hover:bg-[var(--bg-main)]/80 border border-[var(--border-card)] text-xs font-serif font-bold text-[var(--text-main)] flex items-center justify-center gap-2 transition shadow-sm"
+              >
+                <span>Mở Google Search Console</span>
+                <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+              </a>
+
+              <button
+                type="button"
+                onClick={handleTriggerIndexNow}
+                disabled={isSubmittingIndex}
+                className="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-serif font-black text-xs shadow-xl shadow-amber-500/25 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+              >
+                <Zap className={`w-4 h-4 text-slate-950 ${isSubmittingIndex ? 'animate-bounce' : ''}`} />
+                <span>{isSubmittingIndex ? 'Đang Gửi Tín Hiệu...' : '⚡ Bắn Tín Hiệu Index Tức Thì (1-Click)'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Feedback Alert */}
+          {indexResult && (
+            <div className={`p-4 rounded-2xl border flex items-start gap-3 animate-in fade-in duration-300 relative z-10 ${
+              indexResult.success 
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300' 
+                : 'bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-300'
+            }`}>
+              {indexResult.success ? (
+                <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+              ) : (
+                <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+              )}
+              <div className="space-y-1 text-xs">
+                <p className="font-bold font-serif">{indexResult.message}</p>
+                {indexResult.details && (
+                  <p className="font-mono text-[11px] opacity-80">{indexResult.details}</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 3-Step Google Quick Setup Guide */}
+          <div className="pt-4 border-t border-[var(--border-card)] grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
+            <div className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] space-y-1.5">
+              <span className="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 inline-block">
+                Bước 1: Xác Thực
+              </span>
+              <h4 className="font-serif font-bold text-xs text-[var(--text-main)]">Xác thực 1-Click</h4>
+              <p className="text-[11px] text-[var(--text-muted)] font-serif leading-relaxed">
+                Nhập <code className="text-amber-500 font-mono text-[10px]">https://www.thapgia.com</code> vào GSC. Google tự động xác minh qua Google Analytics 4 (G-DDK6K002MD) trong 1 giây.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] space-y-1.5">
+              <span className="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 inline-block">
+                Bước 2: Nạp Sitemap
+              </span>
+              <h4 className="font-serif font-bold text-xs text-[var(--text-main)]">Gửi Sơ Đồ Trang Web</h4>
+              <p className="text-[11px] text-[var(--text-muted)] font-serif leading-relaxed">
+                Tại mục <em>Sơ đồ trang web</em>, dán <code className="text-amber-500 font-mono text-[10px]">sitemap.xml</code> và bấm <strong>Gửi</strong> để nạp toàn bộ 195 liên kết vào hàng đợi bot.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] space-y-1.5">
+              <span className="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 inline-block">
+                Bước 3: Tăng Tốc Index
+              </span>
+              <h4 className="font-serif font-bold text-xs text-[var(--text-main)]">Bắn Tín Hiệu Đột Phá</h4>
+              <p className="text-[11px] text-[var(--text-muted)] font-serif leading-relaxed">
+                Nhấp nút <strong>Bắn Tín Hiệu Index</strong> ở trên mỗi khi xuất bản bài viết mới. Bing, Yandex &amp; Google Ping sẽ đưa bài viết vào diện ưu tiên lập chỉ mục trong vài phút.
+              </p>
+            </div>
+          </div>
+
         </div>
 
         {/* 2-Column Grid */}

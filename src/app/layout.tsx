@@ -56,9 +56,9 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  verification: {
-    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "google-site-verification-veridu",
-  },
+  verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ? {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+  } : undefined,
   openGraph: {
     title: "VERIDU — Nền Tảng Học Tập, Giáo Lý & Kinh Thánh Công Giáo",
     description: "Hệ sinh thái học tập và nghiên cứu Công giáo, Kinh Thánh, Đấu trường Quiz Giáo Lý, Webgame Chinh Phục Chân Lý, Bản đồ 3D Thánh Kinh và Thư viện Bài Viết.",
@@ -147,6 +147,14 @@ export default function RootLayout({
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
         <link rel="dns-prefetch" href="https://cljglzhuwdniynfkzkxc.supabase.co" />
+
+        {/* RSS Auto-Discovery Feed for Google Discover & Readers */}
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title="VERIDU — Dòng Tin & Bài Viết Mới"
+          href="https://www.thapgia.com/feed.xml"
+        />
 
         {/* Preload 3D Sacred Scripture Model & Model-Viewer Library for Instant Rendering */}
         <link rel="preload" href="/models/bible_3d_model.glb" as="fetch" crossOrigin="anonymous" />
