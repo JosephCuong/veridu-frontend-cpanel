@@ -68,10 +68,10 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "https://images.unsplash.com/photo-1548625361-9c8eb25c56df?q=80&w=1200&auto=format&fit=crop",
+        url: "https://www.thapgia.com/images/og-default.jpg",
         width: 1200,
         height: 630,
-        alt: "VERIDU — Nền Tảng Học Tập & Nghiên Cứu Công Giáo",
+        alt: "VERIDU — Nền Tảng Học Tập, Giáo Lý & Kinh Thánh Công Giáo",
       },
     ],
   },
@@ -79,7 +79,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "VERIDU — Nền Tảng Học Tập, Giáo Lý & Kinh Thánh Công Giáo",
     description: "Hệ sinh thái học tập Công giáo, Đấu trường Quiz, Webgame 2D và Thư viện Suy niệm.",
-    images: ["https://images.unsplash.com/photo-1548625361-9c8eb25c56df?q=80&w=1200&auto=format&fit=crop"],
+    images: ["https://www.thapgia.com/images/og-default.jpg"],
   },
 };
 
