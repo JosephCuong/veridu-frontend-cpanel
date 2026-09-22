@@ -20,8 +20,7 @@ import {
   Table as TableIcon,
   HelpCircle,
   FileText,
-  Minus,
-  Sparkles
+  Minus
 } from 'lucide-react';
 
 export interface LayerItem {

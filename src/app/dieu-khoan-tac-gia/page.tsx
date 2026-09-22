@@ -11,7 +11,6 @@ import {
   FileText, 
   HelpCircle,
   ArrowRight,
-  Sparkles,
   PenTool,
   Compass,
   BookMarked,

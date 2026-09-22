@@ -15,7 +15,7 @@ import {
   Maximize2, 
   Minimize2, 
   Type, 
-  Sparkles, 
+  Scroll, 
   Award, 
   ArrowRight, 
   X, 
@@ -190,7 +190,7 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
                 : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-main)]'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <Scroll className="w-3.5 h-3.5" />
             <span>{inBriefOnly ? '✓ Đang Lọc Tóm Lược' : 'Chỉ Tóm Lược'}</span>
           </button>
         </div>
@@ -498,7 +498,7 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
           {/* Block 4: Educational Shortcuts */}
           <div className="p-5 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-sm space-y-3">
             <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-500" />
+              <Scroll className="w-4 h-4 text-amber-500" />
               <span>Khảo Cứu &amp; Ôn Luyện</span>
             </h4>
 
@@ -508,7 +508,7 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
                 className="flex items-center gap-3 p-3 rounded-2xl bg-[var(--bg-main)] hover:bg-amber-500/10 border border-[var(--border-card)] hover:border-amber-500/40 transition group"
               >
                 <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
-                  <Sparkles className="w-4 h-4" />
+                  <Scroll className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h5 className="font-serif font-bold text-xs text-[var(--text-main)] group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">

@@ -9,7 +9,6 @@ import {
   Plus, 
   HelpCircle, 
   Filter, 
-  Sparkles,
   Award,
   ChevronRight,
   CheckSquare,

@@ -6,7 +6,6 @@ import {
   BookMarked, 
   ShieldCheck, 
   Scale, 
-  Sparkles, 
   Copy, 
   Check, 
   BookOpen, 

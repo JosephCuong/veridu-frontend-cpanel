@@ -11,7 +11,7 @@ import {
   Heart, 
   Cross, 
   Church, 
-  Sparkles, 
+  Scroll, 
   Layers, 
   Search, 
   ChevronLeft, 
@@ -61,7 +61,7 @@ function CategoryIcon({ name, className = "w-5 h-5" }: { name: string; className
     case 'Heart': return <Heart className={className} />;
     case 'Cross': return <Cross className={className} />;
     case 'Church': return <Church className={className} />;
-    default: return <Sparkles className={className} />;
+    default: return <BookOpen className={className} />;
   }
 }
 
@@ -256,7 +256,7 @@ export default function ResearchLandingPage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
           {/* Catholic Academic Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/25 backdrop-blur-md text-amber-600 dark:text-amber-400 text-xs sm:text-sm font-serif font-semibold tracking-wide shadow-sm">
-            <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
+            <Cross className="w-4 h-4 text-amber-500 animate-pulse" />
             <span>VIA • VITA • VERITAS — CỔNG THAM KHẢO & KHƠI NGUỒN HỌC THUẬT</span>
           </div>
 
@@ -914,7 +914,7 @@ export default function ResearchLandingPage() {
             <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[var(--border-card)]">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 font-serif font-bold text-xs flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Scroll className="w-3.5 h-3.5" />
                   <span>Đề Tài Khảo Cứu Tự Động Kiến Tạo</span>
                 </span>
                 <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-500 text-xs font-mono font-semibold">

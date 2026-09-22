@@ -7,7 +7,7 @@ import {
   BookOpen, 
   Search, 
   ChevronRight, 
-  Sparkles, 
+  Scroll, 
   Award, 
   GraduationCap, 
   Clock, 
@@ -104,7 +104,7 @@ export default async function CoursesPage({
             </div>
 
             <div className="px-3.5 py-1.5 rounded-full bg-[var(--bg-card)] border border-[var(--border-card)] flex items-center gap-1.5 text-xs font-serif text-[var(--text-muted)] shadow-sm">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
+              <Scroll className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
               <span>Tự Học Linh Hoạt</span>
             </div>
 
@@ -117,7 +117,7 @@ export default async function CoursesPage({
               href="/admin/khoa-hoc"
               className="px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-serif font-bold text-xs shadow-md shadow-amber-500/20 transition-all flex items-center gap-1.5"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Scroll className="w-3.5 h-3.5" />
               <span>Studio Soạn Khóa Học</span>
             </Link>
           </div>
@@ -354,7 +354,7 @@ export default async function CoursesPage({
             {/* Block 4: Quick Educational Shortcuts */}
             <div className="p-5 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-sm space-y-3">
               <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-500" />
+                <Scroll className="w-4 h-4 text-amber-500" />
                 <span>Học Tập &amp; Khảo Cứu Mở Rộng</span>
               </h4>
 

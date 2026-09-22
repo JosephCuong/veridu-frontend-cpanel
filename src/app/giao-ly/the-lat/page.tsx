@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { fetchCatechismParagraphs } from '@/lib/api';
 import CatechismFlashcardClient from '@/components/CatechismFlashcardClient';
-import { ChevronLeft, Sparkles, BookOpen, Trophy, Award, RotateCw } from 'lucide-react';
+import { ChevronLeft, Scroll, BookOpen, Trophy, Award, RotateCw } from 'lucide-react';
 
 export const revalidate = 3600;
 
@@ -39,9 +39,9 @@ export default async function CatechismFlashcardsPage() {
       {/* Hero Header */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-8 pb-4 text-center space-y-3">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-serif font-bold">
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <Scroll className="w-3.5 h-3.5 text-amber-400" />
           <span>HỌC &amp; GHI NHỚ TÍN LÝ HỘI THÁNH CÔNG GIÁO</span>
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <Scroll className="w-3.5 h-3.5 text-amber-400" />
         </div>
         <h1 className="font-serif font-black text-3xl sm:text-5xl text-[var(--text-main)]">
           Bộ Thẻ Lật Giáo Lý (Flashcards)

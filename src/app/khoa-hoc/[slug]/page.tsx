@@ -7,7 +7,7 @@ import {
   Play, CheckCircle, Circle, BookOpen, Clock, 
   Video, Headphones, ChevronLeft, ChevronRight, Award, Loader2, Book,
   FileText, HelpCircle, Lock, Download, Maximize2, ShieldCheck,
-  RotateCcw, Sparkles, Check, ChevronDown, Eye, PanelLeftClose, PanelLeft,
+  RotateCcw, Check, ChevronDown, Eye, PanelLeftClose, PanelLeft,
   AlertTriangle, RefreshCw, Volume2, ExternalLink, Settings
 } from 'lucide-react';
 import { 

@@ -12,7 +12,7 @@ import {
   ChevronRight, 
   CheckCircle2, 
   ArrowRight, 
-  Sparkles,
+  Scroll,
   BookMarked
 } from 'lucide-react';
 
@@ -131,7 +131,7 @@ export default async function GiaoLyLandingPage() {
               href="/giao-ly/the-lat"
               className="px-6 py-3.5 rounded-2xl bg-[var(--bg-card)] hover:bg-amber-500/10 text-amber-800 dark:text-amber-300 font-serif font-bold text-xs border-2 border-amber-500/30 hover:border-amber-500 backdrop-blur-md transition-all flex items-center gap-2 hover:scale-105 shadow-md"
             >
-              <Sparkles className="w-4 h-4 text-amber-500" />
+              <Scroll className="w-4 h-4 text-amber-500" />
               <span>Trung Tâm Thẻ Lật</span>
             </Link>
 
@@ -275,7 +275,7 @@ export default async function GiaoLyLandingPage() {
           <div className="p-8 rounded-3xl bg-gradient-to-br from-[var(--bg-card)] via-[var(--bg-card)] to-amber-500/10 border-2 border-amber-500/30 shadow-xl space-y-4 flex flex-col justify-between">
             <div className="space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
-                <Sparkles className="w-6 h-6" />
+                <Scroll className="w-6 h-6" />
               </div>
               <h3 className="font-serif font-black text-2xl text-[var(--text-main)]">
                 Trung Tâm Thẻ Lật Ghi Nhớ Tín Lý

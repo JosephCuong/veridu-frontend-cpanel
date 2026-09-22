@@ -17,7 +17,6 @@ import {
   ShieldCheck, 
   ArrowLeft,
   ChevronRight,
-  Sparkles,
   Award,
   Check,
   X,

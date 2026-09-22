@@ -4,7 +4,6 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { CatechismParagraph } from '@/lib/api';
 import { 
-  Sparkles, 
   RotateCw, 
   Check, 
   ChevronLeft, 

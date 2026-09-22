@@ -18,7 +18,6 @@ import {
   ExternalLink, 
   Layers, 
   Settings, 
-  Sparkles, 
   Award, 
   GraduationCap, 
   Clock, 
@@ -1031,7 +1030,7 @@ function VisualCourseStudioContent() {
                 <div className="md:col-span-2 flex items-center justify-between p-4 rounded-2xl border border-stone-800 bg-stone-900/40">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
-                      <Sparkles className="w-5 h-5" />
+                      <Award className="w-5 h-5" />
                     </div>
                     <div>
                       <h5 className="font-semibold text-xs sm:text-sm text-stone-100">Cấp Chứng Chỉ Hoàn Thành (Certificate)</h5>

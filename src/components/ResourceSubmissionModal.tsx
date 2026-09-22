@@ -7,7 +7,6 @@ import {
   BookOpen, 
   CheckCircle2, 
   X, 
-  Sparkles, 
   ShieldCheck, 
   Layers, 
   ExternalLink,

@@ -7,7 +7,6 @@ import {
   Layers, 
   Layout, 
   Plus, 
-  Sparkles,
   Maximize2
 } from 'lucide-react';
 

@@ -53,8 +53,7 @@ import {
   Headphones,
   Radio,
   Volume2,
-  Columns,
-  Sparkles
+  Columns
 } from 'lucide-react';
 import { getStoredUser, UserProfile } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
@@ -2248,7 +2247,7 @@ function DangBaiContent() {
             }`}
             title={isZenMode ? "Tắt chế độ Zen Focus (Hiện lại 2 cột bên)" : "Bật chế độ Zen Focus (Chỉ tập trung soạn thảo không xao nhãng)"}
           >
-            <Sparkles className={`w-3.5 h-3.5 ${isZenMode ? 'text-slate-950' : 'text-amber-500'}`} />
+            <Maximize2 className={`w-3.5 h-3.5 ${isZenMode ? 'text-slate-950' : 'text-amber-500'}`} />
             <span className="hidden xl:inline">Zen Focus</span>
           </button>
 

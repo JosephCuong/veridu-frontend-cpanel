@@ -16,8 +16,7 @@ import {
   FileText, 
   ListChecks, 
   HelpCircle, 
-  Table as TableIcon,
-  Sparkles
+  Table as TableIcon
 } from 'lucide-react';
 import { ConfigurableBlockType } from './CatholicBlockConfigModal';
 
@@ -125,7 +124,7 @@ export default function VisualBlockToolbarOverlay({
       return { label: 'Bảng Dữ Liệu', icon: <TableIcon className="w-3.5 h-3.5 text-indigo-400" />, type: 'generic' };
     }
 
-    return { label: 'Khối Khảo Luận', icon: <Sparkles className="w-3.5 h-3.5 text-amber-500" />, type: 'generic' };
+    return { label: 'Khối Khảo Luận', icon: <BookOpen className="w-3.5 h-3.5 text-amber-500" />, type: 'generic' };
   }, []);
 
   // Extract initial parameters for editing

@@ -7,7 +7,6 @@ import {
   Award, 
   Coins, 
   Star, 
-  Sparkles, 
   Check, 
   HelpCircle, 
   Volume2, 

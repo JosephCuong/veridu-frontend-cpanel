@@ -19,7 +19,7 @@ import {
   Maximize2, 
   Minimize2, 
   Type, 
-  Sparkles,
+  Scroll,
   Award,
   ArrowRight,
   ExternalLink,
@@ -28,7 +28,6 @@ import {
   Eye,
   Trophy,
   FlameKindling,
-  Sparkle,
   Book,
   X,
   HelpCircle
@@ -385,7 +384,7 @@ export default function CatechismExplorer({ initialParagraphs, totalCount }: Cat
                     : 'text-[var(--text-muted)] hover:text-amber-500'
                 }`}
               >
-                <Sparkles className="w-4 h-4" />
+                <Scroll className="w-4 h-4" />
                 <span>4. Thẻ Lật Ghi Nhớ</span>
               </button>
             </div>
@@ -494,7 +493,7 @@ export default function CatechismExplorer({ initialParagraphs, totalCount }: Cat
                     : 'bg-[var(--bg-card)] border border-[var(--border-card)] text-amber-500'
                 }`}
               >
-                <Sparkles className="w-3 h-3" />
+                <Scroll className="w-3 h-3" />
                 <span>Chỉ Tóm Lược</span>
               </button>
             </div>

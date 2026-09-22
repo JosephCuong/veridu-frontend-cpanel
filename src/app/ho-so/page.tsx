@@ -22,7 +22,7 @@ import {
   User, Mail, Church, Compass, Award, Flame, Shield, LogOut, 
   Settings, BookOpen, CheckCircle, Clock, Save, Phone, Image as ImageIcon,
   Heart, Calendar, Loader2, Trophy, Trash2, ArrowRight, PlayCircle, BarChart3, 
-  AlertTriangle, Check, Plus, Eye, Cross, FileText, Zap, Droplets, Sparkles, Scroll,
+  AlertTriangle, Check, Plus, Eye, Cross, FileText, Zap, Droplets, Scroll,
   GraduationCap, ExternalLink, ShieldCheck, PenTool
 } from 'lucide-react';
 

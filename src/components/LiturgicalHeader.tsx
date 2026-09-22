@@ -8,7 +8,7 @@ import { getStoredUser, logout, UserProfile } from '@/lib/auth';
 import { calculateLevelInfo } from '@/lib/gamification';
 import { 
   Flame, Moon, Sun, Menu, X, User, LogOut, LogIn, ChevronDown, 
-  BookOpen, MapPin, Clock, Users, FileText, Library, Award, Shield, Cross, Sparkles,
+  BookOpen, MapPin, Clock, Users, FileText, Library, Award, Shield, Cross,
   Zap, Droplets, Settings, Gamepad2, Scroll, MoreHorizontal, Feather, ClipboardList, Scale, PenTool, Megaphone
 } from 'lucide-react';
 
@@ -1294,7 +1294,7 @@ export default function LiturgicalHeader() {
 
           {/* 6. SÁCH TRANH THIẾU NHI */}
           <Link href="/sach-tranh" className="block py-2.5 text-sm font-bold text-amber-400 hover:text-amber-300 flex items-center gap-2.5">
-            <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" /> Sách Tranh Thiếu Nhi
+            <BookOpen className="w-4 h-4 text-amber-400" /> Sách Tranh Thiếu Nhi
           </Link>
 
           {/* 6. ĐẤU TRƯỜNG */}

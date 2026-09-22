@@ -13,7 +13,6 @@ import {
   Check, 
   ExternalLink, 
   Layers, 
-  Sparkles,
   Sliders,
   AlignLeft,
   AlignCenter,
@@ -1376,7 +1375,7 @@ export default function CatholicBlockConfigModal({
               }}
               className="px-3 py-2 rounded-xl bg-[var(--bg-main)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 border border-[var(--border-card)] text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <Layers className="w-3.5 h-3.5 text-amber-500" />
               <span>Chèn Mẫu Mặc Định</span>
             </button>
           ) : <div />}

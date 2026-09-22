@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Sparkles, ExternalLink } from 'lucide-react';
+import { Star, ExternalLink } from 'lucide-react';
 
 interface AdBannerProps {
   slotId?: string;
@@ -45,7 +45,7 @@ export default function AdBanner({
       {!hideHeader && (
         <div className="flex items-center justify-between text-[10px] font-serif text-[var(--text-muted)] tracking-wide mb-2 border-b border-[var(--border-card)]/60 pb-1.5">
           <span className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-bold">
-            <Sparkles className="w-3 h-3 text-amber-500" />
+            <Star className="w-3 h-3 text-amber-500" />
             <span>Không Gian Mục Vụ &amp; Đồng Hành</span>
           </span>
           <span className="text-[9px] opacity-40 font-mono">VERIDU</span>

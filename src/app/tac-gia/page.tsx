@@ -8,7 +8,6 @@ import {
   BookOpen, 
   ShieldCheck, 
   Award, 
-  Sparkles, 
   Cross, 
   UploadCloud, 
   FileText, 
@@ -21,8 +20,7 @@ import {
   ArrowRight,
   Shield,
   HelpCircle,
-  Clock,
-  Sparkle
+  Clock
 } from 'lucide-react';
 import { getStoredUser, UserProfile } from '@/lib/auth';
 

@@ -12,7 +12,7 @@ import {
   ChevronLeft, ChevronRight, ChevronDown, 
   Columns, MessageSquareText, Headphones, 
   X, Heart, Shield, Compass, PlayCircle, Settings2, BookOpen, Search, Menu, 
-  MapPin, LayoutGrid, Type, ExternalLink, Scroll, Sparkles, Award, ArrowRight,
+  MapPin, LayoutGrid, Type, ExternalLink, Scroll, Award, ArrowRight,
   PanelLeftClose, PanelLeftOpen, Bookmark, Check, BookMarked, Gamepad2, Layers
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -1218,7 +1218,7 @@ export default function BibleReader({
               {/* KHỐI 3: CỔNG KẾT NỐI HỆ THỐNG TINH GỌN (SÁCH TRANH, QUIZ, WEBGAME) */}
               <div className="p-5 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-sm space-y-3">
                 <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <Scroll className="w-4 h-4 text-amber-500" />
                   <span>Khám Phá Hệ Thống VERIDU</span>
                 </h4>
 

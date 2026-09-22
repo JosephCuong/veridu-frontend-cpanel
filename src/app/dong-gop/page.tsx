@@ -8,7 +8,7 @@ import {
   BookMarked, 
   Scale, 
   ShieldCheck, 
-  Sparkles, 
+  Star, 
   CheckCircle2, 
   Users, 
   Award, 
@@ -204,7 +204,7 @@ export default function ContributePage() {
             {/* 2. Quy Trình 4 Bước Đóng Góp */}
             <div className="p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)]/60 border border-[var(--border-card)] space-y-6">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-amber-500" />
+                <Star className="w-5 h-5 text-amber-500" />
                 <h2 className="font-serif font-bold text-xl sm:text-2xl text-[var(--text-main)]">
                   Quy Trình 4 Bước Xuất Bản Bài Viết
                 </h2>

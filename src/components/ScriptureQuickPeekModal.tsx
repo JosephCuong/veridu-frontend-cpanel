@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { BookOpen, ExternalLink, X, Loader2, Sparkles } from 'lucide-react';
+import { BookOpen, ExternalLink, X, Loader2, Scroll } from 'lucide-react';
 import Link from 'next/link';
 
 export interface ScripturePeekTarget {
@@ -237,7 +237,7 @@ export default function ScriptureQuickPeekModal({
               {data.hasMore && (
                 <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border border-amber-500/30 flex items-center justify-between gap-3 text-xs">
                   <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-medium">
-                    <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+                    <Scroll className="w-4 h-4 text-amber-500 shrink-0" />
                     <span>
                       Còn <strong>{data.remainingCount} câu</strong> tiếp theo trong đoạn trích này.
                     </span>

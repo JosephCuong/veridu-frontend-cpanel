@@ -9,7 +9,6 @@ import {
   Award, 
   Flame, 
   Trophy, 
-  Sparkles, 
   ArrowRight, 
   Calendar, 
   Coins, 

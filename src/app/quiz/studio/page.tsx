@@ -14,7 +14,7 @@ import {
   AlertCircle, 
   FileText, 
   BookOpen, 
-  Sparkles, 
+  Settings, 
   RefreshCw, 
   Download, 
   ExternalLink,
@@ -410,7 +410,7 @@ export default function QuizBankStudioPage() {
                   : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
               }`}
             >
-              <Sparkles className="w-4 h-4" />
+              <Settings className="w-4 h-4" />
               <span>Cài Đặt Nền Game</span>
             </button>
           </div>
@@ -928,7 +928,7 @@ export default function QuizBankStudioPage() {
           <div className="max-w-3xl mx-auto p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-6">
             <div>
               <h3 className="font-serif font-bold text-lg text-[var(--text-main)] flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-amber-500" />
+                <Settings className="w-5 h-5 text-amber-500" />
                 <span>Tùy Chỉnh Hình Nền &amp; Lớp Phủ Mờ Game</span>
               </h3>
               <p className="text-xs text-[var(--text-muted)] font-serif mt-1">

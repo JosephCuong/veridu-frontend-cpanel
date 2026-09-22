@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { fetchCatechismParagraphs } from '@/lib/api';
 import CatechismReaderClient from '@/components/CatechismReaderClient';
-import { ChevronLeft, BookOpen, Cross, Sun, Shield, Flame, Sparkles, Award } from 'lucide-react';
+import { ChevronLeft, BookOpen, Cross, Sun, Shield, Flame, Scroll, Award } from 'lucide-react';
 
 export const revalidate = 3600;
 
@@ -164,7 +164,7 @@ export default async function CatechismPartPage({ params }: { params: { part: st
               href="/giao-ly/the-lat"
               className="px-4 py-2.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500 text-xs font-serif font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5 transition shadow-sm"
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <Scroll className="w-3.5 h-3.5 text-amber-500" />
               <span>Thẻ Lật Ghi Nhớ</span>
             </Link>
 

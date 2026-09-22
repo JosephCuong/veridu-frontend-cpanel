@@ -8,7 +8,6 @@ import {
   FileText, 
   UploadCloud, 
   GraduationCap, 
-  Sparkles, 
   Gamepad2, 
   PenTool, 
   Check, 
@@ -232,7 +231,7 @@ export default function AdminHubPage() {
             >
               <div className="flex items-center justify-between">
                 <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Sparkles className="w-4 h-4" />
+                  <BookOpen className="w-4 h-4" />
                 </div>
                 <ChevronRight className="w-4 h-4 text-[var(--text-muted)] group-hover:text-amber-500 transition" />
               </div>
