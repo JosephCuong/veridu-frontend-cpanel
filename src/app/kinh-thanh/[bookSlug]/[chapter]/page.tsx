@@ -2,12 +2,46 @@ import React from 'react';
 import type { Metadata } from 'next';
 import BibleReader from '@/components/BibleReader';
 import { fetchBibleChapter, fetchBibleMetadata } from '@/lib/api';
-import { getCanonicalBookSlug } from '@/lib/bibleData';
+import { getCanonicalBookSlug, CANONICAL_BIBLE_BOOKS } from '@/lib/bibleData';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import ShareButtons from '@/components/ShareButtons';
 
 export const revalidate = 86400; // 24 hours Edge CDN cache for Holy Scripture
+
+export async function generateStaticParams() {
+  const params: { bookSlug: string; chapter: string }[] = [];
+
+  // Popular high-traffic chapters to pre-render at build time
+  const popularChapters: Record<string, string[]> = {
+    'sang-the': ['2', '3'],
+    'xuat-hanh': ['2', '20'],
+    'thanh-vinh': ['23', '91', '119'],
+    'mat-theu': ['5', '6', '7', '28'],
+    'mac-co': ['16'],
+    'lu-ca': ['2', '15', '24'],
+    'gio-an': ['3', '14', '15', '20'],
+    'cong-vu-tong-do': ['2'],
+    'ro-ma': ['8', '12'],
+    '1-co-rin-to': ['13'],
+    'khai-huyen': ['21', '22'],
+  };
+
+  for (const book of CANONICAL_BIBLE_BOOKS) {
+    // Pre-render Chapter 1 for all 73 canonical books
+    params.push({ bookSlug: book.code, chapter: '1' });
+
+    // Pre-render selected foundational theological chapters
+    const extras = popularChapters[book.code];
+    if (extras) {
+      for (const ch of extras) {
+        params.push({ bookSlug: book.code, chapter: ch });
+      }
+    }
+  }
+
+  return params;
+}
 
 interface PageProps {
   params: Promise<{

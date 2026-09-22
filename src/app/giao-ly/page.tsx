@@ -97,8 +97,32 @@ export default async function GiaoLyLandingPage() {
     a.category?.toLowerCase().includes('thần học')
   );
 
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Trang Chủ',
+        item: 'https://www.thapgia.com'
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Giáo Lý Hội Thánh Công Giáo',
+        item: 'https://www.thapgia.com/giao-ly'
+      }
+    ]
+  };
+
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col font-sans transition-colors duration-300 pb-24 pt-16 md:pt-20">
+      {/* Schema.org BreadcrumbList */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       
       {/* ── 1. SACRED HERO BANNER (CLEAN PARCHMENT / LIGHT & DARK COMPLIANT) ── */}
       <section className="relative w-full pt-28 sm:pt-36 pb-14 sm:pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-[var(--border-card)] bg-gradient-to-b from-amber-500/[0.04] via-transparent to-[var(--bg-main)]">

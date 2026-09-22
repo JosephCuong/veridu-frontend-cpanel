@@ -64,6 +64,9 @@ export async function middleware(request: NextRequest) {
     const subPath = cleanPath.replace('/doc-kinh-thanh/', '');
     return NextResponse.redirect(new URL(`/kinh-thanh/${subPath}`, request.url), { status: 301 });
   }
+  if (cleanPath === '/bible_chapter' || cleanPath.startsWith('/bible_chapter/')) {
+    return NextResponse.redirect(new URL('/kinh-thanh', request.url), { status: 301 });
+  }
 
 
   // Preserve dedicated library subpages like /thu-vien/sach/*, /thu-vien/tai-lieu/*, and /thu-vien/doc/*

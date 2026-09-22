@@ -18,8 +18,32 @@ export const metadata: Metadata = {
 export default async function CharactersPage() {
   const characters = await fetchCharacters();
 
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Trang Chủ',
+        item: 'https://www.thapgia.com'
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Nhân Vật Kinh Thánh',
+        item: 'https://www.thapgia.com/nhan-vat'
+      }
+    ]
+  };
+
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] transition-colors duration-300 flex flex-col font-sans pt-24 sm:pt-28 md:pt-32 pb-20">
+      {/* Schema.org BreadcrumbList */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       
       {/* ── Top Hero Header Section ── */}
       <section className="relative overflow-hidden py-8 sm:py-12 px-4 sm:px-6 lg:px-8 border-b border-[var(--border-card)]/50 bg-gradient-to-b from-amber-500/5 via-transparent to-transparent">
