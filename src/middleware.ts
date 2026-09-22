@@ -17,6 +17,7 @@ const ADMIN_REQUIRED_ROUTES = [
   '/admin/sach-tranh',
   '/admin/khoa-hoc',
   '/admin/quang-ba',
+  '/admin/soan-bai',
   '/quiz/studio',
   '/sach-tranh/studio',
   '/khoa-hoc/studio'
@@ -25,6 +26,13 @@ const ADMIN_REQUIRED_ROUTES = [
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const cleanPath = pathname.replace(/\/$/, '') || '/';
+
+  // 0. Redirect /admin/soan-bai -> /soan-bai (protected by AUTH_REQUIRED_ROUTES)
+  if (cleanPath === '/admin/soan-bai' || cleanPath.startsWith('/admin/soan-bai/')) {
+    const search = request.nextUrl.search;
+    const subPath = cleanPath.replace(/^\/admin\/soan-bai/, '');
+    return NextResponse.redirect(new URL(`/soan-bai${subPath}${search}`, request.url), { status: 301 });
+  }
 
   // 1. Redirect legacy wp-admin or general admin paths (except allowed admin dashboard and studios)
   if (
@@ -137,6 +145,25 @@ export async function middleware(request: NextRequest) {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('X-XSS-Protection', '1; mode=block');
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+
+  // Content Security Policy (CSP) - Hardened & Tailored for VERIDU Catholic Platform
+  if (!pathname.startsWith('/api/raw-html')) {
+    const cspDirectives = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://www.googletagmanager.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+      "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+      "img-src 'self' data: blob: https:",
+      "media-src 'self' data: blob: https:",
+      "connect-src 'self' https: wss:",
+      "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com",
+      "worker-src 'self' blob:",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'"
+    ];
+    response.headers.set('Content-Security-Policy', cspDirectives.join('; '));
+  }
 
   if (process.env.NODE_ENV === 'production') {
     response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
