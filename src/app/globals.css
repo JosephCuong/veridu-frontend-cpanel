@@ -1638,22 +1638,41 @@ dfn.veridu-term:focus {
 }
 .veridu-footnotes li,
 .footnote-item {
-  padding: 0.5rem 0;
+  padding: 0.6rem 0;
   background: transparent !important;
   border: none !important;
   border-bottom: 1px dashed var(--border-card);
   border-radius: 0 !important;
   box-shadow: none !important;
-  font-size: 0.875rem;
-  line-height: 1.7;
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  display: block !important;
+  text-align: left;
+  word-break: break-word;
 }
 .veridu-footnotes li:last-child,
 .footnote-item:last-child {
   border-bottom: none;
+}
+.veridu-footnotes li .footnote-backref,
+.footnote-item .footnote-backref {
+  display: inline-block !important;
+  margin-left: 0.4rem;
+  color: var(--gold-primary, #b45309);
+  text-decoration: none;
+  font-weight: 700;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+.veridu-footnotes li .footnote-backref:hover,
+.footnote-item .footnote-backref:hover {
+  transform: translateY(-1px);
+  color: #d97706;
+}
+.veridu-footnotes li .footnote-num,
+.footnote-item .footnote-num {
+  font-weight: 700;
+  margin-right: 0.45rem;
+  color: var(--gold-primary, #b45309);
 }
 sup.veridu-footnote {
   font-size: 0.75em;

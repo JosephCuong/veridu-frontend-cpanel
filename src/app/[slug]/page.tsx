@@ -217,6 +217,76 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
   const titleText = typeof article.title === 'string' ? article.title : 'Bài Viết VERIDU';
   const htmlContent = article.interactiveHtml || article.contentHtml || '';
   const prayerText = (article as any).prayerText as string | undefined;
+
+  // Effective Locations & Timeline with Self-Contained Fallback
+  let effectiveLocations = geoTimeline?.locations || [];
+  let effectiveTimelineEvents = geoTimeline?.timelineEvents || [];
+
+  if (article && (effectiveLocations.length === 0 || effectiveTimelineEvents.length === 0)) {
+    const rawContent = htmlContent;
+    const scriptMatch = rawContent.match(/<script\s+type="application\/json"\s+id="veridu-article-geo-timeline"[^>]*>([\s\S]*?)<\/script>/i);
+    if (scriptMatch) {
+      try {
+        const parsed = JSON.parse(scriptMatch[1]);
+        if (effectiveLocations.length === 0 && Array.isArray(parsed.locations) && parsed.locations.length > 0) {
+          effectiveLocations = parsed.locations.map((item: any, idx: number) => ({
+            id: item.id || `loc-${idx}`,
+            slug: item.slug || `loc-${idx}`,
+            name: item.name || item.title || '',
+            name_en: item.name_en || '',
+            name_original: item.ancient_name || item.name_original || '',
+            meaning: item.meaning || '',
+            region: item.region || 'Thánh Địa (Holy Land)',
+            testament: item.testament || 'cuu-uoc',
+            era: item.era || item.historical_period || 'Kinh Thánh',
+            latitude: Number(item.latitude ?? item.lat),
+            longitude: Number(item.longitude ?? item.lng ?? item.lon),
+            importance_level: item.importance_level || 2,
+            image_url: item.image_url || '',
+            summary: item.summary || item.description || '',
+            description: item.description || item.summary || '',
+            events: item.events || [],
+            scriptures: item.scriptures || item.biblical_references || item.bible_references || [],
+            theology: item.theology || '',
+            ancient_name: item.ancient_name || item.name_original || '',
+            historical_period: item.historical_period || '',
+            archaeological_evidence: item.archaeological_evidence || '',
+            bible_references: Array.isArray(item.biblical_references) ? item.biblical_references : (Array.isArray(item.bible_references) ? item.bible_references : (item.biblical_references ? [item.biblical_references] : [])),
+            article_slugs: [resolvedParams.slug]
+          }));
+        }
+        if (effectiveTimelineEvents.length === 0 && (Array.isArray(parsed.timeline_events) || Array.isArray(parsed.events))) {
+          const rawEvents = parsed.timeline_events || parsed.events;
+          effectiveTimelineEvents = rawEvents.map((ev: any, idx: number) => {
+            const yr = typeof ev.year_bce_ce === 'number' ? ev.year_bce_ce : (typeof ev.order_year === 'number' ? ev.order_year : (typeof ev.year === 'number' ? ev.year : 0));
+            return {
+              id: ev.id || `evt-${idx}`,
+              slug: ev.slug || ev.id || `evt-${idx}`,
+              order_year: yr,
+              year_label: ev.display_date || ev.year_label || (yr < 0 ? `${Math.abs(yr)} TCN` : `${yr} SCN`),
+              title: ev.event_title || ev.title || 'Sự kiện',
+              subtitle: ev.subtitle || ev.biblical_anchor || '',
+              biblical_anchor: ev.biblical_anchor || ev.scripture || '',
+              archaeological_anchor: ev.archaeological_anchor || ev.archaeology || '',
+              significance: ev.significance || ev.theology || ev.summary || '',
+              summary: ev.summary || ev.significance || '',
+              description: ev.description || ev.content || '',
+              content: ev.content || ev.description || '',
+              theology: ev.theology || ev.significance || '',
+              article_slug: resolvedParams.slug,
+              article_slugs: [resolvedParams.slug],
+              bible_references: ev.biblical_anchor ? [ev.biblical_anchor] : [],
+              era_id: ev.era_id || 'era-cuu-uoc',
+              era_name: ev.era_name || ev.period || '',
+              category: ev.category || 'cuu-uoc'
+            };
+          }).sort((a: any, b: any) => a.order_year - b.order_year);
+        }
+      } catch (err) {
+        console.error('Failed to parse inline geo-timeline JSON:', err);
+      }
+    }
+  }
   
   const coverImage = formatImageUrl(article.featured_image || article.thumbnail);
 
@@ -367,8 +437,8 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
                       if (/<veridu-timeline-placeholder/i.test(segment)) {
                         return (
                           <Fragment key={`timeline-${idx}`}>
-                            {geoTimeline && geoTimeline.timelineEvents && geoTimeline.timelineEvents.length > 0 ? (
-                              <ArticleTimelineSection timelineEvents={geoTimeline.timelineEvents} />
+                            {effectiveTimelineEvents && effectiveTimelineEvents.length > 0 ? (
+                              <ArticleTimelineSection timelineEvents={effectiveTimelineEvents} />
                             ) : null}
                           </Fragment>
                         );
@@ -376,8 +446,8 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
                       if (/<veridu-map-placeholder/i.test(segment)) {
                         return (
                           <Fragment key={`map-${idx}`}>
-                            {geoTimeline && geoTimeline.locations && geoTimeline.locations.length > 0 ? (
-                              <ArticleMapSection locations={geoTimeline.locations} />
+                            {effectiveLocations && effectiveLocations.length > 0 ? (
+                              <ArticleMapSection locations={effectiveLocations} />
                             ) : null}
                           </Fragment>
                         );
@@ -392,10 +462,10 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
               </div>
 
               {/* In-Article Interactive Geo & Timeline Widget (Rendered at bottom if no inline placeholders used) */}
-              {geoTimeline && !hasMountingPlaceholders && (
+              {!hasMountingPlaceholders && (effectiveLocations.length > 0 || effectiveTimelineEvents.length > 0) && (
                 <ArticleGeoTimelineWidget 
-                  locations={geoTimeline.locations} 
-                  timelineEvents={geoTimeline.timelineEvents} 
+                  locations={effectiveLocations} 
+                  timelineEvents={effectiveTimelineEvents} 
                   articleTitle={cleanTitle} 
                 />
               )}

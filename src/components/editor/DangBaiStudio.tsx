@@ -1323,6 +1323,18 @@ function DangBaiContent() {
       return;
     }
 
+    // Embed Geo & Timeline inline backup into HTML content
+    if (geoTimelineJson.trim()) {
+      try {
+        const parsed = JSON.parse(geoTimelineJson);
+        finalHtml = finalHtml.replace(/<script\s+type="application\/json"\s+id="veridu-article-geo-timeline"[^>]*>[\s\S]*?<\/script>/gi, '').trim();
+        finalHtml += `\n<script type="application/json" id="veridu-article-geo-timeline">${JSON.stringify(parsed)}</script>`;
+        setContentHtml(finalHtml);
+      } catch (err) {
+        console.warn('Lỗi khi đính kèm inline geoTimelineJson:', err);
+      }
+    }
+
     setIsSubmitting(true);
     setMessage(null);
 

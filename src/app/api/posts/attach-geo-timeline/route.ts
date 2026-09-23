@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { revalidatePath } from 'next/cache';
+import { getSupabaseServerClient } from '@/lib/supabaseServer';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,6 +77,7 @@ function determineEraAndCategory(year: number): { era_id: string; era_name: stri
 
 export async function POST(request: Request) {
   try {
+    const supabase = getSupabaseServerClient();
     const body = await request.json();
     const { article_slug, locations = [], timeline_events = [] } = body;
 
@@ -335,9 +337,60 @@ export async function POST(request: Request) {
       }
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // 3. TỰ ĐỘNG ĐÍNH KÈM THẺ SCRIPT JSON VÀO CONTENT BÀI VIẾT (SELF-CONTAINED BACKUP)
+    // ─────────────────────────────────────────────────────────────
+    let postUpdated = false;
+    try {
+      const { data: postData } = await supabase
+        .from('posts')
+        .select('id, content')
+        .eq('slug', article_slug)
+        .maybeSingle();
+
+      if (postData && postData.content) {
+        let content = postData.content;
+        // Xóa thẻ script JSON cũ nếu có
+        content = content.replace(/<script\s+type="application\/json"\s+id="veridu-article-geo-timeline"[^>]*>[\s\S]*?<\/script>/gi, '').trim();
+        // Nhúng thẻ script JSON mới
+        const geoTimelineData = {
+          locations: locations,
+          timeline_events: timeline_events
+        };
+        const scriptTag = `\n<script type="application/json" id="veridu-article-geo-timeline">${JSON.stringify(geoTimelineData)}</script>`;
+        content += scriptTag;
+
+        const { error: postUpdateErr } = await supabase
+          .from('posts')
+          .update({ content, updated_at: new Date().toISOString() })
+          .eq('id', postData.id);
+
+        if (!postUpdateErr) {
+          postUpdated = true;
+        } else {
+          console.error('Lỗi khi cập nhật content bài viết self-contained:', postUpdateErr);
+        }
+      }
+    } catch (postErr) {
+      console.error('Lỗi khi cập nhật bài viết self-contained:', postErr);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 4. FLUSH ISR CACHE CHO BÀI VIẾT
+    // ─────────────────────────────────────────────────────────────
+    try {
+      revalidatePath(`/${article_slug}`);
+      revalidatePath(`/thu-vien/${article_slug}`);
+      revalidatePath('/');
+      revalidatePath('/thu-vien');
+    } catch (cacheErr) {
+      console.warn('Lỗi khi revalidatePath:', cacheErr);
+    }
+
     return NextResponse.json({
       success: true,
       article_slug,
+      post_updated: postUpdated,
       processedLocations,
       processedTimeline
     });
