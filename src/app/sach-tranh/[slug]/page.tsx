@@ -3,7 +3,6 @@ import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { DEFAULT_STORYBOOKS } from '@/lib/storybooksData';
 import StorybookReaderClient from '@/components/StorybookReaderClient';
-import ShareButtons from '@/components/ShareButtons';
 
 export const revalidate = 60;
 
@@ -65,13 +64,6 @@ export default async function StorybookReaderPage({ params }: { params: { slug: 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col font-sans select-none">
       <StorybookReaderClient book={book} />
-      <ShareButtons
-        url={pageUrl}
-        title={`${book.title} — Sách Tranh Kinh Thánh Thiếu Nhi`}
-        quote={book.description || book.subtitle || `Khám phá câu chuyện Kinh Thánh thiếu nhi: ${book.title}`}
-        category="Sách Tranh Kinh Thánh"
-        author="Tủ Sách Thiếu Nhi VERIDU"
-      />
     </div>
   );
 }

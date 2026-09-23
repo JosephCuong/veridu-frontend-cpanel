@@ -11,7 +11,7 @@ import { Metadata } from 'next';
 
 import VisualArticleRenderer from '@/components/VisualArticleRenderer';
 import ArticleGeoTimelineWidget from '@/components/ArticleGeoTimelineWidget';
-import ShareButtons from '@/components/ShareButtons';
+import ShareButtons, { ArticleInlineShare } from '@/components/ShareButtons';
 import TableOfContents from '@/components/TableOfContents';
 import AdminEditFloatingButton from '@/components/AdminEditFloatingButton';
 import ArticleAuthorCard from '@/components/ArticleAuthorCard';
@@ -322,17 +322,6 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
           title={cleanTitle}
           sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals"
         />
-
-        <ShareButtons 
-          url={articleUrl} 
-          title={cleanTitle} 
-          quote={sacredScripture.quote}
-          quoteSource={sacredScripture.source}
-          category={article.category || 'Thần Học & Thánh Kinh'}
-          author={authorProfile.christian_name ? `${authorProfile.christian_name} ${authorProfile.full_name}` : (article.author_name || article.author || 'Ban Học Vụ VERIDU')}
-          imageUrl={coverImage || defaultImage}
-          availableImages={extractedImages}
-        />
       </main>
     );
   }
@@ -386,6 +375,18 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
                 </div>
               )}
             </article>
+
+            {/* In-Article Liturgical Share Block (Optimal for Mobile & End-of-Reading Engagement) */}
+            <ArticleInlineShare 
+              url={articleUrl} 
+              title={cleanTitle} 
+              quote={sacredScripture.quote}
+              quoteSource={sacredScripture.source}
+              category={article.category || 'Thần Học & Thánh Kinh'}
+              author={authorProfile.christian_name ? `${authorProfile.christian_name} ${authorProfile.full_name}` : (article.author_name || article.author || 'Ban Học Vụ VERIDU')}
+              imageUrl={coverImage || defaultImage}
+              availableImages={extractedImages}
+            />
 
             {/* 1. About the Author */}
             <ArticleAuthorCard 

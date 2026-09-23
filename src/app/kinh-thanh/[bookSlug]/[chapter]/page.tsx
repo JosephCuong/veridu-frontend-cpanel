@@ -5,7 +5,6 @@ import { fetchBibleChapter, fetchBibleMetadata } from '@/lib/api';
 import { getCanonicalBookSlug, CANONICAL_BIBLE_BOOKS } from '@/lib/bibleData';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import ShareButtons from '@/components/ShareButtons';
 
 export const revalidate = 86400; // 24 hours Edge CDN cache for Holy Scripture
 
@@ -184,15 +183,6 @@ export default async function KinhThanhPage({ params, searchParams }: PageProps)
           </div>
         )}
       </main>
-
-      {/* Cổng chia sẻ & Tạo thẻ ảnh Lời Chúa */}
-      <ShareButtons
-        url={pageUrl}
-        title={`Sách ${bookNameVi} - Chương ${chapterNumber}`}
-        quote={data?.verses?.[0]?.content ? `„${data.verses[0].content}”` : `Sách ${bookNameVi}, Chương ${chapterNumber}`}
-        category="Thánh Kinh Trọn Bộ"
-        author={`Bản dịch ${translationSlug.toUpperCase()}`}
-      />
     </div>
   );
 }
