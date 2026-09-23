@@ -16,6 +16,16 @@
   --text-muted: #94a3b8;
   --accent-gold: #fbbf24;
   --accent-gold-text: #fbbf24;
+
+  /* VERIDU Scholarly Tokens - Dark Mode */
+  --gold-primary: #fbbf24;
+  --gold-border: rgba(251, 191, 36, 0.4);
+  --gold-light: rgba(251, 191, 36, 0.15);
+  --crimson-primary: #f87171;
+  --crimson-light: rgba(239, 68, 68, 0.15);
+  --indigo-primary: #60a5fa;
+  --emerald-primary: #34d399;
+  --border-color: #1e293b;
 }
 
 html.light {
@@ -27,6 +37,16 @@ html.light {
   --text-muted: #475569;
   --accent-gold: #d97706;
   --accent-gold-text: #b45309;
+
+  /* VERIDU Scholarly Tokens - Light Mode */
+  --gold-primary: #c59b27;
+  --gold-border: #e6ca65;
+  --gold-light: rgba(197, 155, 39, 0.12);
+  --crimson-primary: #8b2626;
+  --crimson-light: #fbeeed;
+  --indigo-primary: #2a4365;
+  --emerald-primary: #065f46;
+  --border-color: #e5dcce;
 }
 
 @theme inline {
@@ -1266,5 +1286,453 @@ a.scripture-superlink.scripture-badge {
   display: inline-flex;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════════
+   VERIDU SCHOLARLY ARTICLE DESIGN SYSTEM (HỆ THỐNG BÁCH KHOA CHUYÊN KHẢO)
+   ══════════════════════════════════════════════════════════════════════════════ */
 
+/* ─── 1. ROOT SEMANTIC WRAPPER ───────────────────────────────────────────── */
+article.veridu-scholarly-article,
+.veridu-scholarly-article {
+  max-width: 840px;
+  margin-left: auto;
+  margin-right: auto;
+  font-family: var(--font-serif);
+  line-height: 1.8;
+}
 
+/* ─── 2. MOUNTING PLACEHOLDERS (D3 TIMELINE & LEAFLET MAP) ──────────────── */
+veridu-timeline-placeholder,
+.veridu-timeline-placeholder {
+  display: block;
+  position: relative;
+  margin: 2rem 0;
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  border: 1.5px dashed var(--gold-primary);
+  background: var(--gold-light);
+  min-height: 90px;
+}
+veridu-timeline-placeholder::before,
+.veridu-timeline-placeholder::before {
+  content: '⏳ TRỤC NIÊN BIỂU LỊCH SỬ CỨU ĐỘ (D3 TIMELINE PLACEHOLDER) — Tự động tích hợp d3_timeline.json';
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--gold-primary);
+  text-align: center;
+  padding: 1rem 0;
+}
+
+veridu-map-placeholder,
+.veridu-map-placeholder {
+  display: block;
+  position: relative;
+  margin: 2rem 0;
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  border: 1.5px dashed var(--indigo-primary);
+  background: rgba(42, 67, 101, 0.08);
+  min-height: 90px;
+}
+veridu-map-placeholder::before,
+.veridu-map-placeholder::before {
+  content: '🗺️ BẢN ĐỒ TỌA ĐỘ KHẢO CỔ (LEAFLET MAP PLACEHOLDER) — Tự động tích hợp leaflet_coordinates.json';
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--indigo-primary);
+  text-align: center;
+  padding: 1rem 0;
+}
+
+/* ─── 3. SUBTITLE ARCHITECTURE ──────────────────────────────────────────── */
+.article-subtitle {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-style: italic;
+  color: var(--gold-primary);
+  margin-top: -0.75rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ─── 4. ARCHAEOLOGICAL IMAGES & MUSEUM CAPTION ─────────────────────────── */
+figure.wp-block-image.veridu-image-block,
+figure.veridu-image-block {
+  margin: 2rem auto;
+  text-align: center;
+}
+figure.wp-block-image.veridu-image-block img,
+figure.veridu-image-block img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+  cursor: zoom-in;
+  transition: transform 0.3s ease;
+}
+figure.wp-block-image.veridu-image-block img:hover,
+figure.veridu-image-block img:hover {
+  transform: scale(1.01);
+}
+figure.wp-block-image.veridu-image-block figcaption,
+figure.veridu-image-block figcaption {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  margin-top: 0.75rem;
+  text-align: center;
+  max-width: 48rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ─── 5. SCHOLARLY AUDIO PODCAST PLAYERS ────────────────────────────────── */
+.veridu-embed-audio {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+.veridu-embed-audio.mini {
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid var(--gold-border);
+  background: var(--gold-light);
+}
+.veridu-embed-audio .audio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  font-family: var(--font-sans);
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.veridu-embed-audio .audio-label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--gold-primary);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.veridu-embed-audio .audio-badge {
+  font-size: 0.75rem;
+  font-family: var(--font-mono, monospace);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+}
+.veridu-embed-audio audio {
+  width: 100%;
+  height: 2.75rem;
+  border-radius: 0.5rem;
+}
+.veridu-embed-audio.mini audio {
+  height: 2.25rem;
+}
+
+/* ─── 6. INLINE SCHOLARLY TERMS ─────────────────────────────────────────── */
+dfn.veridu-term {
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1.5px dotted var(--gold-primary);
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  padding: 0.05rem 0.2rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+}
+dfn.veridu-term:hover,
+dfn.veridu-term:focus {
+  background-color: var(--gold-light);
+  color: var(--gold-primary);
+  outline: none;
+}
+
+/* ─── 7. CATECHETICAL CALLOUTS ──────────────────────────────────────────── */
+.catechetical-callout {
+  margin: 1.75rem 0;
+  padding: 1.25rem 1.5rem;
+  border-radius: 0 1rem 1rem 0;
+  border-left: 4px solid;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+.catechetical-callout .callout-header {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-sans);
+}
+.catechetical-callout .callout-body {
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+.catechetical-callout.callout-note {
+  border-left-color: var(--indigo-primary);
+  background: rgba(42, 67, 101, 0.08);
+}
+.catechetical-callout.callout-note .callout-header {
+  color: var(--indigo-primary);
+}
+.catechetical-callout.callout-tip {
+  border-left-color: var(--emerald-primary);
+  background: rgba(6, 95, 70, 0.08);
+}
+.catechetical-callout.callout-tip .callout-header {
+  color: var(--emerald-primary);
+}
+.catechetical-callout.callout-important {
+  border-left-color: var(--gold-primary);
+  background: var(--gold-light);
+}
+.catechetical-callout.callout-important .callout-header {
+  color: var(--gold-primary);
+}
+.catechetical-callout.callout-warning {
+  border-left-color: var(--crimson-primary);
+  background: var(--crimson-light);
+}
+.catechetical-callout.callout-warning .callout-header {
+  color: var(--crimson-primary);
+}
+
+/* ─── 8. SACRED SCRIPTURE QUOTE BLOCK ───────────────────────────────────── */
+.sacred-scripture.veridu-scripture-quote {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  background: linear-gradient(to right, var(--gold-light), transparent);
+  border-left: 4px solid var(--gold-primary);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+.sacred-scripture.veridu-scripture-quote .icon-box {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  background: var(--gold-light);
+  color: var(--gold-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+  border: 1px solid var(--gold-border);
+}
+.sacred-scripture.veridu-scripture-quote blockquote {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.15rem;
+  line-height: 1.7;
+  margin: 0 0 0.75rem 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.sacred-scripture.veridu-scripture-quote .scripture-link-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3rem 0.85rem;
+  border-radius: 9999px;
+  background: var(--gold-light);
+  color: var(--gold-primary);
+  border: 1px solid var(--gold-border);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-decoration: none !important;
+  transition: all 0.2s ease;
+}
+.sacred-scripture.veridu-scripture-quote .scripture-link-badge:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+/* ─── 9. LITURGICAL PRAYER BLOCK ────────────────────────────────────────── */
+.prayer-block {
+  margin: 2rem 0;
+  padding: 1.75rem;
+  border-radius: 1.5rem;
+  background: rgba(42, 67, 101, 0.05);
+  border-left: 4px solid var(--indigo-primary);
+  border-top: 1px solid rgba(42, 67, 101, 0.15);
+  border-right: 1px solid rgba(42, 67, 101, 0.15);
+  border-bottom: 1px solid rgba(42, 67, 101, 0.15);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+  font-family: var(--font-serif);
+}
+.prayer-block .prayer-title {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--indigo-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.875rem;
+  font-family: var(--font-sans);
+}
+.prayer-block .prayer-text {
+  font-style: italic;
+  font-size: 1.1rem;
+  line-height: 1.8;
+  margin: 0;
+}
+.prayer-block .prayer-amen {
+  text-align: right;
+  font-weight: 700;
+  color: var(--gold-primary);
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+}
+
+/* ─── 10. 4 SCHOLARLY END BLOCKS & ANCHOR IDS ───────────────────────────── */
+.veridu-footnotes,
+.footnotes-section {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid var(--border-color);
+}
+.veridu-footnotes ol,
+.footnotes-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+  space-y: 0.75rem;
+}
+.veridu-footnotes li,
+.footnote-item {
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+sup.veridu-footnote {
+  font-size: 0.75em;
+  vertical-align: super;
+  line-height: 0;
+}
+
+.scripture-meta {
+  margin: 2.5rem 0;
+  padding: 1.5rem;
+  border-radius: 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+}
+.scripture-meta .scripture-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background: var(--bg-main);
+  border: 1px solid var(--border-card);
+  margin-bottom: 0.5rem;
+}
+@media (min-width: 640px) {
+  .scripture-meta .scripture-item {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+}
+.scripture-meta .scripture-claim {
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.scripture-meta .scripture-refs,
+.scripture-meta .verse-badge {
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  color: var(--gold-primary);
+}
+
+.dictionary-meta {
+  margin: 2.5rem 0;
+  padding: 1.5rem;
+  border-radius: 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+}
+.dictionary-meta .dictionary-title {
+  font-weight: 800;
+  font-size: 0.875rem;
+  color: var(--indigo-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-card);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  font-family: var(--font-serif);
+}
+.dictionary-meta .dictionary-entry {
+  padding: 0.75rem 0;
+  border-bottom: 1px dashed var(--border-card);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.dictionary-meta .dictionary-entry:last-child {
+  border-bottom: none;
+}
+.dictionary-meta .term-keyword {
+  font-weight: 700;
+  color: var(--gold-primary);
+  margin-right: 0.35rem;
+}
+.dictionary-meta .term-lang {
+  font-style: italic;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  margin-right: 0.35rem;
+}
+
+.bibliography {
+  margin: 2.5rem 0;
+  padding: 1.5rem;
+  border-radius: 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+.bibliography p {
+  padding-left: 2rem;
+  text-indent: -2rem;
+  margin-bottom: 0.75rem;
+}

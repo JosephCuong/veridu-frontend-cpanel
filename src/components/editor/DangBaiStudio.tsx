@@ -53,7 +53,8 @@ import {
   Headphones,
   Radio,
   Volume2,
-  Columns
+  Columns,
+  Library
 } from 'lucide-react';
 import { getStoredUser, UserProfile } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
@@ -714,6 +715,163 @@ function DangBaiContent() {
     const str = JSON.stringify(sample, null, 2);
     setGeoTimelineJson(str);
     setGeoTimelineStatus({ valid: true, message: 'Đã nạp mẫu JSON: 1 tọa độ địa danh • 1 mốc thời gian.' });
+  };
+
+  // 🏛️ FULL SCHOLARLY ARTICLE TEMPLATE (11 Phân Hệ Bách Khoa VERIDU)
+  const FULL_SCHOLARLY_TEMPLATE = `<article class="veridu-scholarly-article">
+
+  <p class="article-subtitle">Khảo Luận Chuyên Sâu Về Biến Cố Xuất Hành Và Di Sản Tín Lý</p>
+
+  <div class="veridu-embed-audio mini">
+    <div class="audio-header">
+      <span class="audio-label">🎧 Nghe Audio Tóm Lược Chuyên Khảo</span>
+      <span class="audio-badge">Mini Player</span>
+    </div>
+    <audio controls preload="none">
+      <source src="https://assets.thapgia.com/audio/sample-intro.mp3" type="audio/mpeg" />
+      Trình duyệt của bạn không hỗ trợ phát âm thanh.
+    </audio>
+  </div>
+
+  <veridu-timeline-placeholder></veridu-timeline-placeholder>
+
+  <p>Biến cố Xuất Hành không chỉ là một trang sử giải phóng dân tộc đơn thuần, mà là khúc quanh quyết định trong toàn bộ Lịch sử Cứu độ của Giao ước cũ, hướng trọn vẹn về sự viên mãn trong Đức Kitô. Qua dòng thời gian, <dfn class="veridu-term" title="Giao ước vĩnh cửu được Thiên Chúa thiết lập với dân tộc được chọn" data-base="Do Thái: בְּרִית (Berit)">Giao Ước</dfn> tại núi Sinai đã định hình căn tính tâm linh của toàn thể Dân Chúa.</p>
+
+  <div class="sacred-scripture veridu-scripture-quote">
+    <div class="icon-box">✝️</div>
+    <div class="content-box">
+      <blockquote>
+        "Ngươi hãy nói với con cái Ít-ra-en: Chính các ngươi đã thấy Ta xử sự với người Ai-cập thế nào, và đã mang các ngươi như trên cánh phượng hoàng mà đem đến với Ta."
+      </blockquote>
+      <div class="source-wrapper">
+        <cite>— Sách Xuất Hành (Xh 19, 4)</cite>
+        <a href="/kinh-thanh" class="scripture-link-badge">
+          📖 Tra cứu Kinh Thánh NTT
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="catechetical-callout callout-important">
+    <div class="callout-header">
+      <span>🛡️</span> LƯU Ý TÍN LÝ NỀN TẢNG
+    </div>
+    <div class="callout-body">
+      Mạc khải trong Cựu Ước mang tính tiệm tiến sư phạm của Thiên Chúa, chuẩn bị tâm hồn nhân loại đón nhận Mạc khải trọn vẹn nơi Đức Giêsu Kitô – Ngôi Lời Nhập Thể.
+    </div>
+  </div>
+
+  <figure class="wp-block-image veridu-image-block">
+    <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1200&q=80" data-lightbox="true" alt="Di chỉ khảo cổ Sinai" />
+    <figcaption>Bia đá Khảo cổ học Tel Dan (Thế kỷ IX TCN), Bảo tàng Israel, Jerusalem. Khắc ghi tước hiệu Nhà Đa-vít.</figcaption>
+  </figure>
+
+  <p>Thần học Kitô giáo từ các thời Giáo Phụ luôn nhìn nhận hành trình vượt Biển Đỏ là hình bóng tiên báo (Typology) mầu nhiệm Phép Rửa, đưa người tín hữu vượt qua vực thẳm tội lỗi bước vào đời sống mới của ân sủng.</p>
+
+  <div class="prayer-block">
+    <div class="prayer-title">
+      <span>🕯️</span> Lời Nguyện Sốt Mến
+    </div>
+    <p class="prayer-text">
+      Lạy Chúa là Thiên Chúa của Giao Ước, xin dẫn dắt tâm hồn chúng con qua sa mạc trần gian, luôn trung kiên bước đi dưới ánh sáng Chân Lý và Tình Yêu của Ngài.
+    </p>
+    <div class="prayer-amen">Amen.</div>
+  </div>
+
+  <veridu-map-placeholder></veridu-map-placeholder>
+
+  <section id="chu-thich" class="veridu-footnotes">
+    <h3 class="font-serif font-bold text-base text-[var(--gold-primary)] uppercase tracking-wider mb-3">1. Chú Thích Học Thuật</h3>
+    <ol>
+      <li>
+        <span>[1] Thuật ngữ <em>Berit</em> trong văn khắc Cận Đông Cổ Đại (ANE) mang cấu trúc hiệp ước bá chủ (Suzerainty Treaty).</span>
+        <a href="#fnref-1" class="font-mono text-xs text-amber-500 hover:underline">↩ Quay lại</a>
+      </li>
+      <li>
+        <span>[2] Xem thêm Khảo luận Thần học của Augustinô về Hình bóng và Sự thật (De Civitate Dei, XVI, 26).</span>
+        <a href="#fnref-2" class="font-mono text-xs text-amber-500 hover:underline">↩ Quay lại</a>
+      </li>
+    </ol>
+  </section>
+
+  <section id="tham-chieu" class="scripture-meta">
+    <div class="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-serif font-black text-sm uppercase tracking-wider border-b border-[var(--border-card)] pb-3 mb-3">
+      <span>📜</span> 2. Danh Mục Tham Chiếu Thánh Kinh
+    </div>
+    <div class="space-y-2">
+      <div class="scripture-item">
+        <span class="scripture-claim">Giao ước Sinai &amp; Lề luật:</span>
+        <span class="scripture-refs">Xh 19,1-6; Xh 24,3-8; Đnl 5,1-22</span>
+      </div>
+      <div class="scripture-item">
+        <span class="scripture-claim">Hình bóng Tiên báo trong Tân Ước:</span>
+        <span class="scripture-refs">1Cr 10,1-4; Dt 8,6-13; Dt 9,15</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="bang-thuat-ngu" class="dictionary-meta">
+    <div class="dictionary-title">
+      <span>📚</span> 3. Bảng Thuật Ngữ Thần Học &amp; Cổ Ngữ
+    </div>
+    <div class="space-y-1">
+      <div class="dictionary-entry">
+        <span class="term-keyword">Berit</span>
+        <span class="term-lang">(Do Thái: בְּרִית)</span>:
+        <span class="term-definition">Giao ước ràng buộc thiêng liêng giữa Thiên Chúa và dân Ít-ra-en, thiết lập quan hệ phụ tử và trách nhiệm luân lý.</span>
+      </div>
+      <div class="dictionary-entry">
+        <span class="term-keyword">Typology</span>
+        <span class="term-lang">(Hy Lạp: τύπος)</span>:
+        <span class="term-definition">Phương pháp chú giải Tiên trưng học, nhận diện những biến cố Cựu Ước như hình bóng tiên báo mầu nhiệm Đức Kitô trong Tân Ước.</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="thu-muc-tai-lieu" class="bibliography">
+    <h3 class="font-serif font-bold text-base text-[var(--gold-primary)] uppercase tracking-wider mb-3">4. Thư Mục Tài Liệu Tham Khảo</h3>
+    <p>Giáo hoàng Bộ Giáo Lý Đức Tin. <em>Sách Giáo Lý Hội Thánh Công Giáo</em>. Bản dịch Ủy ban Giáo lý Đức tin (HĐGMVN), 2011.</p>
+    <p>Phạm Quốc Tuấn, Lm. Giuse. <em>Giáo Trình Dẫn Nhập Thần Học Kinh Thánh Cựu Ước</em>. ĐCV Thánh Giuse Xuân Lộc, 2020.</p>
+    <p>Vaux, Roland de. <em>Ancient Israel: Its Life and Institutions</em>. Darton, Longman &amp; Todd, London, 1961.</p>
+  </section>
+
+</article>`;
+
+  // 1-Click Insert Full Scholarly Template
+  const handleInsertFullScholarlyTemplate = () => {
+    if (contentHtml && contentHtml.trim().length > 60) {
+      const confirmReplace = window.confirm(
+        'Bạn có chắc muốn chèn Khung Bài Chuẩn 11 Phần VERIDU? Thao tác này sẽ áp dụng bố cục bách khoa toàn diện cho bài viết hiện tại.'
+      );
+      if (!confirmReplace) return;
+    }
+
+    setContentHtml(FULL_SCHOLARLY_TEMPLATE);
+    if (visualCanvasRef.current) {
+      visualCanvasRef.current.innerHTML = FULL_SCHOLARLY_TEMPLATE;
+    }
+
+    if (!title.trim()) {
+      setTitle('Khảo Luận Chuyên Sâu Về Biến Cố Xuất Hành Và Di Sản Tín Lý');
+      setSlug('khao-luan-chuyen-sau-ve-bien-co-xuat-hanh-va-di-san-tin-ly');
+    }
+    if (!excerpt.trim()) {
+      setExcerpt('Khảo luận học thuật toàn diện đối chiếu bản văn Kinh Thánh với khảo cổ học Cận Đông Cổ Đại, phân tích chiều kích Thần học Giao Ước và ý nghĩa cứu độ.');
+    }
+    setArticleType('theological');
+    setCategory('Khảo Cứu Thần Học');
+    setReadingTime('12 phút đọc');
+
+    // Auto-populate sample geo timeline if empty
+    if (!geoTimelineJson.trim()) {
+      handleLoadSampleJson();
+    }
+
+    setMessage({ 
+      type: 'success', 
+      text: 'Đã nạp thành công Khung Bài Chuẩn 11 Phần (Full Scholarly Template) của VERIDU!' 
+    });
+    setTimeout(() => setMessage(null), 4000);
   };
 
   // 1-Click Catholic Block Insertion Handler
@@ -1824,6 +1982,30 @@ function DangBaiContent() {
             Nhấp vào bất kỳ khối nào bên dưới để chèn mẫu chuẩn vào vị trí con trỏ:
           </p>
 
+          {/* 🌟 1-CLICK FULL SCHOLARLY ARTICLE TEMPLATE (11 PHẦN CHUẨN BÁCH KHOA) */}
+          <button
+            type="button"
+            onClick={handleInsertFullScholarlyTemplate}
+            className="w-full py-3 px-3.5 rounded-2xl bg-gradient-to-r from-amber-500/25 via-amber-500/15 to-indigo-500/15 hover:from-amber-500/35 hover:to-indigo-500/25 border-2 border-amber-500/50 flex items-center justify-between text-xs font-bold text-[var(--text-main)] transition shadow-lg shadow-amber-500/10 cursor-pointer group"
+          >
+            <div className="flex items-center gap-2.5 text-left">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center border border-amber-500/30 group-hover:scale-105 transition-transform">
+                <Library className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="font-serif font-black text-amber-600 dark:text-amber-400 text-xs">
+                  🏛️ Khung Bài Chuẩn 11 Phần
+                </div>
+                <div className="text-[10px] text-[var(--text-muted)] font-normal">
+                  Trọn bộ cấu trúc bách khoa VERIDU
+                </div>
+              </div>
+            </div>
+            <span className="text-[10px] px-2 py-1 rounded-full bg-amber-500 text-slate-950 font-black">
+              1-Click
+            </span>
+          </button>
+
           {/* Quick Custom Media Inserter Trigger */}
           <button
             type="button"
@@ -1854,55 +2036,79 @@ function DangBaiContent() {
                 action: () => handleOpenConfigModal('prayer')
               },
               {
-                name: '3. Tóm Tắt Nghiên Cứu Thần Học',
+                name: '3. Tiêu Đề Phụ Học Thuật',
+                desc: 'Phụ đề Lora chữ nghiêng vàng hổ phách (.article-subtitle)',
+                icon: <Type className="w-4 h-4 text-amber-500" />,
+                action: () => handleInsertCatholicBlock(`<p class="article-subtitle">Khảo Luận Chuyên Sâu Về Biến Cố Lịch Sử Cứu Độ Và Di Sản Tín Lý</p>`)
+              },
+              {
+                name: '4. Thuật Ngữ Nội Dòng (<dfn>)',
+                desc: 'Thẻ tra cứu nổi Popover Glassmorphic viền vàng hổ phách',
+                icon: <HelpCircle className="w-4 h-4 text-amber-500" />,
+                action: () => handleOpenConfigModal('term')
+              },
+              {
+                name: '5. Điểm Neo Niên Biểu & Bản Đồ',
+                desc: 'Chèn thẻ giữ chỗ D3 Timeline hoặc Leaflet Map tương tác',
+                icon: <Compass className="w-4 h-4 text-cyan-400" />,
+                action: () => handleOpenConfigModal('placeholders')
+              },
+              {
+                name: '6. Bộ 4 Khối Kết Thúc Học Thuật',
+                desc: 'Chú thích (#chu-thich), Tham chiếu (#tham-chieu), Thuật ngữ, Thư mục',
+                icon: <Library className="w-4 h-4 text-amber-500" />,
+                action: () => handleOpenConfigModal('scholarly_end')
+              },
+              {
+                name: '7. Tóm Tắt Nghiên Cứu Thần Học',
                 desc: 'Thẻ tóm tắt học thuật VERIDU RESEARCH',
                 icon: <FileText className="w-4 h-4 text-indigo-500" />,
                 action: () => handleInsertCatholicBlock(`<div class="abstract-research my-8 p-6 sm:p-8 rounded-3xl bg-indigo-500/10 border border-indigo-500/30 shadow-xl backdrop-blur-md space-y-4 not-prose"><div class="abstract-header flex items-center justify-between border-b border-indigo-500/20 pb-3"><span class="text-xs font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 flex items-center gap-2 font-serif"><span>📖</span> TÓM TẮT NGHIÊN CỨU THẦN HỌC</span><span class="abstract-badge text-[10px] px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 font-bold font-mono">VERIDU RESEARCH</span></div><p class="font-serif text-sm sm:text-base leading-relaxed text-[var(--text-main)] m-0">Khảo luận chuyên sâu về nền tảng tín lý và bối cảnh lịch sử của Tín Điều Theotokos tại Công đồng Êphêsô (431), làm rõ sự hiệp nhất hai bản tính trong duy nhất một Ngôi Vị Thiên Chúa.</p><div class="flex flex-wrap gap-2 pt-2 border-t border-indigo-500/10"><span class="text-[10px] px-2.5 py-1 rounded-lg bg-[var(--bg-card)] text-indigo-600 dark:text-indigo-300 font-bold border border-indigo-500/20">#Theotokos</span><span class="text-[10px] px-2.5 py-1 rounded-lg bg-[var(--bg-card)] text-indigo-600 dark:text-indigo-300 font-bold border border-indigo-500/20">#Epheso431</span></div></div>`)
               },
               {
-                name: '4. Bằng Chứng Thánh Kinh',
+                name: '8. Bằng Chứng Thánh Kinh',
                 desc: 'Bảng danh mục luận điểm & câu đối chiếu',
                 icon: <ListChecks className="w-4 h-4 text-amber-500" />,
                 action: () => handleInsertCatholicBlock(`<div class="scripture-meta my-8 p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-4 not-prose"><div class="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-serif font-black text-sm uppercase tracking-wider border-b border-[var(--border-card)] pb-3"><span>📜</span> DANH MỤC BẰNG CHỨNG THÁNH KINH</div><div class="space-y-3"><div class="scripture-item flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)]/60"><span class="scripture-claim font-bold text-xs text-[var(--text-main)]">Hòm Bia Giao Ước Mới:</span><span class="scripture-refs font-mono text-xs font-bold text-amber-600 dark:text-amber-400">Xh 40,34-35; Lc 1,35; Kh 11,19</span></div><div class="scripture-item flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)]/60"><span class="scripture-claim font-bold text-xs text-[var(--text-main)]">Đấng Trung Gian Duy Nhất:</span><span class="scripture-refs font-mono text-xs font-bold text-amber-600 dark:text-amber-400">1Tm 2,5; Dt 9,15</span></div></div></div>`)
               },
               {
-                name: '5. Thuật Ngữ Thần Học',
+                name: '9. Thuật Ngữ Thần Học',
                 desc: 'Giải nghĩa thuật ngữ kèm từ nguyên Hy Lạp/Latin',
                 icon: <HelpCircle className="w-4 h-4 text-indigo-500" />,
                 action: () => handleInsertCatholicBlock(`<div class="dictionary-meta my-8 p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-2 not-prose"><div class="dictionary-title flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-serif font-black text-sm uppercase tracking-wider border-b border-[var(--border-card)] pb-3"><span>📚</span> TRA CỨU THUẬT NGỮ GIÁO LÝ & THẦN HỌC</div><div class="space-y-1"><div class="dictionary-entry py-3 border-b border-dashed border-[var(--border-card)]"><span class="term-keyword font-bold text-amber-600 dark:text-amber-400">Theotokos</span> <span class="term-lang italic text-[var(--text-muted)] text-xs">(Hy Lạp: Θεοτόκος)</span>: <span class="term-definition text-[var(--text-main)] text-xs sm:text-sm leading-relaxed">Tước hiệu Mẹ Thiên Chúa, được tuyên tín tại Công đồng Êphêsô (431) nhằm khẳng định Đức Kitô là Thiên Chúa thật và con người thật.</span></div></div></div>`)
               },
               {
-                name: '6. Hình Ảnh Nghệ Thuật Thánh',
-                desc: 'Ảnh Drive/URL kèm chú thích & Lightbox',
+                name: '10. Hình Ảnh Nghệ Thuật Thánh',
+                desc: 'Ảnh Drive/URL kèm chú thích bảo tàng & Lightbox',
                 icon: <ImageIcon className="w-4 h-4 text-emerald-500" />,
                 action: () => handleOpenConfigModal('image')
               },
               {
-                name: '7a. Video Nhúng Đa Nền Tảng',
+                name: '11a. Video Nhúng Đa Nền Tảng',
                 desc: 'Nhập link YouTube, Facebook, Drive, Vimeo...',
                 icon: <Video className="w-4 h-4 text-rose-500" />,
                 action: () => handleOpenConfigModal('video')
               },
               {
-                name: '7b. Podcast Mini-Player',
+                name: '11b. Podcast Mini-Player',
                 desc: 'Khung nghe âm thanh nhỏ gọn mở đầu bài viết',
                 icon: <Headphones className="w-4 h-4 text-amber-500" />,
                 action: () => handleOpenConfigModal('audio', { playerType: 'audio_mini' })
               },
               {
-                name: '7c. Podcast Full-Player',
+                name: '11c. Podcast Full-Player',
                 desc: 'Khung nghe Podcast học thuật chi tiết kèm mô tả & số tập',
                 icon: <Radio className="w-4 h-4 text-indigo-500" />,
                 action: () => handleOpenConfigModal('audio', { playerType: 'audio_full' })
               },
               {
-                name: '8. Hộp Lưu Ý & Cảnh Báo',
-                desc: 'Hộp nhấn mạnh giáo lý 4 cấp phụng vụ',
+                name: '12. Hộp Lưu Ý & Cảnh Báo',
+                desc: 'Hộp nhấn mạnh giáo lý 4 cấp phụng vụ (note, tip, important, warning)',
                 icon: <AlertTriangle className="w-4 h-4 text-amber-500" />,
                 action: () => handleOpenConfigModal('callout')
               },
               {
-                name: '9. Vùng Chứa Flexbox (Section)',
+                name: '13. Vùng Chứa Flexbox (Section)',
                 desc: 'Phân cột (1, 2, 3 cột) kèm nền kính Stained-Glass',
                 icon: <Columns className="w-4 h-4 text-cyan-400" />,
                 action: () => handleOpenConfigModal('container')

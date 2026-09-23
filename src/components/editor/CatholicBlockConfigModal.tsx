@@ -23,7 +23,12 @@ import {
   Grid,
   ShieldCheck,
   Globe,
-  FileCheck
+  FileCheck,
+  HelpCircle,
+  MapPin,
+  Clock,
+  Compass,
+  Library
 } from 'lucide-react';
 import { parseVideoUrl, generateVideoBlockHtml } from '@/lib/videoHelper';
 import { 
@@ -35,7 +40,7 @@ import {
   getLayoutGridClass 
 } from './VeriduFlexboxContainer';
 
-export type ConfigurableBlockType = 'video' | 'image' | 'scripture' | 'audio' | 'callout' | 'prayer' | 'container';
+export type ConfigurableBlockType = 'video' | 'image' | 'scripture' | 'audio' | 'callout' | 'prayer' | 'container' | 'term' | 'placeholders' | 'scholarly_end';
 
 export interface CatholicBlockConfigModalProps {
   isOpen: boolean;
@@ -127,6 +132,17 @@ export default function CatholicBlockConfigModal({
   const [containerGap, setContainerGap] = useState<FlexboxGap>('md');
   const [containerTitle, setContainerTitle] = useState('');
 
+  // ─── 8. TERM STATE ───────────────────────────────────────────────────────────
+  const [termWord, setTermWord] = useState('Shekinah');
+  const [termBase, setTermBase] = useState('Shekinah');
+  const [termDefinition, setTermDefinition] = useState('Vinh quang Thiên Chúa ngự giữa dân Người dưới dạng đám mây phát sáng.');
+
+  // ─── 9. PLACEHOLDERS STATE ───────────────────────────────────────────────────
+  const [placeholderKind, setPlaceholderKind] = useState<'timeline' | 'map'>('timeline');
+
+  // ─── 10. SCHOLARLY END BLOCKS STATE ──────────────────────────────────────────
+  const [scholarlyEndKind, setScholarlyEndKind] = useState<'all_four' | 'footnotes' | 'scripture_meta' | 'dictionary_meta' | 'bibliography'>('all_four');
+
   // Initialize or prefill state whenever modal opens or blockType changes
   useEffect(() => {
     if (!isOpen) return;
@@ -174,6 +190,14 @@ export default function CatholicBlockConfigModal({
       setContainerBgStyle(initialData?.bgStyle || 'amber-glass');
       setContainerGap(initialData?.gap || 'md');
       setContainerTitle(initialData?.title || '');
+    } else if (blockType === 'term') {
+      setTermWord(initialData?.term || initialData?.word || 'Shekinah');
+      setTermBase(initialData?.base || 'Shekinah');
+      setTermDefinition(initialData?.title || initialData?.definition || 'Vinh quang Thiên Chúa ngự giữa dân Người dưới dạng đám mây phát sáng.');
+    } else if (blockType === 'placeholders') {
+      setPlaceholderKind(initialData?.kind || 'timeline');
+    } else if (blockType === 'scholarly_end') {
+      setScholarlyEndKind(initialData?.kind || 'all_four');
     }
   }, [isOpen, blockType, initialData]);
 
@@ -363,6 +387,85 @@ export default function CatholicBlockConfigModal({
           title: containerTitle.trim() || undefined
         });
       }
+
+      case 'term': {
+        const word = termWord.trim() || 'Thuật ngữ';
+        const base = termBase.trim() || word;
+        const def = termDefinition.trim();
+        return `<dfn class="veridu-term" title="${def}" data-base="${base}">${word}</dfn>`;
+      }
+
+      case 'placeholders': {
+        if (placeholderKind === 'timeline') {
+          return `\n<veridu-timeline-placeholder></veridu-timeline-placeholder>\n`;
+        }
+        return `\n<veridu-map-placeholder></veridu-map-placeholder>\n`;
+      }
+
+      case 'scholarly_end': {
+        const footnotesHtml = `<div class="veridu-footnotes not-prose my-12 pt-6 border-t-2 border-[var(--border-color)]" id="chu-thich">
+  <h4 id="chu-thich" class="text-sm font-bold uppercase tracking-wider text-amber-500 font-serif mb-4 flex items-center gap-2">
+    <span>📜</span> Chú Thích Học Thuật
+  </h4>
+  <ol class="space-y-3 font-serif text-sm list-none p-0 m-0">
+    <li id="fn1" class="p-3.5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] flex items-start justify-between gap-3">
+      <div class="flex-1 leading-relaxed text-[var(--text-main)]">
+        <span class="footnote-num font-mono font-bold text-amber-500 mr-2">[1]</span>
+        <span>Flavius Josephus, <em>Jewish Antiquities</em>, VIII, 2-5 (Khảo cứu niên biểu các triều vua Israel).</span>
+      </div>
+      <a href="#ref1" class="footnote-backref text-amber-500 font-bold" title="Quay lại bài viết">↩</a>
+    </li>
+  </ol>
+</div>`;
+
+        const scriptureMetaHtml = `<div class="scripture-meta my-8 p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-4 not-prose" id="tham-chieu">
+  <h3 id="tham-chieu" class="text-sm font-bold uppercase tracking-wider text-amber-500 font-serif border-b border-[var(--border-card)] pb-3 flex items-center gap-2">
+    <span>📖</span> Tham Chiếu Bản Văn Thánh Kinh Trọng Tâm
+  </h3>
+  <div class="space-y-3">
+    <div class="scripture-item flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)]">
+      <span class="scripture-claim font-bold text-xs text-[var(--text-main)]">Hòm Bia Giao Ước Mới:</span>
+      <span class="verse-badge font-mono text-xs font-bold text-amber-500">Xh 40:34-35; Lc 1:35; Kh 11:19</span>
+    </div>
+    <div class="scripture-item flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)]">
+      <span class="scripture-claim font-bold text-xs text-[var(--text-main)]">Đấng Trung Gian Duy Nhất:</span>
+      <span class="verse-badge font-mono text-xs font-bold text-amber-500">1Tm 2:5; Dt 9:15</span>
+    </div>
+  </div>
+</div>`;
+
+        const dictionaryMetaHtml = `<div class="dictionary-meta my-8 p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-2 not-prose" id="bang-thuat-ngu">
+  <div class="dictionary-title text-sm font-bold uppercase tracking-wider text-indigo-400 font-serif border-b border-[var(--border-card)] pb-3 flex items-center gap-2" id="bang-thuat-ngu">
+    <span>📚</span> TRA CỨU THUẬT NGỮ THẦN HỌC &amp; KHẢO CỔ HỌC
+  </div>
+  <div class="space-y-1">
+    <div class="dictionary-entry py-3 border-b border-dashed border-[var(--border-card)]">
+      <span class="term-keyword font-bold text-amber-500">Shekinah</span>
+      <span class="term-lang italic text-[var(--text-muted)] text-xs">(Híp-ri: שכינה)</span>:
+      <span class="term-definition text-[var(--text-main)] text-xs sm:text-sm leading-relaxed">
+        Vinh quang Thiên Chúa ngự giữa dân Người dưới dạng đám mây phát sáng.
+      </span>
+    </div>
+  </div>
+</div>`;
+
+        const bibliographyHtml = `<div class="bibliography my-8 p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-3 not-prose" id="thu-muc-tai-lieu">
+  <h3 id="thu-muc-tai-lieu" class="text-sm font-bold uppercase tracking-wider text-amber-500 font-serif border-b border-[var(--border-card)] pb-3 flex items-center gap-2">
+    <span>📚</span> Thư Mục Tài Liệu Tham Khảo Chuẩn Mực
+  </h3>
+  <div class="space-y-2 text-xs sm:text-sm font-serif leading-relaxed text-[var(--text-main)]">
+    <p>Flavius Josephus. <em>Jewish Antiquities</em>. Translated by H. St. J. Thackeray. Loeb Classical Library. Cambridge: Harvard University Press, 1930.</p>
+    <p>Lm. Nguyễn Thế Thuấn, C.Ss.R. <em>Kinh Thánh</em>. Dòng Chúa Cứu Thế Việt Nam, 1976.</p>
+  </div>
+</div>`;
+
+        if (scholarlyEndKind === 'footnotes') return footnotesHtml;
+        if (scholarlyEndKind === 'scripture_meta') return scriptureMetaHtml;
+        if (scholarlyEndKind === 'dictionary_meta') return dictionaryMetaHtml;
+        if (scholarlyEndKind === 'bibliography') return bibliographyHtml;
+
+        return `\n${footnotesHtml}\n\n${scriptureMetaHtml}\n\n${dictionaryMetaHtml}\n\n${bibliographyHtml}\n`;
+      }
     }
   };
 
@@ -387,6 +490,9 @@ export default function CatholicBlockConfigModal({
               {blockType === 'callout' && <AlertTriangle className="w-5 h-5 text-amber-500" />}
               {blockType === 'prayer' && <Heart className="w-5 h-5 text-purple-500" />}
               {blockType === 'container' && <Columns className="w-5 h-5 text-cyan-400" />}
+              {blockType === 'term' && <HelpCircle className="w-5 h-5 text-amber-500" />}
+              {blockType === 'placeholders' && <Layers className="w-5 h-5 text-indigo-500" />}
+              {blockType === 'scholarly_end' && <BookOpen className="w-5 h-5 text-amber-500" />}
             </div>
             <div>
               <h3 className="font-serif font-bold text-base text-[var(--text-main)] flex items-center gap-2">
@@ -1358,6 +1464,208 @@ export default function CatholicBlockConfigModal({
                 <p className="text-[10px] text-[var(--text-muted)] italic">
                   * Trên điện thoại di động, các cột sẽ tự động xếp chồng (stacking) mượt mà để tránh tràn lề ngang.
                 </p>
+              </div>
+            </div>
+          )}
+
+          {/* BLOCK TYPE: TERM */}
+          {blockType === 'term' && (
+            <div className="space-y-4 animate-in fade-in duration-200">
+              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300/90 leading-relaxed flex items-start gap-2.5">
+                <BookOpen className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-amber-300 font-semibold block mb-0.5">Thuật Ngữ Nội Dòng Chuẩn Bách Khoa (Inline Term Lookup)</strong>
+                  Chèn thẻ <code className="px-1.5 py-0.5 rounded bg-black/40 text-amber-200 font-mono text-[11px]">&lt;dfn class="veridu-term"&gt;</code>. Khi độc giả trỏ chuột hoặc chạm vào từ, thẻ nổi Popover Glassmorphic viền vàng hổ phách sẽ hiện ra kèm định nghĩa và nút cuộn đến <code className="px-1 py-0.5 rounded bg-black/40 font-mono">#bang-thuat-ngu</code>.
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-semibold text-[var(--text-main)] mb-1 block">
+                    Từ hiển thị trong bài viết <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={termWord}
+                    onChange={(e) => setTermWord(e.target.value)}
+                    placeholder="Ví dụ: Logos, Kerygma, Giao Ước Sinai..."
+                    className="w-full px-3 py-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-sm text-[var(--text-main)] focus:outline-none focus:border-amber-500 transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-[var(--text-main)] mb-1 block">
+                    Từ nguyên / Ngôn ngữ gốc (data-base)
+                  </label>
+                  <input
+                    type="text"
+                    value={termBase}
+                    onChange={(e) => setTermBase(e.target.value)}
+                    placeholder="Ví dụ: Hy Lạp: λόγος (Logos), Do Thái: בְּרִית (Berit)..."
+                    className="w-full px-3 py-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-sm text-[var(--text-main)] focus:outline-none focus:border-amber-500 transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-[var(--text-main)] mb-1 block">
+                    Định nghĩa học thuật / Ý nghĩa thần học (title) <span className="text-red-400">*</span>
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={termDefinition}
+                    onChange={(e) => setTermDefinition(e.target.value)}
+                    placeholder="Nhập định nghĩa cô đọng, khúc chiết về mặt thần học và từ nguyên học..."
+                    className="w-full px-3 py-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-sm text-[var(--text-main)] focus:outline-none focus:border-amber-500 transition resize-none"
+                  />
+                </div>
+
+                {/* Preview Box */}
+                <div className="pt-2 border-t border-[var(--border-card)]">
+                  <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
+                    Xem trước hiển thị:
+                  </div>
+                  <div className="p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)]">
+                    <p className="text-sm leading-relaxed text-[var(--text-main)]">
+                      Theo truyền thống Giáo Phụ, thần học về{' '}
+                      <dfn
+                        className="veridu-term font-semibold cursor-help"
+                        title={termDefinition || 'Định nghĩa thuật ngữ...'}
+                        data-base={termBase || 'Từ nguyên...'}
+                      >
+                        {termWord || 'Từ khóa'}
+                      </dfn>{' '}
+                      là chìa khóa nền tảng để thấu hiểu công cuộc Nhập Thể và Cứu Độ.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* BLOCK TYPE: PLACEHOLDERS */}
+          {blockType === 'placeholders' && (
+            <div className="space-y-4 animate-in fade-in duration-200">
+              <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300/90 leading-relaxed flex items-start gap-2.5">
+                <Compass className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-indigo-300 font-semibold block mb-0.5">Điểm Neo Giữ Chỗ Tương Tác (Mounting Placeholders)</strong>
+                  Các thẻ giữ chỗ đặc biệt cho hệ thống tự động render biểu đồ D3 Timeline hoặc Bản đồ Khảo cổ tương tác Leaflet tại đúng vị trí quy chuẩn học thuật.
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPlaceholderKind('timeline')}
+                  className={`p-4 rounded-xl border text-left transition flex flex-col justify-between cursor-pointer ${
+                    placeholderKind === 'timeline'
+                      ? 'bg-amber-500/15 border-amber-500/60 shadow-lg shadow-amber-500/10'
+                      : 'bg-[var(--bg-main)] border-[var(--border-card)] hover:border-amber-500/40'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Clock className="w-4 h-4 text-amber-400" />
+                      <span className="font-semibold text-sm text-[var(--text-main)]">Trục Niên Biểu (Timeline)</span>
+                    </div>
+                    <code className="text-[11px] font-mono text-amber-300/90 block mb-2">&lt;veridu-timeline-placeholder&gt;</code>
+                    <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                      Vị trí quy chuẩn: <strong>Ngay sau Audio Mini ở đầu bài</strong>, trước khi đi vào nội dung khảo cứu chi tiết.
+                    </p>
+                  </div>
+                  {placeholderKind === 'timeline' && (
+                    <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-amber-400">
+                      <Check className="w-3.5 h-3.5" /> Đã chọn
+                    </div>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPlaceholderKind('map')}
+                  className={`p-4 rounded-xl border text-left transition flex flex-col justify-between cursor-pointer ${
+                    placeholderKind === 'map'
+                      ? 'bg-cyan-500/15 border-cyan-500/60 shadow-lg shadow-cyan-500/10'
+                      : 'bg-[var(--bg-main)] border-[var(--border-card)] hover:border-cyan-500/40'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <MapPin className="w-4 h-4 text-cyan-400" />
+                      <span className="font-semibold text-sm text-[var(--text-main)]">Bản Đồ Khảo Cổ (Map)</span>
+                    </div>
+                    <code className="text-[11px] font-mono text-cyan-300/90 block mb-2">&lt;veridu-map-placeholder&gt;</code>
+                    <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                      Vị trí quy chuẩn: <strong>Ở cuối bài viết</strong>, ngay trước 4 Khối Kết Thúc để độc giả tổng quan toàn cảnh địa lý.
+                    </p>
+                  </div>
+                  {placeholderKind === 'map' && (
+                    <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-cyan-400">
+                      <Check className="w-3.5 h-3.5" /> Đã chọn
+                    </div>
+                  )}
+                </button>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs text-[var(--text-muted)]">
+                💡 <span className="font-medium text-[var(--text-main)]">Lưu ý:</span> Khi hệ thống phát hiện các thẻ này trong bài viết, nó sẽ tự động lấy dữ liệu tọa độ hoặc các mốc lịch sử đã thiết lập trong tab <strong>Dữ Liệu Khảo Cổ & Niên Biểu</strong> để dựng bản đồ và trục thời gian trực quan.
+              </div>
+            </div>
+          )}
+
+          {/* BLOCK TYPE: SCHOLARLY END */}
+          {blockType === 'scholarly_end' && (
+            <div className="space-y-4 animate-in fade-in duration-200">
+              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300/90 leading-relaxed flex items-start gap-2.5">
+                <Library className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-amber-300 font-semibold block mb-0.5">Bộ 4 Khối Kết Thúc Chuẩn Bách Khoa VERIDU</strong>
+                  Được thiết kế theo cấu trúc chuyên san học thuật quốc tế với các định danh cố định để hỗ trợ điều hướng nội dòng mượt mà.
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-[var(--text-main)] block">
+                  Chọn phần kết thúc cần chèn:
+                </label>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {[
+                    { id: 'all_four', name: '🏛️ Trọn Bộ 4 Khối Học Thuật', desc: 'Chèn đầy đủ cả 4 phần kết thúc chuẩn quy cách' },
+                    { id: 'footnotes', name: '1. Chú Thích Học Thuật', desc: 'Định danh neo #chu-thich (.veridu-footnotes)' },
+                    { id: 'scripture_meta', name: '2. Tham Chiếu Thánh Kinh', desc: 'Định danh neo #tham-chieu (.scripture-meta)' },
+                    { id: 'dictionary_meta', name: '3. Bảng Thuật Ngữ', desc: 'Định danh neo #bang-thuat-ngu (.dictionary-meta)' },
+                    { id: 'bibliography', name: '4. Thư Mục Tài Liệu', desc: 'Định danh neo #thu-muc-tai-lieu (.bibliography)' },
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setScholarlyEndKind(item.id as any)}
+                      className={`p-3 rounded-xl border text-left transition cursor-pointer ${
+                        scholarlyEndKind === item.id
+                          ? 'bg-amber-500/15 border-amber-500/60 shadow-sm'
+                          : 'bg-[var(--bg-main)] border-[var(--border-card)] hover:border-amber-500/30'
+                      }`}
+                    >
+                      <div className="font-semibold text-xs text-[var(--text-main)] mb-0.5">
+                        {item.name}
+                      </div>
+                      <div className="text-[11px] text-[var(--text-muted)]">
+                        {item.desc}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-black/20 border border-[var(--border-card)] text-xs text-[var(--text-muted)] space-y-1">
+                <div className="font-semibold text-[var(--text-main)]">📌 Các Anchor ID chuẩn mực được hỗ trợ:</div>
+                <div className="grid grid-cols-2 gap-x-2 gap-y-1 font-mono text-[11px] text-amber-300/80">
+                  <div>• <code className="text-amber-200">#chu-thich</code></div>
+                  <div>• <code className="text-amber-200">#tham-chieu</code></div>
+                  <div>• <code className="text-amber-200">#bang-thuat-ngu</code></div>
+                  <div>• <code className="text-amber-200">#thu-muc-tai-lieu</code></div>
+                </div>
               </div>
             </div>
           )}

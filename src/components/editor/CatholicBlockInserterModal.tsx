@@ -463,13 +463,116 @@ export const CATHOLIC_BLOCK_TEMPLATES: CatholicBlockTemplate[] = [
       }
     ]
   },
+
+  // ─── 10. THUẬT NGỮ NỘI DÒNG (<dfn class="veridu-term">) ───────────────────
+  {
+    id: 'veridu-term',
+    name: '10. Tra Cứu Thuật Ngữ Nội Dòng (<dfn>)',
+    category: 'research_theology',
+    categoryLabel: 'Khảo Cứu & Thuật Ngữ',
+    icon: <HelpCircle className="w-5 h-5 text-amber-500" />,
+    badge: 'Chuẩn Bách Khoa',
+    description: 'Thẻ ngữ nghĩa <dfn class="veridu-term">. Khi rê chuột hoặc chạm nhẹ, thẻ nổi Popover Glassmorphic viền vàng hổ phách sẽ hiện ra hiển thị từ ngữ gốc, định nghĩa thần học và link nhảy đến #bang-thuat-ngu.',
+    guidance: 'Dùng trực tiếp bên trong đoạn văn (inline) đối với các từ khóa thần học quan trọng như Logos, Kerygma, Theotokos, Berit...',
+    htmlSnippet: `<dfn class="veridu-term" title="Khái niệm Ngôi Lời vĩnh cửu trong Phúc âm Gioan, Đấng trung gian tạo dựng và mạc khải" data-base="Hy Lạp: λόγος (Logos)">Logos</dfn>`,
+    variants: [
+      {
+        name: 'Nguyên Mẫu Thần Học (Logos)',
+        description: 'Định nghĩa Ngôi Lời Hy Lạp',
+        snippet: `<dfn class="veridu-term" title="Khái niệm Ngôi Lời vĩnh cửu trong Phúc âm Gioan" data-base="Hy Lạp: λόγος (Logos)">Logos</dfn>`
+      },
+      {
+        name: 'Thuật Ngữ Cựu Ước (Berit)',
+        description: 'Giao ước Sinai trong tiếng Do Thái cổ',
+        snippet: `<dfn class="veridu-term" title="Giao ước ràng buộc thiêng liêng giữa Thiên Chúa và dân Ít-ra-en" data-base="Do Thái: בְּרִית (Berit)">Giao Ước</dfn>`
+      }
+    ]
+  },
+
+  // ─── 11. ĐIỂM NEO GIỮ CHỖ TƯƠNG TÁC (PLACEHOLDERS) ────────────────────────
+  {
+    id: 'interactive-placeholders',
+    name: '11. Điểm Neo Niên Biểu & Bản Đồ (Placeholders)',
+    category: 'research_theology',
+    categoryLabel: 'Khảo Cứu & Thuật Ngữ',
+    icon: <ListChecks className="w-5 h-5 text-cyan-400" />,
+    badge: 'Tương Tác D3 & Leaflet',
+    description: 'Các thẻ giữ chỗ đặc biệt cho hệ thống tự động chèn biểu đồ D3 Timeline ở đầu bài và Bản đồ Khảo cổ tương tác Leaflet ở cuối bài.',
+    guidance: 'Quy chuẩn: <veridu-timeline-placeholder> đặt ngay sau Audio Mini ở đầu bài. <veridu-map-placeholder> đặt ngay trước 4 Khối Kết Thúc.',
+    htmlSnippet: `<veridu-timeline-placeholder></veridu-timeline-placeholder>
+
+<veridu-map-placeholder></veridu-map-placeholder>`,
+    variants: [
+      {
+        name: 'Trục Niên Biểu D3 (Timeline Placeholder)',
+        description: 'Đặt ở đầu bài, ngay sau Audio Mini',
+        snippet: `<veridu-timeline-placeholder></veridu-timeline-placeholder>`
+      },
+      {
+        name: 'Bản Đồ Khảo Cổ Leaflet (Map Placeholder)',
+        description: 'Đặt ở cuối bài, ngay trước 4 Khối Kết Thúc',
+        snippet: `<veridu-map-placeholder></veridu-map-placeholder>`
+      }
+    ]
+  },
+
+  // ─── 12. BỘ 4 KHỐI KẾT THÚC HỌC THUẬT (SCHOLARLY END BLOCKS) ──────────────
+  {
+    id: 'scholarly-end-blocks',
+    name: '12. Bộ 4 Khối Kết Thúc Chuẩn Bách Khoa (4 Scholarly End Blocks)',
+    category: 'research_theology',
+    categoryLabel: 'Khảo Cứu & Thuật Ngữ',
+    icon: <BookOpen className="w-5 h-5 text-amber-500" />,
+    badge: 'Chuẩn Chuyên San',
+    description: 'Trọn bộ 4 khối học thuật kết thúc bài viết với đầy đủ anchor IDs: #chu-thich, #tham-chieu, #bang-thuat-ngu, #thu-muc-tai-lieu.',
+    guidance: 'Đặt ở cuối cùng của bài viết. Hệ thống hỗ trợ hiệu ứng bắt sáng (target glow) và cuộn trang mượt mà khi người đọc tương tác.',
+    htmlSnippet: `<section id="chu-thich" class="veridu-footnotes">
+  <h3 class="font-serif font-bold text-base text-[var(--gold-primary)] uppercase tracking-wider mb-3">1. Chú Thích Học Thuật</h3>
+  <ol>
+    <li>
+      <span>[1] Thuật ngữ <em>Berit</em> trong văn khắc Cận Đông Cổ Đại (ANE) mang cấu trúc hiệp ước bá chủ (Suzerainty Treaty).</span>
+      <a href="#fnref-1" class="font-mono text-xs text-amber-500 hover:underline">↩ Quay lại</a>
+    </li>
+  </ol>
+</section>
+
+<section id="tham-chieu" class="scripture-meta">
+  <div class="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-serif font-black text-sm uppercase tracking-wider border-b border-[var(--border-card)] pb-3 mb-3">
+    <span>📜</span> 2. Danh Mục Tham Chiếu Thánh Kinh
+  </div>
+  <div class="space-y-2">
+    <div class="scripture-item">
+      <span class="scripture-claim">Giao ước Sinai &amp; Lề luật:</span>
+      <span class="scripture-refs">Xh 19,1-6; Xh 24,3-8; Đnl 5,1-22</span>
+    </div>
+  </div>
+</section>
+
+<section id="bang-thuat-ngu" class="dictionary-meta">
+  <div class="dictionary-title">
+    <span>📚</span> 3. Bảng Thuật Ngữ Thần Học &amp; Cổ Ngữ
+  </div>
+  <div class="space-y-1">
+    <div class="dictionary-entry">
+      <span class="term-keyword">Berit</span>
+      <span class="term-lang">(Do Thái: בְּרִית)</span>:
+      <span class="term-definition">Giao ước ràng buộc thiêng liêng giữa Thiên Chúa và dân Ít-ra-en, thiết lập quan hệ phụ tử và trách nhiệm luân lý.</span>
+    </div>
+  </div>
+</section>
+
+<section id="thu-muc-tai-lieu" class="bibliography">
+  <h3 class="font-serif font-bold text-base text-[var(--gold-primary)] uppercase tracking-wider mb-3">4. Thư Mục Tài Liệu Tham Khảo</h3>
+  <p>Phạm Quốc Tuấn, Lm. Giuse. <em>Giáo Trình Dẫn Nhập Thần Học Kinh Thánh Cựu Ước</em>. ĐCV Thánh Giuse Xuân Lộc, 2020.</p>
+</section>`
+  }
 ];
 
 interface CatholicBlockInserterModalProps {
   isOpen: boolean;
   onClose: () => void;
   onInsertHtml: (htmlSnippet: string) => void;
-  onOpenConfigModal?: (type: 'video' | 'image' | 'scripture' | 'audio' | 'callout' | 'prayer') => void;
+  onOpenConfigModal?: (type: any) => void;
 }
 
 export default function CatholicBlockInserterModal({

@@ -10,6 +10,14 @@ interface VisualArticleRendererProps {
   className?: string;
 }
 
+interface TermPopoverState {
+  term: string;
+  base: string;
+  definition: string;
+  top: number;
+  left: number;
+}
+
 export default function VisualArticleRenderer({ 
   contentHtml, 
   className = ''
@@ -17,6 +25,9 @@ export default function VisualArticleRenderer({
   const containerRef = useRef<HTMLDivElement>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [lightboxAlt, setLightboxAlt] = useState<string>('');
+  const [lightboxCaption, setLightboxCaption] = useState<string>('');
+  const [termPopover, setTermPopover] = useState<TermPopoverState | null>(null);
+  const popoverTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [scriptureTarget, setScriptureTarget] = useState<ScripturePeekTarget | null>(null);
   const [isScriptureModalOpen, setIsScriptureModalOpen] = useState(false);
 
@@ -150,7 +161,11 @@ export default function VisualArticleRenderer({
       const target = e.currentTarget as HTMLImageElement;
       if (target && target.src) {
         setLightboxSrc(target.src);
-        setLightboxAlt(target.alt || 'Ảnh bài viết');
+        const figure = target.closest('figure');
+        const figcaption = figure?.querySelector('figcaption');
+        const captionText = figcaption?.textContent?.trim() || '';
+        setLightboxCaption(captionText);
+        setLightboxAlt(target.alt || captionText || 'Ảnh bài viết');
       }
     };
     const handleImageError = (e: Event) => {
@@ -196,6 +211,71 @@ export default function VisualArticleRenderer({
           }
         }
       });
+    });
+
+    // 4c. Inline Scholarly Term Interaction (<dfn class="veridu-term">)
+    const termElements = containerRef.current.querySelectorAll<HTMLElement>('dfn.veridu-term, dfn[data-base]');
+    
+    const showTermPopover = (el: HTMLElement) => {
+      if (popoverTimerRef.current) clearTimeout(popoverTimerRef.current);
+      const rect = el.getBoundingClientRect();
+      const rawTitle = el.getAttribute('title') || el.dataset.termTitle || '';
+      if (el.getAttribute('title')) {
+        el.dataset.termTitle = el.getAttribute('title') || '';
+        el.removeAttribute('title'); // Prevent native browser tooltip overlap
+      }
+      const base = el.getAttribute('data-base') || '';
+      const term = el.textContent?.trim() || '';
+
+      const popoverWidth = 320;
+      let left = rect.left;
+      if (typeof window !== 'undefined') {
+        if (left + popoverWidth > window.innerWidth - 16) {
+          left = window.innerWidth - popoverWidth - 16;
+        }
+        if (left < 16) left = 16;
+      }
+
+      let top = rect.bottom + 8;
+      if (typeof window !== 'undefined' && top + 180 > window.innerHeight) {
+        top = Math.max(16, rect.top - 190);
+      }
+
+      setTermPopover({
+        term,
+        base,
+        definition: rawTitle || el.dataset.termTitle || '',
+        top,
+        left
+      });
+    };
+
+    const handleTermEnter = (e: Event) => {
+      showTermPopover(e.currentTarget as HTMLElement);
+    };
+
+    const handleTermLeave = (e: Event) => {
+      const el = e.currentTarget as HTMLElement;
+      if (el.dataset.termTitle) {
+        el.setAttribute('title', el.dataset.termTitle);
+      }
+      popoverTimerRef.current = setTimeout(() => {
+        setTermPopover(null);
+      }, 300);
+    };
+
+    const handleTermClick = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      showTermPopover(e.currentTarget as HTMLElement);
+    };
+
+    termElements.forEach((termEl) => {
+      termEl.addEventListener('mouseenter', handleTermEnter);
+      termEl.addEventListener('mouseleave', handleTermLeave);
+      termEl.addEventListener('focus', handleTermEnter);
+      termEl.addEventListener('blur', handleTermLeave);
+      termEl.addEventListener('click', handleTermClick);
     });
 
     // 5. Footnote Normalization & Bidirectional Return Links (Vòng đỏ & Nút quay lại ↩)
@@ -366,6 +446,23 @@ export default function VisualArticleRenderer({
         setIsScriptureModalOpen(true);
         return;
       }
+
+      // E. Scholarly Anchors (#chu-thich, #tham-chieu, #bang-thuat-ngu, #thu-muc-tai-lieu)
+      const scholarlyDestMatch = href.match(/^#(chu-thich|tham-chieu|bang-thuat-ngu|thu-muc-tai-lieu)$/i);
+      if (scholarlyDestMatch) {
+        const targetId = scholarlyDestMatch[1].toLowerCase();
+        const dest = document.getElementById(targetId) || containerRef.current?.querySelector(`[id="${targetId}"]`);
+        if (dest) {
+          e.preventDefault();
+          dest.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          dest.classList.add('footnote-target-glow-active');
+          window.history.pushState(null, '', href);
+          setTimeout(() => {
+            dest.classList.remove('footnote-target-glow-active');
+          }, 2500);
+          return;
+        }
+      }
     };
 
     const containerEl = containerRef.current;
@@ -376,17 +473,39 @@ export default function VisualArticleRenderer({
         img.removeEventListener('click', handleImageClick);
         img.removeEventListener('error', handleImageError);
       });
+      termElements.forEach((termEl) => {
+        termEl.removeEventListener('mouseenter', handleTermEnter);
+        termEl.removeEventListener('mouseleave', handleTermLeave);
+        termEl.removeEventListener('focus', handleTermEnter);
+        termEl.removeEventListener('blur', handleTermLeave);
+        termEl.removeEventListener('click', handleTermClick);
+      });
       containerEl.removeEventListener('click', handleContainerClick);
     };
   }, [safeHtml]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setLightboxSrc(null);
+      if (e.key === 'Escape') {
+        setLightboxSrc(null);
+        setTermPopover(null);
+      }
+    };
+    const handleClickOutside = (e: MouseEvent) => {
+      if (termPopover) {
+        const target = e.target as HTMLElement;
+        if (!target.closest('.veridu-term') && !target.closest('.term-popover-card')) {
+          setTermPopover(null);
+        }
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+    window.addEventListener('click', handleClickOutside);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('click', handleClickOutside);
+    };
+  }, [termPopover]);
 
   return (
     <>
@@ -395,6 +514,72 @@ export default function VisualArticleRenderer({
         className={`prose dark:prose-invert prose-amber prose-veridu-sanitized max-w-none font-serif text-[var(--text-main)] leading-relaxed text-base sm:text-lg has-drop-cap ${className}`}
         dangerouslySetInnerHTML={{ __html: safeHtml }}
       />
+
+      {/* 🌟 INLINE SCHOLARLY TERM POPOVER CARD (<dfn class="veridu-term">) */}
+      {termPopover && (
+        <div 
+          style={{
+            top: `${termPopover.top}px`,
+            left: `${termPopover.left}px`,
+          }}
+          className="term-popover-card fixed z-[9998] w-80 max-w-[calc(100vw-32px)] p-4 rounded-2xl bg-slate-900/95 dark:bg-slate-950/95 border border-amber-500/40 shadow-2xl backdrop-blur-xl text-slate-100 animate-in fade-in zoom-in-95 duration-150"
+          onMouseEnter={() => {
+            if (popoverTimerRef.current) clearTimeout(popoverTimerRef.current);
+          }}
+          onMouseLeave={() => {
+            popoverTimerRef.current = setTimeout(() => setTermPopover(null), 300);
+          }}
+        >
+          <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2 mb-2.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-serif font-bold text-amber-400 text-sm sm:text-base">
+                {termPopover.term}
+              </span>
+              {termPopover.base && (
+                <span className="px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono text-[11px] font-semibold">
+                  {termPopover.base}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => setTermPopover(null)}
+              className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
+              title="Đóng"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {termPopover.definition && (
+            <p className="text-xs sm:text-sm text-slate-200/90 leading-relaxed font-serif mb-3">
+              {termPopover.definition}
+            </p>
+          )}
+
+          <div className="pt-2 border-t border-white/10 flex items-center justify-between">
+            <span className="text-[10px] text-slate-400 uppercase tracking-wider font-mono">
+              Thuật ngữ VERIDU
+            </span>
+            <a
+              href="#bang-thuat-ngu"
+              onClick={(e) => {
+                e.preventDefault();
+                setTermPopover(null);
+                const target = document.getElementById('bang-thuat-ngu');
+                if (target) {
+                  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  target.classList.add('footnote-target-glow-active');
+                  setTimeout(() => target.classList.remove('footnote-target-glow-active'), 2500);
+                }
+              }}
+              className="inline-flex items-center gap-1 text-[11px] font-sans font-bold text-amber-400 hover:text-amber-300 hover:underline cursor-pointer"
+            >
+              <span>Xem Bảng Thuật Ngữ</span>
+              <span>↘</span>
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* 🖼️ GLASSMORPHIC IMAGE LIGHTBOX MODAL */}
       {lightboxSrc && (
@@ -411,20 +596,26 @@ export default function VisualArticleRenderer({
           </button>
 
           <div 
-            className="max-w-5xl max-h-[90vh] relative rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-900/50 p-2"
+            className="max-w-5xl max-h-[90vh] relative rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-900/50 p-2 sm:p-4"
             onClick={(e) => e.stopPropagation()}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src={lightboxSrc} 
               alt={lightboxAlt} 
-              className="max-w-full max-h-[82vh] object-contain rounded-2xl mx-auto shadow-2xl"
+              className="max-w-full max-h-[75vh] object-contain rounded-2xl mx-auto shadow-2xl"
             />
-            {lightboxAlt && (
+            {lightboxCaption ? (
+              <div className="mt-3 mb-1 px-4 text-center">
+                <p className="text-xs sm:text-sm font-serif italic text-amber-200/90 leading-relaxed max-w-3xl mx-auto">
+                  {lightboxCaption}
+                </p>
+              </div>
+            ) : lightboxAlt ? (
               <p className="text-center text-xs font-sans italic text-amber-400 mt-3 mb-1 tracking-wide px-4">
                 {lightboxAlt}
               </p>
-            )}
+            ) : null}
           </div>
         </div>
       )}

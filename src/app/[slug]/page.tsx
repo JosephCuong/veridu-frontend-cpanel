@@ -1,3 +1,4 @@
+import React, { Fragment } from 'react';
 import { 
   getLibraryArticleBySlug, 
   fetchArticleGeoAndTimeline, 
@@ -10,7 +11,7 @@ import Image from 'next/image';
 import { Metadata } from 'next';
 
 import VisualArticleRenderer from '@/components/VisualArticleRenderer';
-import ArticleGeoTimelineWidget from '@/components/ArticleGeoTimelineWidget';
+import ArticleGeoTimelineWidget, { ArticleMapSection, ArticleTimelineSection } from '@/components/ArticleGeoTimelineWidget';
 import ShareButtons, { ArticleInlineShare } from '@/components/ShareButtons';
 import TableOfContents from '@/components/TableOfContents';
 import AdminEditFloatingButton from '@/components/AdminEditFloatingButton';
@@ -290,6 +291,11 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
     excerpt: article.excerpt,
   });
 
+  // Check if article uses VERIDU mounting placeholders
+  const hasTimelinePlaceholder = /<veridu-timeline-placeholder\b[^>]*>(?:<\/veridu-timeline-placeholder>)?/i.test(htmlContent);
+  const hasMapPlaceholder = /<veridu-map-placeholder\b[^>]*>(?:<\/veridu-map-placeholder>)?/i.test(htmlContent);
+  const hasMountingPlaceholders = hasTimelinePlaceholder || hasMapPlaceholder;
+
   // 1. TEMPLATE BÀI TƯƠNG TÁC (HTML/JS Sandbox Fullscreen)
   if (articleType === 'interactive') {
     return (
@@ -342,7 +348,7 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
         
         <div className="flex flex-col lg:flex-row gap-8">
           <main className="flex-1 w-full max-w-[850px] mx-auto space-y-8">
-            <article className="p-6 sm:p-12 rounded-3xl glass-panel space-y-8 relative overflow-hidden">
+            <article className="p-6 sm:p-12 rounded-3xl glass-panel space-y-8 relative overflow-hidden veridu-scholarly-article">
               <header className="border-b border-slate-200/50 dark:border-white/10 pb-8 text-center sm:text-left space-y-4 relative z-10">
                 <span className="px-3.5 py-1.5 rounded-full bg-slate-500/20 border border-slate-500/30 text-[var(--text-main)] text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm">
                   <Tag className="w-3.5 h-3.5" /> {article.category || 'Bài Viết'}
@@ -352,11 +358,41 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
               </header>
               
               <div className="article-content relative z-10">
-                <VisualArticleRenderer contentHtml={htmlContent} />
+                {!hasMountingPlaceholders ? (
+                  <VisualArticleRenderer contentHtml={htmlContent} />
+                ) : (
+                  <div className="space-y-6">
+                    {htmlContent.split(/(<veridu-timeline-placeholder\b[^>]*>(?:<\/veridu-timeline-placeholder>)?|<veridu-map-placeholder\b[^>]*>(?:<\/veridu-map-placeholder>)?)/i).map((segment, idx) => {
+                      if (!segment) return null;
+                      if (/<veridu-timeline-placeholder/i.test(segment)) {
+                        return (
+                          <Fragment key={`timeline-${idx}`}>
+                            {geoTimeline && geoTimeline.timelineEvents && geoTimeline.timelineEvents.length > 0 ? (
+                              <ArticleTimelineSection timelineEvents={geoTimeline.timelineEvents} />
+                            ) : null}
+                          </Fragment>
+                        );
+                      }
+                      if (/<veridu-map-placeholder/i.test(segment)) {
+                        return (
+                          <Fragment key={`map-${idx}`}>
+                            {geoTimeline && geoTimeline.locations && geoTimeline.locations.length > 0 ? (
+                              <ArticleMapSection locations={geoTimeline.locations} />
+                            ) : null}
+                          </Fragment>
+                        );
+                      }
+                      if (segment.trim()) {
+                        return <VisualArticleRenderer key={`content-${idx}`} contentHtml={segment} />;
+                      }
+                      return null;
+                    })}
+                  </div>
+                )}
               </div>
 
-              {/* In-Article Interactive Geo & Timeline Widget */}
-              {geoTimeline && (
+              {/* In-Article Interactive Geo & Timeline Widget (Rendered at bottom if no inline placeholders used) */}
+              {geoTimeline && !hasMountingPlaceholders && (
                 <ArticleGeoTimelineWidget 
                   locations={geoTimeline.locations} 
                   timelineEvents={geoTimeline.timelineEvents} 
