@@ -156,9 +156,6 @@ export default function RootLayout({
           href="https://www.thapgia.com/feed.xml"
         />
 
-        {/* Preload 3D Sacred Scripture Model & Model-Viewer Library for Instant Rendering */}
-        <link rel="preload" href="/models/bible_3d_model.glb" as="fetch" crossOrigin="anonymous" />
-        <link rel="preload" href="/vendor/model-viewer.min.js" as="script" />
 
         {/* JSON-LD Schema */}
         <script

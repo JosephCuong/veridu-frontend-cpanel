@@ -116,58 +116,14 @@ const THEMES: Record<string, ThemeConfig> = {
 
 export default function Hero3DSection() {
   const [activeTheme, setActiveTheme] = useState<string>('gold');
-  const [isScriptLoaded, setIsScriptLoaded] = useState<boolean>(false);
-  const [hasModelError, setHasModelError] = useState<boolean>(false);
-  const modelRef = useRef<any>(null);
   const auraRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
 
   const currentConfig = THEMES[activeTheme] || THEMES.gold;
 
-  // 1. Dynamic script loader for Google <model-viewer> (Local First -> CDN Fallback)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    if ((window as any).customElements && (window as any).customElements.get('model-viewer')) {
-      setIsScriptLoaded(true);
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.type = 'module';
-    script.src = '/vendor/model-viewer.min.js';
-    script.onload = () => setIsScriptLoaded(true);
-    script.onerror = () => {
-      console.warn('Local /vendor/model-viewer.min.js failed, attempting Cloudflare CDN fallback');
-      const fallbackScript = document.createElement('script');
-      fallbackScript.type = 'module';
-      fallbackScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js';
-      fallbackScript.onload = () => setIsScriptLoaded(true);
-      fallbackScript.onerror = () => {
-        console.warn('All model-viewer script sources failed, switching to graceful fallback card');
-        setHasModelError(true);
-      };
-      document.head.appendChild(fallbackScript);
-    };
-    document.head.appendChild(script);
-  }, []);
-
-  // Listen for 3D model load errors
-  useEffect(() => {
-    const el = modelRef.current;
-    if (!el) return;
-    const handleError = () => {
-      console.warn('3D Model failed to render, switching to graceful fallback card');
-      setHasModelError(true);
-    };
-    el.addEventListener('error', handleError);
-    return () => {
-      el.removeEventListener('error', handleError);
-    };
-  }, [isScriptLoaded]);
-
-  // 2. High-Performance Mouse Parallax (0 React re-renders via RAF & Direct DOM ref)
+  // High-Performance 3D Mouse Parallax & Tilt (0 React re-renders via RAF & Direct DOM ref)
   useEffect(() => {
     let mouseX = 0;
     let mouseY = 0;
@@ -175,21 +131,19 @@ export default function Hero3DSection() {
 
     const handleMouseMove = (e: MouseEvent) => {
       mouseX = (e.clientX / window.innerWidth - 0.5) * 24;
-      mouseY = (e.clientY / window.innerHeight - 0.5) * 12;
+      mouseY = (e.clientY / window.innerHeight - 0.5) * 16;
 
       if (!isMoving) {
         isMoving = true;
         rafRef.current = requestAnimationFrame(() => {
           if (auraRef.current) {
-            auraRef.current.style.transform = `translate3d(${mouseX * -0.5}px, ${mouseY * -0.5}px, 0) rotate(${mouseX}deg)`;
+            auraRef.current.style.transform = `translate3d(${mouseX * -0.6}px, ${mouseY * -0.6}px, 0) scale(${1 + Math.abs(mouseX) * 0.005})`;
           }
 
-          if (modelRef.current) {
-            try {
-              const orbitDegX = (mouseX * 1.1).toFixed(1);
-              const orbitDegY = (90 + mouseY).toFixed(1);
-              modelRef.current.cameraOrbit = `${orbitDegX}deg ${orbitDegY}deg 380%`;
-            } catch (err) {}
+          if (cardRef.current) {
+            const rotX = (-mouseY * 0.8).toFixed(2);
+            const rotY = (mouseX * 0.8).toFixed(2);
+            cardRef.current.style.transform = `perspective(1000px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateZ(10px)`;
           }
 
           isMoving = false;
@@ -273,89 +227,82 @@ export default function Hero3DSection() {
           </div>
         </div>
 
-        {/* CENTER COLUMN: 3D MODEL CANVAS VIEWPORT */}
-        <div className="lg:col-span-4 flex items-center justify-center relative min-h-[350px] sm:min-h-[480px]">
+        {/* CENTER COLUMN: 3D STAINED-GLASS SACRED CARD VIEWPORT */}
+        <div className="lg:col-span-4 flex items-center justify-center relative min-h-[380px] sm:min-h-[480px]">
           
-          {/* Glassmorphic Aura Ring Behind 3D Model with GPU Transform Ref */}
+          {/* Glassmorphic Aura Ring Behind Sacred Card with GPU Transform Ref */}
           <div 
             ref={auraRef}
-            className="absolute w-72 h-72 sm:w-96 sm:h-96 rounded-full border border-white/20 bg-white/5 backdrop-blur-xl shadow-2xl pointer-events-none will-change-transform"
+            className="absolute w-72 h-72 sm:w-96 sm:h-96 rounded-full border border-amber-400/20 bg-amber-500/10 backdrop-blur-2xl shadow-[0_0_80px_rgba(245,158,11,0.25)] pointer-events-none will-change-transform"
             style={{ transform: 'translate3d(0, 0, 0)' }}
           />
 
-          {hasModelError ? (
-            /* Fallback 3D Sacred Scriptures Glass Card with SVG (Only on true failure) */
-            <div className="w-72 h-96 rounded-3xl bg-white/10 border border-white/30 backdrop-blur-2xl p-6 flex flex-col items-center justify-center text-center space-y-4 shadow-2xl animate-in fade-in duration-500">
-              <div className="w-20 h-20 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                <BookOpen className="w-10 h-10" />
+          {/* Stained-Glass 3D Sacred Scriptures Card (Instant 0MB, Mouse Tilt Parallax, Zero Download) */}
+          <div
+            ref={cardRef}
+            className="relative w-72 sm:w-80 h-[440px] rounded-3xl bg-gradient-to-b from-white/15 via-white/5 to-black/40 border border-amber-400/40 backdrop-blur-2xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] p-6 flex flex-col items-center justify-between text-center transition-all duration-300 overflow-hidden group select-none will-change-transform"
+            style={{ transform: 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)' }}
+          >
+            {/* Shimmer Light Reflection Sweep */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+
+            {/* Inner Sacred Border Trim */}
+            <div className="absolute inset-2.5 rounded-2xl border border-amber-400/20 pointer-events-none" />
+
+            {/* Card Header: Latin Sacred Monogram */}
+            <div className="relative z-10 pt-1 space-y-1">
+              <div className="text-[10px] tracking-[0.25em] font-serif font-black text-amber-300/90 uppercase drop-shadow-sm">
+                ✦ VERIDU SACRA SCRIPTURA ✦
               </div>
-              <h3 className="font-serif font-bold text-xl text-white">Kinh Thánh 73 Sách</h3>
-              <p className="text-xs text-slate-300 max-w-[200px]">Trọn bộ Cựu Ước & Tân Ước chuẩn bản dịch Cố LM. Nguyễn Thế Thuấn</p>
+              <div className="text-[11px] font-sans text-slate-300/80 tracking-wider">
+                {currentConfig.badge}
+              </div>
+            </div>
+
+            {/* Card Centerpiece: Golden Cross & Sacred Bible Iconography */}
+            <div className="relative z-10 my-auto flex flex-col items-center justify-center">
+              {/* Radial Halo Glow */}
+              <div className="absolute w-36 h-36 rounded-full bg-amber-400/20 blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-700" />
+              
+              {/* Grand Icon Container */}
+              <div className="relative w-28 h-28 rounded-3xl bg-gradient-to-br from-amber-400/25 via-amber-900/40 to-slate-950/80 border-2 border-amber-400/60 flex flex-col items-center justify-center shadow-2xl shadow-amber-500/20 group-hover:scale-105 transition-all duration-500">
+                {/* Sacred Alpha & Omega Inscription */}
+                <div className="absolute top-2 w-full px-3 flex justify-between text-[11px] font-serif font-black text-amber-300/70 select-none">
+                  <span>Α</span>
+                  <span>Ω</span>
+                </div>
+
+                {/* Holy Cross */}
+                <div className="text-amber-300 drop-shadow-[0_0_12px_rgba(251,191,36,0.6)]">
+                  {renderIcon(currentConfig.iconType, 'w-12 h-12 text-amber-300')}
+                </div>
+
+                {/* Sacred Monogram Bottom */}
+                <div className="absolute bottom-1.5 text-[9px] font-serif font-black text-amber-400/70 tracking-widest">
+                  IHS
+                </div>
+              </div>
+
+              {/* Dynamic Theme Title & Subname */}
+              <h3 className="mt-4 font-serif font-black text-lg text-white tracking-wide drop-shadow-md">
+                {currentConfig.name}
+              </h3>
+              <p className="mt-0.5 text-xs text-amber-200/80 font-sans max-w-[220px] line-clamp-1">
+                {currentConfig.subname}
+              </p>
+            </div>
+
+            {/* Card Footer: Interactive Glowing Action Button */}
+            <div className="relative z-10 w-full pb-1">
               <Link 
-                href="/kinh-thanh" 
-                className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-xs flex items-center gap-1.5 transition-all shadow-md hover:scale-105 cursor-pointer"
+                href={currentConfig.ctaLink} 
+                className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 cursor-pointer"
               >
-                <span>Đọc Kinh Thánh</span>
+                <span>Mở Khảo Cứu</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
-          ) : isScriptLoaded ? (
-            /* @ts-ignore - Google <model-viewer> Custom Element */
-            <model-viewer
-              ref={modelRef}
-              src="/models/bible_3d_model.glb"
-              alt="Mô hình Kinh Thánh 3D VERIDU"
-              camera-controls
-              auto-rotate
-              rotation-per-second="10deg"
-              disable-zoom
-              shadow-intensity="1.5"
-              environment-image="neutral"
-              exposure="1.4"
-              interaction-prompt="none"
-              camera-orbit={currentConfig.modelOrbit}
-              field-of-view="30deg"
-              loading="eager"
-              reveal="auto"
-              style={{
-                width: '100%',
-                height: '450px',
-                outline: 'none',
-                filter: `drop-shadow(0 25px 50px ${currentConfig.glowColor})`
-              }}
-            >
-              {/* @ts-ignore - Poster slot displayed while 3D GLB is loading */}
-              <div 
-                slot="poster" 
-                className="w-full h-full flex flex-col items-center justify-center pointer-events-none select-none animate-pulse"
-              >
-                <div className="relative w-44 h-56 rounded-2xl bg-gradient-to-br from-amber-500/20 via-slate-900/70 to-amber-950/40 border border-amber-400/40 backdrop-blur-xl p-5 flex flex-col items-center justify-center text-center shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-                  <div className="w-16 h-16 rounded-2xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-300 mb-3 shadow-lg shadow-amber-500/20">
-                    <BookOpen className="w-8 h-8 text-amber-300" />
-                  </div>
-                  <span className="font-serif font-bold text-sm text-amber-200 tracking-wide">VERIDU 3D</span>
-                  <span className="text-[11px] text-slate-300 mt-1 font-sans">Đang nạp Thánh Kinh...</span>
-                  <div className="w-24 h-1 bg-white/10 rounded-full mt-3 overflow-hidden">
-                    <div className="w-full h-full bg-gradient-to-r from-amber-500 via-amber-300 to-amber-500 animate-pulse" />
-                  </div>
-                </div>
-              </div>
-            </model-viewer>
-          ) : (
-            /* Script Loading State (Poster) */
-            <div className="w-full h-[450px] flex flex-col items-center justify-center pointer-events-none select-none animate-pulse">
-              <div className="relative w-44 h-56 rounded-2xl bg-gradient-to-br from-amber-500/20 via-slate-900/70 to-amber-950/40 border border-amber-400/40 backdrop-blur-xl p-5 flex flex-col items-center justify-center text-center shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-                <div className="w-16 h-16 rounded-2xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-300 mb-3 shadow-lg shadow-amber-500/20">
-                  <BookOpen className="w-8 h-8 text-amber-300" />
-                </div>
-                <span className="font-serif font-bold text-sm text-amber-200 tracking-wide">VERIDU 3D</span>
-                <span className="text-[11px] text-slate-300 mt-1 font-sans">Đang nạp Thánh Kinh...</span>
-                <div className="w-24 h-1 bg-white/10 rounded-full mt-3 overflow-hidden">
-                  <div className="w-full h-full bg-gradient-to-r from-amber-500 via-amber-300 to-amber-500 animate-pulse" />
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
 
         {/* RIGHT COLUMN: 4-THEME SACRED CATHOLIC CARDS (100% SVG Icons) */}

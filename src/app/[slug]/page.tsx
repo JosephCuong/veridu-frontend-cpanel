@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React from 'react';
 import { 
   getLibraryArticleBySlug, 
   fetchArticleGeoAndTimeline, 
@@ -11,8 +11,8 @@ import Image from 'next/image';
 import { Metadata } from 'next';
 
 import VisualArticleRenderer from '@/components/VisualArticleRenderer';
-import ArticleGeoTimelineWidget, { ArticleMapSection, ArticleTimelineSection } from '@/components/ArticleGeoTimelineWidget';
-import ShareButtons, { ArticleInlineShare } from '@/components/ShareButtons';
+import ArticleGeoTimelineWidget from '@/components/ArticleGeoTimelineWidget';
+import ShareButtons from '@/components/ShareButtons';
 import TableOfContents from '@/components/TableOfContents';
 import AdminEditFloatingButton from '@/components/AdminEditFloatingButton';
 import ArticleAuthorCard from '@/components/ArticleAuthorCard';
@@ -361,10 +361,10 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
     excerpt: article.excerpt,
   });
 
-  // Check if article uses VERIDU mounting placeholders
-  const hasTimelinePlaceholder = /<veridu-timeline-placeholder\b[^>]*>(?:<\/veridu-timeline-placeholder>)?/i.test(htmlContent);
-  const hasMapPlaceholder = /<veridu-map-placeholder\b[^>]*>(?:<\/veridu-map-placeholder>)?/i.test(htmlContent);
-  const hasMountingPlaceholders = hasTimelinePlaceholder || hasMapPlaceholder;
+  // Clean mounting placeholders so the article body flows uninterrupted
+  const cleanHtmlContent = htmlContent
+    .replace(/<veridu-timeline-placeholder\b[^>]*>(?:<\/veridu-timeline-placeholder>)?/gi, '')
+    .replace(/<veridu-map-placeholder\b[^>]*>(?:<\/veridu-map-placeholder>)?/gi, '');
 
   // 1. TEMPLATE BÀI TƯƠNG TÁC (HTML/JS Sandbox Fullscreen)
   if (articleType === 'interactive') {
@@ -428,47 +428,8 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
               </header>
               
               <div className="article-content relative z-10">
-                {!hasMountingPlaceholders ? (
-                  <VisualArticleRenderer contentHtml={htmlContent} />
-                ) : (
-                  <div className="space-y-6">
-                    {htmlContent.split(/(<veridu-timeline-placeholder\b[^>]*>(?:<\/veridu-timeline-placeholder>)?|<veridu-map-placeholder\b[^>]*>(?:<\/veridu-map-placeholder>)?)/i).map((segment, idx) => {
-                      if (!segment) return null;
-                      if (/<veridu-timeline-placeholder/i.test(segment)) {
-                        return (
-                          <Fragment key={`timeline-${idx}`}>
-                            {effectiveTimelineEvents && effectiveTimelineEvents.length > 0 ? (
-                              <ArticleTimelineSection timelineEvents={effectiveTimelineEvents} />
-                            ) : null}
-                          </Fragment>
-                        );
-                      }
-                      if (/<veridu-map-placeholder/i.test(segment)) {
-                        return (
-                          <Fragment key={`map-${idx}`}>
-                            {effectiveLocations && effectiveLocations.length > 0 ? (
-                              <ArticleMapSection locations={effectiveLocations} />
-                            ) : null}
-                          </Fragment>
-                        );
-                      }
-                      if (segment.trim()) {
-                        return <VisualArticleRenderer key={`content-${idx}`} contentHtml={segment} />;
-                      }
-                      return null;
-                    })}
-                  </div>
-                )}
+                <VisualArticleRenderer contentHtml={cleanHtmlContent} />
               </div>
-
-              {/* In-Article Interactive Geo & Timeline Widget (Rendered at bottom if no inline placeholders used) */}
-              {!hasMountingPlaceholders && (effectiveLocations.length > 0 || effectiveTimelineEvents.length > 0) && (
-                <ArticleGeoTimelineWidget 
-                  locations={effectiveLocations} 
-                  timelineEvents={effectiveTimelineEvents} 
-                  articleTitle={cleanTitle} 
-                />
-              )}
               
               {/* Tags */}
               {(article as any).tags && (article as any).tags.length > 0 && (
@@ -482,17 +443,16 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
               )}
             </article>
 
-            {/* In-Article Liturgical Share Block (Optimal for Mobile & End-of-Reading Engagement) */}
-            <ArticleInlineShare 
-              url={articleUrl} 
-              title={cleanTitle} 
-              quote={sacredScripture.quote}
-              quoteSource={sacredScripture.source}
-              category={article.category || 'Thần Học & Thánh Kinh'}
-              author={authorProfile.christian_name ? `${authorProfile.christian_name} ${authorProfile.full_name}` : (article.author_name || article.author || 'Ban Học Vụ VERIDU')}
-              imageUrl={coverImage || defaultImage}
-              availableImages={extractedImages}
-            />
+            {/* Dedicated Scholarly Explorer Section: Geo & Timeline (Placed cleanly outside <article>) */}
+            {(effectiveLocations.length > 0 || effectiveTimelineEvents.length > 0) && (
+              <div className="relative z-10">
+                <ArticleGeoTimelineWidget 
+                  locations={effectiveLocations} 
+                  timelineEvents={effectiveTimelineEvents} 
+                  articleTitle={cleanTitle} 
+                />
+              </div>
+            )}
 
             {/* 1. About the Author */}
             <ArticleAuthorCard 

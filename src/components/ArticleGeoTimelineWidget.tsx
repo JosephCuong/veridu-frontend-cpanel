@@ -29,7 +29,11 @@ interface ArticleGeoTimelineWidgetProps {
 function MiniMap({ locations }: { locations: MapLocation[] }) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const leafletRef = useRef<any>(null);
+  const tileLayerRef = useRef<any>(null);
+  const markersMapRef = useRef<Map<string | number, any>>(new Map());
   const [selectedLoc, setSelectedLoc] = useState<MapLocation | null>(locations[0] || null);
+  const [tileMode, setTileMode] = useState<'topo' | 'satellite'>('topo');
 
   useEffect(() => {
     if (typeof window === 'undefined' || !mapContainerRef.current || locations.length === 0) return;
@@ -38,11 +42,13 @@ function MiniMap({ locations }: { locations: MapLocation[] }) {
 
     import('leaflet').then((L) => {
       if (!isMounted || !mapContainerRef.current) return;
+      leafletRef.current = L;
 
       // Clean up previous instance if any
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
+        markersMapRef.current.clear();
       }
 
       // Fix default marker icon issues in Leaflet with webpack
@@ -64,11 +70,12 @@ function MiniMap({ locations }: { locations: MapLocation[] }) {
       });
       mapInstanceRef.current = map;
 
-      // Esri World Topo Map (Clean biblical topographical relief without watermarks)
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+      // Initial Tile Layer: Esri World Topo Map
+      const initialLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
         attribution: '&copy; Esri &mdash; National Geographic',
         maxZoom: 18,
       }).addTo(map);
+      tileLayerRef.current = initialLayer;
 
       // Create custom pulse marker icon
       const createCustomIcon = (name: string, isSelected: boolean) => {
@@ -90,6 +97,7 @@ function MiniMap({ locations }: { locations: MapLocation[] }) {
       };
 
       const markersGroup = L.featureGroup();
+      markersMapRef.current.clear();
 
       locations.forEach((loc) => {
         const marker = L.marker([loc.latitude, loc.longitude], {
@@ -97,7 +105,7 @@ function MiniMap({ locations }: { locations: MapLocation[] }) {
         });
 
         const popupContent = `
-          <div style="font-family: inherit; font-size: 12px; color: #1e293b; max-width: 240px; padding: 4px;">
+          <div style="font-family: inherit; font-size: 12px; color: #1e293b; max-width: 250px; padding: 4px;">
             <div style="font-weight: 800; font-size: 13px; color: #b45309; margin-bottom: 2px;">${loc.name}</div>
             ${loc.ancient_name ? `<div style="font-style: italic; color: #64748b; margin-bottom: 4px;">Tên cổ: ${loc.ancient_name}</div>` : ''}
             <p style="margin: 4px 0 6px; line-height: 1.4; color: #334155;">${loc.description || loc.summary || ''}</p>
@@ -111,6 +119,7 @@ function MiniMap({ locations }: { locations: MapLocation[] }) {
         marker.bindPopup(popupContent);
         marker.on('click', () => setSelectedLoc(loc));
         markersGroup.addLayer(marker);
+        markersMapRef.current.set(loc.id, marker);
       });
 
       markersGroup.addTo(map);
@@ -119,6 +128,13 @@ function MiniMap({ locations }: { locations: MapLocation[] }) {
       if (locations.length > 1) {
         map.fitBounds(markersGroup.getBounds(), { padding: [40, 40], maxZoom: 10 });
       }
+
+      // Ensure proper rendering size
+      setTimeout(() => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+        }
+      }, 200);
     });
 
     return () => {
@@ -126,15 +142,46 @@ function MiniMap({ locations }: { locations: MapLocation[] }) {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
+        markersMapRef.current.clear();
       }
     };
   }, [locations]);
 
-  // Function to pan to a specific location
+  // Switch Tile Layer: Topo vs Satellite
+  const handleToggleTileMode = (newMode: 'topo' | 'satellite') => {
+    if (newMode === tileMode || !mapInstanceRef.current || !leafletRef.current) return;
+    const L = leafletRef.current;
+    const map = mapInstanceRef.current;
+
+    if (tileLayerRef.current) {
+      map.removeLayer(tileLayerRef.current);
+    }
+
+    if (newMode === 'satellite') {
+      tileLayerRef.current = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '&copy; Esri, Maxar, Earthstar Geographics',
+        maxZoom: 18,
+      }).addTo(map);
+    } else {
+      tileLayerRef.current = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '&copy; Esri &mdash; National Geographic',
+        maxZoom: 18,
+      }).addTo(map);
+    }
+
+    setTileMode(newMode);
+    map.invalidateSize();
+  };
+
+  // Function to pan to a specific location and open popup
   const handleSelectLocation = (loc: MapLocation) => {
     setSelectedLoc(loc);
     if (mapInstanceRef.current) {
       mapInstanceRef.current.flyTo([loc.latitude, loc.longitude], 10, { duration: 1.2 });
+      const marker = markersMapRef.current.get(loc.id);
+      if (marker) {
+        setTimeout(() => marker.openPopup(), 400);
+      }
     }
   };
 
@@ -149,14 +196,41 @@ function MiniMap({ locations }: { locations: MapLocation[] }) {
       />
 
       {/* Map Display Frame */}
-      <div className="relative w-full h-[360px] sm:h-[420px] rounded-2xl overflow-hidden border border-[var(--border-card)] shadow-inner">
+      <div className="relative w-full h-[380px] sm:h-[450px] rounded-2xl overflow-hidden border border-[var(--border-card)] shadow-inner">
         <div ref={mapContainerRef} className="w-full h-full z-10" />
 
-        {/* Floating Quick Action */}
+        {/* Top-Left: Tile Mode Switcher (Topo / Satellite) */}
+        <div className="absolute top-3 left-3 z-20 flex items-center p-1 rounded-xl bg-slate-900/90 border border-amber-500/40 shadow-xl backdrop-blur-md">
+          <button
+            type="button"
+            onClick={() => handleToggleTileMode('topo')}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-serif font-bold transition-all cursor-pointer ${
+              tileMode === 'topo'
+                ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            <Layers className="w-3 h-3" />
+            <span>Địa Hình Cổ</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleToggleTileMode('satellite')}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-serif font-bold transition-all cursor-pointer ${
+              tileMode === 'satellite'
+                ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            <span>🛰️ Vệ Tinh</span>
+          </button>
+        </div>
+
+        {/* Top-Right: Quick Action Link to Main Map */}
         <div className="absolute top-3 right-3 z-20">
           <Link
             href="/ban-do"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-950 text-amber-400 text-xs font-serif font-bold border border-amber-500/40 shadow-lg backdrop-blur transition hover:scale-105"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-950 text-amber-400 text-xs font-serif font-bold border border-amber-500/40 shadow-xl backdrop-blur transition hover:scale-105"
           >
             <Compass className="w-3.5 h-3.5" />
             <span>Mở Trên Bản Đồ Lớn 3D</span>
@@ -221,6 +295,16 @@ export default function ArticleGeoTimelineWidget({
   const hasLocations = locations.length > 0;
   const hasTimeline = timelineEvents.length > 0;
   const [activeTab, setActiveTab] = useState<'map' | 'timeline'>(hasLocations ? 'map' : 'timeline');
+
+  // Trigger Leaflet invalidateSize when switching back to map tab
+  useEffect(() => {
+    if (activeTab === 'map') {
+      const timer = setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab]);
 
   // If article has neither geo nor timeline data, do not render
   if (!hasLocations && !hasTimeline) {
