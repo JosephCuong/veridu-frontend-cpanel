@@ -78,6 +78,20 @@ import VeriduLayersInspector from '@/components/editor/VeriduLayersInspector';
 import { parseVideoUrl, generateVideoBlockHtml } from '@/lib/videoHelper';
 import ResourceSubmissionModal from '@/components/ResourceSubmissionModal';
 
+export function getFullAuthorName(u: UserProfile | null): string {
+  if (!u) return 'Ban Biên Tập VERIDU';
+  const christian = (u.christianName || '').trim();
+  const rawName = (u.fullName || u.displayName || '').trim();
+
+  if (christian && rawName) {
+    if (rawName.toLowerCase().startsWith(christian.toLowerCase())) {
+      return rawName;
+    }
+    return `${christian} ${rawName}`;
+  }
+  return christian || rawName || 'Ban Biên Tập VERIDU';
+}
+
 function slugifyVietnamese(str: string): string {
   return str
     .toLowerCase()
@@ -271,7 +285,7 @@ function DangBaiContent() {
     const u = getStoredUser();
     setUser(u);
     if (!editId && u) {
-      const defaultName = u.fullName || u.displayName || (u.christianName ? `${u.christianName} ${u.displayName}` : '') || '';
+      const defaultName = getFullAuthorName(u);
       if (defaultName) {
         setAuthorName(defaultName);
       }
@@ -1135,7 +1149,10 @@ function DangBaiContent() {
       if (/<audio|veridu-embed-audio|\.mp3|\.wav|\.m4a/i.test(rawText)) features.push('🎧 Audio Podcast');
       if (/<iframe|veridu-embed-video|youtube\.com|youtu\.be|<video/i.test(rawText)) features.push('🎬 Video Nhúng');
 
-      // Detect 3D Interactive application vs Standard article
+      // Mặc định tệp tải lên LUÔN ở chế độ Standard (Bài viết Tiêu Chuẩn)
+      setArticleType('standard');
+
+      // Chẩn đoán mã tương tác để ghi chú vào tính năng (không tự ý đổi chế độ)
       const is3DInteractive = 
         /<canvas[\s>]/i.test(rawText) ||
         /three\.js|three\.min\.js|babylon|webgl/i.test(rawText) ||
@@ -1143,11 +1160,13 @@ function DangBaiContent() {
         /tuong-tac|3d|interactive/i.test(file.name);
 
       if (is3DInteractive) {
-        features.push('🚀 Ứng dụng Tương Tác 3D');
-        setArticleType('interactive');
-        setCategory('Bài Tương Tác HTML 3D');
-      } else {
-        setArticleType('standard');
+        features.push('🎮 Tương tác Canvas/Script (Có thể chọn 3D trong Cài Đặt nếu cần)');
+      }
+
+      // Đảm bảo tên tác giả luôn duy trì tên cấu hình đầy đủ (Giuse VERIDU)
+      const currentFullAuthor = getFullAuthorName(user || getStoredUser());
+      if (!authorName || authorName.trim() === 'VERIDU' || authorName.trim() === 'Ban Biên Tập VERIDU') {
+        setAuthorName(currentFullAuthor);
       }
 
       setDetectedFeatures(features);
@@ -1326,7 +1345,7 @@ function DangBaiContent() {
         featured_image: formatImageUrl(featuredImage.trim()),
         content: finalHtml,
         status: postStatus,
-        author_name: authorName.trim() || user?.fullName || user?.displayName || 'Ban Biên Tập VERIDU',
+        author_name: authorName.trim() || getFullAuthorName(user || getStoredUser()),
         reading_time: readingTime.trim() || calculateReadingTime(finalHtml),
         published_at: publishedDate ? new Date(publishedDate).toISOString() : new Date().toISOString(),
         audio_url: audioUrl ? audioUrl.trim() : null,

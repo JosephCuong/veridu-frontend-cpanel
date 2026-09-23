@@ -421,14 +421,14 @@ export const CATHOLIC_BLOCK_TEMPLATES: CatholicBlockTemplate[] = [
     <span class="text-base">📜</span> CHÚ THÍCH &amp; TÀI LIỆU THAM KHẢO
   </div>
   <ol class="footnotes-list space-y-3 font-serif text-sm list-none p-0 m-0">
-    <li id="fn-1" class="footnote-item p-3.5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] flex items-start justify-between gap-3">
+    <li id="fn-1" class="footnote-item py-2 border-b border-dashed border-[var(--border-card)] flex items-start justify-between gap-3">
       <div class="flex-1 leading-relaxed text-[var(--text-main)]">
         <span class="footnote-num font-mono font-bold text-rose-600 dark:text-rose-400 mr-2">[1]</span>
         <span>Thánh Tôma Aquinô, <em>Summa Theologiae</em>, I, q. 2, a. 3 (Về Năm Con Đường Chứng Minh Sự Hữu Thiên Chúa).</span>
       </div>
       <a href="#fnref-1" class="footnote-backref" title="Quay lại vị trí vừa đọc [1]"><span aria-hidden="true">&#x21A9;&#xFE0E;</span><span class="sr-only">Quay lại vị trí vừa đọc [1]</span></a>
     </li>
-    <li id="fn-2" class="footnote-item p-3.5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] flex items-start justify-between gap-3">
+    <li id="fn-2" class="footnote-item py-2 border-b border-dashed border-[var(--border-card)] flex items-start justify-between gap-3">
       <div class="flex-1 leading-relaxed text-[var(--text-main)]">
         <span class="footnote-num font-mono font-bold text-rose-600 dark:text-rose-400 mr-2">[2]</span>
         <span>Giáo lý Hội Thánh Công Giáo (GLHTCG), số 464.</span>
@@ -451,7 +451,7 @@ export const CATHOLIC_BLOCK_TEMPLATES: CatholicBlockTemplate[] = [
     <span class="text-base">📜</span> CHÚ THÍCH &amp; TÀI LIỆU THAM KHẢO
   </div>
   <ol class="footnotes-list space-y-3 font-serif text-sm list-none p-0 m-0">
-    <li id="fn-1" class="footnote-item p-3.5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] flex items-start justify-between gap-3">
+    <li id="fn-1" class="footnote-item py-2 border-b border-dashed border-[var(--border-card)] flex items-start justify-between gap-3">
       <div class="flex-1 leading-relaxed text-[var(--text-main)]">
         <span class="footnote-num font-mono font-bold text-rose-600 dark:text-rose-400 mr-2">[1]</span>
         <span>Thánh Tôma Aquinô, <em>Summa Theologiae</em>, I, q. 2, a. 3.</span>

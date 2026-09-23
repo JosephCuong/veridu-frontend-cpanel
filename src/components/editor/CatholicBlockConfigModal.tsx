@@ -408,7 +408,7 @@ export default function CatholicBlockConfigModal({
     <span>📜</span> Chú Thích Học Thuật
   </h4>
   <ol class="space-y-3 font-serif text-sm list-none p-0 m-0">
-    <li id="fn1" class="p-3.5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] flex items-start justify-between gap-3">
+    <li id="fn1" class="py-2 border-b border-dashed border-[var(--border-card)] flex items-start justify-between gap-3">
       <div class="flex-1 leading-relaxed text-[var(--text-main)]">
         <span class="footnote-num font-mono font-bold text-amber-500 mr-2">[1]</span>
         <span>Flavius Josephus, <em>Jewish Antiquities</em>, VIII, 2-5 (Khảo cứu niên biểu các triều vua Israel).</span>
