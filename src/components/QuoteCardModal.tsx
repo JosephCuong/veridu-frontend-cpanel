@@ -167,22 +167,26 @@ export default function QuoteCardModal({
     setAllAvailableImages(imageList);
   }, [isOpen, initialQuote, initialTitle, initialAuthor, imageUrl, availableImages]);
 
-  // Preload logo image (VERIDU light logo)
+  // Preload logo image (VERIDU light logo) only when modal is open
   useEffect(() => {
+    if (!isOpen) return;
     const logo = new Image();
     logo.crossOrigin = 'anonymous';
     logo.src = '/images/veridu_logo_light.png';
     logo.onload = () => {
       loadedLogoImageRef.current = logo;
-      if (isOpen) renderCard();
+      renderCard();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  // Preload chosen background image with CORS proxy
+  // Preload chosen background image with CORS proxy only when modal is open
   useEffect(() => {
+    if (!isOpen) return;
+
     if (!selectedBgUrl) {
       loadedBgImageRef.current = null;
-      if (isOpen) renderCard();
+      renderCard();
       return;
     }
 
@@ -191,13 +195,14 @@ export default function QuoteCardModal({
     img.src = getSafeImageUrl(selectedBgUrl);
     img.onload = () => {
       loadedBgImageRef.current = img;
-      if (isOpen) renderCard();
+      renderCard();
     };
     img.onerror = () => {
       console.warn('Failed to load background image:', selectedBgUrl);
       loadedBgImageRef.current = null;
-      if (isOpen) renderCard();
+      renderCard();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBgUrl, isOpen]);
 
   // Helper to wrap text cleanly

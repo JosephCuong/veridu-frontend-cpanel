@@ -74,6 +74,7 @@ function MiniMap({ locations }: { locations: MapLocation[] }) {
       const initialLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
         attribution: '&copy; Esri &mdash; National Geographic',
         maxZoom: 18,
+        crossOrigin: true,
       }).addTo(map);
       tileLayerRef.current = initialLayer;
 
@@ -127,22 +128,41 @@ function MiniMap({ locations }: { locations: MapLocation[] }) {
       // Fit map bounds to show all markers with padding
       if (locations.length > 1) {
         map.fitBounds(markersGroup.getBounds(), { padding: [40, 40], maxZoom: 10 });
+      } else if (locations.length === 1) {
+        map.setView([locations[0].latitude, locations[0].longitude], 8);
       }
 
-      // Ensure proper rendering size
-      setTimeout(() => {
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.invalidateSize();
-        }
-      }, 200);
+      // Robust multi-stage layout invalidation to guarantee full container coverage
+      const t1 = setTimeout(() => map.invalidateSize(), 50);
+      const t2 = setTimeout(() => map.invalidateSize(), 250);
+      const t3 = setTimeout(() => map.invalidateSize(), 600);
+
+      // Auto-adapt on any container resize or viewport change
+      let resizeObserver: ResizeObserver | null = null;
+      if (typeof ResizeObserver !== 'undefined' && mapContainerRef.current) {
+        resizeObserver = new ResizeObserver(() => {
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.invalidateSize({ debounceMove: true });
+          }
+        });
+        resizeObserver.observe(mapContainerRef.current);
+      }
+
+      (map as any)._cleanupTimers = [t1, t2, t3];
+      (map as any)._resizeObserver = resizeObserver;
     });
 
+    const markersMap = markersMapRef.current;
     return () => {
       isMounted = false;
       if (mapInstanceRef.current) {
+        const obs = (mapInstanceRef.current as any)._resizeObserver;
+        if (obs) obs.disconnect();
+        const timers = (mapInstanceRef.current as any)._cleanupTimers;
+        if (Array.isArray(timers)) timers.forEach(clearTimeout);
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
-        markersMapRef.current.clear();
+        markersMap.clear();
       }
     };
   }, [locations]);
@@ -161,16 +181,18 @@ function MiniMap({ locations }: { locations: MapLocation[] }) {
       tileLayerRef.current = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: '&copy; Esri, Maxar, Earthstar Geographics',
         maxZoom: 18,
+        crossOrigin: true,
       }).addTo(map);
     } else {
       tileLayerRef.current = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
         attribution: '&copy; Esri &mdash; National Geographic',
         maxZoom: 18,
+        crossOrigin: true,
       }).addTo(map);
     }
 
     setTileMode(newMode);
-    map.invalidateSize();
+    setTimeout(() => map.invalidateSize(), 50);
   };
 
   // Function to pan to a specific location and open popup
@@ -187,16 +209,8 @@ function MiniMap({ locations }: { locations: MapLocation[] }) {
 
   return (
     <div className="space-y-4">
-      {/* Leaflet CSS Link */}
-      <link 
-        rel="stylesheet" 
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
-        crossOrigin="" 
-      />
-
       {/* Map Display Frame */}
-      <div className="relative w-full h-[380px] sm:h-[450px] rounded-2xl overflow-hidden border border-[var(--border-card)] shadow-inner">
+      <div className="relative w-full h-[380px] sm:h-[450px] rounded-2xl overflow-hidden border border-[var(--border-card)] shadow-inner bg-slate-950">
         <div ref={mapContainerRef} className="w-full h-full z-10" />
 
         {/* Top-Left: Tile Mode Switcher (Topo / Satellite) */}

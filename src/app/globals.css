@@ -1769,3 +1769,30 @@ sup.veridu-footnote {
   text-indent: -2rem;
   margin-bottom: 0.75rem;
 }
+
+/* ── LEAFLET MAP STABILITY & POSITIONING OVERRIDES ── */
+.leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  font-family: inherit;
+  z-index: 10;
+  background: #0f172a !important;
+}
+.leaflet-tile-pane {
+  z-index: 2 !important;
+}
+.leaflet-tile {
+  position: absolute !important;
+  filter: inherit;
+}
+.leaflet-marker-pane {
+  z-index: 600 !important;
+}
+.leaflet-popup-pane {
+  z-index: 700 !important;
+}
+.leaflet-control-container .leaflet-top,
+.leaflet-control-container .leaflet-bottom {
+  z-index: 800 !important;
+}
+
