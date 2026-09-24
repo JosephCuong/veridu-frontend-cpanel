@@ -145,7 +145,18 @@ export default function BibleMap() {
 
   return (
     <div className="w-full">
-      <BibleMapInteractive initialLocations={locations} />
+      <React.Suspense
+        fallback={
+          <div className="w-full h-[600px] flex flex-col items-center justify-center bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl space-y-4 shadow-xl">
+            <Compass className="w-10 h-10 text-amber-500 animate-spin" />
+            <p className="font-serif text-sm font-bold text-[var(--text-muted)]">
+              Đang chuẩn bị Bản Đồ Thánh Địa...
+            </p>
+          </div>
+        }
+      >
+        <BibleMapInteractive initialLocations={locations} />
+      </React.Suspense>
     </div>
   );
 }

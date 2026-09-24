@@ -450,6 +450,7 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
                   locations={effectiveLocations} 
                   timelineEvents={effectiveTimelineEvents} 
                   articleTitle={cleanTitle} 
+                  articleSlug={article.slug}
                 />
               </div>
             )}

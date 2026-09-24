@@ -18,15 +18,25 @@ import {
   Landmark,
   Quote
 } from 'lucide-react';
+import { getTestamentMeta } from '@/components/BibleMapInteractive';
 
 interface ArticleGeoTimelineWidgetProps {
   locations?: MapLocation[];
   timelineEvents?: TimelineEventData[];
   articleTitle?: string;
+  articleSlug?: string;
 }
 
 // Leaflet map component (rendered only in browser)
-function MiniMap({ locations }: { locations: MapLocation[] }) {
+function MiniMap({ 
+  locations,
+  articleTitle,
+  articleSlug
+}: { 
+  locations: MapLocation[];
+  articleTitle?: string;
+  articleSlug?: string;
+}) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const leafletRef = useRef<any>(null);
@@ -34,6 +44,17 @@ function MiniMap({ locations }: { locations: MapLocation[] }) {
   const markersMapRef = useRef<Map<string | number, any>>(new Map());
   const [selectedLoc, setSelectedLoc] = useState<MapLocation | null>(locations[0] || null);
   const [tileMode, setTileMode] = useState<'topo' | 'satellite'>('topo');
+
+  // Helper for deep-linking
+  const buildMapUrl = (locSlug?: string | number) => {
+    const params = new URLSearchParams();
+    if (locSlug !== undefined && locSlug !== null && locSlug !== '') {
+      params.set('loc', String(locSlug));
+    }
+    if (articleTitle) params.set('from', articleTitle);
+    if (articleSlug) params.set('article', articleSlug);
+    return `/ban-do?${params.toString()}`;
+  };
 
   useEffect(() => {
     if (typeof window === 'undefined' || !mapContainerRef.current || locations.length === 0) return;
@@ -78,22 +99,25 @@ function MiniMap({ locations }: { locations: MapLocation[] }) {
       }).addTo(map);
       tileLayerRef.current = initialLayer;
 
-      // Create custom pulse marker icon
-      const createCustomIcon = (name: string, isSelected: boolean) => {
+      // Create custom pulse marker icon with 3-era distinction
+      const createCustomIcon = (loc: MapLocation, isSelected: boolean) => {
+        const meta = getTestamentMeta(loc.testament);
+        const displayName = loc.name.split('(')[0].trim();
         return L.divIcon({
           className: 'custom-leaflet-marker',
           html: `
             <div class="relative flex items-center justify-center -translate-x-1/2 -translate-y-full cursor-pointer group">
-              <div class="w-8 h-8 rounded-full ${isSelected ? 'bg-amber-500 text-slate-950 scale-125 ring-4 ring-amber-500/40' : 'bg-slate-900 text-amber-400 border-2 border-amber-500'} flex items-center justify-center shadow-2xl transition-all duration-300">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              <div style="background: ${meta.pinColor}; box-shadow: 0 0 12px ${meta.glowColor}; border: 2px solid #ffffff;" class="w-8 h-8 rounded-full ${isSelected ? 'scale-125 ring-4 ring-amber-500/50' : ''} flex items-center justify-center text-white font-bold text-xs shadow-2xl transition-all duration-300">
+                ${meta.symbolIcon}
               </div>
               <div class="absolute -top-7 whitespace-nowrap px-2 py-0.5 rounded-md bg-slate-950/90 text-amber-300 text-[10px] font-bold border border-amber-500/40 shadow-lg pointer-events-none">
-                ${name}
+                ${displayName}
               </div>
             </div>
           `,
           iconSize: [32, 32],
           iconAnchor: [16, 32],
+          popupAnchor: [0, -32],
         });
       };
 
@@ -101,12 +125,19 @@ function MiniMap({ locations }: { locations: MapLocation[] }) {
       markersMapRef.current.clear();
 
       locations.forEach((loc) => {
+        const meta = getTestamentMeta(loc.testament);
         const marker = L.marker([loc.latitude, loc.longitude], {
-          icon: createCustomIcon(loc.name.split('(')[0].trim(), false),
+          icon: createCustomIcon(loc, false),
         });
 
         const popupContent = `
           <div style="font-family: inherit; font-size: 12px; color: #1e293b; max-width: 250px; padding: 4px;">
+            <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
+              <span style="font-size: 10px; padding: 1px 5px; border-radius: 4px; font-weight: bold; background: ${meta.pinColor}; color: #ffffff;">
+                ${meta.symbolIcon} ${meta.label}
+              </span>
+              <span style="font-size: 10px; color: #64748b; font-weight: 600;">${loc.region}</span>
+            </div>
             <div style="font-weight: 800; font-size: 13px; color: #b45309; margin-bottom: 2px;">${loc.name}</div>
             ${loc.ancient_name ? `<div style="font-style: italic; color: #64748b; margin-bottom: 4px;">Tên cổ: ${loc.ancient_name}</div>` : ''}
             <p style="margin: 4px 0 6px; line-height: 1.4; color: #334155;">${loc.description || loc.summary || ''}</p>
@@ -114,11 +145,19 @@ function MiniMap({ locations }: { locations: MapLocation[] }) {
               <div style="margin-top: 4px; font-weight: bold; color: #0369a1;">
                 📖 Kinh Thánh: ${loc.bible_references.join(', ')}
               </div>` : ''}
+            <div style="margin-top: 6px; padding-top: 4px; border-top: 1px dashed #cbd5e1;">
+              <a href="${buildMapUrl(loc.slug || loc.id)}" style="color: #0284c7; font-weight: bold; font-size: 11px; text-decoration: none;">
+                Mở trên Bản Đồ Lớn 3D &rarr;
+              </a>
+            </div>
           </div>
         `;
 
         marker.bindPopup(popupContent);
-        marker.on('click', () => setSelectedLoc(loc));
+        marker.on('click', () => {
+          setSelectedLoc(loc);
+          map.flyTo([loc.latitude, loc.longitude], 10, { duration: 1 });
+        });
         markersGroup.addLayer(marker);
         markersMapRef.current.set(loc.id, marker);
       });
@@ -243,7 +282,7 @@ function MiniMap({ locations }: { locations: MapLocation[] }) {
         {/* Top-Right: Quick Action Link to Main Map */}
         <div className="absolute top-3 right-3 z-20">
           <Link
-            href="/ban-do"
+            href={buildMapUrl(selectedLoc?.slug || selectedLoc?.id)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-950 text-amber-400 text-xs font-serif font-bold border border-amber-500/40 shadow-xl backdrop-blur transition hover:scale-105"
           >
             <Compass className="w-3.5 h-3.5" />
@@ -257,43 +296,63 @@ function MiniMap({ locations }: { locations: MapLocation[] }) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {locations.map((loc) => {
           const isSelected = selectedLoc?.id === loc.id;
+          const meta = getTestamentMeta(loc.testament);
+
           return (
-            <button
+            <div
               key={loc.id}
               onClick={() => handleSelectLocation(loc)}
-              className={`text-left p-3.5 rounded-2xl border transition-all cursor-pointer ${
+              className={`text-left p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
                 isSelected
                   ? 'bg-amber-500/15 border-amber-500 shadow-md ring-1 ring-amber-500/30'
                   : 'bg-[var(--bg-card)] border-[var(--border-card)] hover:border-amber-500/50'
               }`}
             >
-              <div className="flex items-start justify-between gap-1 mb-1">
-                <span className="font-serif font-bold text-xs sm:text-sm text-[var(--text-main)] line-clamp-1">
-                  {loc.name}
-                </span>
-                <MapPin className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-amber-500' : 'text-[var(--text-muted)]'}`} />
+              <div>
+                <div className="flex items-start justify-between gap-1 mb-1">
+                  <span className="font-serif font-bold text-xs sm:text-sm text-[var(--text-main)] line-clamp-1">
+                    {loc.name}
+                  </span>
+                  <MapPin className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-amber-500' : 'text-[var(--text-muted)]'}`} />
+                </div>
+
+                {loc.ancient_name && (
+                  <div className="text-[11px] text-amber-600 dark:text-amber-400 font-serif italic mb-1">
+                    Tên cổ: {loc.ancient_name}
+                  </div>
+                )}
+
+                <p className="text-[11px] text-[var(--text-muted)] font-serif line-clamp-2 leading-relaxed mb-2">
+                  {loc.description || loc.summary || ''}
+                </p>
+
+                {loc.bible_references && loc.bible_references.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {loc.bible_references.map((ref, idx) => (
+                      <span key={idx} className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-mono font-bold text-[10px]">
+                        {ref}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {loc.ancient_name && (
-                <div className="text-[11px] text-amber-600 dark:text-amber-400 font-serif italic mb-1">
-                  Tên cổ: {loc.ancient_name}
-                </div>
-              )}
+              {/* Card Footer: Era Badge + Direct Link to Large Map */}
+              <div className="pt-2 mt-2 border-t border-[var(--border-card)] flex items-center justify-between text-[11px]">
+                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${meta.badgeBg}`}>
+                  {meta.symbolIcon} {meta.label}
+                </span>
 
-              <p className="text-[11px] text-[var(--text-muted)] font-serif line-clamp-2 leading-relaxed mb-2">
-                {loc.description || loc.summary || ''}
-              </p>
-
-              {loc.bible_references && loc.bible_references.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {loc.bible_references.map((ref, idx) => (
-                    <span key={idx} className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-mono font-bold text-[10px]">
-                      {ref}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </button>
+                <Link
+                  href={buildMapUrl(loc.slug || loc.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 font-serif font-bold text-amber-600 dark:text-amber-400 hover:text-amber-500 hover:underline transition"
+                >
+                  <span>Bản Đồ 3D</span>
+                  <ExternalLink className="w-2.5 h-2.5" />
+                </Link>
+              </div>
+            </div>
           );
         })}
       </div>
@@ -304,7 +363,8 @@ function MiniMap({ locations }: { locations: MapLocation[] }) {
 export default function ArticleGeoTimelineWidget({
   locations = [],
   timelineEvents = [],
-  articleTitle = 'bài viết'
+  articleTitle = 'bài viết',
+  articleSlug = ''
 }: ArticleGeoTimelineWidgetProps) {
   const hasLocations = locations.length > 0;
   const hasTimeline = timelineEvents.length > 0;
@@ -375,7 +435,11 @@ export default function ArticleGeoTimelineWidget({
           TAB 1: BẢN ĐỒ ĐỊA DANH THÁNH ĐỊA
       ───────────────────────────────────────────────────────────── */}
       {activeTab === 'map' && hasLocations && (
-        <ArticleMapSection locations={locations} />
+        <ArticleMapSection 
+          locations={locations} 
+          articleTitle={articleTitle} 
+          articleSlug={articleSlug} 
+        />
       )}
 
       {/* ─────────────────────────────────────────────────────────────
@@ -390,7 +454,15 @@ export default function ArticleGeoTimelineWidget({
 }
 
 // ─── STANDALONE SECTION EXPORTS (FOR VERIDU SCHOLARLY PLACEHOLDERS) ───────────
-export function ArticleMapSection({ locations }: { locations: MapLocation[] }) {
+export function ArticleMapSection({ 
+  locations,
+  articleTitle,
+  articleSlug
+}: { 
+  locations: MapLocation[];
+  articleTitle?: string;
+  articleSlug?: string;
+}) {
   if (!locations || locations.length === 0) return null;
   return (
     <div className="veridu-map-mounted my-8 p-5 sm:p-6 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-xl space-y-4 not-prose">
@@ -400,7 +472,11 @@ export function ArticleMapSection({ locations }: { locations: MapLocation[] }) {
           <span>Bản Đồ Tọa Độ Khảo Cổ &amp; Địa Danh Thánh Địa ({locations.length})</span>
         </span>
       </div>
-      <MiniMap locations={locations} />
+      <MiniMap 
+        locations={locations} 
+        articleTitle={articleTitle} 
+        articleSlug={articleSlug} 
+      />
     </div>
   );
 }
