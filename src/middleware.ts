@@ -58,6 +58,13 @@ export async function middleware(request: NextRequest) {
     const subPath = cleanPath.replace(/^\/dang-bai/, '');
     return NextResponse.redirect(new URL(`/soan-bai${subPath}${search}`, request.url), { status: 301 });
   }
+  if (
+    cleanPath === '/to-phu-ap-ra-ham-hanh-trinh-bo-xu-di-theo-tieng-chua-lekh-lekha-5867' ||
+    cleanPath === '/thu-vien/to-phu-ap-ra-ham-hanh-trinh-bo-xu-di-theo-tieng-chua-lekh-lekha-5867'
+  ) {
+    const search = request.nextUrl.search;
+    return NextResponse.redirect(new URL(`/to-phu-ap-ra-ham-hanh-trinh-bo-xu-di-theo-tieng-chua-lekh-lekha${search}`, request.url), { status: 301 });
+  }
   if (cleanPath === '/courses') {
     return NextResponse.redirect(new URL('/khoa-hoc', request.url), { status: 301 });
   }

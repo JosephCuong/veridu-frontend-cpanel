@@ -149,6 +149,20 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/to-phu-ap-ra-ham-hanh-trinh-bo-xu-di-theo-tieng-chua-lekh-lekha-5867',
+        destination: '/to-phu-ap-ra-ham-hanh-trinh-bo-xu-di-theo-tieng-chua-lekh-lekha',
+        permanent: true,
+      },
+      {
+        source: '/thu-vien/to-phu-ap-ra-ham-hanh-trinh-bo-xu-di-theo-tieng-chua-lekh-lekha-5867',
+        destination: '/to-phu-ap-ra-ham-hanh-trinh-bo-xu-di-theo-tieng-chua-lekh-lekha',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

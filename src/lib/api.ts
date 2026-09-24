@@ -410,14 +410,32 @@ export async function getLibraryArticles(): Promise<Article[]> {
 
 export async function getLibraryArticleBySlug(slug: string): Promise<Article | null> {
   try {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('posts')
       .select('*')
       .eq('slug', slug)
       .eq('status', 'published')
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (!data) {
+      // Fallback: check if slug has trailing digits or is base slug
+      const baseSlug = slug.replace(/-\d+$/, '');
+      const candidates = Array.from(new Set([baseSlug, `${baseSlug}-5867`])).filter(s => s !== slug);
+      if (candidates.length > 0) {
+        const { data: fallbackData } = await supabase
+          .from('posts')
+          .select('*')
+          .in('slug', candidates)
+          .eq('status', 'published')
+          .limit(1)
+          .maybeSingle();
+        if (fallbackData) {
+          data = fallbackData;
+        }
+      }
+    }
+
+    if (!data) return null;
 
     const calculatedTime = data.reading_time || calculateReadingTime(data.content);
     const resolvedAuthor = data.author_name || 'Ban Biên Tập VERIDU';
@@ -1146,15 +1164,18 @@ export async function fetchArticleGeoAndTimeline(articleSlug: string): Promise<{
   timelineEvents: TimelineEventData[];
 }> {
   try {
+    const baseSlug = articleSlug.replace(/-\d+$/, '');
+    const candidateSlugs = Array.from(new Set([articleSlug, baseSlug, `${baseSlug}-5867`])).filter(Boolean);
+
     const [locRes, timelineRes] = await Promise.all([
       supabase
         .from('map_locations')
         .select('*')
-        .contains('article_slugs', [articleSlug]),
+        .overlaps('article_slugs', candidateSlugs),
       supabase
         .from('timeline_events')
         .select('*')
-        .or(`article_slug.eq.${articleSlug},article_slugs.cs.{${articleSlug}}`)
+        .or(candidateSlugs.map(s => `article_slug.eq.${s},article_slugs.cs.{${s}}`).join(','))
         .order('order_year', { ascending: true })
     ]);
 
