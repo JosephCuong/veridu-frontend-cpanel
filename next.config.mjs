@@ -161,6 +161,51 @@ const nextConfig = {
         destination: '/to-phu-ap-ra-ham-hanh-trinh-bo-xu-di-theo-tieng-chua-lekh-lekha',
         permanent: true,
       },
+      {
+        source: '/ban-do-kinh-thanh',
+        destination: '/ban-do',
+        permanent: true,
+      },
+      {
+        source: '/dong-thoi-gian',
+        destination: '/lich-su',
+        permanent: true,
+      },
+      {
+        source: '/courses',
+        destination: '/khoa-hoc',
+        permanent: true,
+      },
+      {
+        source: '/courses/:path*',
+        destination: '/khoa-hoc/:path*',
+        permanent: true,
+      },
+      {
+        source: '/doc-kinh-thanh',
+        destination: '/kinh-thanh',
+        permanent: true,
+      },
+      {
+        source: '/doc-kinh-thanh/:path*',
+        destination: '/kinh-thanh/:path*',
+        permanent: true,
+      },
+      {
+        source: '/dang-bai',
+        destination: '/soan-bai',
+        permanent: true,
+      },
+      {
+        source: '/dang-bai/:path*',
+        destination: '/soan-bai/:path*',
+        permanent: true,
+      },
+      {
+        source: '/thu-vien/dang-bai',
+        destination: '/soan-bai',
+        permanent: true,
+      },
     ];
   },
 };

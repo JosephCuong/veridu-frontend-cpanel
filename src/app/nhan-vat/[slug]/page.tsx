@@ -351,7 +351,7 @@ export default async function CharacterDetailPage({ params }: { params: { slug: 
 
                 <div className="space-y-5">
                   {character.scriptures.map((sc, index) => {
-                    const bibleReaderUrl = `/doc-kinh-thanh/${sc.book_slug}/${sc.chapter}`;
+                    const bibleReaderUrl = `/kinh-thanh/${sc.book_slug}/${sc.chapter}`;
 
                     return (
                       <div 

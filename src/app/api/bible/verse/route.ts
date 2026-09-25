@@ -1,20 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/api';
 import { getCanonicalBookSlug, getBookInfoBySlug, formatScriptureUrl } from '@/lib/bibleData';
+import { parseSingleCitation } from '@/lib/bibleReferenceParser';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const rawBook = searchParams.get('book') || '';
-    const chapterStr = searchParams.get('chapter') || '1';
-    const verseStartStr = searchParams.get('verse') || searchParams.get('v') || '1';
-    const verseEndStr = searchParams.get('verseEnd') || searchParams.get('ve') || verseStartStr;
+    const refParam = searchParams.get('ref') || searchParams.get('q') || '';
+    let parsedFromRef: ReturnType<typeof parseSingleCitation> = null;
+    if (refParam) {
+      parsedFromRef = parseSingleCitation(refParam);
+    }
+
+    const rawBook = searchParams.get('book') || parsedFromRef?.bookSlug || '';
+    const chapterStr = searchParams.get('chapter') || (parsedFromRef ? String(parsedFromRef.chapter) : '1');
+
+    let defaultVStart = '1';
+    let defaultVEnd = '1';
+    if (parsedFromRef?.verseRange) {
+      const parts = parsedFromRef.verseRange.split(/[-–—]/);
+      defaultVStart = parts[0]?.trim() || '1';
+      defaultVEnd = parts[1]?.trim() || defaultVStart;
+    }
+
+    const verseStartStr = searchParams.get('verse') || searchParams.get('v') || defaultVStart;
+    const verseEndStr = searchParams.get('verseEnd') || searchParams.get('ve') || defaultVEnd;
     const translationSlug = searchParams.get('t') || 'ntt';
 
     if (!rawBook) {
-      return NextResponse.json({ error: 'Thiếu tham số sách (book)' }, { status: 400 });
+      return NextResponse.json({ 
+        error: 'Thiếu tham số sách (book) hoặc tham chiếu (ref)',
+        hint: 'Ví dụ: ?book=sang-the&chapter=1&verse=1 hoặc ?ref=St 1,1'
+      }, { status: 400 });
     }
 
     const canonicalSlug = getCanonicalBookSlug(rawBook);

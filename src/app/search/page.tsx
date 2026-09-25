@@ -97,7 +97,7 @@ export default async function SearchPage({
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {courses.map((course) => (
                     <Link 
-                      href={`/courses/${course.slug}`}
+                      href={`/khoa-hoc/${course.slug}`}
                       key={course.id} 
                       className="group bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl overflow-hidden hover:border-[var(--accent-gold)] transition-all flex flex-col shadow-md hover:shadow-xl hover:-translate-y-1"
                     >
@@ -162,7 +162,7 @@ export default async function SearchPage({
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {articles.map((article) => (
                     <Link 
-                      href={`/library/${article.slug}`}
+                      href={`/${article.slug}`}
                       key={article.id} 
                       className="group bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl overflow-hidden hover:border-[var(--accent-gold)] transition-all flex flex-col shadow-md hover:shadow-xl hover:-translate-y-1"
                     >

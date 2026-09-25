@@ -153,6 +153,9 @@ export default function TrieuPhuDucTinPage() {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
 
       if (type === 'tick') {
         const osc = ctx.createOscillator();
@@ -230,6 +233,10 @@ export default function TrieuPhuDucTinPage() {
           osc.stop(now + i * 0.15 + 1.2);
         });
       }
+
+      setTimeout(() => {
+        try { ctx.close(); } catch (e) {}
+      }, 1500);
     } catch (e) {}
   }, [soundEnabled]);
 

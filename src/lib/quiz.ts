@@ -137,7 +137,20 @@ export const BIBLICAL_AVATARS: BiblicalAvatar[] = [
   }
 ];
 
+interface QuizCacheEntry {
+  timestamp: number;
+  data: QuizQuestion[];
+}
+const quizCache = new Map<string, QuizCacheEntry>();
+const QUIZ_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes in-memory cache
+
 export async function fetchQuizQuestions(category?: string, limit: number = 50): Promise<QuizQuestion[]> {
+  const cacheKey = `${category || 'all'}_${limit}`;
+  const cached = quizCache.get(cacheKey);
+  if (cached && (Date.now() - cached.timestamp < QUIZ_CACHE_TTL_MS)) {
+    return cached.data;
+  }
+
   try {
     // 1. Try fetching from catechism_quiz_bank first
     let bankQuery = supabase.from('catechism_quiz_bank').select('*').limit(limit);
@@ -149,7 +162,7 @@ export async function fetchQuizQuestions(category?: string, limit: number = 50):
     const { data: bankData, error: bankError } = await bankQuery;
     
     if (!bankError && bankData && bankData.length > 0) {
-      return bankData.map((item: any) => ({
+      const results: QuizQuestion[] = bankData.map((item: any) => ({
         id: item.id.toString(),
         category: item.subject || item.grade_level || 'Giáo Lý',
         questionText: item.title || item.question,
@@ -159,6 +172,8 @@ export async function fetchQuizQuestions(category?: string, limit: number = 50):
         scriptureRef: item.hint || item.bible_book || '',
         difficulty: item.difficulty || 'Dễ'
       }));
+      quizCache.set(cacheKey, { timestamp: Date.now(), data: results });
+      return results;
     }
 
     // 2. Fallback to quiz_questions if catechism_quiz_bank is empty

@@ -1,7 +1,7 @@
 /**
  * Utility: Bible Reference Parser for VERIDU
  * Chuyển đổi các định dạng trích dẫn Kinh Thánh Công giáo Việt Nam (NTT / CGKPV)
- * thành các liên kết điều hướng trực tiếp tới /doc-kinh-thanh/[bookSlug]/[chapter]
+ * thành các liên kết điều hướng trực tiếp tới /kinh-thanh/[bookSlug]/[chapter]
  */
 
 export interface ParsedScripture {
@@ -148,7 +148,7 @@ export function parseSingleCitation(segment: string): ParsedScripture | null {
         chapter: chapterNum,
         verseRange: verses,
         label,
-        url: `/doc-kinh-thanh/${book.code}/${chapterNum}`,
+        url: `/kinh-thanh/${book.code}/${chapterNum}`,
         note
       };
     }
@@ -170,7 +170,7 @@ export function parseSingleCitation(segment: string): ParsedScripture | null {
           chapter: chNum,
           verseRange: vRange,
           label: `${book.name} ${chNum}${vRange ? `:${vRange}` : ''}`,
-          url: `/doc-kinh-thanh/${book.code}/${chNum}`,
+          url: `/kinh-thanh/${book.code}/${chNum}`,
           note
         };
       }

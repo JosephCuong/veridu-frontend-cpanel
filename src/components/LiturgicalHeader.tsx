@@ -309,10 +309,9 @@ export default function LiturgicalHeader() {
   };
 
   // Ẩn Header toàn cục trên trang soạn thảo và trang phát bài học LMS (/khoa-hoc/[slug]) để tạo Chế độ Tập Trung (Focus Mode)
-  const isCoursePlayer = (pathname !== '/khoa-hoc' && !!pathname?.startsWith('/khoa-hoc/')) || 
-                         (pathname !== '/courses' && !!pathname?.startsWith('/courses/'));
+  const isCoursePlayer = pathname !== '/khoa-hoc' && !!pathname?.startsWith('/khoa-hoc/');
 
-  if (pathname === '/soan-bai' || pathname?.startsWith('/soan-bai/') || pathname === '/dang-bai' || pathname?.startsWith('/dang-bai/') || isCoursePlayer) {
+  if (pathname === '/soan-bai' || pathname?.startsWith('/soan-bai/') || isCoursePlayer) {
     return null;
   }
 
@@ -591,7 +590,7 @@ export default function LiturgicalHeader() {
               <Link 
                 href="/dong-gop" 
                 className={`flex items-center gap-1.5 py-1 text-slate-200 hover:text-amber-400 transition-colors drop-shadow-xs ${
-                  pathname === '/dong-gop' || pathname === '/noi-dung-can-thiet' || pathname === '/huong-dan-viet-bai' || pathname === '/dieu-khoan-tac-gia' || pathname === '/soan-bai' || pathname === '/dang-bai' || pathname === '/tac-gia' || pathname?.startsWith('/tac-gia/')
+                  pathname === '/dong-gop' || pathname === '/noi-dung-can-thiet' || pathname === '/huong-dan-viet-bai' || pathname === '/dieu-khoan-tac-gia' || pathname === '/soan-bai' || pathname === '/tac-gia' || pathname?.startsWith('/tac-gia/')
                     ? 'text-amber-400 font-black border-b-2 border-amber-400 pb-0.5' 
                     : ''
                 }`}
@@ -827,7 +826,7 @@ export default function LiturgicalHeader() {
             <Link 
               href="/dong-gop" 
               className={`flex items-center gap-1 py-1 text-slate-200 hover:text-amber-400 transition-colors ${
-                pathname === '/dong-gop' || pathname === '/noi-dung-can-thiet' || pathname === '/huong-dan-viet-bai' || pathname === '/dieu-khoan-tac-gia' || pathname === '/soan-bai' || pathname === '/dang-bai' || pathname === '/tac-gia' || pathname?.startsWith('/tac-gia/')
+                pathname === '/dong-gop' || pathname === '/noi-dung-can-thiet' || pathname === '/huong-dan-viet-bai' || pathname === '/dieu-khoan-tac-gia' || pathname === '/soan-bai' || pathname === '/tac-gia' || pathname?.startsWith('/tac-gia/')
                   ? 'text-amber-400 font-black' 
                   : ''
               }`}

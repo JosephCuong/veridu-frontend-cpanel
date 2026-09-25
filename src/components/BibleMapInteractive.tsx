@@ -994,7 +994,7 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
                   {selectedLocation.scriptures && selectedLocation.scriptures.length > 0 && (
                     <div className="space-y-3 pt-1">
                       {selectedLocation.scriptures.map((sc, index) => {
-                        const readerUrl = `/doc-kinh-thanh/${sc.book_slug}/${sc.chapter}`;
+                        const readerUrl = `/kinh-thanh/${sc.book_slug}/${sc.chapter}`;
                         return (
                           <div key={index} className="p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-2">
                             <div className="flex items-center justify-between gap-2">

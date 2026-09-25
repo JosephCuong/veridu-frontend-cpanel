@@ -46,6 +46,9 @@ export default function ExodusQuestGamePage() {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
 
       if (type === 'win') {
         [523.25, 659.25, 783.99].forEach((freq, i) => {
@@ -73,6 +76,10 @@ export default function ExodusQuestGamePage() {
         osc.start();
         osc.stop(ctx.currentTime + 0.3);
       }
+
+      setTimeout(() => {
+        try { ctx.close(); } catch (e) {}
+      }, 1000);
     } catch (e) {}
   };
 

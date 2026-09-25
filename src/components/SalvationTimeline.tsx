@@ -540,7 +540,7 @@ export default function SalvationTimeline() {
                   {evt.scriptures && evt.scriptures.length > 0 && (
                     <div className="space-y-2 pt-2 border-t border-[var(--border-card)]">
                       {evt.scriptures.map((sc, idx) => {
-                        const readerUrl = `/doc-kinh-thanh/${sc.book_slug}/${sc.chapter}`;
+                        const readerUrl = `/kinh-thanh/${sc.book_slug}/${sc.chapter}`;
                         return (
                           <div key={idx} className="p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-1.5">
                             <div className="flex items-center justify-between gap-2">

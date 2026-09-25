@@ -1004,14 +1004,14 @@ export default function ResearchLandingPage() {
                   </span>
                 )}
                 <Link
-                  href="/khao-co"
+                  href="/ban-do"
                   className="px-3 py-1 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-[var(--text-muted)] hover:text-amber-500 transition inline-flex items-center gap-1"
                 >
                   <MapPin className="w-3 h-3 text-amber-500" />
                   <span>Bản đồ khảo cổ 3D</span>
                 </Link>
                 <Link
-                  href="/dong-thoi-gian"
+                  href="/lich-su"
                   className="px-3 py-1 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-[var(--text-muted)] hover:text-amber-500 transition inline-flex items-center gap-1"
                 >
                   <Clock className="w-3 h-3 text-blue-500" />
@@ -1353,7 +1353,7 @@ export default function ResearchLandingPage() {
 
           <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
             <Link
-              href="/quy-chuan"
+              href="/huong-dan-viet-bai"
               className="px-5 py-2.5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-amber-500/50 text-xs font-serif font-semibold text-[var(--text-main)] transition"
             >
               Xem Quy Chuẩn Biên Tập & Trích Dẫn
