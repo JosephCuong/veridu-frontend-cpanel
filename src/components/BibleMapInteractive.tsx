@@ -18,16 +18,19 @@ import {
   Scroll, 
   Navigation, 
   Maximize2,
+  Minimize2,
   ChevronRight,
+  ChevronLeft,
   ShieldCheck,
   CheckCircle2,
   Map as MapIcon,
   Globe,
   ZoomIn,
   ZoomOut,
-  Sparkles,
   RotateCcw,
-  X
+  X,
+  Image as ImageIcon,
+  MousePointer
 } from 'lucide-react';
 
 interface BibleMapInteractiveProps {
@@ -68,7 +71,7 @@ export function getTestamentMeta(testament: string) {
     glowColor: 'rgba(124, 58, 237, 0.45)',
     badgeBg: 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30',
     pillBg: 'border-purple-500/40 text-purple-500 bg-purple-500/10',
-    symbolIcon: '🌟',
+    symbolIcon: '🏛️',
     description: 'Địa danh kinh điển chuyển tiếp trung tâm (như Thánh đô Giê-ru-sa-lem)',
   };
 }
@@ -91,11 +94,14 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
   }, [initialLocations, targetLocSlug]);
 
   const [selectedLocation, setSelectedLocation] = useState<MapLocation>(initialSelected);
+  const [activeImageIdx, setActiveImageIdx] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [testamentFilter, setTestamentFilter] = useState<'all' | 'cuu-uoc' | 'tan-uoc' | 'ca-hai'>('all');
   const [regionFilter, setRegionFilter] = useState<string>('all');
   const [tileMode, setTileMode] = useState<TileProvider>('topo');
+  const [scrollZoomEnabled, setScrollZoomEnabled] = useState<boolean>(true);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -103,6 +109,12 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
   const markersRef = useRef<{ [key: string]: any }>({});
   const tileLayerRef = useRef<any>(null);
   const searchBoxRef = useRef<HTMLDivElement>(null);
+  const profileCardRef = useRef<HTMLDivElement>(null);
+
+  // Reset active image index whenever selected location changes
+  useEffect(() => {
+    setActiveImageIdx(0);
+  }, [selectedLocation?.id]);
 
   // Extract unique regions for filter
   const availableRegions = useMemo(() => {
@@ -178,7 +190,26 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Tile layer URLs
+  // Escape key exits fullscreen
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreen]);
+
+  // Invalidate map size when fullscreen toggles
+  useEffect(() => {
+    if (mapInstanceRef.current) {
+      setTimeout(() => mapInstanceRef.current.invalidateSize(), 100);
+      setTimeout(() => mapInstanceRef.current.invalidateSize(), 300);
+    }
+  }, [isFullscreen]);
+
+  // Tile layer URLs: Esri World Imagery, Esri World Street Map (No key / No watermark), Esri Topo
   const getTileUrl = (provider: TileProvider) => {
     switch (provider) {
       case 'satellite':
@@ -188,8 +219,8 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
         };
       case 'street':
         return {
-          url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-          attribution: '&copy; OpenStreetMap & CartoDB'
+          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+          attribution: '&copy; Esri &mdash; World Street Map'
         };
       case 'topo':
       default:
@@ -271,7 +302,7 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
           ${loc.meaning ? `<span style="font-size: 11px; color: #475569; font-style: italic; display: block; margin-top: 2px;">"${loc.meaning}"</span>` : ''}
           ${hasArticles ? `<div style="margin-top: 6px; display: inline-block; background: #fef3c7; color: #92400e; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; border: 1px solid #fde68a;">📜 Có ${loc.article_slugs?.length} chuyên khảo nghiên cứu</div>` : ''}
           <div style="margin-top: 8px; font-size: 11px; font-weight: bold; color: #0284c7; border-top: 1px dashed #cbd5e1; pt: 4px;">
-            Nhấp để phóng to & xem hồ sơ &rarr;
+            Nhấp để phóng to &amp; xem hồ sơ &rarr;
           </div>
         </div>
       `;
@@ -289,8 +320,8 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
     });
   }, [selectedLocation]);
 
-  // Handle selecting a location (FlyTo + Popup + smooth zoom)
-  const handleSelectLocation = useCallback((loc: MapLocation, shouldFly = true, zoomLevel = 13) => {
+  // Handle selecting a location (FlyTo + Popup + smooth zoom + scroll)
+  const handleSelectLocation = useCallback((loc: MapLocation, shouldFly = true, zoomLevel = 13, shouldScrollToCard = false) => {
     setSelectedLocation(loc);
 
     if (mapInstanceRef.current && shouldFly) {
@@ -306,6 +337,10 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
           marker.openPopup();
         }, 500);
       }
+    }
+
+    if (shouldScrollToCard && profileCardRef.current && typeof window !== 'undefined') {
+      profileCardRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, []);
 
@@ -329,9 +364,22 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
     if (markers.length > 0) {
       const group = L.featureGroup(markers);
       mapInstanceRef.current.flyToBounds(group.getBounds(), {
-        padding: [50, 50],
+        padding: [60, 60],
         duration: 1.2,
       });
+    }
+  };
+
+  // Toggle Scroll Zoom Handler
+  const toggleScrollZoom = () => {
+    const nextState = !scrollZoomEnabled;
+    setScrollZoomEnabled(nextState);
+    if (mapInstanceRef.current) {
+      if (nextState) {
+        mapInstanceRef.current.scrollWheelZoom.enable();
+      } else {
+        mapInstanceRef.current.scrollWheelZoom.disable();
+      }
     }
   };
 
@@ -362,7 +410,7 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
         center: defaultCenter,
         zoom: initialZoom,
         zoomControl: false, // We provide custom Stained-Glass controls
-        scrollWheelZoom: false, // Prevent wheel trapping on page scroll
+        scrollWheelZoom: scrollZoomEnabled, // User toggleable, default true
         touchZoom: true, // Allow 2-finger zoom on mobile
       });
 
@@ -399,11 +447,10 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
       if (typeof ResizeObserver !== 'undefined' && mapContainerRef.current) {
         const resizeObserver = new ResizeObserver(() => {
           if (mapInstanceRef.current) {
-            mapInstanceRef.current.invalidateSize({ debounceMove: true });
+            mapInstanceRef.current.invalidateSize();
           }
         });
         resizeObserver.observe(mapContainerRef.current);
-        (map as any)._resizeObserver = resizeObserver;
       }
     }
 
@@ -412,20 +459,18 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
     return () => {
       isMounted = false;
       if (mapInstanceRef.current) {
-        const obs = (mapInstanceRef.current as any)._resizeObserver;
-        if (obs) obs.disconnect();
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
     };
   }, []);
 
-  // Update Tile Layer when tileMode changes
+  // Update tile layer dynamically when tileMode changes
   useEffect(() => {
     if (!mapInstanceRef.current || typeof window === 'undefined') return;
 
     async function updateTile() {
-      const L = (await import('leaflet')).default;
+      const L = leafletModuleRef.current || (await import('leaflet')).default;
       if (tileLayerRef.current) {
         mapInstanceRef.current.removeLayer(tileLayerRef.current);
       }
@@ -451,8 +496,20 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
   const tanUocCount = useMemo(() => locations.filter(l => l.testament === 'tan-uoc').length, [locations]);
   const caHaiCount = useMemo(() => locations.filter(l => l.testament === 'ca-hai').length, [locations]);
 
+  // Extract gallery images for the selected location (supports multiple Google Drive links or fallback)
+  const selectedGallery = useMemo(() => {
+    if (!selectedLocation) return [];
+    if (selectedLocation.images && selectedLocation.images.length > 0) {
+      return selectedLocation.images;
+    }
+    if (selectedLocation.image_url) {
+      return [selectedLocation.image_url];
+    }
+    return ['https://images.unsplash.com/photo-1548625361-9c8eb25c56df?q=80&w=1200'];
+  }, [selectedLocation]);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       
       {/* ── Breadcrumb from Article Deep-Link ── */}
       {fromArticleTitle && (
@@ -481,99 +538,22 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
         </div>
       )}
 
-      {/* ── Top Filter & Control Panel ── */}
-      <div className="glass-panel p-4 sm:p-6 rounded-3xl border border-amber-500/20 shadow-xl space-y-4">
+      {/* ════════════════════════════════════════════════════════════════════════
+          PHẦN 1: KHUNG BẢN ĐỒ TOÀN CHIỀU RỘNG 1 CỘT (FULL-WIDTH MAP CANVAS)
+          ════════════════════════════════════════════════════════════════════════ */}
+      <section className="space-y-3">
         
-        {/* Row 1: Search Box with Live Autocomplete & Map Mode Switcher */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+        {/* Map Control Bar (Chế độ bản đồ, Cuộn chuột, Toàn cảnh, Toàn màn hình) */}
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-lg">
           
-          {/* Search Box with Autocomplete Dropdown */}
-          <div ref={searchBoxRef} className="relative flex-1">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
-              <input
-                type="text"
-                value={searchQuery}
-                onFocus={() => setIsSearchFocused(true)}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setIsSearchFocused(true);
-                }}
-                placeholder="Tìm kiếm địa danh (gõ có dấu hoặc không dấu: gierusalem, belem, sinai, khepron...)"
-                className="w-full pl-11 pr-10 py-3 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-amber-500/60 focus:ring-2 focus:ring-amber-500/20 transition-all font-serif"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    setIsSearchFocused(false);
-                  }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-amber-500 p-1 rounded-full transition"
-                  title="Xóa tìm kiếm"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Live Autocomplete Dropdown */}
-            {isSearchFocused && searchSuggestions.length > 0 && (
-              <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-[var(--bg-card)]/95 backdrop-blur-xl border border-amber-500/30 rounded-2xl shadow-2xl overflow-hidden py-2 space-y-1 divide-y divide-[var(--border-card)]/40 max-h-72 overflow-y-auto">
-                <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center justify-between">
-                  <span>Gợi ý địa danh phù hợp ({searchSuggestions.length})</span>
-                  <span className="text-[10px] font-normal text-[var(--text-muted)]">Nhấp để bay tới và phóng to</span>
-                </div>
-                {searchSuggestions.map((item) => {
-                  const meta = getTestamentMeta(item.testament);
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => {
-                        handleSelectLocation(item, true, 13);
-                        setSearchQuery(item.name);
-                        setIsSearchFocused(false);
-                      }}
-                      className="w-full text-left px-3.5 py-2.5 hover:bg-amber-500/10 flex items-center justify-between gap-3 transition cursor-pointer"
-                    >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-serif font-bold text-xs text-[var(--text-main)] truncate">
-                            {item.name}
-                          </span>
-                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border ${meta.badgeBg}`}>
-                            {meta.symbolIcon} {meta.label}
-                          </span>
-                        </div>
-                        {item.ancient_name && (
-                          <div className="text-[10px] text-amber-700 dark:text-amber-300 font-serif italic truncate">
-                            Cổ danh: {item.ancient_name}
-                          </div>
-                        )}
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <span className="text-[10px] font-bold text-[var(--text-muted)] block">
-                          {item.region}
-                        </span>
-                        <span className="text-[9px] text-amber-500 font-bold flex items-center gap-1 justify-end">
-                          <span>Phóng to</span>
-                          <ChevronRight className="w-2.5 h-2.5" />
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Map Tile Layer Toggle Buttons */}
-          <div className="flex items-center p-1 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] self-start md:self-auto overflow-x-auto scrollbar-none shrink-0">
+          {/* Left: 3 Tile Provider Modes */}
+          <div className="flex items-center p-1 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] overflow-x-auto scrollbar-none">
             <button
+              type="button"
               onClick={() => setTileMode('topo')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-serif font-bold whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-serif font-bold whitespace-nowrap transition-all cursor-pointer ${
                 tileMode === 'topo'
-                  ? 'bg-amber-500 text-slate-950 shadow-md scale-100 font-black'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-black'
                   : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
               }`}
             >
@@ -582,10 +562,11 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
             </button>
 
             <button
+              type="button"
               onClick={() => setTileMode('satellite')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-serif font-bold whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-serif font-bold whitespace-nowrap transition-all cursor-pointer ${
                 tileMode === 'satellite'
-                  ? 'bg-amber-500 text-slate-950 shadow-md scale-100 font-black'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-black'
                   : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
               }`}
             >
@@ -594,285 +575,286 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
             </button>
 
             <button
+              type="button"
               onClick={() => setTileMode('street')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-serif font-bold whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-serif font-bold whitespace-nowrap transition-all cursor-pointer ${
                 tileMode === 'street'
-                  ? 'bg-amber-500 text-slate-950 shadow-md scale-100 font-black'
+                  ? 'bg-amber-500 text-slate-950 shadow-md font-black'
                   : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
               }`}
             >
               <MapIcon className="w-3.5 h-3.5" />
-              <span>Địa Lý Tiêu Chuẩn</span>
+              <span>Địa Lý Tiêu Chuẩn (Esri)</span>
             </button>
           </div>
 
-        </div>
-
-        {/* Row 2: Filter Tabs (Testaments & Regions) */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[var(--border-card)]">
-          
-          {/* Testament Tabs with Stained-Glass Era Badges */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-            <button
-              onClick={() => setTestamentFilter('all')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-serif font-bold whitespace-nowrap transition-all cursor-pointer ${
-                testamentFilter === 'all'
-                  ? 'bg-amber-500/20 text-amber-500 border border-amber-500/50 shadow-sm font-black'
-                  : 'bg-[var(--bg-main)] text-[var(--text-muted)] border border-transparent hover:border-[var(--border-card)]'
-              }`}
-            >
-              Tất Cả Địa Danh ({locations.length})
-            </button>
-
-            <button
-              onClick={() => setTestamentFilter('cuu-uoc')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-serif font-bold whitespace-nowrap transition-all flex items-center gap-1 cursor-pointer ${
-                testamentFilter === 'cuu-uoc'
-                  ? 'bg-amber-600/20 text-amber-500 border border-amber-600/50 shadow-sm font-black'
-                  : 'bg-[var(--bg-main)] text-[var(--text-muted)] border border-transparent hover:border-[var(--border-card)]'
-              }`}
-            >
-              <span>📜 Cựu Ước</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-amber-500/10">
-                {cuuUocCount + caHaiCount}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setTestamentFilter('tan-uoc')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-serif font-bold whitespace-nowrap transition-all flex items-center gap-1 cursor-pointer ${
-                testamentFilter === 'tan-uoc'
-                  ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/50 shadow-sm font-black'
-                  : 'bg-[var(--bg-main)] text-[var(--text-muted)] border border-transparent hover:border-[var(--border-card)]'
-              }`}
-            >
-              <span>✝️ Tân Ước</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-emerald-500/10">
-                {tanUocCount + caHaiCount}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setTestamentFilter('ca-hai')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-serif font-bold whitespace-nowrap transition-all flex items-center gap-1 cursor-pointer ${
-                testamentFilter === 'ca-hai'
-                  ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50 shadow-sm font-black'
-                  : 'bg-[var(--bg-main)] text-[var(--text-muted)] border border-transparent hover:border-[var(--border-card)]'
-              }`}
-            >
-              <span>🌟 Cả Hai Giao Ước</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-purple-500/10">
-                {caHaiCount}
-              </span>
-            </button>
-          </div>
-
-          {/* Region Dropdown */}
+          {/* Right: Interaction Toggles (Scroll Zoom, Reset, Fullscreen) */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-[var(--text-muted)] font-serif font-semibold">Phân vùng:</span>
-            <select
-              value={regionFilter}
-              onChange={(e) => setRegionFilter(e.target.value)}
-              aria-label="Lọc theo phân vùng địa lý"
-              className="px-3 py-1.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs font-serif font-semibold text-[var(--text-main)] focus:outline-none focus:border-amber-500/50"
-            >
-              <option value="all">Mọi phân vùng Thánh Địa</option>
-              {availableRegions.map(reg => (
-                <option key={reg} value={reg}>{reg}</option>
-              ))}
-            </select>
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* ── Main Map Canvas & Interactive Inspector Layout ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        {/* Left Column: Interactive Map Canvas + Location Selector List (7 Columns) */}
-        <div className="lg:col-span-7 space-y-6">
-          
-          {/* Map Canvas Wrapper */}
-          <div className="relative rounded-3xl overflow-hidden border-2 border-amber-500/30 shadow-2xl bg-stone-950 h-[460px] sm:h-[540px] w-full z-10 group">
-            <div ref={mapContainerRef} className="w-full h-full" style={{ minHeight: '460px' }}></div>
             
-            {/* Top-Right: Custom Stained-Glass Zoom & Bounds Controls */}
-            <div className="absolute top-4 right-4 z-[400] flex flex-col items-center gap-1.5">
-              <button
-                type="button"
-                onClick={handleZoomIn}
-                className="w-9 h-9 rounded-xl bg-slate-950/85 hover:bg-slate-900 border border-amber-500/40 text-amber-300 flex items-center justify-center shadow-xl backdrop-blur-md transition hover:scale-110 cursor-pointer"
-                title="Phóng to bản đồ"
-              >
-                <ZoomIn className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={handleZoomOut}
-                className="w-9 h-9 rounded-xl bg-slate-950/85 hover:bg-slate-900 border border-amber-500/40 text-amber-300 flex items-center justify-center shadow-xl backdrop-blur-md transition hover:scale-110 cursor-pointer"
-                title="Thu nhỏ bản đồ"
-              >
-                <ZoomOut className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={handleResetBounds}
-                className="w-9 h-9 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 flex items-center justify-center shadow-xl font-bold transition hover:scale-110 cursor-pointer"
-                title="Toàn cảnh Thánh Địa (Khung nhìn bao quát)"
-              >
-                <Maximize2 className="w-4 h-4" />
-              </button>
-            </div>
+            {/* Scroll Wheel Zoom Toggle */}
+            <button
+              type="button"
+              onClick={toggleScrollZoom}
+              className={`px-3 py-1.5 rounded-xl border text-xs font-serif font-bold flex items-center gap-1.5 shadow-sm backdrop-blur-md transition-all cursor-pointer ${
+                scrollZoomEnabled
+                  ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/40 ring-1 ring-amber-500/20'
+                  : 'bg-[var(--bg-main)] text-[var(--text-muted)] border-[var(--border-card)]'
+              }`}
+              title={scrollZoomEnabled ? "Cuộn chuột thu phóng: Đang BẬT" : "Cuộn chuột thu phóng: Đang TẮT"}
+            >
+              <MousePointer className="w-3.5 h-3.5 text-amber-500" />
+              <span className="hidden sm:inline">Cuộn chuột zoom:</span>
+              <span className="font-sans font-bold">{scrollZoomEnabled ? 'Bật' : 'Tắt'}</span>
+            </button>
 
-            {/* Bottom-Left: Floating Map Legend (Chú Giải Thời Kỳ) */}
-            <div className="absolute bottom-4 left-4 z-[400] bg-slate-950/90 backdrop-blur-md border border-amber-500/40 p-2 sm:p-2.5 rounded-2xl shadow-2xl space-y-1.5 max-w-[280px]">
-              <div className="text-[10px] font-serif font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-amber-400" />
-                <span>Chú Giải Thời Kỳ Thánh Địa</span>
-              </div>
-              <div className="flex flex-col gap-1 text-[11px] font-serif">
-                <button
-                  type="button"
-                  onClick={() => setTestamentFilter('cuu-uoc')}
-                  className="flex items-center gap-2 hover:bg-white/10 px-1.5 py-0.5 rounded-md transition text-left cursor-pointer"
-                >
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#d97706] shadow-[0_0_8px_#d97706]"></span>
-                  <span className="text-amber-200">📜 Cựu Ước ({cuuUocCount})</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTestamentFilter('tan-uoc')}
-                  className="flex items-center gap-2 hover:bg-white/10 px-1.5 py-0.5 rounded-md transition text-left cursor-pointer"
-                >
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#059669] shadow-[0_0_8px_#059669]"></span>
-                  <span className="text-emerald-200">✝️ Tân Ước ({tanUocCount})</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTestamentFilter('ca-hai')}
-                  className="flex items-center gap-2 hover:bg-white/10 px-1.5 py-0.5 rounded-md transition text-left cursor-pointer"
-                >
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#7c3aed] shadow-[0_0_8px_#7c3aed]"></span>
-                  <span className="text-purple-200">🌟 Cả Hai Giao Ước ({caHaiCount})</span>
-                </button>
-              </div>
-            </div>
+            {/* Reset Bounds Button */}
+            <button
+              type="button"
+              onClick={handleResetBounds}
+              className="px-3 py-1.5 rounded-xl bg-[var(--bg-main)] hover:bg-amber-500 hover:text-slate-950 border border-[var(--border-card)] text-xs font-serif font-bold text-[var(--text-main)] flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+              title="Khung nhìn bao quát toàn bộ Thánh Địa"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Toàn Cảnh</span>
+            </button>
 
-            {/* Bottom-Right: Mobile Help Badge */}
-            <div className="absolute bottom-4 right-4 z-[400] hidden sm:flex items-center gap-1.5 bg-slate-950/80 backdrop-blur-md border border-amber-500/30 text-amber-300 text-[10px] font-serif font-bold px-3 py-1.5 rounded-full shadow-lg pointer-events-none">
-              <MapPin className="w-3 h-3 text-amber-400" />
-              <span>Chạm ghim để phóng to chi tiết</span>
-            </div>
-          </div>
+            {/* Fullscreen Button */}
+            <button
+              type="button"
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className="p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs font-serif flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+              title={isFullscreen ? "Thoát toàn màn hình" : "Mở rộng toàn màn hình"}
+            >
+              {isFullscreen ? (
+                <>
+                  <Minimize2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Thu Nhỏ</span>
+                </>
+              ) : (
+                <>
+                  <Maximize2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Toàn Màn Hình</span>
+                </>
+              )}
+            </button>
 
-          {/* Location Quick List Strip */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-serif font-bold text-base text-[var(--text-main)] flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-amber-500" />
-                <span>Danh Sách Địa Danh Hiển Thị ({filteredLocations.length})</span>
-              </h3>
-              <button
-                type="button"
-                onClick={handleResetBounds}
-                className="text-xs text-amber-500 hover:underline flex items-center gap-1 font-serif cursor-pointer"
-              >
-                <RotateCcw className="w-3 h-3" />
-                <span>Về góc nhìn toàn cảnh</span>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[420px] overflow-y-auto pr-1">
-              {filteredLocations.map((loc) => {
-                const isSelected = selectedLocation?.id === loc.id;
-                const meta = getTestamentMeta(loc.testament);
-
-                return (
-                  <div
-                    key={loc.id}
-                    onClick={() => handleSelectLocation(loc, true, 13)}
-                    className={`p-4 rounded-2xl border cursor-pointer transition-all duration-200 flex flex-col justify-between ${
-                      isSelected
-                        ? 'bg-amber-500/15 border-amber-500 shadow-md shadow-amber-500/10 scale-[1.02] ring-1 ring-amber-500/40'
-                        : 'bg-[var(--bg-card)] border-[var(--border-card)] hover:border-amber-500/40'
-                    }`}
-                  >
-                    <div className="space-y-1.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <h4 className={`font-serif font-bold text-sm leading-snug ${
-                          isSelected ? 'text-amber-500' : 'text-[var(--text-main)]'
-                        }`}>
-                          {loc.name}
-                        </h4>
-                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border shrink-0 ${meta.badgeBg}`}>
-                          {meta.symbolIcon} {meta.label}
-                        </span>
-                      </div>
-
-                      {loc.ancient_name && (
-                        <p className="text-xs text-amber-700 dark:text-amber-300 font-serif italic truncate">
-                          Cổ danh: {loc.ancient_name}
-                        </p>
-                      )}
-
-                      {loc.summary && (
-                        <p className="text-xs text-[var(--text-muted)] font-serif line-clamp-2 leading-relaxed">
-                          {loc.summary}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="pt-2 mt-2 border-t border-[var(--border-card)] flex items-center justify-between text-[11px] font-bold text-amber-600 dark:text-amber-400 font-serif">
-                      <span>Phóng to &amp; Định vị</span>
-                      <Navigation className="w-3 h-3" />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </div>
 
         </div>
 
-        {/* Right Column: Detailed Location Wiki Card (5 Columns) */}
-        <div className="lg:col-span-5">
+        {/* Map Canvas Wrapper */}
+        <div 
+          className={`relative rounded-3xl overflow-hidden border-2 border-amber-500/30 shadow-2xl bg-stone-950 w-full transition-all duration-300 z-20 group ${
+            isFullscreen 
+              ? 'fixed inset-0 z-[9999] h-screen w-screen rounded-none border-0' 
+              : 'h-[520px] sm:h-[600px] lg:h-[660px]'
+          }`}
+        >
+          <div ref={mapContainerRef} className="w-full h-full" style={{ minHeight: '520px' }}></div>
+          
+          {/* Top-Right: Custom Stained-Glass Zoom & Bounds Controls */}
+          <div className="absolute top-4 right-4 z-[400] flex flex-col items-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleZoomIn}
+              className="w-10 h-10 rounded-2xl bg-slate-950/85 hover:bg-slate-900 border border-amber-500/40 text-amber-300 flex items-center justify-center shadow-xl backdrop-blur-md transition hover:scale-110 cursor-pointer"
+              title="Phóng to bản đồ (+)"
+            >
+              <ZoomIn className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={handleZoomOut}
+              className="w-10 h-10 rounded-2xl bg-slate-950/85 hover:bg-slate-900 border border-amber-500/40 text-amber-300 flex items-center justify-center shadow-xl backdrop-blur-md transition hover:scale-110 cursor-pointer"
+              title="Thu nhỏ bản đồ (-)"
+            >
+              <ZoomOut className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={handleResetBounds}
+              className="w-10 h-10 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 flex items-center justify-center shadow-xl font-bold transition hover:scale-110 cursor-pointer"
+              title="Toàn cảnh Thánh Địa (Khung nhìn bao quát)"
+            >
+              <Maximize2 className="w-4 h-4" />
+            </button>
+            {isFullscreen && (
+              <button
+                type="button"
+                onClick={() => setIsFullscreen(false)}
+                className="w-10 h-10 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center shadow-xl font-bold transition hover:scale-110 cursor-pointer"
+                title="Đóng chế độ toàn màn hình (Esc)"
+              >
+                <Minimize2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Bottom-Left: Floating Map Legend (Chú Giải Thời Kỳ Thánh Địa - Icon Phụng Vụ Thánh Thiêng, KHÔNG có icon AI) */}
+          <div className="absolute bottom-4 left-4 z-[400] bg-slate-950/90 backdrop-blur-md border border-amber-500/40 p-2.5 sm:p-3 rounded-2xl shadow-2xl space-y-2 max-w-[280px]">
+            <div className="text-[10px] font-serif font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5 border-b border-amber-500/20 pb-1">
+              <Compass className="w-3.5 h-3.5 text-amber-400" />
+              <span>Chú Giải Thời Kỳ Thánh Địa</span>
+            </div>
+            <div className="flex flex-col gap-1 text-[11px] font-serif">
+              <button
+                type="button"
+                onClick={() => setTestamentFilter('cuu-uoc')}
+                className={`flex items-center justify-between gap-2 px-2 py-1 rounded-lg transition text-left cursor-pointer ${
+                  testamentFilter === 'cuu-uoc' ? 'bg-amber-500/30 text-amber-300 font-bold' : 'hover:bg-white/10 text-amber-200'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#d97706] shadow-[0_0_8px_#d97706]"></span>
+                  <span>📜 Cựu Ước</span>
+                </div>
+                <span className="font-mono text-[10px] opacity-80">({cuuUocCount})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTestamentFilter('tan-uoc')}
+                className={`flex items-center justify-between gap-2 px-2 py-1 rounded-lg transition text-left cursor-pointer ${
+                  testamentFilter === 'tan-uoc' ? 'bg-emerald-500/30 text-emerald-300 font-bold' : 'hover:bg-white/10 text-emerald-200'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#059669] shadow-[0_0_8px_#059669]"></span>
+                  <span>✝ Tân Ước</span>
+                </div>
+                <span className="font-mono text-[10px] opacity-80">({tanUocCount})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTestamentFilter('ca-hai')}
+                className={`flex items-center justify-between gap-2 px-2 py-1 rounded-lg transition text-left cursor-pointer ${
+                  testamentFilter === 'ca-hai' ? 'bg-purple-500/30 text-purple-300 font-bold' : 'hover:bg-white/10 text-purple-200'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#7c3aed] shadow-[0_0_8px_#7c3aed]"></span>
+                  <span>🏛️ Cả Hai Giao Ước</span>
+                </div>
+                <span className="font-mono text-[10px] opacity-80">({caHaiCount})</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Bottom-Right: User Guide Indicator */}
+          <div className="absolute bottom-4 right-4 z-[400] hidden sm:flex items-center gap-2 bg-slate-950/80 backdrop-blur-md border border-amber-500/30 text-amber-300 text-[10px] font-serif font-bold px-3.5 py-1.5 rounded-full shadow-lg pointer-events-none">
+            <MapPin className="w-3 h-3 text-amber-400" />
+            <span>{scrollZoomEnabled ? 'Cuộn chuột để thu phóng • Chạm ghim để mở hồ sơ' : 'Chạm ghim trên bản đồ để mở hồ sơ chi tiết'}</span>
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════════════
+          PHẦN 2: BỐ CỤC 2 CỘT PHÍA DƯỚI BẢN ĐỒ
+          Cột Trái (Col 7): Hồ Sơ Chi Tiết Thánh Địa (Wiki Profile & Gallery)
+          Cột Phải (Col 5): Tìm Kiếm & Danh Sách Địa Danh Thánh Địa
+          ════════════════════════════════════════════════════════════════════════ */}
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pt-2">
+        
+        {/* ── Cột Trái (Col 7, ~58% width): Hồ Sơ Chi Tiết Thánh Địa ── */}
+        <div ref={profileCardRef} className="lg:col-span-7 space-y-6">
           {selectedLocation ? (
-            <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-amber-500/30 shadow-2xl space-y-6 relative overflow-hidden sticky top-24">
+            <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-amber-500/30 shadow-2xl space-y-6 relative overflow-hidden">
               
               {/* Decorative Corner Glow */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
+              <div className="absolute top-0 right-0 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
 
-              {/* Location Image */}
-              {selectedLocation.image_url && (
-                <div className="relative w-full h-52 sm:h-60 rounded-2xl overflow-hidden border border-amber-500/30 shadow-lg">
+              {/* Gallery / Location Images (Supports Multi-Images from Google Drive) */}
+              <div className="space-y-2">
+                <div className="relative w-full h-64 sm:h-72 lg:h-80 rounded-2xl overflow-hidden border border-amber-500/30 shadow-lg bg-stone-950 group">
                   <Image
-                    src={selectedLocation.image_url}
+                    src={selectedGallery[activeImageIdx] || selectedLocation.image_url || 'https://images.unsplash.com/photo-1548625361-9c8eb25c56df?q=80&w=1200'}
                     alt={selectedLocation.name}
                     fill
-                    className="object-cover"
-                    sizes="(max-width: 1024px) 100vw, 40vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    sizes="(max-width: 1024px) 100vw, 60vw"
+                    priority
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-transparent to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-stone-950/85 via-stone-950/20 to-transparent"></div>
                   
-                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white">
+                  {/* Prev / Next Buttons if multiple images exist */}
+                  {selectedGallery.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setActiveImageIdx((prev) => (prev === 0 ? selectedGallery.length - 1 : prev - 1))}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-950/70 hover:bg-amber-500 hover:text-slate-950 text-white flex items-center justify-center backdrop-blur-sm transition border border-white/20 cursor-pointer"
+                        title="Xem ảnh trước"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveImageIdx((prev) => (prev === selectedGallery.length - 1 ? 0 : prev + 1))}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-950/70 hover:bg-amber-500 hover:text-slate-950 text-white flex items-center justify-center backdrop-blur-sm transition border border-white/20 cursor-pointer"
+                        title="Xem ảnh kế tiếp"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+
+                  {/* Top-Right Badge: Image counter */}
+                  {selectedGallery.length > 1 && (
+                    <div className="absolute top-3 right-3 flex items-center gap-1 text-[11px] font-mono bg-slate-950/75 text-amber-300 px-2.5 py-0.5 rounded-full border border-amber-500/30 backdrop-blur-sm shadow-md">
+                      <ImageIcon className="w-3 h-3 text-amber-400" />
+                      <span>{activeImageIdx + 1} / {selectedGallery.length}</span>
+                    </div>
+                  )}
+
+                  {/* Bottom Image Overlay Badges */}
+                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white flex-wrap gap-2">
                     {(() => {
                       const meta = getTestamentMeta(selectedLocation.testament);
                       return (
-                        <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500 text-slate-950 shadow-md">
-                          {meta.symbolIcon} {selectedLocation.era || meta.label}
+                        <span className="text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-amber-500 text-slate-950 shadow-md flex items-center gap-1">
+                          <span>{meta.symbolIcon}</span>
+                          <span>{selectedLocation.era || meta.label}</span>
                         </span>
                       );
                     })()}
-                    <span className="text-xs text-stone-200 font-mono bg-stone-950/60 px-2 py-0.5 rounded-md backdrop-blur-sm">
+                    <span className="text-xs text-stone-200 font-mono bg-stone-950/70 px-2.5 py-1 rounded-md backdrop-blur-sm border border-white/10">
                       {selectedLocation.latitude.toFixed(4)}° N, {selectedLocation.longitude.toFixed(4)}° E
                     </span>
                   </div>
                 </div>
-              )}
+
+                {/* Thumbnails row if more than 1 image */}
+                {selectedGallery.length > 1 && (
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none pt-1">
+                    {selectedGallery.map((imgUrl, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setActiveImageIdx(idx)}
+                        className={`relative w-16 h-12 rounded-xl overflow-hidden shrink-0 border-2 transition-all cursor-pointer ${
+                          activeImageIdx === idx
+                            ? 'border-amber-500 ring-2 ring-amber-500/40 scale-105'
+                            : 'border-transparent opacity-60 hover:opacity-100'
+                        }`}
+                      >
+                        <Image
+                          src={imgUrl}
+                          alt={`${selectedLocation.name} - ảnh ${idx + 1}`}
+                          fill
+                          className="object-cover"
+                          sizes="64px"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Title & Names */}
-              <div className="space-y-1.5 border-b border-[var(--border-card)] pb-4">
+              <div className="space-y-2 border-b border-[var(--border-card)] pb-4">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-amber-500 uppercase tracking-wider font-serif">
                     <MapPin className="w-3.5 h-3.5" />
@@ -881,20 +863,20 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
                   {(() => {
                     const meta = getTestamentMeta(selectedLocation.testament);
                     return (
-                      <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${meta.badgeBg}`}>
+                      <span className={`text-[10px] font-black px-3 py-0.5 rounded-full border ${meta.badgeBg}`}>
                         {meta.symbolIcon} {meta.label}
                       </span>
                     );
                   })()}
                 </div>
 
-                <h2 className="font-serif font-black text-2xl sm:text-3xl text-[var(--text-main)]">
+                <h2 className="font-serif font-black text-2xl sm:text-3xl text-[var(--text-main)] tracking-tight">
                   {selectedLocation.name}
                 </h2>
 
                 {selectedLocation.name_original && (
                   <p className="font-serif text-sm text-[var(--text-muted)] italic">
-                    Nguyên ngữ: {selectedLocation.name_original}
+                    Nguyên ngữ (Do Thái / Hy Lạp): <span className="text-amber-600 dark:text-amber-400 font-bold">{selectedLocation.name_original}</span>
                   </p>
                 )}
 
@@ -919,21 +901,23 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
               </div>
 
               {/* Summary / Description */}
-              <div className="space-y-2 text-xs sm:text-sm text-[var(--text-main)] leading-relaxed font-serif">
+              <div className="space-y-3 text-xs sm:text-sm text-[var(--text-main)] leading-relaxed font-serif">
                 {selectedLocation.summary && (
-                  <p className="font-bold text-amber-600 dark:text-amber-400 italic">
+                  <div className="p-4 rounded-2xl bg-amber-500/10 border-l-4 border-amber-500 text-amber-800 dark:text-amber-200 font-serif italic text-sm leading-relaxed">
                     &ldquo;{selectedLocation.summary}&rdquo;
-                  </p>
+                  </div>
                 )}
-                <div 
-                  className="space-y-3 prose dark:prose-invert text-xs sm:text-sm max-w-none font-sans"
-                  dangerouslySetInnerHTML={{ __html: selectedLocation.description || '' }}
-                />
+                {selectedLocation.description && (
+                  <div 
+                    className="space-y-3 prose dark:prose-invert text-xs sm:text-sm max-w-none font-sans"
+                    dangerouslySetInnerHTML={{ __html: selectedLocation.description }}
+                  />
+                )}
               </div>
 
               {/* Key Salvation Events */}
               {selectedLocation.events && selectedLocation.events.length > 0 && (
-                <div className="space-y-2 pt-3 border-t border-[var(--border-card)]">
+                <div className="space-y-2.5 pt-3 border-t border-[var(--border-card)]">
                   <h4 className="font-serif font-bold text-sm text-[var(--text-main)] flex items-center gap-1.5">
                     <ShieldCheck className="w-4 h-4 text-amber-500" />
                     <span>Biến Cố Cứu Độ Then Chốt</span>
@@ -941,7 +925,7 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
                   <ul className="space-y-1.5">
                     {selectedLocation.events.map((evt, idx) => (
                       <li key={idx} className="text-xs text-[var(--text-muted)] flex items-start gap-2 font-serif">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
                         <span>{evt}</span>
                       </li>
                     ))}
@@ -960,7 +944,7 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
                     </h4>
                   </div>
 
-                  {/* Dynamic Clickable Badges from bible_references */}
+                  {/* Clickable Scripture Badges from bible_references */}
                   {selectedLocation.bible_references && selectedLocation.bible_references.length > 0 && (() => {
                     const parsedList = parseScriptureReferences(selectedLocation.bible_references);
                     if (parsedList.length === 0) return null;
@@ -973,7 +957,7 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
                               href={ps.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500 text-amber-700 dark:text-amber-300 hover:text-slate-950 border border-amber-500/25 hover:border-amber-500 font-mono text-[11px] font-bold transition-all shadow-sm"
+                              className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/10 hover:bg-amber-500 text-amber-700 dark:text-amber-300 hover:text-slate-950 border border-amber-500/25 hover:border-amber-500 font-mono text-[11px] font-bold transition-all shadow-sm"
                               title={`Đọc ${ps.label} trong Kinh Thánh`}
                             >
                               <span>📖 {ps.label}</span>
@@ -990,15 +974,15 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
                     );
                   })()}
 
-                  {/* Quoted Scriptures */}
+                  {/* Quoted Scripture Verses */}
                   {selectedLocation.scriptures && selectedLocation.scriptures.length > 0 && (
                     <div className="space-y-3 pt-1">
                       {selectedLocation.scriptures.map((sc, index) => {
                         const readerUrl = `/kinh-thanh/${sc.book_slug}/${sc.chapter}`;
                         return (
-                          <div key={index} className="p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-2">
+                          <div key={index} className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-2">
                             <div className="flex items-center justify-between gap-2">
-                              <span className="text-[11px] font-black px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 font-mono">
+                              <span className="text-[11px] font-black px-2.5 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 font-mono">
                                 {sc.reference}
                               </span>
                               <Link
@@ -1024,7 +1008,7 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
 
               {/* Theology Meaning Box */}
               {selectedLocation.theology && (
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 via-[var(--bg-main)] to-amber-500/5 border border-amber-500/30 space-y-1.5">
+                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-amber-500/10 via-[var(--bg-main)] to-amber-500/5 border border-amber-500/30 space-y-2">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 font-serif">
                     <Cross className="w-3.5 h-3.5 text-amber-500" />
                     <span>Ý Nghĩa Thần Học &amp; Biểu Tượng Cứu Độ</span>
@@ -1037,7 +1021,7 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
 
               {/* Archaeological Evidence */}
               {selectedLocation.archaeological_evidence && (
-                <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-1.5">
+                <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-2">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400 font-serif">
                     <Layers className="w-3.5 h-3.5 text-amber-500" />
                     <span>Dấu Tích &amp; Bằng Chứng Khảo Cổ Học</span>
@@ -1064,10 +1048,10 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
                         href={`/${slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group p-3 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-500/60 transition-all flex items-center justify-between gap-3"
+                        className="group p-3.5 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-500/60 transition-all flex items-center justify-between gap-3"
                       >
                         <div className="flex items-start gap-2.5 min-w-0">
-                          <BookOpen className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+                          <BookOpen className="w-4 h-4 text-amber-500 shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
                           <div className="min-w-0">
                             <span className="text-xs font-serif font-bold text-[var(--text-main)] group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors line-clamp-2">
                               {slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
@@ -1077,7 +1061,7 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
                             </span>
                           </div>
                         </div>
-                        <div className="flex-shrink-0 flex items-center gap-1 text-[11px] font-bold text-amber-700 dark:text-amber-300 bg-amber-500/15 px-2.5 py-1 rounded-full border border-amber-500/30 group-hover:bg-amber-500 group-hover:text-slate-950 transition-all font-serif">
+                        <div className="shrink-0 flex items-center gap-1 text-[11px] font-bold text-amber-700 dark:text-amber-300 bg-amber-500/15 px-3 py-1 rounded-full border border-amber-500/30 group-hover:bg-amber-500 group-hover:text-slate-950 transition-all font-serif">
                           <span>Đọc Bài</span>
                           <ExternalLink className="w-3 h-3" />
                         </div>
@@ -1096,7 +1080,257 @@ export default function BibleMapInteractive({ initialLocations }: BibleMapIntera
           )}
         </div>
 
-      </div>
+        {/* ── Cột Phải (Col 5, ~42% width): Tìm Kiếm & Danh Sách Địa Danh ── */}
+        <div className="lg:col-span-5 space-y-4">
+          
+          {/* Search & Advanced Filters Box */}
+          <div className="glass-panel p-5 rounded-3xl border border-amber-500/20 shadow-xl space-y-4">
+            
+            {/* Search Input with Autocomplete */}
+            <div ref={searchBoxRef} className="relative">
+              <div className="relative">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setIsSearchFocused(true);
+                  }}
+                  placeholder="Tìm kiếm địa danh (gõ có dấu hoặc không dấu)..."
+                  className="w-full pl-10 pr-9 py-2.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs sm:text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-amber-500/60 focus:ring-2 focus:ring-amber-500/20 transition-all font-serif"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setIsSearchFocused(false);
+                    }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-amber-500 p-1 rounded-full transition"
+                    title="Xóa tìm kiếm"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Autocomplete Dropdown */}
+              {isSearchFocused && searchSuggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-slate-950/95 backdrop-blur-xl border border-amber-500/40 rounded-2xl shadow-2xl z-50 overflow-hidden divide-y divide-slate-800">
+                  {searchSuggestions.map((item) => {
+                    const meta = getTestamentMeta(item.testament);
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          handleSelectLocation(item, true, 13, true);
+                          setSearchQuery('');
+                          setIsSearchFocused(false);
+                        }}
+                        className="w-full px-4 py-2.5 text-left flex items-center justify-between gap-3 hover:bg-amber-500/20 transition group cursor-pointer"
+                      >
+                        <div className="min-w-0">
+                          <div className="text-xs font-serif font-bold text-amber-200 group-hover:text-amber-400 transition truncate">
+                            {item.name}
+                          </div>
+                          {item.ancient_name && (
+                            <div className="text-[10px] text-slate-400 font-serif italic truncate">
+                              Cổ danh: {item.ancient_name}
+                            </div>
+                          )}
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <span className="text-[10px] font-bold text-slate-400 block">
+                            {item.region}
+                          </span>
+                          <span className="text-[9px] text-amber-400 font-bold flex items-center gap-1 justify-end">
+                            <span>Phóng to</span>
+                            <ChevronRight className="w-2.5 h-2.5" />
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Testament Filter Buttons */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-serif font-bold text-[var(--text-muted)] uppercase tracking-wider block">
+                Thời kỳ Giao ước:
+              </label>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setTestamentFilter('all')}
+                  className={`px-3 py-1 rounded-full text-[11px] font-serif font-bold transition-all cursor-pointer ${
+                    testamentFilter === 'all'
+                      ? 'bg-amber-500/20 text-amber-500 border border-amber-500/50 shadow-sm font-black'
+                      : 'bg-[var(--bg-main)] text-[var(--text-muted)] border border-transparent hover:border-[var(--border-card)]'
+                  }`}
+                >
+                  Tất Cả ({locations.length})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setTestamentFilter('cuu-uoc')}
+                  className={`px-3 py-1 rounded-full text-[11px] font-serif font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                    testamentFilter === 'cuu-uoc'
+                      ? 'bg-amber-600/20 text-amber-500 border border-amber-600/50 shadow-sm font-black'
+                      : 'bg-[var(--bg-main)] text-[var(--text-muted)] border border-transparent hover:border-[var(--border-card)]'
+                  }`}
+                >
+                  <span>📜 Cựu Ước</span>
+                  <span className="text-[9px] font-mono px-1 rounded-full bg-amber-500/10">
+                    {cuuUocCount + caHaiCount}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setTestamentFilter('tan-uoc')}
+                  className={`px-3 py-1 rounded-full text-[11px] font-serif font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                    testamentFilter === 'tan-uoc'
+                      ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/50 shadow-sm font-black'
+                      : 'bg-[var(--bg-main)] text-[var(--text-muted)] border border-transparent hover:border-[var(--border-card)]'
+                  }`}
+                >
+                  <span>✝ Tân Ước</span>
+                  <span className="text-[9px] font-mono px-1 rounded-full bg-emerald-500/10">
+                    {tanUocCount + caHaiCount}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setTestamentFilter('ca-hai')}
+                  className={`px-3 py-1 rounded-full text-[11px] font-serif font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                    testamentFilter === 'ca-hai'
+                      ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50 shadow-sm font-black'
+                      : 'bg-[var(--bg-main)] text-[var(--text-muted)] border border-transparent hover:border-[var(--border-card)]'
+                  }`}
+                >
+                  <span>🏛️ Cả Hai</span>
+                  <span className="text-[9px] font-mono px-1 rounded-full bg-purple-500/10">
+                    {caHaiCount}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Region Filter Dropdown */}
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-[var(--border-card)]">
+              <span className="text-xs text-[var(--text-muted)] font-serif font-semibold">Phân vùng:</span>
+              <select
+                value={regionFilter}
+                onChange={(e) => setRegionFilter(e.target.value)}
+                aria-label="Lọc theo phân vùng địa lý"
+                className="px-3 py-1.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs font-serif font-semibold text-[var(--text-main)] focus:outline-none focus:border-amber-500/50 max-w-[200px]"
+              >
+                <option value="all">Mọi phân vùng Thánh Địa</option>
+                {availableRegions.map(reg => (
+                  <option key={reg} value={reg}>{reg}</option>
+                ))}
+              </select>
+            </div>
+
+          </div>
+
+          {/* Location Cards Vertical List */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <h3 className="font-serif font-bold text-sm text-[var(--text-main)] flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-amber-500" />
+                <span>Danh Sách Địa Danh ({filteredLocations.length})</span>
+              </h3>
+              <button
+                type="button"
+                onClick={handleResetBounds}
+                className="text-xs text-amber-500 hover:underline flex items-center gap-1 font-serif cursor-pointer"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Toàn cảnh</span>
+              </button>
+            </div>
+
+            {/* Scrollable Container with Custom 6px Scrollbar */}
+            <div className="space-y-3 max-h-[820px] overflow-y-auto pr-1.5 custom-scrollbar">
+              {filteredLocations.map((loc) => {
+                const isSelected = selectedLocation?.id === loc.id;
+                const meta = getTestamentMeta(loc.testament);
+                const thumbImg = (loc.images && loc.images.length > 0) ? loc.images[0] : (loc.image_url || 'https://images.unsplash.com/photo-1548625361-9c8eb25c56df?q=80&w=300');
+
+                return (
+                  <div
+                    key={loc.id}
+                    onClick={() => handleSelectLocation(loc, true, 13, true)}
+                    className={`p-3.5 sm:p-4 rounded-2xl border cursor-pointer transition-all duration-200 flex items-start gap-3.5 ${
+                      isSelected
+                        ? 'bg-amber-500/15 border-amber-500 shadow-md shadow-amber-500/10 ring-1 ring-amber-500/40 scale-[1.01]'
+                        : 'bg-[var(--bg-card)] border-[var(--border-card)] hover:border-amber-500/40 hover:bg-amber-500/5'
+                    }`}
+                  >
+                    {/* Small Thumbnail */}
+                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden shrink-0 border border-amber-500/20 bg-stone-900">
+                      <Image
+                        src={thumbImg}
+                        alt={loc.name}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="80px"
+                      />
+                      <div className="absolute top-1 left-1">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-stone-950/80 text-white font-mono backdrop-blur-xs">
+                          {meta.symbolIcon}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Content details */}
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-1.5">
+                        <h4 className={`font-serif font-bold text-sm leading-snug truncate ${
+                          isSelected ? 'text-amber-500' : 'text-[var(--text-main)]'
+                        }`}>
+                          {loc.name}
+                        </h4>
+                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border shrink-0 ${meta.badgeBg}`}>
+                          {meta.label}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-[11px] text-[var(--text-muted)] font-serif">
+                        <span className="text-amber-600 dark:text-amber-400 font-semibold truncate">{loc.region}</span>
+                        {loc.ancient_name && (
+                          <span className="italic truncate">• Cổ danh: {loc.ancient_name}</span>
+                        )}
+                      </div>
+
+                      {loc.summary && (
+                        <p className="text-xs text-[var(--text-muted)] font-serif line-clamp-2 leading-relaxed pt-0.5">
+                          {loc.summary}
+                        </p>
+                      )}
+
+                      <div className="pt-1 flex items-center justify-between text-[11px] font-bold text-amber-600 dark:text-amber-400 font-serif">
+                        <span>Định vị trên bản đồ</span>
+                        <Navigation className="w-3 h-3" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+        </div>
+
+      </section>
 
     </div>
   );

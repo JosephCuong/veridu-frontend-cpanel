@@ -287,6 +287,7 @@ export interface MapLocation {
   longitude: number;
   importance_level?: number;
   image_url?: string;
+  images?: string[];
   summary?: string;
   description?: string;
   events?: string[];
@@ -1073,6 +1074,50 @@ export async function fetchCharacterBySlug(slug: string): Promise<Character | nu
   }
 }
 
+// ─── Helper parse đa ảnh (Google Drive / Array / Comma-separated) ─
+function parseLocationImages(rawImage: any, rawImagesField?: any): string[] {
+  const result: string[] = [];
+  if (Array.isArray(rawImagesField)) {
+    rawImagesField.forEach(img => {
+      if (typeof img === 'string' && img.trim()) {
+        const formatted = formatImageUrl(img.trim());
+        if (formatted && !result.includes(formatted)) result.push(formatted);
+      }
+    });
+  }
+  if (typeof rawImage === 'string' && rawImage.trim()) {
+    const trimmed = rawImage.trim();
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((img: any) => {
+            if (typeof img === 'string' && img.trim()) {
+              const formatted = formatImageUrl(img.trim());
+              if (formatted && !result.includes(formatted)) result.push(formatted);
+            }
+          });
+        }
+      } catch {
+        const formatted = formatImageUrl(trimmed);
+        if (formatted && !result.includes(formatted)) result.push(formatted);
+      }
+    } else if (trimmed.includes(',') || trimmed.includes('\n')) {
+      trimmed.split(/[\r\n,]+/).forEach(part => {
+        const p = part.trim();
+        if (p) {
+          const formatted = formatImageUrl(p);
+          if (formatted && !result.includes(formatted)) result.push(formatted);
+        }
+      });
+    } else {
+      const formatted = formatImageUrl(trimmed);
+      if (formatted && !result.includes(formatted)) result.push(formatted);
+    }
+  }
+  return result;
+}
+
 // ─── Map Locations Fetcher (Supabase Integration) ───────────────
 export async function fetchMapLocations(): Promise<MapLocation[]> {
   try {
@@ -1084,32 +1129,37 @@ export async function fetchMapLocations(): Promise<MapLocation[]> {
 
     if (error || !data) return [];
 
-    return data.map((item: any) => ({
-      id: item.id,
-      slug: item.slug || '',
-      name: item.name,
-      name_en: item.name_en || '',
-      name_original: item.name_original || '',
-      meaning: item.meaning || '',
-      region: item.region || 'Giu-đê (Judea)',
-      testament: item.testament || 'tan-uoc',
-      era: item.era || 'Tân Ước',
-      latitude: Number(item.latitude),
-      longitude: Number(item.longitude),
-      importance_level: item.importance_level || 1,
-      image_url: item.image_url || '',
-      summary: item.summary || '',
-      description: item.description || '',
-      events: item.events || [],
-      scriptures: item.scriptures || [],
-      theology: item.theology || '',
-      ancient_name: item.ancient_name || '',
-      historical_period: item.historical_period || '',
-      archaeological_evidence: item.archaeological_evidence || '',
-      bible_references: item.bible_references || [],
-      article_slugs: item.article_slugs || [],
-      created_at: item.created_at
-    }));
+    return data.map((item: any) => {
+      const parsedImages = parseLocationImages(item.image_url, item.images || item.gallery_images);
+      return {
+        id: item.id,
+        slug: item.slug || '',
+        name: item.name,
+        name_en: item.name_en || '',
+        name_original: item.name_original || '',
+        meaning: item.meaning || '',
+        region: item.region || 'Giu-đê (Judea)',
+        testament: item.testament || 'tan-uoc',
+        era: item.era || 'Tân Ước',
+        latitude: Number(item.latitude),
+        longitude: Number(item.longitude),
+        importance_level: item.importance_level || 1,
+        image_url: parsedImages[0] || (item.image_url ? formatImageUrl(item.image_url) : '') || 'https://images.unsplash.com/photo-1548625361-9c8eb25c56df?q=80&w=800',
+        images: parsedImages.length > 0 ? parsedImages : [item.image_url ? formatImageUrl(item.image_url) : 'https://images.unsplash.com/photo-1548625361-9c8eb25c56df?q=80&w=800'].filter(Boolean),
+        summary: item.summary || '',
+        description: item.description || '',
+        events: item.events || [],
+        scriptures: item.scriptures || [],
+        theology: item.theology || '',
+        ancient_name: item.ancient_name || '',
+        historical_period: item.historical_period || '',
+        archaeological_evidence: item.archaeological_evidence || '',
+        bible_references: item.bible_references || [],
+        article_slugs: item.article_slugs || [],
+        aliases: item.aliases || [],
+        created_at: item.created_at
+      };
+    });
   } catch (error) {
     console.error('Lỗi khi tải danh sách địa danh bản đồ từ Supabase:', error);
     return [];
@@ -1126,6 +1176,8 @@ export async function fetchMapLocationBySlug(slug: string): Promise<MapLocation 
 
     if (error || !data) return null;
 
+    const parsedImages = parseLocationImages(data.image_url, data.images || data.gallery_images);
+
     return {
       id: data.id,
       slug: data.slug || '',
@@ -1139,7 +1191,8 @@ export async function fetchMapLocationBySlug(slug: string): Promise<MapLocation 
       latitude: Number(data.latitude),
       longitude: Number(data.longitude),
       importance_level: data.importance_level || 1,
-      image_url: data.image_url || '',
+      image_url: parsedImages[0] || (data.image_url ? formatImageUrl(data.image_url) : '') || 'https://images.unsplash.com/photo-1548625361-9c8eb25c56df?q=80&w=800',
+      images: parsedImages.length > 0 ? parsedImages : [data.image_url ? formatImageUrl(data.image_url) : 'https://images.unsplash.com/photo-1548625361-9c8eb25c56df?q=80&w=800'].filter(Boolean),
       summary: data.summary || '',
       description: data.description || '',
       events: data.events || [],
@@ -1150,6 +1203,7 @@ export async function fetchMapLocationBySlug(slug: string): Promise<MapLocation 
       archaeological_evidence: data.archaeological_evidence || '',
       bible_references: data.bible_references || [],
       article_slugs: data.article_slugs || [],
+      aliases: data.aliases || [],
       created_at: data.created_at
     };
   } catch (error) {
