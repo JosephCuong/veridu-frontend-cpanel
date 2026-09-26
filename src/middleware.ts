@@ -153,6 +153,23 @@ export async function middleware(request: NextRequest) {
   response.headers.set('X-XSS-Protection', '1; mode=block');
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // CACHE-CONTROL HEADERS (ROLE-BASED & ROUTE SECURITY)
+  // ══════════════════════════════════════════════════════════════════════════
+  if (isAdminRequired || cleanPath.startsWith('/admin')) {
+    // Admin routes: Strict zero-cache policy (no storage in browser or CDN proxies)
+    response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate, max-age=0');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+  } else if (cleanPath === '/dang-nhap' || cleanPath === '/dang-ky') {
+    // Auth screens: Never cache credentials or login state
+    response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+  } else if (isAuthRequired) {
+    // Personal user areas: Short 60s private browser cache for smooth back/forward, never cached at edge CDN
+    response.headers.set('Cache-Control', 'private, max-age=60, stale-while-revalidate=30');
+  }
+
   // Content Security Policy (CSP) - Hardened & Tailored for VERIDU Catholic Platform
   if (!pathname.startsWith('/api/raw-html')) {
     const cspDirectives = [

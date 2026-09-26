@@ -18,6 +18,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
   const [christianName, setChristianName] = useState('Giuse');
   const [displayName, setDisplayName] = useState('');
   const [parish, setParish] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -79,7 +80,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             createdAt: data.user?.created_at || new Date().toISOString()
           };
           
-          saveAuthSession(data.session.access_token, userObj);
+          saveAuthSession(data.session.access_token, userObj, rememberMe);
           onSuccess(userObj);
           onClose();
         }
@@ -117,7 +118,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             badges: [],
             createdAt: data.user?.created_at || new Date().toISOString()
           };
-          saveAuthSession(data.session.access_token, userObj);
+          saveAuthSession(data.session.access_token, userObj, rememberMe);
           onSuccess(userObj);
           onClose();
         } else {
@@ -136,7 +137,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
     setIsLoading(true);
     setErrorMsg('');
     try {
-      const redirectUrl = `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(window.location.pathname)}`;
+      const redirectUrl = `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(window.location.pathname)}&remember=${rememberMe ? '1' : '0'}`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -275,6 +276,21 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                 placeholder="VD: Giáo Xứ Tân Định"
                 className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-xl px-3 py-2 text-xs text-[var(--text-main)] placeholder-slate-600 focus:outline-none focus:border-amber-500"
               />
+            </div>
+          )}
+
+          {mode === 'login' && (
+            <div className="flex items-center space-x-2 pt-1 pb-1">
+              <input
+                type="checkbox"
+                id="modal-remember-me"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-3.5 h-3.5 rounded border-[var(--border-card)] text-amber-500 focus:ring-amber-500 accent-amber-500 cursor-pointer"
+              />
+              <label htmlFor="modal-remember-me" className="text-[11px] text-[var(--text-muted)] cursor-pointer select-none">
+                Ghi nhớ đăng nhập (tối đa 72 giờ)
+              </label>
             </div>
           )}
 

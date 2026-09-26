@@ -14,7 +14,7 @@ function LoginFormContent() {
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -97,7 +97,7 @@ function LoginFormContent() {
     setIsLoading(true);
     setErrorMsg('');
     try {
-      const redirectUrl = `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTarget)}`;
+      const redirectUrl = `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTarget)}&remember=${rememberMe ? '1' : '0'}`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -179,16 +179,21 @@ function LoginFormContent() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-xs font-serif">
-              <label className="flex items-center space-x-2 cursor-pointer select-none">
+            <div className="p-3.5 rounded-2xl bg-[var(--bg-main)]/70 border border-[var(--border-card)] space-y-1.5 transition-all">
+              <label className="flex items-center space-x-2.5 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded border-[var(--border-card)] text-amber-600 focus:ring-amber-500"
+                  className="w-4 h-4 rounded border-[var(--border-card)] text-amber-600 focus:ring-amber-500 accent-amber-600 cursor-pointer"
                 />
-                <span className="text-[var(--text-muted)]">Ghi nhớ đăng nhập</span>
+                <span className="text-xs font-serif font-semibold text-[var(--text-main)]">Ghi nhớ đăng nhập trên thiết bị này</span>
               </label>
+              <p className="text-[11px] text-[var(--text-muted)] font-serif pl-6.5 leading-relaxed">
+                {rememberMe 
+                  ? 'Duy trì phiên đăng nhập tối đa 72 giờ (3 ngày) trên trình duyệt này.' 
+                  : 'Mặc định: Phiên làm việc sẽ tự động kết thúc khi bạn đóng trình duyệt.'}
+              </p>
             </div>
 
             <button

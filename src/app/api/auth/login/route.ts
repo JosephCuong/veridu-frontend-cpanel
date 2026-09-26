@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabaseClient';
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json();
+    const { email, password, rememberMe } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Vui lòng cung cấp email và mật khẩu' }, { status: 400 });
@@ -37,14 +37,21 @@ export async function POST(request: Request) {
       user: userData,
     });
 
-    // Set secure HttpOnly Cookie on response
-    response.cookies.set('veridu_token', access_token, {
-      httpOnly: true,
+    // Set secure Cookie on response (72 hours max if rememberMe, otherwise browser session cookie)
+    const cookieOptions: any = {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60, // 30 ngày
       path: '/',
-    });
+    };
+
+    if (rememberMe) {
+      cookieOptions.maxAge = 72 * 60 * 60; // 72 hours
+    }
+
+    response.cookies.set('veridu_token', access_token, cookieOptions);
+    response.cookies.set('veridu_user', encodeURIComponent(JSON.stringify(userData)), cookieOptions);
+
+    response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
 
     return response;
   } catch (err: any) {

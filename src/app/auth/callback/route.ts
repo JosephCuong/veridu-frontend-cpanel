@@ -7,6 +7,8 @@ export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
   const redirectTarget = requestUrl.searchParams.get('redirect') || '/ho-so';
+  const rememberParam = requestUrl.searchParams.get('remember');
+  const isRemember = rememberParam === '1';
 
   if (!code) {
     return NextResponse.redirect(new URL('/dang-nhap?error=missing_code', requestUrl.origin));
@@ -95,21 +97,21 @@ export async function GET(request: NextRequest) {
     const jsonString = JSON.stringify(userProfile);
     const encodedUser = encodeURIComponent(jsonString);
 
-    const cookieMaxAge = 60 * 60 * 24 * 30; // 30 days
-
-    response.cookies.set('veridu_token', token, {
+    // 72 hours max if user checked remember-me; otherwise browser session cookie
+    const cookieOptions: any = {
       path: '/',
-      maxAge: cookieMaxAge,
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production'
-    });
+    };
 
-    response.cookies.set('veridu_user', encodedUser, {
-      path: '/',
-      maxAge: cookieMaxAge,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production'
-    });
+    if (isRemember) {
+      cookieOptions.maxAge = 72 * 60 * 60; // 72 hours
+    }
+
+    response.cookies.set('veridu_token', token, cookieOptions);
+    response.cookies.set('veridu_user', encodedUser, cookieOptions);
+
+    response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
 
     return response;
   } catch (err: any) {
