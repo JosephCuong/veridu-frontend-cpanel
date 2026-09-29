@@ -137,17 +137,17 @@ export async function sendAdminNewApplicationAlert(app: AuthorApplicationEmailDa
           </div>
 
           <div class="btn-wrapper">
-            <a href="https://www.thapgia.com/admin" class="btn" target="_blank">
+            <a href="https://www.cruxveritatis.org/admin" class="btn" target="_blank">
               🛡️ Truy Cập Quản Trị Duyệt Đơn
             </a>
           </div>
           <p style="font-size: 12px; color: #64748b; text-align: center; margin: 8px 0 0 0;">
-            Bạn cũng có thể xem tại: <a href="https://www.thapgia.com/tac-gia/dashboard?tab=admin_moderation" style="color: #f59e0b;">Bảng Điều Khiển Tác Giả &rsaquo; Hàng Đợi</a>
+            Bạn cũng có thể xem tại: <a href="https://www.cruxveritatis.org/tac-gia/dashboard?tab=admin_moderation" style="color: #f59e0b;">Bảng Điều Khiển Tác Giả &rsaquo; Hàng Đợi</a>
           </p>
         </div>
         <div class="footer">
           <p style="margin: 0 0 4px 0;">Hệ Thống Truyền Thông &amp; Tri Thức Công Giáo VERIDU</p>
-          <p style="margin: 0; color: #475569;">Email tự động gửi từ máy chủ · www.thapgia.com</p>
+          <p style="margin: 0; color: #475569;">Email tự động gửi từ máy chủ · www.cruxveritatis.org</p>
         </div>
       </div>
     </body>
@@ -252,10 +252,10 @@ export async function sendAuthorApprovalNotice(app: AuthorApplicationEmailData) 
           </div>
 
           <div class="btn-grid">
-            <a href="https://www.thapgia.com/soan-bai" class="btn-primary" target="_blank">
+            <a href="https://www.cruxveritatis.org/soan-bai" class="btn-primary" target="_blank">
               ✍️ Vào Phòng Soạn Thảo Đăng Bài
             </a>
-            <a href="https://www.thapgia.com/tac-gia/dashboard" class="btn-secondary" target="_blank">
+            <a href="https://www.cruxveritatis.org/tac-gia/dashboard" class="btn-secondary" target="_blank">
               📊 Bảng Điều Khiển Tác Giả
             </a>
           </div>

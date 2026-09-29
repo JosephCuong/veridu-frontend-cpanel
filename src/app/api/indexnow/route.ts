@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 export const dynamic = 'force-dynamic';
 
 const INDEXNOW_KEY = '2487e684076a60a76ed3e8f3dc6983e7';
-const HOST = 'www.thapgia.com';
+const HOST = process.env.NEXT_PUBLIC_SITE_HOST || 'www.cruxveritatis.org';
 const BASE_URL = `https://${HOST}`;
 const KEY_LOCATION = `${BASE_URL}/${INDEXNOW_KEY}.txt`;
 

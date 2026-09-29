@@ -59,7 +59,7 @@ export default function DieuKhoanSuDungPage() {
             </div>
             <div className="space-y-2.5 text-[var(--text-main)] leading-relaxed">
               <p>
-                <strong>VERIDU (thapgia.com)</strong> là website học thuật phi thương mại, phi lợi nhuận, được lập ra như một kênh thông tin nội bộ và chia sẻ học liệu của <strong>Nhóm Nghiên Cứu Công Giáo, Kinh Thánh Và Loan Báo Tin Mừng</strong>.
+                <strong>VERIDU (cruxveritatis.org)</strong> là website học thuật phi thương mại, phi lợi nhuận, được lập ra như một kênh thông tin nội bộ và chia sẻ học liệu của <strong>Nhóm Nghiên Cứu Công Giáo, Kinh Thánh Và Loan Báo Tin Mừng</strong>.
               </p>
               <p className="text-[var(--text-muted)]">
                 Mục đích duy nhất của website là phục vụ việc nghiên cứu văn bản Kinh Thánh, đào sâu Giáo lý Công giáo, tìm hiểu lịch sử cứu độ và hỗ trợ các hoạt động loan báo Tin Mừng. Website <strong>không hoạt động kinh doanh</strong>, không bán hàng và không cung cấp dịch vụ thương mại thu phí.

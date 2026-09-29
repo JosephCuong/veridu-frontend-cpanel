@@ -62,7 +62,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   
   const title = `Sách ${book.nameVi} — Chương ${chapterNumber} | Kinh Thánh VERIDU`;
   const description = `Đọc, nghiên cứu và suy niệm Sách ${book.nameVi} Chương ${chapterNumber} trọn bộ 73 Sách Cựu Ước & Tân Ước với bản dịch chuẩn xác, hệ thống chú giải phụng vụ và đối chiếu Lời Chúa trên VERIDU.`;
-  const pageUrl = `https://www.thapgia.com/kinh-thanh/${canonicalBookSlug}/${chapterNumber}?t=ntt`;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
+  const pageUrl = `${siteUrl}/kinh-thanh/${canonicalBookSlug}/${chapterNumber}?t=ntt`;
 
   return {
     title,
@@ -78,7 +79,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       type: 'article',
       images: [
         {
-          url: `https://www.thapgia.com/api/og?title=${encodeURIComponent(`Sách ${book.nameVi} — Chương ${chapterNumber}`)}&category=${encodeURIComponent('Kinh Thánh Trọn Bộ')}&author=${encodeURIComponent('Lời Chúa Hằng Ngày')}`,
+          url: `${siteUrl}/api/og?title=${encodeURIComponent(`Sách ${book.nameVi} — Chương ${chapterNumber}`)}&category=${encodeURIComponent('Kinh Thánh Trọn Bộ')}&author=${encodeURIComponent('Lời Chúa Hằng Ngày')}`,
           width: 1200,
           height: 630,
           alt: `Kinh Thánh - Sách ${book.nameVi}`,
@@ -116,7 +117,8 @@ export default async function KinhThanhPage({ params, searchParams }: PageProps)
 
   const currentBook = metadata.books.find(b => b.slug.toLowerCase() === canonicalBookSlug.toLowerCase());
   const bookNameVi = currentBook ? currentBook.nameVi : 'Kinh Thánh';
-  const pageUrl = `https://www.thapgia.com/kinh-thanh/${canonicalBookSlug}/${chapterNumber}?t=${translationSlug}`;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
+  const pageUrl = `${siteUrl}/kinh-thanh/${canonicalBookSlug}/${chapterNumber}?t=${translationSlug}`;
 
   // Structured Data (JSON-LD) for Bible Breadcrumb & Book
   const bibleJsonLd = {
@@ -130,19 +132,19 @@ export default async function KinhThanhPage({ params, searchParams }: PageProps)
             "@type": "ListItem",
             "position": 1,
             "name": "Trang Chủ",
-            "item": "https://www.thapgia.com"
+            "item": siteUrl
           },
           {
             "@type": "ListItem",
             "position": 2,
             "name": "Kinh Thánh 73 Sách",
-            "item": "https://www.thapgia.com/kinh-thanh"
+            "item": `${siteUrl}/kinh-thanh`
           },
           {
             "@type": "ListItem",
             "position": 3,
             "name": `Sách ${bookNameVi}`,
-            "item": `https://www.thapgia.com/kinh-thanh/${canonicalBookSlug}/1?t=${translationSlug}`
+            "item": `${siteUrl}/kinh-thanh/${canonicalBookSlug}/1?t=${translationSlug}`
           },
           {
             "@type": "ListItem",

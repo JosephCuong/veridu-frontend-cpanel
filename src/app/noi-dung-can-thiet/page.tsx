@@ -91,7 +91,7 @@ export default function ResearchLandingPage() {
     });
 
     text += `\n--- NGUỒN TƯ LIỆU BẮT BUỘC ---\n` + m.methodology.requiredSources.join('\n');
-    text += `\n\nNguồn: Cổng Nghiên Cứu VERIDU (https://www.thapgia.com/noi-dung-can-thiet)`;
+    text += `\n\nNguồn: Cổng Nghiên Cứu VERIDU (https://www.cruxveritatis.org/noi-dung-can-thiet)`;
 
     navigator.clipboard.writeText(text);
     setCopiedOutline(true);

@@ -152,7 +152,7 @@ export default function RegisterPage() {
                 </label>
                 <input 
                   type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                  placeholder="contact@thapgia.com"
+                  placeholder="contact@cruxveritatis.org"
                   className="w-full bg-[var(--bg-main)]/50 border border-[var(--border-card)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)]"
                 />
               </div>

@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   title: 'Thỏa Thuận & Điều Khoản Tác Giả | VERIDU',
   description: 'Quy định bản quyền, quyền sở hữu trí tuệ, cam kết chống đạo văn và trách nhiệm pháp lý dành cho tác giả cộng tác với nền tảng VERIDU.',
   alternates: {
-    canonical: 'https://www.thapgia.com/dieu-khoan-tac-gia'
+    canonical: 'https://www.cruxveritatis.org/dieu-khoan-tac-gia'
   }
 };
 

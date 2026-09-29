@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://www.thapgia.com';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
 
   // 1. Static Core Routes
   const staticRoutes: MetadataRoute.Sitemap = [

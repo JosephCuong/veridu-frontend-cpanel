@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 export default async function CharactersPage() {
   const characters = await fetchCharacters();
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -26,13 +27,13 @@ export default async function CharactersPage() {
         '@type': 'ListItem',
         position: 1,
         name: 'Trang Chủ',
-        item: 'https://www.thapgia.com'
+        item: siteUrl
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Nhân Vật Kinh Thánh',
-        item: 'https://www.thapgia.com/nhan-vat'
+        item: `${siteUrl}/nhan-vat`
       }
     ]
   };

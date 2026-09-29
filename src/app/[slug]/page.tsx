@@ -63,7 +63,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return { title: 'Không tìm thấy bài viết | VERIDU' };
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thapgia.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
   const defaultTitle = typeof article.title === 'string' ? article.title.replace(/<[^>]+>/g, '') : 'Bài Viết VERIDU';
   const defaultDesc = article.excerpt ? article.excerpt.replace(/<[^>]+>/g, '').substring(0, 160) : 'Khám phá thư viện tài liệu Công giáo trên VERIDU.';
   const ogDynamicUrl = `${siteUrl}/api/og?title=${encodeURIComponent(defaultTitle)}&category=${encodeURIComponent(article.category || 'Thần Học & Thánh Kinh')}&author=${encodeURIComponent(article.author_name || article.author || 'Ban Học Vụ VERIDU')}`;
@@ -75,10 +75,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: seo.title || defaultTitle,
     description: seo.description || defaultDesc,
     alternates: {
-      canonical: `https://www.thapgia.com/${resolvedParams.slug}`,
+      canonical: `${siteUrl}/${resolvedParams.slug}`,
+      languages: {
+        'vi-VN': `${siteUrl}/${resolvedParams.slug}`,
+        'en-US': `${siteUrl}/en/${resolvedParams.slug}`,
+      },
     },
     openGraph: {
-      url: `https://www.thapgia.com/${resolvedParams.slug}`,
+      url: `${siteUrl}/${resolvedParams.slug}`,
       siteName: 'VERIDU',
       title: seo.og_title || seo.title || defaultTitle,
       description: seo.og_description || seo.description || defaultDesc,
@@ -291,10 +295,11 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
   const coverImage = formatImageUrl(article.featured_image || article.thumbnail);
 
   // Domain for share buttons (Short SEO URL)
-  const articleUrl = `https://www.thapgia.com/${resolvedParams.slug}`;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
+  const articleUrl = `${siteUrl}/${resolvedParams.slug}`;
   const cleanTitle = titleText.replace(/<[^>]+>/g, '');
   const defaultDesc = article.excerpt ? article.excerpt.replace(/<[^>]+>/g, '').substring(0, 160) : 'Khám phá thư viện tài liệu Công giáo trên VERIDU.';
-  const ogDynamicUrl = `https://www.thapgia.com/api/og?title=${encodeURIComponent(cleanTitle)}&category=${encodeURIComponent(article.category || 'Thần Học & Thánh Kinh')}&author=${encodeURIComponent(article.author_name || article.author || 'Ban Học Vụ VERIDU')}`;
+  const ogDynamicUrl = `${siteUrl}/api/og?title=${encodeURIComponent(cleanTitle)}&category=${encodeURIComponent(article.category || 'Thần Học & Thánh Kinh')}&author=${encodeURIComponent(article.author_name || article.author || 'Ban Học Vụ VERIDU')}`;
   const defaultImage = (article.thumbnail && !article.thumbnail.includes('default-og-image')) ? article.thumbnail : ((article.featured_image && !article.featured_image.includes('default-og-image')) ? article.featured_image : ogDynamicUrl);
 
   // Structured Data (JSON-LD) for Article & Breadcrumb
@@ -304,7 +309,7 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
       {
         "@type": "Article",
         "@id": `${articleUrl}#article`,
-        "isPartOf": { "@id": "https://www.thapgia.com/#website" },
+        "isPartOf": { "@id": `${siteUrl}/#website` },
         "headline": cleanTitle,
         "description": (article.excerpt || defaultDesc).replace(/<[^>]+>/g, '').substring(0, 200),
         "image": [coverImage || defaultImage],
@@ -316,11 +321,11 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
         },
         "publisher": {
           "@type": "Organization",
-          "@id": "https://www.thapgia.com/#organization",
+          "@id": `${siteUrl}/#organization`,
           "name": "VERIDU",
           "logo": {
             "@type": "ImageObject",
-            "url": "https://www.thapgia.com/favicon.ico"
+            "url": `${siteUrl}/favicon.ico`
           }
         },
         "mainEntityOfPage": articleUrl
@@ -333,13 +338,13 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
             "@type": "ListItem",
             "position": 1,
             "name": "Trang Chủ",
-            "item": "https://www.thapgia.com"
+            "item": siteUrl
           },
           {
             "@type": "ListItem",
             "position": 2,
             "name": "Thư Viện",
-            "item": "https://www.thapgia.com/thu-vien"
+            "item": `${siteUrl}/thu-vien`
           },
           {
             "@type": "ListItem",
@@ -420,9 +425,20 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
           <main className="flex-1 w-full max-w-[850px] mx-auto space-y-8">
             <article className="p-6 sm:p-12 rounded-3xl glass-panel space-y-8 relative overflow-hidden veridu-scholarly-article">
               <header className="border-b border-slate-200/50 dark:border-white/10 pb-8 text-center sm:text-left space-y-4 relative z-10">
-                <span className="px-3.5 py-1.5 rounded-full bg-slate-500/20 border border-slate-500/30 text-[var(--text-main)] text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm">
-                  <Tag className="w-3.5 h-3.5" /> {article.category || 'Bài Viết'}
-                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="px-3.5 py-1.5 rounded-full bg-slate-500/20 border border-slate-500/30 text-[var(--text-main)] text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm">
+                    <Tag className="w-3.5 h-3.5" /> {article.category || 'Bài Viết'}
+                  </span>
+                  {article.content_en && (
+                    <Link
+                      href={`/en/${resolvedParams.slug}`}
+                      className="px-3 py-1.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-600 dark:text-amber-400 text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-sm"
+                      title="Read English Translation"
+                    >
+                      <span>🇬🇧 Read in English</span>
+                    </Link>
+                  )}
+                </div>
                 <h1 className="text-3xl sm:text-5xl font-serif font-black text-transparent bg-clip-text bg-gradient-to-br from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 leading-[1.25] drop-shadow-sm" dangerouslySetInnerHTML={{ __html: titleText }} />
                 <MetaDataRow article={article} />
               </header>

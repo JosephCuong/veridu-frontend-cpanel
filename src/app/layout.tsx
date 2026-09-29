@@ -28,23 +28,25 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.cruxveritatis.org";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.thapgia.com"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "VERIDU — Nền Tảng Học Tập, Giáo Lý & Kinh Thánh Công Giáo",
     template: "%s | VERIDU",
   },
   description: "VERIDU — Hệ sinh thái học tập và nghiên cứu Công giáo, Kinh Thánh, Đấu trường Quiz Giáo Lý, Webgame Chinh Phục Chân Lý, Bản đồ 3D Thánh Kinh và Thư viện Bài Viết Suy Niệm.",
   keywords: [
-    "VERIDU", "Thập Giá", "Kinh Thánh", "Giáo Lý Hội Thánh Công Giáo",
+    "VERIDU", "Thập Giá", "Crux Veritatis", "Kinh Thánh", "Giáo Lý Hội Thánh Công Giáo",
     "Đấu Trường Quiz", "Chinh Phục Chân Lý", "Hành Trình Đất Hứa", "Sách Tranh Công Giáo",
     "Bản Đồ Kinh Thánh", "Suy Niệm Lời Chúa", "Thiếu Nhi Thánh Thể"
   ],
-  authors: [{ name: "VERIDU Editorial & Tech Team", url: "https://www.thapgia.com" }],
+  authors: [{ name: "VERIDU Editorial & Tech Team", url: SITE_URL }],
   creator: "VERIDU",
   publisher: "VERIDU Catholic Knowledge Platform",
   alternates: {
-    canonical: "https://www.thapgia.com",
+    canonical: SITE_URL,
   },
   robots: {
     index: true,
@@ -63,13 +65,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "VERIDU — Nền Tảng Học Tập, Giáo Lý & Kinh Thánh Công Giáo",
     description: "Hệ sinh thái học tập và nghiên cứu Công giáo, Kinh Thánh, Đấu trường Quiz Giáo Lý, Webgame Chinh Phục Chân Lý, Bản đồ 3D Thánh Kinh và Thư viện Bài Viết.",
-    url: "https://www.thapgia.com",
+    url: SITE_URL,
     siteName: "VERIDU",
     locale: "vi_VN",
     type: "website",
     images: [
       {
-        url: "https://www.thapgia.com/images/og-default.jpg",
+        url: `${SITE_URL}/images/og-default.jpg`,
         width: 1200,
         height: 630,
         alt: "VERIDU — Nền Tảng Học Tập, Giáo Lý & Kinh Thánh Công Giáo",
@@ -80,7 +82,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "VERIDU — Nền Tảng Học Tập, Giáo Lý & Kinh Thánh Công Giáo",
     description: "Hệ sinh thái học tập Công giáo, Đấu trường Quiz, Webgame 2D và Thư viện Suy niệm.",
-    images: ["https://www.thapgia.com/images/og-default.jpg"],
+    images: [`${SITE_URL}/images/og-default.jpg`],
   },
 };
 
@@ -95,24 +97,24 @@ export default function RootLayout({
     "@graph": [
       {
         "@type": "Organization",
-        "@id": "https://www.thapgia.com/#organization",
+        "@id": `${SITE_URL}/#organization`,
         "name": "VERIDU",
-        "url": "https://www.thapgia.com",
+        "url": SITE_URL,
         "logo": {
           "@type": "ImageObject",
-          "url": "https://www.thapgia.com/favicon.ico"
+          "url": `${SITE_URL}/favicon.ico`
         },
         "description": "Nền tảng học tập, nghiên cứu Kinh Thánh và Giáo Lý Công Giáo."
       },
       {
         "@type": "WebSite",
-        "@id": "https://www.thapgia.com/#website",
-        "url": "https://www.thapgia.com",
+        "@id": `${SITE_URL}/#website`,
+        "url": SITE_URL,
         "name": "VERIDU",
-        "publisher": { "@id": "https://www.thapgia.com/#organization" },
+        "publisher": { "@id": `${SITE_URL}/#organization` },
         "potentialAction": {
           "@type": "SearchAction",
-          "target": "https://www.thapgia.com/search?q={search_term_string}",
+          "target": `${SITE_URL}/search?q={search_term_string}`,
           "query-input": "required name=search_term_string"
         }
       }
@@ -154,7 +156,7 @@ export default function RootLayout({
           rel="alternate"
           type="application/rss+xml"
           title="VERIDU — Dòng Tin & Bài Viết Mới"
-          href="https://www.thapgia.com/feed.xml"
+          href={`${SITE_URL}/feed.xml`}
         />
 
 

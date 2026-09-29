@@ -114,7 +114,7 @@ export default function SocialCampaignAdminPage() {
   const category = selectedPost?.category || 'Thánh Kinh & Thần Học';
 
   // UTM Tracking Link
-  const baseUrl = selectedPost ? ('https://www.thapgia.com/' + selectedPost.slug) : 'https://www.thapgia.com';
+  const baseUrl = selectedPost ? ('https://www.cruxveritatis.org/' + selectedPost.slug) : 'https://www.cruxveritatis.org';
   const utmUrl = baseUrl + '?utm_source=' + selectedChannel + '&utm_medium=social&utm_campaign=' + encodeURIComponent(campaignName) + '&utm_content=' + (selectedPost?.slug || 'home');
 
   // Generate Social Copy tailored to Catholic community
@@ -317,7 +317,7 @@ export default function SocialCampaignAdminPage() {
               </span>
               <h4 className="font-serif font-bold text-xs text-[var(--text-main)]">Xác thực 1-Click</h4>
               <p className="text-[11px] text-[var(--text-muted)] font-serif leading-relaxed">
-                Nhập <code className="text-amber-500 font-mono text-[10px]">https://www.thapgia.com</code> vào GSC. Google tự động xác minh qua Google Analytics 4 (G-DDK6K002MD) trong 1 giây.
+                Nhập <code className="text-amber-500 font-mono text-[10px]">https://www.cruxveritatis.org</code> vào GSC. Google tự động xác minh qua Google Analytics 4 (G-DDK6K002MD) trong 1 giây.
               </p>
             </div>
 

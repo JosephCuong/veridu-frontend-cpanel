@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: { params: { slug: string } | 
 
   const title = `${character.name} — Tiểu Sử & Ý Nghĩa Thần Học | VERIDU`;
   const description = character.short_description || `Khám phá cuộc đời, vai trò và ý nghĩa thần học của ${character.name} trong Kinh Thánh.`;
-  const image = character.avatar_url || character.cover_image || 'https://www.thapgia.com/images/veridu_logo_dark.png';
+  const image = character.avatar_url || character.cover_image || 'https://www.cruxveritatis.org/images/veridu_logo_dark.png';
 
   return {
     title,

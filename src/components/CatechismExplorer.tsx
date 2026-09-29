@@ -242,7 +242,7 @@ export default function CatechismExplorer({ initialParagraphs, totalCount }: Cat
   // Handle Copy
   const handleCopy = (p: CatechismParagraph) => {
     if (typeof navigator !== 'undefined') {
-      const textToCopy = `[${p.title}]\n${p.plain_text || ''}\nNguồn: Giáo Lý Hội Thánh Công Giáo — VERIDU (https://www.thapgia.com/giao-ly)`;
+      const textToCopy = `[${p.title}]\n${p.plain_text || ''}\nNguồn: Giáo Lý Hội Thánh Công Giáo — VERIDU (https://www.cruxveritatis.org/giao-ly)`;
       navigator.clipboard.writeText(textToCopy);
       setCopiedId(p.id);
       setTimeout(() => setCopiedId(null), 2500);

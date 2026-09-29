@@ -660,7 +660,7 @@ export default function GLVRoomControlPage() {
             <div className="p-8 sm:p-12 rounded-3xl bg-gradient-to-br from-amber-500/20 via-[var(--bg-card)] to-amber-500/10 border-2 border-amber-500/50 shadow-2xl text-center space-y-4 relative overflow-hidden">
               <div className="space-y-1">
                 <span className="text-xs sm:text-sm font-bold uppercase tracking-widest text-amber-500">
-                  Mời Thí Sinh Truy Cập <strong className="underline font-mono">thapgia.com/quiz</strong> &amp; Nhập Mã PIN:
+                  Mời Thí Sinh Truy Cập <strong className="underline font-mono">cruxveritatis.org/quiz</strong> &amp; Nhập Mã PIN:
                 </span>
                 <h1 className="font-mono font-black text-6xl sm:text-8xl lg:text-9xl text-[var(--text-main)] tracking-widest drop-shadow-lg text-amber-500">
                   {roomPin}

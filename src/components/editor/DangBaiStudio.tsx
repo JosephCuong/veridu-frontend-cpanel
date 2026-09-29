@@ -742,7 +742,7 @@ function DangBaiContent() {
       <span class="audio-badge">Mini Player</span>
     </div>
     <audio controls preload="none">
-      <source src="https://assets.thapgia.com/audio/sample-intro.mp3" type="audio/mpeg" />
+      <source src="https://assets.cruxveritatis.org/audio/sample-intro.mp3" type="audio/mpeg" />
       Trình duyệt của bạn không hỗ trợ phát âm thanh.
     </audio>
   </div>
@@ -3122,7 +3122,7 @@ function DangBaiContent() {
             </div>
 
             <div className="p-3 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs font-mono text-amber-600 dark:text-amber-400 truncate">
-              https://www.thapgia.com/{publishedSlug}
+              https://www.cruxveritatis.org/{publishedSlug}
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">

@@ -77,6 +77,7 @@ export default async function CoursesPage({
     filteredCourses.reverse();
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -85,13 +86,13 @@ export default async function CoursesPage({
         '@type': 'ListItem',
         position: 1,
         name: 'Trang Chủ',
-        item: 'https://www.thapgia.com'
+        item: siteUrl
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Khóa Học Giáo Lý & Kinh Thánh',
-        item: 'https://www.thapgia.com/khoa-hoc'
+        item: `${siteUrl}/khoa-hoc`
       }
     ]
   };

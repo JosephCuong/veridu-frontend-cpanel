@@ -13,7 +13,7 @@ function escapeXml(unsafe: string): string {
 }
 
 export async function GET() {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thapgia.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
 
   try {
     const { data: posts, error } = await supabase

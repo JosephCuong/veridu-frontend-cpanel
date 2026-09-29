@@ -97,6 +97,7 @@ export default async function GiaoLyLandingPage() {
     a.category?.toLowerCase().includes('thần học')
   );
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -105,13 +106,13 @@ export default async function GiaoLyLandingPage() {
         '@type': 'ListItem',
         position: 1,
         name: 'Trang Chủ',
-        item: 'https://www.thapgia.com'
+        item: siteUrl
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Giáo Lý Hội Thánh Công Giáo',
-        item: 'https://www.thapgia.com/giao-ly'
+        item: `${siteUrl}/giao-ly`
       }
     ]
   };

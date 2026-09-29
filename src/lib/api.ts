@@ -86,6 +86,12 @@ export interface Article {
   published_at?: string;
   audio_url?: string;
   video_url?: string;
+  title_en?: string;
+  excerpt_en?: string;
+  content_en?: string;
+  contentHtml_en?: string;
+  available_languages?: string[];
+  lang?: 'vi' | 'en' | 'la';
 }
 
 export interface AuthorProfile {
@@ -402,6 +408,11 @@ export async function getLibraryArticles(): Promise<Article[]> {
       likes: item.likes || 0,
       audio_url: item.audio_url || '',
       video_url: item.video_url || '',
+      title_en: item.title_en || '',
+      excerpt_en: item.excerpt_en || '',
+      content_en: item.content_en || '',
+      contentHtml_en: item.content_en || '',
+      available_languages: item.available_languages || ['vi'],
     }));
   } catch (e) {
     console.error('getLibraryArticles error:', e);
@@ -469,6 +480,11 @@ export async function getLibraryArticleBySlug(slug: string): Promise<Article | n
       likes: data.likes || 0,
       audio_url: data.audio_url || '',
       video_url: data.video_url || '',
+      title_en: data.title_en || '',
+      excerpt_en: data.excerpt_en || '',
+      content_en: data.content_en || '',
+      contentHtml_en: data.content_en || '',
+      available_languages: data.available_languages || ['vi'],
     };
   } catch (e) {
     console.error('getLibraryArticleBySlug error:', e);

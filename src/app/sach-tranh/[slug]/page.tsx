@@ -59,7 +59,8 @@ export default async function StorybookReaderPage({ params }: { params: { slug: 
     notFound();
   }
 
-  const pageUrl = `https://www.thapgia.com/sach-tranh/${params.slug}`;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
+  const pageUrl = `${siteUrl}/sach-tranh/${params.slug}`;
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col font-sans select-none">

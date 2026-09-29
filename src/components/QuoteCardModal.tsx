@@ -486,7 +486,7 @@ export default function QuoteCardModal({
       }
     }
 
-    // ── 7. FOOTER: EXACT BRANDING '* THAPGIA.COM - VERIDU *' ──
+    // ── 7. FOOTER: EXACT BRANDING '* CRUXVERITATIS.ORG - VERIDU *' ──
     const botY = height - (aspectRatio === '9:16' ? 140 : 80);
 
     // Thin footer divider
@@ -497,11 +497,11 @@ export default function QuoteCardModal({
     ctx.lineTo(width / 2 + 180, botY - 32);
     ctx.stroke();
 
-    // Sacred Footprint Branding Text: * THAPGIA.COM - VERIDU *
+    // Sacred Footprint Branding Text: * CRUXVERITATIS.ORG - VERIDU *
     ctx.font = 'bold 15px sans-serif';
     ctx.fillStyle = currentTheme.accent;
     ctx.letterSpacing = '2px';
-    ctx.fillText('* THAPGIA.COM - VERIDU *', width / 2, botY - 8);
+    ctx.fillText('* CRUXVERITATIS.ORG - VERIDU *', width / 2, botY - 8);
 
     // Sacred Subtitle
     ctx.font = '12px sans-serif';
@@ -576,7 +576,7 @@ export default function QuoteCardModal({
             />
           </div>
           <p className="text-[11px] text-[var(--text-muted)] mt-2 font-serif text-center">
-            Ảnh chuẩn HD (1080p) • Watermark Logo VERIDU • Thương hiệu * THAPGIA.COM - VERIDU *
+            Ảnh chuẩn HD (1080p) • Watermark Logo VERIDU • Thương hiệu * CRUXVERITATIS.ORG - VERIDU *
           </p>
         </div>
 

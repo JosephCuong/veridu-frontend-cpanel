@@ -52,11 +52,11 @@ export function resolveMediaUrl(url: string, type: 'image' | 'audio' = 'image'):
   const trimmed = url.trim();
 
   // Ensure storybooks and models use same-origin proxy rewrites to bypass client DNS/SSL/CORS issues
-  if (trimmed.startsWith('https://media.thapgia.com/storybooks/')) {
-    return trimmed.replace('https://media.thapgia.com', '');
+  if (trimmed.startsWith('https://media.thapgia.com/storybooks/') || trimmed.startsWith('https://media.cruxveritatis.org/storybooks/')) {
+    return trimmed.replace(/^https:\/\/media\.(thapgia\.com|cruxveritatis\.org)/, '');
   }
-  if (trimmed.startsWith('https://media.thapgia.com/models/')) {
-    return trimmed.replace('https://media.thapgia.com', '');
+  if (trimmed.startsWith('https://media.thapgia.com/models/') || trimmed.startsWith('https://media.cruxveritatis.org/models/')) {
+    return trimmed.replace(/^https:\/\/media\.(thapgia\.com|cruxveritatis\.org)/, '');
   }
   if (trimmed.startsWith('/storybooks/') || trimmed.startsWith('/models/')) {
     return trimmed;

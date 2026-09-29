@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   title: 'Sứ Mạng Đóng Góp Bài Viết & Tri Thức Công Giáo | VERIDU',
   description: 'Gia nhập đội ngũ tác giả, học giả và giáo lý viên VERIDU. Cùng lan tỏa tri thức Thần học, Kinh Thánh và di sản văn hóa Công giáo đến hàng vạn độc giả.',
   alternates: {
-    canonical: 'https://www.thapgia.com/dong-gop'
+    canonical: 'https://www.cruxveritatis.org/dong-gop'
   }
 };
 

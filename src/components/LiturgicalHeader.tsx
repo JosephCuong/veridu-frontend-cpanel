@@ -11,6 +11,7 @@ import {
   BookOpen, MapPin, Clock, Users, FileText, Library, Award, Shield, Cross,
   Zap, Droplets, Settings, Gamepad2, Scroll, MoreHorizontal, Feather, ClipboardList, Scale, PenTool, Megaphone
 } from 'lucide-react';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default function LiturgicalHeader() {
   const pathname = usePathname();
@@ -429,6 +430,9 @@ export default function LiturgicalHeader() {
                 <span>Đăng Nhập</span>
               </Link>
             )}
+
+            {/* Language Switcher */}
+            <LanguageSwitcher />
 
             {/* Theme Toggle Button */}
             <button 
@@ -963,6 +967,9 @@ export default function LiturgicalHeader() {
             </Link>
           )}
 
+          {/* Language Switcher */}
+          <LanguageSwitcher />
+
           {/* Theme Toggle Button */}
           <button 
             onClick={toggleTheme}
@@ -1065,6 +1072,9 @@ export default function LiturgicalHeader() {
             </Link>
           )}
 
+          {/* Language Switcher */}
+          <LanguageSwitcher />
+
           {/* Theme Toggle Button */}
           <button 
             onClick={toggleTheme}
@@ -1128,6 +1138,9 @@ export default function LiturgicalHeader() {
               <span>{user.streak || 1}</span>
             </div>
           )}
+
+          {/* Language Switcher */}
+          <LanguageSwitcher compact />
 
           <button 
             onClick={toggleTheme}

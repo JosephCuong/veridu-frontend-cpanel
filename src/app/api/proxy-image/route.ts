@@ -15,6 +15,7 @@ const ALLOWED_HOST_SUFFIXES = [
   'unsplash.com',
   'wikimedia.org',
   'thapgia.com',
+  'cruxveritatis.org',
   'supabase.co',
 ];
 

@@ -200,7 +200,7 @@ export async function GET(request: NextRequest) {
               }}
             >
               <span style={{ color: '#fbbf24' }}>✦</span>
-              <span>thapgia.com</span>
+              <span>cruxveritatis.org</span>
               <span>•</span>
               <span>veridu.net</span>
             </div>
