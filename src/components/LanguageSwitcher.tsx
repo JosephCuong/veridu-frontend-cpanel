@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
 import { Globe, ChevronDown, Check } from 'lucide-react';
-
-export type SupportedLocale = 'vi' | 'en' | 'la';
+import { useTranslation } from '@/context/LanguageContext';
+import { SupportedLocale } from '@/locales/types';
 
 interface LocaleOption {
   code: SupportedLocale;
@@ -40,28 +39,9 @@ interface LanguageSwitcherProps {
 }
 
 export default function LanguageSwitcher({ className = '', compact = false }: LanguageSwitcherProps) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const [currentLocale, setCurrentLocale] = useState<SupportedLocale>('vi');
+  const { locale, setLocale, t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Detect current locale from URL path or cookie/localStorage
-  useEffect(() => {
-    if (pathname?.startsWith('/en/') || pathname === '/en') {
-      setCurrentLocale('en');
-    } else if (pathname?.startsWith('/la/') || pathname === '/la') {
-      setCurrentLocale('la');
-    } else {
-      // Check stored preference
-      const savedLocale = localStorage.getItem('veridu-locale') as SupportedLocale;
-      if (savedLocale && ['vi', 'en', 'la'].includes(savedLocale)) {
-        setCurrentLocale(savedLocale);
-      } else {
-        setCurrentLocale('vi');
-      }
-    }
-  }, [pathname]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -74,47 +54,19 @@ export default function LanguageSwitcher({ className = '', compact = false }: La
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const switchLocale = (newLocale: SupportedLocale) => {
+  const handleSelect = (code: SupportedLocale) => {
     setIsOpen(false);
-    setCurrentLocale(newLocale);
-
-    // Persist in localStorage and cookie for SSR
-    localStorage.setItem('veridu-locale', newLocale);
-    document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
-    window.dispatchEvent(new CustomEvent('localeChange', { detail: newLocale }));
-
-    // Route logic
-    const currentPath = pathname || '/';
-
-    if (newLocale === 'en') {
-      if (!currentPath.startsWith('/en')) {
-        // Switch to /en/... or /en
-        const targetPath = currentPath === '/' ? '/en' : `/en${currentPath}`;
-        router.push(targetPath);
-      }
-    } else if (newLocale === 'la') {
-      if (!currentPath.startsWith('/la')) {
-        const cleanPath = currentPath.replace(/^\/(en|la)/, '') || '/';
-        const targetPath = cleanPath === '/' ? '/la' : `/la${cleanPath}`;
-        router.push(targetPath);
-      }
-    } else {
-      // Switching to VI (default, no prefix)
-      if (currentPath.startsWith('/en') || currentPath.startsWith('/la')) {
-        const viPath = currentPath.replace(/^\/(en|la)/, '') || '/';
-        router.push(viPath);
-      }
-    }
+    setLocale(code);
   };
 
-  const activeOption = LOCALES.find((l) => l.code === currentLocale) || LOCALES[0];
+  const activeOption = LOCALES.find((l) => l.code === locale) || LOCALES[0];
 
   return (
     <div ref={dropdownRef} className={`relative inline-block text-left ${className}`}>
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        aria-label="Chọn ngôn ngữ"
+        aria-label="Chọn ngôn ngữ / Select Language"
         aria-expanded={isOpen}
         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-900/80 hover:bg-slate-850 border border-slate-700/60 text-slate-200 hover:border-amber-500/50 hover:text-amber-400 transition-all shadow-md text-xs font-semibold cursor-pointer"
         title="Ngôn ngữ / Language"
@@ -130,29 +82,30 @@ export default function LanguageSwitcher({ className = '', compact = false }: La
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-52 rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
-          <div className="px-3 py-1.5 border-b border-slate-800 text-[10px] font-bold uppercase tracking-wider text-amber-400 font-serif">
-            🌐 Chọn Ngôn Ngữ / Language
+        <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+          <div className="px-3.5 py-2 border-b border-slate-800 text-[10px] font-bold uppercase tracking-wider text-amber-400 font-serif flex items-center justify-between">
+            <span>🌐 {t('header.language', 'Chọn Ngôn Ngữ')}</span>
+            <span className="font-mono text-[9px] text-slate-500">i18n</span>
           </div>
 
           <div className="py-1">
             {LOCALES.map((option) => {
-              const isSelected = option.code === currentLocale;
+              const isSelected = option.code === locale;
               return (
                 <button
                   key={option.code}
                   type="button"
-                  onClick={() => switchLocale(option.code)}
-                  className={`w-full flex items-center justify-between px-3.5 py-2 text-left text-xs transition-colors cursor-pointer ${
+                  onClick={() => handleSelect(option.code)}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 text-left text-xs transition-colors cursor-pointer ${
                     isSelected
                       ? 'bg-amber-500/15 text-amber-300 font-bold'
                       : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <span className="text-base">{option.flag}</span>
+                    <span className="text-lg leading-none">{option.flag}</span>
                     <div className="flex flex-col">
-                      <span className="font-medium">{option.nativeLabel}</span>
+                      <span className="font-medium text-xs">{option.nativeLabel}</span>
                       <span className="text-[10px] text-slate-400 uppercase tracking-wider font-mono">
                         {option.code} · {option.label}
                       </span>
@@ -164,7 +117,7 @@ export default function LanguageSwitcher({ className = '', compact = false }: La
             })}
           </div>
 
-          <div className="px-3 py-1.5 mt-1 border-t border-slate-800 text-[9px] text-slate-400 font-serif leading-tight">
+          <div className="px-3.5 py-2 mt-1 border-t border-slate-800 text-[9px] text-slate-400 font-serif leading-tight">
             ✝️ Bản dịch hàn lâm &amp; Phụng vụ chuẩn tắc
           </div>
         </div>

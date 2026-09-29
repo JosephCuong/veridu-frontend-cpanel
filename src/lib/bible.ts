@@ -1,6 +1,8 @@
 export interface BibleBook {
   slug: string;
   nameVi: string;
+  nameEn?: string;
+  nameLa?: string;
   testament: 'Cựu Ước' | 'Tân Ước';
   totalChapters: number;
 }

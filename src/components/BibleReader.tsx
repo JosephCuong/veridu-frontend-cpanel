@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslation } from '@/context/LanguageContext';
+import { getBibleBookName } from '@/lib/bibleData';
 
 interface BibleReaderProps {
   initialBookSlug: string;
@@ -53,6 +55,8 @@ export default function BibleReader({
   commentary,
 }: BibleReaderProps) {
   const router = useRouter();
+  const { t, locale } = useTranslation();
+  const getBookName = (book: BibleBook) => (book ? (getBibleBookName(book.slug, locale) || book.nameVi) : '');
 
   // Selected Book, Chapter, Translation
   const selectedBook = books.find((b) => b.slug === initialBookSlug) || books[0];
@@ -284,10 +288,12 @@ export default function BibleReader({
   const hasPrevChapter = currentChapter > 1;
 
   // Filtered books for Cựu Ước / Tân Ước
-  const filteredBooks = books.filter(b => 
-    b.nameVi?.toLowerCase().includes(bookSearch.toLowerCase()) || 
-    b.slug.toLowerCase().includes(bookSearch.toLowerCase())
-  );
+  const filteredBooks = books.filter(b => {
+    const bookTitle = getBookName(b);
+    return bookTitle.toLowerCase().includes(bookSearch.toLowerCase()) || 
+      b.nameVi?.toLowerCase().includes(bookSearch.toLowerCase()) || 
+      b.slug.toLowerCase().includes(bookSearch.toLowerCase());
+  });
   const otBooks = filteredBooks.filter(b => b.testament === 'Cựu Ước');
   const ntBooks = filteredBooks.filter(b => b.testament === 'Tân Ước');
 
@@ -317,7 +323,7 @@ export default function BibleReader({
             {showExpandedNav && (
               <h3 className="font-serif font-bold text-xs tracking-wide text-amber-700 dark:text-amber-400 flex items-center gap-1.5 uppercase">
                 <BookOpen className="w-4 h-4 text-amber-500" />
-                <span>Kinh Thánh ({books.length} Sách)</span>
+                <span>{locale === 'en' ? `Holy Bible (${books.length} Books)` : (locale === 'la' ? `Biblia Sacra (${books.length} Libri)` : `Kinh Thánh (${books.length} Sách)`)}</span>
               </h3>
             )}
             <button 
@@ -325,7 +331,7 @@ export default function BibleReader({
                 setIsNavDocked(!isNavDocked);
                 setUserToggledNav(true);
               }}
-              title={isNavDocked ? "Mở rộng danh sách Sách" : "Thu gọn cột trái để mở rộng không gian đọc"}
+              title={isNavDocked ? (locale === 'en' ? "Expand Books list" : "Mở rộng danh sách Sách") : (locale === 'en' ? "Collapse left sidebar" : "Thu gọn cột trái để mở rộng không gian đọc")}
               className="p-1.5 rounded-xl bg-[var(--bg-main)] hover:bg-amber-500/10 text-[var(--text-muted)] hover:text-amber-500 border border-[var(--border-card)] transition-all mx-auto cursor-pointer"
             >
               {isNavDocked ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
@@ -339,14 +345,14 @@ export default function BibleReader({
                 <button
                   key={b.slug}
                   onClick={() => handleNav(b.slug, 1, selectedTranslation.slug)}
-                  title={`${b.nameVi} (${b.totalChapters} Chương)`}
+                  title={`${getBookName(b)} (${b.totalChapters} ${locale === 'en' ? 'Chapters' : (locale === 'la' ? 'Capita' : 'Chương')})`}
                   className={`w-10 h-10 rounded-2xl font-serif text-xs font-bold flex items-center justify-center border transition-all cursor-pointer ${
                     selectedBook.slug === b.slug 
                       ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md' 
                       : 'bg-[var(--bg-main)] border-[var(--border-card)] hover:border-amber-500/40 text-[var(--text-main)]'
                   }`}
                 >
-                  {b.nameVi?.substring(0, 2)}
+                  {getBookName(b).substring(0, 2)}
                 </button>
               ))}
             </div>
@@ -358,7 +364,7 @@ export default function BibleReader({
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
                 <input 
                   type="text" 
-                  placeholder="Tra cứu sách..." 
+                  placeholder={locale === 'en' ? 'Search books...' : (locale === 'la' ? 'Quaerere libros...' : 'Tra cứu sách...')} 
                   value={bookSearch}
                   onChange={(e) => setBookSearch(e.target.value)}
                   className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all font-semibold"
@@ -372,7 +378,7 @@ export default function BibleReader({
                 {otBooks.length > 0 && (
                   <div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 mb-2 inline-block">
-                      Cựu Ước ({otBooks.length})
+                      {t('bible.old_testament')} ({otBooks.length})
                     </span>
                     <div className="space-y-1 mt-1">
                       {otBooks.map((b) => (
@@ -385,9 +391,9 @@ export default function BibleReader({
                                 : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
                             }`}
                           >
-                            <span className="truncate">{b.nameVi}</span>
+                            <span className="truncate">{getBookName(b)}</span>
                             <span className="text-[10px] font-sans font-normal opacity-70 shrink-0 ml-1">
-                              {b.totalChapters} ch
+                              {b.totalChapters} {locale === 'en' ? 'ch' : (locale === 'la' ? 'cap' : 'ch')}
                             </span>
                           </button>
 
@@ -419,7 +425,7 @@ export default function BibleReader({
                 {ntBooks.length > 0 && (
                   <div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-800 dark:text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20 mb-2 inline-block">
-                      Tân Ước ({ntBooks.length})
+                      {t('bible.new_testament')} ({ntBooks.length})
                     </span>
                     <div className="space-y-1 mt-1">
                       {ntBooks.map((b) => (
@@ -432,9 +438,9 @@ export default function BibleReader({
                                 : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
                             }`}
                           >
-                            <span className="truncate">{b.nameVi}</span>
+                            <span className="truncate">{getBookName(b)}</span>
                             <span className="text-[10px] font-sans font-normal opacity-70 shrink-0 ml-1">
-                              {b.totalChapters} ch
+                              {b.totalChapters} {locale === 'en' ? 'ch' : (locale === 'la' ? 'cap' : 'ch')}
                             </span>
                           </button>
 
@@ -493,7 +499,7 @@ export default function BibleReader({
                 <div className="flex items-center gap-1.5 text-xs font-bold">
                   <span className="px-3 py-1 rounded-xl bg-amber-500/10 text-amber-800 dark:text-amber-400 border border-amber-500/25 shadow-xs flex items-center gap-1">
                     <BookOpen className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                    {selectedBook.nameVi}
+                    {getBookName(selectedBook)}
                   </span>
                   
                   {/* Chapter Selector Dropdown Pill */}
@@ -502,7 +508,7 @@ export default function BibleReader({
                       onClick={() => setIsChapterMenuOpen(!isChapterMenuOpen)}
                       className="px-3 py-1 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] hover:border-amber-500/50 flex items-center gap-1 transition-all cursor-pointer"
                     >
-                      <span>Chương {currentChapter}</span>
+                      <span>{locale === 'en' ? `Chapter ${currentChapter}` : (locale === 'la' ? `Caput ${currentChapter}` : `Chương ${currentChapter}`)}</span>
                       <ChevronDown className="w-3 h-3 opacity-70" />
                     </button>
 
@@ -549,7 +555,7 @@ export default function BibleReader({
                   }`}
                 >
                   <Columns className="w-3.5 h-3.5 text-amber-500" />
-                  <span className="hidden sm:inline">Song Song</span>
+                  <span className="hidden sm:inline">{locale === 'en' ? 'Parallel' : (locale === 'la' ? 'Parallel' : 'Song Song')}</span>
                 </button>
 
                 {/* 📖 Chú Giải Button */}
@@ -563,7 +569,7 @@ export default function BibleReader({
                   }`}
                 >
                   <MessageSquareText className="w-3.5 h-3.5 text-amber-500" />
-                  <span className="hidden sm:inline">Chú Giải</span>
+                  <span className="hidden sm:inline">{locale === 'en' ? 'Commentary' : (locale === 'la' ? 'Commentarius' : 'Chú Giải')}</span>
                 </button>
 
                 {/* 🗺️ Địa Danh Button */}
@@ -577,7 +583,7 @@ export default function BibleReader({
                   }`}
                 >
                   <MapPin className="w-3.5 h-3.5 text-emerald-500" />
-                  <span className="hidden sm:inline">Địa Danh</span>
+                  <span className="hidden sm:inline">{locale === 'en' ? 'Holy Land Map' : (locale === 'la' ? 'Terra Sancta' : 'Địa Danh')}</span>
                   {detectedLocations.length > 0 && (
                     <span className="bg-emerald-500 text-slate-950 text-[10px] px-1.5 py-0.2 rounded-full font-black ml-0.5">
                       {detectedLocations.length}
@@ -644,11 +650,13 @@ export default function BibleReader({
               {/* Header Title */}
               <div className="text-center mb-8 border-b border-[var(--border-card)] pb-6">
                 <h1 className="text-3xl sm:text-4xl md:text-5xl font-black font-serif tracking-tight mb-2">
-                  {selectedBook.nameVi}
+                  {getBookName(selectedBook)}
                 </h1>
-                <h2 className="text-lg sm:text-xl text-amber-600 dark:text-amber-400 font-serif italic">Chương {currentChapter}</h2>
+                <h2 className="text-lg sm:text-xl text-amber-600 dark:text-amber-400 font-serif italic">
+                  {locale === 'en' ? `Chapter ${currentChapter}` : (locale === 'la' ? `Caput ${currentChapter}` : `Chương ${currentChapter}`)}
+                </h2>
                 <div className="mt-2 text-xs text-[var(--text-muted)] font-serif">
-                  Bản dịch chính: <span className="font-bold text-[var(--text-main)]">{selectedTranslation.name.replace(/^Bản dịch\s+/i, '')}</span>
+                  {locale === 'en' ? 'Primary translation:' : (locale === 'la' ? 'Versio primaria:' : 'Bản dịch chính:')} <span className="font-bold text-[var(--text-main)]">{selectedTranslation.name.replace(/^Bản dịch\s+/i, '')}</span>
                 </div>
               </div>
 
@@ -859,12 +867,12 @@ export default function BibleReader({
                     className="px-5 py-2.5 rounded-2xl bg-[var(--bg-main)] hover:bg-amber-500 hover:text-slate-950 border border-[var(--border-card)] text-xs font-serif font-bold flex items-center gap-2 transition-all shadow-sm cursor-pointer"
                   >
                     <ChevronLeft className="w-4 h-4" />
-                    <span>Chương {currentChapter - 1}</span>
+                    <span>{locale === 'en' ? `Chapter ${currentChapter - 1}` : (locale === 'la' ? `Caput ${currentChapter - 1}` : `Chương ${currentChapter - 1}`)}</span>
                   </button>
                 ) : <div />}
 
                 <span className="text-xs font-serif text-[var(--text-muted)]">
-                  Chương {currentChapter} / {selectedBook.totalChapters}
+                  {locale === 'en' ? `Chapter ${currentChapter} / ${selectedBook.totalChapters}` : (locale === 'la' ? `Caput ${currentChapter} / ${selectedBook.totalChapters}` : `Chương ${currentChapter} / ${selectedBook.totalChapters}`)}
                 </span>
 
                 {hasNextChapter ? (
@@ -872,7 +880,7 @@ export default function BibleReader({
                     onClick={() => handleNav(selectedBook.slug, currentChapter + 1, selectedTranslation.slug)}
                     className="px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 border border-amber-500 text-xs font-serif font-bold flex items-center gap-2 transition-all shadow-md cursor-pointer"
                   >
-                    <span>Chương {currentChapter + 1}</span>
+                    <span>{locale === 'en' ? `Chapter ${currentChapter + 1}` : (locale === 'la' ? `Caput ${currentChapter + 1}` : `Chương ${currentChapter + 1}`)}</span>
                     <ChevronRight className="w-4 h-4" />
                   </button>
                 ) : <div />}
@@ -909,7 +917,7 @@ export default function BibleReader({
               <div className="flex items-center justify-between pb-3 border-b border-[var(--border-card)] mb-3">
                 <span className="font-serif font-bold text-xs text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
                   <BookOpen className="w-4 h-4 text-amber-500" />
-                  <span>Không Gian Phân Tích</span>
+                  <span>{locale === 'en' ? 'Exegesis Workspace' : (locale === 'la' ? 'Spatium Exegesis' : 'Không Gian Phân Tích')}</span>
                 </span>
                 <button 
                   onClick={() => setIsStudyPaneOpen(false)}
@@ -932,7 +940,7 @@ export default function BibleReader({
                   }`}
                 >
                   <MessageSquareText className="w-3.5 h-3.5 shrink-0" />
-                  <span>Chú giải</span>
+                  <span>{locale === 'en' ? 'Exegesis' : (locale === 'la' ? 'Exegesis' : 'Chú giải')}</span>
                 </button>
 
                 <button
@@ -945,7 +953,7 @@ export default function BibleReader({
                   }`}
                 >
                   <Columns className="w-3.5 h-3.5 shrink-0" />
-                  <span>Đối chiếu</span>
+                  <span>{locale === 'en' ? 'Parallel' : (locale === 'la' ? 'Collatio' : 'Đối chiếu')}</span>
                 </button>
 
                 <button
@@ -958,7 +966,7 @@ export default function BibleReader({
                   }`}
                 >
                   <MapPin className="w-3.5 h-3.5 shrink-0" />
-                  <span>Địa danh</span>
+                  <span>{locale === 'en' ? 'Map 3D' : (locale === 'la' ? 'Loca' : 'Địa danh')}</span>
                 </button>
 
                 <button
@@ -971,7 +979,7 @@ export default function BibleReader({
                   }`}
                 >
                   <PlayCircle className="w-3.5 h-3.5 shrink-0" />
-                  <span>Video</span>
+                  <span>{locale === 'en' ? 'Media' : (locale === 'la' ? 'Media' : 'Video')}</span>
                 </button>
               </div>
 
@@ -982,7 +990,7 @@ export default function BibleReader({
                 {activeStudyTab === 'commentary' && (
                   <div className="space-y-3 text-xs">
                     <div className="text-[11px] font-bold text-[var(--text-muted)] border-b border-[var(--border-card)] pb-2 uppercase tracking-wider">
-                      Chú Giải Thần Học: {selectedBook.nameVi} - Chương {currentChapter}
+                      {locale === 'en' ? 'Theological Exegesis' : (locale === 'la' ? 'Exegesis Theologica' : 'Chú Giải Thần Học')}: {getBookName(selectedBook)} - {locale === 'en' ? `Chapter ${currentChapter}` : (locale === 'la' ? `Caput ${currentChapter}` : `Chương ${currentChapter}`)}
                     </div>
 
                     {commentary?.historicalContext && (
@@ -1291,7 +1299,7 @@ export default function BibleReader({
           <div className="w-4/5 max-w-xs bg-[var(--bg-card)] h-full p-4 flex flex-col border-r border-[var(--border-card)] shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-[var(--border-card)] mb-3">
               <h3 className="font-serif font-bold text-sm text-amber-500 flex items-center gap-2">
-                <BookOpen className="w-4 h-4" /> Mục Lục Kinh Thánh
+                <BookOpen className="w-4 h-4" /> {locale === 'en' ? 'Holy Bible Index' : (locale === 'la' ? 'Index Bibliae Sacrae' : 'Mục Lục Kinh Thánh')}
               </h3>
               <button onClick={() => setShowMobileNavDrawer(false)} className="p-1 rounded-full bg-[var(--bg-main)]">
                 <X className="w-5 h-5" />
@@ -1311,8 +1319,10 @@ export default function BibleReader({
                       selectedBook.slug === b.slug ? 'bg-amber-500 text-slate-950' : 'hover:bg-[var(--bg-main)]'
                     }`}
                   >
-                    <span>{b.nameVi}</span>
-                    <span className="text-[10px] font-sans opacity-70">{b.totalChapters} ch</span>
+                    <span>{getBookName(b)}</span>
+                    <span className="text-[10px] font-sans opacity-70">
+                      {b.totalChapters} {locale === 'en' ? 'ch' : (locale === 'la' ? 'cap' : 'ch')}
+                    </span>
                   </button>
                 ))}
               </div>

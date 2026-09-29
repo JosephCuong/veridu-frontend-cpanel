@@ -25,9 +25,11 @@ import {
   Heart
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
+import { useTranslation } from '@/context/LanguageContext';
 
 export default function Footer() {
   const pathname = usePathname();
+  const { t, locale } = useTranslation();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
@@ -92,7 +94,7 @@ export default function Footer() {
   }
 
   return (
-    <footer className="mt-auto relative w-full overflow-hidden bg-[var(--header-bg)] border-t border-[var(--border-card)] backdrop-blur-2xl transition-colors duration-300">
+    <footer className="mt-auto relative w-full overflow-hidden notranslate bg-[var(--header-bg)] border-t border-[var(--border-card)] backdrop-blur-2xl transition-colors duration-300">
       
       {/* 🌟 Liturgical Decorative Gold Glow Accent */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-4/5 h-[1.5px] bg-gradient-to-r from-transparent via-[var(--accent-gold)] to-transparent opacity-60"></div>
@@ -123,18 +125,18 @@ export default function Footer() {
                 <Cross className="w-3 h-3 text-amber-500" /> VIA · VITA · VERITAS
               </div>
               <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed font-sans">
-                Nền tảng số hóa tri thức Công giáo, nghiên cứu Thánh Kinh, Bản đồ 3D Thánh Địa, Đấu trường Giáo lý và Thư viện Thần học hiệp thông phụng sự Hội Thánh.
+                {t('footer.about_desc')}
               </p>
             </div>
 
             <div className="space-y-2 pt-2 text-xs text-[var(--text-muted)]">
               <div className="flex items-center gap-2.5">
                 <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
-                <span>Việt Nam · Hiệp thông cùng Giáo Hội Toàn Cầu</span>
+                <span>{t('footer.communion_note')}</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-amber-500 shrink-0" />
-                <span>lienhe@cruxveritatis.org · veridu.net@gmail.com</span>
+                <span>lienhe@cruxveritatis.org</span>
               </div>
             </div>
           </div>
@@ -142,37 +144,37 @@ export default function Footer() {
           {/* CỘT 2: THÁNH KINH & KHÔNG GIAN 3D (3/12 Col) */}
           <div className="lg:col-span-3 space-y-4">
             <h3 className="font-serif font-black text-sm text-[var(--text-main)] uppercase tracking-wider flex items-center gap-2 border-b border-[var(--border-card)] pb-3">
-              <BookOpen className="w-4 h-4 text-amber-500" /> Thánh Kinh &amp; Lịch Sử
+              <BookOpen className="w-4 h-4 text-amber-500" /> {t('footer.col_bible_title')}
             </h3>
             <ul className="space-y-3 text-xs">
               <li>
                 <Link href="/kinh-thanh" className="text-[var(--text-muted)] hover:text-amber-500 transition-colors flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 group-hover:scale-125 transition-transform"></span>
-                  <span>Đọc Kinh Thánh Trực Tuyến</span>
+                  <span>{locale === 'en' ? 'Online Holy Bible' : (locale === 'la' ? 'Biblia Sacra Online' : 'Đọc Kinh Thánh Trực Tuyến')}</span>
                 </Link>
               </li>
               <li>
                 <Link href="/ban-do" className="text-[var(--text-muted)] hover:text-amber-500 transition-colors flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 group-hover:scale-125 transition-transform"></span>
-                  <span>Bản Đồ 3D Thánh Địa</span>
+                  <span>{locale === 'en' ? 'Holy Land 3D Map' : (locale === 'la' ? 'Terra Sancta 3D' : 'Bản Đồ 3D Thánh Địa')}</span>
                 </Link>
               </li>
               <li>
                 <Link href="/lich-su" className="text-[var(--text-muted)] hover:text-amber-500 transition-colors flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 group-hover:scale-125 transition-transform"></span>
-                  <span>Dòng Thời Gian Lịch Sử Thánh</span>
+                  <span>{locale === 'en' ? 'Salvation History Timeline' : (locale === 'la' ? 'Historia Salutis' : 'Dòng Thời Gian Lịch Sử Thánh')}</span>
                 </Link>
               </li>
               <li>
                 <Link href="/nhan-vat" className="text-[var(--text-muted)] hover:text-amber-500 transition-colors flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 group-hover:scale-125 transition-transform"></span>
-                  <span>Tra Cứu Nhân Vật Thánh Kinh</span>
+                  <span>{locale === 'en' ? 'Biblical Figures Lexicon' : (locale === 'la' ? 'Personae Biblicae' : 'Tra Cứu Nhân Vật Thánh Kinh')}</span>
                 </Link>
               </li>
               <li>
                 <Link href="/khoa-hoc" className="text-[var(--text-muted)] hover:text-amber-500 transition-colors flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 group-hover:scale-125 transition-transform"></span>
-                  <span>Khóa Học LMS Công Giáo</span>
+                  <span>{locale === 'en' ? 'Catholic Learning Courses' : (locale === 'la' ? 'Cursus Catholici' : 'Khóa Học LMS Công Giáo')}</span>
                 </Link>
               </li>
             </ul>
@@ -181,61 +183,61 @@ export default function Footer() {
           {/* CỘT 3: THƯ VIỆN & GIÁO LÝ (2/12 Col) */}
           <div className="lg:col-span-2 space-y-4">
             <h3 className="font-serif font-black text-sm text-[var(--text-main)] uppercase tracking-wider flex items-center gap-2 border-b border-[var(--border-card)] pb-3">
-              <Library className="w-4 h-4 text-amber-500" /> Tri Thức &amp; Mục Vụ
+              <Library className="w-4 h-4 text-amber-500" /> {t('footer.col_theology_title')}
             </h3>
             <ul className="space-y-3 text-xs">
               <li>
                 <Link href="/thu-vien" className="text-[var(--text-muted)] hover:text-amber-500 transition-colors flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 group-hover:scale-125 transition-transform"></span>
-                  <span>Thư Viện Bài Viết</span>
+                  <span>{locale === 'en' ? 'Article Library' : (locale === 'la' ? 'Bibliotheca' : 'Thư Viện Bài Viết')}</span>
                 </Link>
               </li>
               <li>
                 <Link href="/giao-ly" className="text-[var(--text-muted)] hover:text-amber-500 transition-colors flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 group-hover:scale-125 transition-transform"></span>
-                  <span>Giáo Lý Hội Thánh</span>
+                  <span>{locale === 'en' ? 'Catechism of the Church' : (locale === 'la' ? 'Catechismus Ecclesiae' : 'Giáo Lý Hội Thánh')}</span>
                 </Link>
               </li>
               <li>
                 <Link href="/thu-vien/sach" className="text-[var(--text-muted)] hover:text-amber-500 transition-colors flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 group-hover:scale-125 transition-transform"></span>
-                  <span>Tủ Sách Thần Học</span>
+                  <span>{locale === 'en' ? 'Theological E-Books' : (locale === 'la' ? 'Libri Theologici' : 'Tủ Sách Thần Học')}</span>
                 </Link>
               </li>
               <li>
                 <Link href="/thu-vien/tai-lieu" className="text-[var(--text-muted)] hover:text-amber-500 transition-colors flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 group-hover:scale-125 transition-transform"></span>
-                  <span>Tài Liệu Huấn Quyền</span>
+                  <span>{locale === 'en' ? 'Magisterium Documents' : (locale === 'la' ? 'Magisterium' : 'Tài Liệu Huấn Quyền')}</span>
                 </Link>
               </li>
               <li>
                 <Link href="/quiz" className="text-[var(--text-muted)] hover:text-amber-500 transition-colors flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 group-hover:scale-125 transition-transform"></span>
-                  <span>Đấu Trường Giáo Lý</span>
+                  <span>{locale === 'en' ? 'Catechism Arena' : (locale === 'la' ? 'Certamen Catecheticum' : 'Đấu Trường Giáo Lý')}</span>
                 </Link>
               </li>
               <li>
                 <Link href="/dong-gop" className="text-[var(--text-muted)] hover:text-amber-500 transition-colors flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 group-hover:scale-125 transition-transform"></span>
-                  <span>Đóng Góp Bài Viết</span>
+                  <span>{locale === 'en' ? 'Contribute Treatise' : (locale === 'la' ? 'Collatio' : 'Đóng Góp Bài Viết')}</span>
                 </Link>
               </li>
               <li>
                 <Link href="/noi-dung-can-thiet" className="text-[var(--text-muted)] hover:text-amber-500 transition-colors flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 group-hover:scale-125 transition-transform"></span>
-                  <span>Đề Tài Cần Nghiên Cứu</span>
+                  <span>{locale === 'en' ? 'Needed Research Topics' : (locale === 'la' ? 'Themata Necessaria' : 'Đề Tài Cần Nghiên Cứu')}</span>
                 </Link>
               </li>
               <li>
                 <Link href="/huong-dan-viet-bai" className="text-[var(--text-muted)] hover:text-amber-500 transition-colors flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 group-hover:scale-125 transition-transform"></span>
-                  <span>Quy Chuẩn Soạn Thảo</span>
+                  <span>{locale === 'en' ? 'Editorial Guidelines' : (locale === 'la' ? 'Normae Scripturae' : 'Quy Chuẩn Soạn Thảo')}</span>
                 </Link>
               </li>
               <li>
                 <Link href="/soan-bai" className="text-[var(--text-muted)] hover:text-amber-500 transition-colors flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60 group-hover:scale-125 transition-transform"></span>
-                  <span>Soạn Thảo Bài Viết</span>
+                  <span>{locale === 'en' ? 'Write Studio' : (locale === 'la' ? 'Scriptorium' : 'Soạn Thảo Bài Viết')}</span>
                 </Link>
               </li>
             </ul>
@@ -244,17 +246,21 @@ export default function Footer() {
           {/* CỘT 4: BẢN TIN PHỤNG VỤ & KẾT NỐI (3/12 Col) */}
           <div className="lg:col-span-3 space-y-4">
             <h3 className="font-serif font-black text-sm text-[var(--text-main)] uppercase tracking-wider flex items-center gap-2 border-b border-[var(--border-card)] pb-3">
-              <Mail className="w-4 h-4 text-amber-500" /> Nhận Bản Tin Phụng Vụ
+              <Mail className="w-4 h-4 text-amber-500" /> {locale === 'en' ? 'Liturgical Newsletter' : (locale === 'la' ? 'Epistula Liturgica' : 'Nhận Bản Tin Phụng Vụ')}
             </h3>
             
             <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-              Đăng ký để nhận suy niệm Lời Chúa, phân tích tín lý và các tài liệu nghiên cứu mới nhất qua email.
+              {locale === 'en' 
+                ? 'Subscribe to receive Scripture meditations, theological exegesis, and academic treatises.'
+                : (locale === 'la' 
+                  ? 'Subscribere ad accipiendas meditationes Verbi Dei et tractatus theologicos.' 
+                  : 'Đăng ký để nhận suy niệm Lời Chúa, phân tích tín lý và các tài liệu nghiên cứu mới nhất qua email.')}
             </p>
 
             <form onSubmit={handleSubscribe} className="relative">
               <input 
                 type="email" 
-                placeholder="Nhập email của bạn..." 
+                placeholder={locale === 'en' ? 'Enter your email...' : (locale === 'la' ? 'Scribe electronicum tuum...' : 'Nhập email của bạn...')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={status === 'loading'}
@@ -264,8 +270,8 @@ export default function Footer() {
                 type="submit" 
                 disabled={status === 'loading'}
                 className="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl transition-all disabled:opacity-50 cursor-pointer active:scale-95 shadow-md"
-                title="Đăng Ký Nhận Bản Tin"
-                aria-label="Đăng ký nhận bản tin"
+                title={locale === 'en' ? 'Subscribe' : (locale === 'la' ? 'Subscribere' : 'Đăng Ký')}
+                aria-label="Subscribe to newsletter"
               >
                 {status === 'loading' ? (
                   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -287,7 +293,9 @@ export default function Footer() {
             )}
             
             <div className="pt-2">
-              <div className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2.5">Mạng Xã Hội Công Giáo</div>
+              <div className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2.5">
+                {locale === 'en' ? 'Catholic Media & Channels' : (locale === 'la' ? 'Media Catholica' : 'Mạng Xã Hội Công Giáo')}
+              </div>
               <div className="flex items-center gap-2.5">
                 <a 
                   href="https://facebook.com/veridu.net" 
@@ -334,34 +342,52 @@ export default function Footer() {
 
         {/* 🌟 CÂU LỜI CHÚA TRANG TRỌNG CHÂN TRANG */}
         <div className="py-6 border-t border-[var(--border-card)] text-center space-y-1">
-          <p className="font-serif italic text-xs sm:text-sm text-amber-800 dark:text-amber-400 font-medium">
-            &ldquo;Lời Chúa là ngọn đèn soi cho con bước, là ánh sáng chỉ đường con đi.&rdquo;
-          </p>
-          <span className="text-[10px] font-bold text-[var(--text-muted)] tracking-wider uppercase">— Thánh Vịnh 119, 105 —</span>
+          {locale === 'en' ? (
+            <>
+              <p className="font-serif italic text-xs sm:text-sm text-amber-800 dark:text-amber-400 font-medium">
+                &ldquo;Your word is a lamp to my feet and a light to my path.&rdquo;
+              </p>
+              <span className="text-[10px] font-bold text-[var(--text-muted)] tracking-wider uppercase">— Psalm 119:105 —</span>
+            </>
+          ) : locale === 'la' ? (
+            <>
+              <p className="font-serif italic text-xs sm:text-sm text-amber-800 dark:text-amber-400 font-medium">
+                &ldquo;Lucerna pedibus meis verbum tuum, et lumen semitis meis.&rdquo;
+              </p>
+              <span className="text-[10px] font-bold text-[var(--text-muted)] tracking-wider uppercase">— Psalmus 119:105 —</span>
+            </>
+          ) : (
+            <>
+              <p className="font-serif italic text-xs sm:text-sm text-amber-800 dark:text-amber-400 font-medium">
+                &ldquo;Lời Chúa là ngọn đèn soi cho con bước, là ánh sáng chỉ đường con đi.&rdquo;
+              </p>
+              <span className="text-[10px] font-bold text-[var(--text-muted)] tracking-wider uppercase">— Thánh Vịnh 119, 105 —</span>
+            </>
+          )}
         </div>
 
         {/* 🌟 BOTTOM BAR: COPYRIGHT, LEGAL POLICIES & SYSTEM STATUS */}
         <div className="pt-6 border-t border-[var(--border-card)] flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[var(--text-muted)]">
           <p className="text-center md:text-left">
-            &copy; {new Date().getFullYear()} <strong className="text-[var(--text-main)] font-bold">VERIDU</strong> · Hiệp Thông &amp; Phụng Sự Giáo Hội.
+            &copy; {new Date().getFullYear()} <strong className="text-[var(--text-main)] font-bold">CRUX VERITATIS</strong> · {locale === 'en' ? 'In Communion & Service of the Universal Church.' : (locale === 'la' ? 'In Communione cum Ecclesia Universali.' : 'Hiệp Thông & Phụng Sự Giáo Hội.')}
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-6 font-semibold text-[11px]">
             <Link href="/dong-gop" className="hover:text-amber-500 transition-colors">
-              Cộng Tác Tác Giả
+              {locale === 'en' ? 'Contributors' : (locale === 'la' ? 'Auctores' : 'Cộng Tác Tác Giả')}
             </Link>
             <Link href="/dieu-khoan-tac-gia" className="hover:text-amber-500 transition-colors">
-              Điều Khoản Tác Giả
+              {t('footer.author_terms')}
             </Link>
             <Link href="/dieu-khoan-su-dung" className="hover:text-amber-500 transition-colors">
-              Điều Khoản Sử Dụng
+              {t('footer.terms')}
             </Link>
             <Link href="/chinh-sach-bao-mat" className="hover:text-amber-500 transition-colors">
-              Chính Sách Bảo Mật
+              {t('footer.privacy')}
             </Link>
             <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Hệ thống an toàn &amp; ổn định
+              {locale === 'en' ? 'System secure & operational' : (locale === 'la' ? 'Systema firmum & tutum' : 'Hệ thống an toàn & ổn định')}
             </span>
           </div>
         </div>

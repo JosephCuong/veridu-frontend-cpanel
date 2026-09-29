@@ -5,6 +5,7 @@ import LiturgicalHeader from "@/components/LiturgicalHeader";
 import Footer from "@/components/Footer";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import { ToastProvider } from "@/components/Toast";
+import { LanguageProvider } from "@/context/LanguageContext";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 
@@ -172,18 +173,33 @@ export default function RootLayout({
             __html: `!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localStorage.getItem('veridu-theme');if(e==='light'){c.add('light')}else{c.add('dark')}}catch(e){}}();`,
           }}
         />
+
+        {/* Silent Google Translate Integration for Automated Multilingual Experience */}
+        <script
+          id="google-translate-init"
+          dangerouslySetInnerHTML={{
+            __html: `function googleTranslateElementInit(){if(window.google&&window.google.translate){new window.google.translate.TranslateElement({pageLanguage:'vi',includedLanguages:'en,vi,la',autoDisplay:false},'google_translate_element');}}`,
+          }}
+        />
+        <script
+          async
+          src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
+        />
       </head>
       <body className="w-full min-h-screen flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 transition-colors duration-300">
+        <div id="google_translate_element" style={{ display: 'none' }} className="notranslate" />
         <ToastProvider>
-          <LiturgicalHeader />
-          
-          <div className="flex-1 flex flex-col w-full">
-            {children}
-          </div>
-          
-          <Footer />
-          <CookieConsentBanner />
-          <BackToTop />
+          <LanguageProvider>
+            <LiturgicalHeader />
+            
+            <div className="flex-1 flex flex-col w-full">
+              {children}
+            </div>
+            
+            <Footer />
+            <CookieConsentBanner />
+            <BackToTop />
+          </LanguageProvider>
         </ToastProvider>
       </body>
     </html>

@@ -12,9 +12,11 @@ import {
   Zap, Droplets, Settings, Gamepad2, Scroll, MoreHorizontal, Feather, ClipboardList, Scale, PenTool, Megaphone
 } from 'lucide-react';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useTranslation } from '@/context/LanguageContext';
 
 export default function LiturgicalHeader() {
   const pathname = usePathname();
+  const { t, locale, isEn } = useTranslation();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
@@ -235,7 +237,7 @@ export default function LiturgicalHeader() {
           className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-slate-200 hover:bg-amber-500/15 hover:text-amber-400 transition-colors group cursor-pointer"
         >
           <User className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
-          <span>Hồ Sơ</span>
+          <span>{t('nav.profile')}</span>
         </Link>
 
         {/* 2. Cài Đặt */}
@@ -245,7 +247,7 @@ export default function LiturgicalHeader() {
           className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-slate-200 hover:bg-amber-500/15 hover:text-amber-400 transition-colors group cursor-pointer"
         >
           <Settings className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform" />
-          <span>Cài Đặt</span>
+          <span>{locale === 'en' ? 'Settings' : (locale === 'la' ? 'Optiones' : 'Cài Đặt')}</span>
         </Link>
 
         {/* 3. Trung Tâm Quản Trị (Admin) */}
@@ -257,7 +259,7 @@ export default function LiturgicalHeader() {
           >
             <span className="flex items-center gap-2.5">
               <Shield className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
-              <span>Trung Tâm Quản Trị</span>
+              <span>{t('nav.admin')}</span>
             </span>
             {pendingCount > 0 && (
               <span className="px-1.5 py-0.2 rounded-full bg-red-500 text-white font-mono text-[10px] font-black">
@@ -275,7 +277,7 @@ export default function LiturgicalHeader() {
             className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-amber-400 hover:bg-amber-500/15 transition-colors group cursor-pointer"
           >
             <FileText className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
-            <span>Phòng Soạn Thảo</span>
+            <span>{locale === 'en' ? 'Write Studio' : (locale === 'la' ? 'Scriptorium' : 'Phòng Soạn Thảo')}</span>
           </Link>
         )}
 
@@ -287,7 +289,7 @@ export default function LiturgicalHeader() {
             className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-amber-400 hover:bg-amber-500/15 transition-colors group cursor-pointer"
           >
             <Megaphone className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
-            <span>Chiến Dịch Quảng Bá</span>
+            <span>{locale === 'en' ? 'Campaigns' : (locale === 'la' ? 'Promotio' : 'Chiến Dịch Quảng Bá')}</span>
           </Link>
         )}
 
@@ -302,7 +304,7 @@ export default function LiturgicalHeader() {
             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-red-400 hover:bg-red-500/15 transition-colors cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
-            <span>Đăng Xuất</span>
+            <span>{t('nav.logout')}</span>
           </button>
         </div>
       </div>
@@ -319,7 +321,7 @@ export default function LiturgicalHeader() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 notranslate ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       } ${
         isScrolled
@@ -372,7 +374,7 @@ export default function LiturgicalHeader() {
                     title="Trung Tâm Quản Trị & Kiểm Duyệt"
                   >
                     <Shield className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
-                    <span>Quản Trị</span>
+                    <span>{t('nav.admin')}</span>
                     {pendingCount > 0 && (
                       <span className="px-1.5 py-0.2 rounded-full bg-red-500 text-white font-mono text-[10px] font-black animate-pulse">
                         {pendingCount}
@@ -383,11 +385,11 @@ export default function LiturgicalHeader() {
 
                 {/* Streak Badge */}
                 <div 
-                  title={`Chuỗi học tập liên tục: ${user.streak || 1} ngày`}
+                  title={`Chuỗi học tập: ${user.streak || 1} ngày`}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/15 border border-amber-500/30 rounded-full text-amber-400 font-bold text-xs shadow-xs"
                 >
                   <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-400 animate-pulse" />
-                  <span>{user.streak || 1} Ngày</span>
+                  <span>{user.streak || 1} {locale === 'en' ? 'Days' : (locale === 'la' ? 'Dies' : 'Ngày')}</span>
                 </div>
                 
                 {/* Full Desktop User Pill */}
@@ -410,7 +412,7 @@ export default function LiturgicalHeader() {
                         {user.christianName ? `${user.christianName} ` : ''}{user.displayName}
                       </span>
                       <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-400 font-mono font-black text-[10px] uppercase border border-amber-500/30">
-                        CẤP {levelInfo.level}
+                        {locale === 'en' ? `LVL ${levelInfo.level}` : (locale === 'la' ? `GRADUS ${levelInfo.level}` : `CẤP ${levelInfo.level}`)}
                       </span>
                     </div>
 
@@ -427,7 +429,7 @@ export default function LiturgicalHeader() {
                 className="flex items-center gap-1.5 px-4 py-1.5 bg-amber-500 text-slate-950 rounded-full font-bold text-xs shadow-md shadow-amber-500/20 hover:bg-amber-400 transition-all hover:scale-105"
               >
                 <LogIn className="w-3.5 h-3.5" />
-                <span>Đăng Nhập</span>
+                <span>{t('nav.login')}</span>
               </Link>
             )}
 
@@ -465,7 +467,7 @@ export default function LiturgicalHeader() {
                     : ''
                 }`}
               >
-                <span>Kinh Thánh</span>
+                <span>{t('nav.bible')}</span>
                 <ChevronDown className="w-3.5 h-3.5 text-amber-400/80 transition-transform group-hover:rotate-180" />
               </Link>
 
@@ -476,7 +478,7 @@ export default function LiturgicalHeader() {
                       <BookOpen className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-amber-400">Sách Kinh Thánh</div>
+                      <div className="font-bold text-xs text-slate-100 group-hover:text-amber-400">{t('nav.bible')}</div>
                       <div className="text-[10px] text-slate-400 lowercase">73 Sách Cựu &amp; Tân Ước</div>
                     </div>
                   </Link>
@@ -486,7 +488,7 @@ export default function LiturgicalHeader() {
                       <MapPin className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-emerald-400">Bản Đồ 3D</div>
+                      <div className="font-bold text-xs text-slate-100 group-hover:text-emerald-400">{t('nav.map')}</div>
                       <div className="text-[10px] text-slate-400 lowercase">Địa danh &amp; vùng đất Thánh</div>
                     </div>
                   </Link>
@@ -496,7 +498,7 @@ export default function LiturgicalHeader() {
                       <Clock className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-purple-400">Dòng Thời Gian</div>
+                      <div className="font-bold text-xs text-slate-100 group-hover:text-purple-400">{t('nav.timeline')}</div>
                       <div className="text-[10px] text-slate-400 lowercase">Lịch sử cứu độ qua các thời kỳ</div>
                     </div>
                   </Link>
@@ -506,7 +508,7 @@ export default function LiturgicalHeader() {
                       <Users className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">Nhân Vật</div>
+                      <div className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">{t('nav.characters')}</div>
                       <div className="text-[10px] text-slate-400 lowercase">Gia phả &amp; tiểu sử Thánh</div>
                     </div>
                   </Link>
@@ -521,7 +523,7 @@ export default function LiturgicalHeader() {
                 pathname.startsWith('/khoa-hoc') ? 'text-amber-400 font-black border-b-2 border-amber-400 pb-0.5' : ''
               }`}
             >
-              Khóa Học
+              {t('nav.courses')}
             </Link>
 
             {/* 3. THƯ VIỆN */}
@@ -536,7 +538,7 @@ export default function LiturgicalHeader() {
                   pathname.startsWith('/thu-vien') ? 'text-amber-400 font-black border-b-2 border-amber-400 pb-0.5' : ''
                 }`}
               >
-                <span>Thư Viện</span>
+                <span>{t('nav.library')}</span>
                 <ChevronDown className="w-3.5 h-3.5 text-amber-400/80 transition-transform group-hover:rotate-180" />
               </Link>
 
@@ -582,7 +584,7 @@ export default function LiturgicalHeader() {
                 pathname.startsWith('/giao-ly') ? 'text-amber-400 font-black border-b-2 border-amber-400 pb-0.5' : ''
               }`}
             >
-              Giáo Lý
+              {t('nav.catechism')}
             </Link>
 
             {/* 5. ĐÓNG GÓP */}
@@ -599,7 +601,7 @@ export default function LiturgicalHeader() {
                     : ''
                 }`}
               >
-                <span>Đóng Góp</span>
+                <span>{t('nav.contribute')}</span>
                 <ChevronDown className="w-3.5 h-3.5 text-amber-400/80 transition-transform group-hover:rotate-180" />
               </Link>
 
@@ -675,7 +677,7 @@ export default function LiturgicalHeader() {
                 pathname.startsWith('/sach-tranh') ? 'text-amber-400 font-black border-b-2 border-amber-400 pb-0.5' : ''
               }`}
             >
-              Sách Tranh
+              {t('nav.storybooks')}
             </Link>
 
             {/* 6. ĐẤU TRƯỜNG */}
@@ -685,7 +687,7 @@ export default function LiturgicalHeader() {
                 pathname.startsWith('/quiz') ? 'text-amber-400 font-black border-b-2 border-amber-400 pb-0.5' : ''
               }`}
             >
-              Đấu Trường
+              {t('nav.quiz')}
             </Link>
 
             {/* 7. GAME */}
@@ -695,7 +697,7 @@ export default function LiturgicalHeader() {
                 pathname.startsWith('/game') ? 'text-amber-400 font-black border-b-2 border-amber-400 pb-0.5' : ''
               }`}
             >
-              Game
+              {locale === 'en' ? 'Games' : (locale === 'la' ? 'Ludi' : 'Game')}
             </Link>
 
           </nav>
@@ -774,7 +776,7 @@ export default function LiturgicalHeader() {
               pathname.startsWith('/khoa-hoc') ? 'text-amber-400 font-black' : ''
             }`}
           >
-            Khóa Học
+            {t('nav.courses')}
           </Link>
 
           {/* 3. THƯ VIỆN */}
@@ -789,7 +791,7 @@ export default function LiturgicalHeader() {
                 pathname.startsWith('/thu-vien') ? 'text-amber-400 font-black' : ''
               }`}
             >
-              <span>Thư Viện</span>
+              <span>{t('nav.library')}</span>
               <ChevronDown className="w-3 h-3 text-amber-400/80 transition-transform group-hover:rotate-180" />
             </Link>
 
@@ -818,7 +820,7 @@ export default function LiturgicalHeader() {
               pathname.startsWith('/giao-ly') ? 'text-amber-400 font-black' : ''
             }`}
           >
-            Giáo Lý
+            {t('nav.catechism')}
           </Link>
 
           {/* 5. ĐÓNG GÓP */}
@@ -835,7 +837,7 @@ export default function LiturgicalHeader() {
                   : ''
               }`}
             >
-              <span>Đóng Góp</span>
+              <span>{t('nav.contribute')}</span>
               <ChevronDown className="w-3 h-3 text-amber-400/80 transition-transform group-hover:rotate-180" />
             </Link>
 
@@ -876,7 +878,7 @@ export default function LiturgicalHeader() {
               pathname.startsWith('/sach-tranh') ? 'text-amber-400 font-black' : ''
             }`}
           >
-            Sách Tranh
+            {t('nav.storybooks')}
           </Link>
 
           {/* 7. ĐẤU TRƯỜNG */}
@@ -886,7 +888,7 @@ export default function LiturgicalHeader() {
               pathname.startsWith('/quiz') ? 'text-amber-400 font-black' : ''
             }`}
           >
-            Đấu Trường
+            {t('nav.quiz')}
           </Link>
 
           {/* 8. GAME */}
@@ -896,7 +898,7 @@ export default function LiturgicalHeader() {
               pathname.startsWith('/game') ? 'text-amber-400 font-black' : ''
             }`}
           >
-            Game
+            {locale === 'en' ? 'Games' : (locale === 'la' ? 'Ludi' : 'Game')}
           </Link>
 
         </nav>
@@ -949,7 +951,7 @@ export default function LiturgicalHeader() {
                 </div>
 
                 <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-400 font-mono font-black text-[10px] uppercase border border-amber-500/30">
-                  CẤP {levelInfo.level}
+                  {locale === 'en' ? `LVL ${levelInfo.level}` : (locale === 'la' ? `GRADUS ${levelInfo.level}` : `CẤP ${levelInfo.level}`)}
                 </span>
 
                 <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180 text-amber-400' : 'group-hover:text-amber-400'}`} />
@@ -963,7 +965,7 @@ export default function LiturgicalHeader() {
               className="flex items-center gap-1 px-3.5 py-1.5 bg-amber-500 text-slate-950 rounded-full font-bold text-xs shadow-sm hover:bg-amber-400 transition-all"
             >
               <LogIn className="w-3.5 h-3.5" />
-              <span>Đăng Nhập</span>
+              <span>{t('nav.login')}</span>
             </Link>
           )}
 
@@ -1054,7 +1056,7 @@ export default function LiturgicalHeader() {
                 </div>
 
                 <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-400 font-mono font-black text-[10px] uppercase border border-amber-500/30">
-                  CẤP {levelInfo.level}
+                  {locale === 'en' ? `LVL ${levelInfo.level}` : (locale === 'la' ? `GRADUS ${levelInfo.level}` : `CẤP ${levelInfo.level}`)}
                 </span>
 
                 <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180 text-amber-400' : 'group-hover:text-amber-400'}`} />
@@ -1068,7 +1070,7 @@ export default function LiturgicalHeader() {
               className="flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-500 text-slate-950 rounded-full font-bold text-xs shadow-sm hover:bg-amber-400 transition-all"
             >
               <LogIn className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Đăng Nhập</span>
+              <span className="hidden sm:inline">{t('nav.login')}</span>
             </Link>
           )}
 
@@ -1189,14 +1191,14 @@ export default function LiturgicalHeader() {
                     {user.christianName} {user.displayName}
                   </div>
                   <div className="text-[11px] text-amber-400 font-mono font-bold">
-                    CẤP {levelInfo.level} · {levelInfo.title}
+                    {locale === 'en' ? `LVL ${levelInfo.level}` : (locale === 'la' ? `GRADUS ${levelInfo.level}` : `CẤP ${levelInfo.level}`)} · {levelInfo.title}
                   </div>
                 </div>
               </div>
 
               <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/15 border border-amber-500/30 rounded-full text-amber-400 font-bold text-xs">
                 <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                <span>{user.streak || 1} Ngày</span>
+                <span>{user.streak || 1} {locale === 'en' ? 'Days' : (locale === 'la' ? 'Dies' : 'Ngày')}</span>
               </div>
             </div>
           )}
@@ -1208,7 +1210,7 @@ export default function LiturgicalHeader() {
               className="w-full py-2.5 flex items-center justify-between text-sm font-bold text-slate-200 cursor-pointer"
             >
               <span className="flex items-center gap-2.5">
-                <BookOpen className="w-4 h-4 text-amber-400" /> Kinh Thánh
+                <BookOpen className="w-4 h-4 text-amber-400" /> {t('nav.bible')}
               </span>
               <ChevronDown className={`w-4 h-4 text-amber-400 transition-transform ${mobileExpandedGroup === 'kinh-thanh' ? 'rotate-180' : ''}`} />
             </button>
@@ -1216,16 +1218,16 @@ export default function LiturgicalHeader() {
             {mobileExpandedGroup === 'kinh-thanh' && (
               <div className="pl-6 space-y-2 py-2 border-l-2 border-amber-500/30 ml-2">
                 <Link href="/kinh-thanh" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-amber-400">
-                  <BookOpen className="w-3.5 h-3.5 text-amber-400" /> Sách (73 Sách Thánh)
+                  <BookOpen className="w-3.5 h-3.5 text-amber-400" /> {locale === 'en' ? 'Books (73 Canonical Books)' : (locale === 'la' ? 'Libri (73 Libri)' : 'Sách (73 Sách Thánh)')}
                 </Link>
                 <Link href="/ban-do" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-emerald-400">
-                  <MapPin className="w-3.5 h-3.5 text-emerald-400" /> Bản Đồ 3D Thánh Địa
+                  <MapPin className="w-3.5 h-3.5 text-emerald-400" /> {locale === 'en' ? 'Holy Land 3D Map' : (locale === 'la' ? 'Terra Sancta 3D' : 'Bản Đồ 3D Thánh Địa')}
                 </Link>
                 <Link href="/lich-su" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-purple-400">
-                  <Clock className="w-3.5 h-3.5 text-purple-400" /> Dòng Thời Gian Cứu Độ
+                  <Clock className="w-3.5 h-3.5 text-purple-400" /> {locale === 'en' ? 'Salvation History Timeline' : (locale === 'la' ? 'Historia Salutis' : 'Dòng Thời Gian Cứu Độ')}
                 </Link>
                 <Link href="/nhan-vat" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-indigo-400">
-                  <Users className="w-3.5 h-3.5 text-indigo-400" /> Nhân Vật Kinh Thánh
+                  <Users className="w-3.5 h-3.5 text-indigo-400" /> {locale === 'en' ? 'Biblical Figures' : (locale === 'la' ? 'Personae Biblicae' : 'Nhân Vật Kinh Thánh')}
                 </Link>
               </div>
             )}
@@ -1233,7 +1235,7 @@ export default function LiturgicalHeader() {
 
           {/* 2. KHÓA HỌC */}
           <Link href="/khoa-hoc" className="block py-2.5 text-sm font-bold text-slate-200 hover:text-amber-400 flex items-center gap-2.5">
-            <Award className="w-4 h-4 text-amber-400" /> Khóa Học
+            <Award className="w-4 h-4 text-amber-400" /> {t('nav.courses')}
           </Link>
 
           {/* 3. THƯ VIỆN GROUP */}
@@ -1243,7 +1245,7 @@ export default function LiturgicalHeader() {
               className="w-full py-2.5 flex items-center justify-between text-sm font-bold text-slate-200 cursor-pointer"
             >
               <span className="flex items-center gap-2.5">
-                <Library className="w-4 h-4 text-indigo-400" /> Thư Viện
+                <Library className="w-4 h-4 text-indigo-400" /> {t('nav.library')}
               </span>
               <ChevronDown className={`w-4 h-4 text-indigo-400 transition-transform ${mobileExpandedGroup === 'thu-vien' ? 'rotate-180' : ''}`} />
             </button>
@@ -1251,13 +1253,13 @@ export default function LiturgicalHeader() {
             {mobileExpandedGroup === 'thu-vien' && (
               <div className="pl-6 space-y-2 py-2 border-l-2 border-indigo-500/30 ml-2">
                 <Link href="/thu-vien" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-amber-400">
-                  <FileText className="w-3.5 h-3.5 text-amber-400" /> Bài Viết &amp; Suy Niệm
+                  <FileText className="w-3.5 h-3.5 text-amber-400" /> {locale === 'en' ? 'Treatises & Meditations' : (locale === 'la' ? 'Tractatus & Meditationes' : 'Bài Viết & Suy Niệm')}
                 </Link>
                 <Link href="/thu-vien/sach" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-indigo-400">
-                  <Library className="w-3.5 h-3.5 text-indigo-400" /> Tủ Sách Điện Tử (PDF/EPUB)
+                  <Library className="w-3.5 h-3.5 text-indigo-400" /> {locale === 'en' ? 'E-Books (PDF/EPUB)' : (locale === 'la' ? 'Libri Electronici' : 'Tủ Sách Điện Tử (PDF/EPUB)')}
                 </Link>
                 <Link href="/thu-vien/tai-lieu" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-rose-400">
-                  <BookOpen className="w-3.5 h-3.5 text-rose-400" /> Tài Liệu &amp; Giáo Án
+                  <BookOpen className="w-3.5 h-3.5 text-rose-400" /> {locale === 'en' ? 'Documents & Catechesis' : (locale === 'la' ? 'Documenta & Catechesis' : 'Tài Liệu & Giáo Án')}
                 </Link>
               </div>
             )}
@@ -1265,7 +1267,7 @@ export default function LiturgicalHeader() {
 
           {/* 4. GIÁO LÝ */}
           <Link href="/giao-ly" onClick={() => setIsMobileMenuOpen(false)} className="block py-2.5 text-sm font-bold text-slate-200 hover:text-amber-400 flex items-center gap-2.5">
-            <Cross className="w-4 h-4 text-rose-400" /> Giáo Lý
+            <Cross className="w-4 h-4 text-rose-400" /> {t('nav.catechism')}
           </Link>
 
           {/* 5. ĐÓNG GÓP GROUP */}
@@ -1275,7 +1277,7 @@ export default function LiturgicalHeader() {
               className="w-full py-2.5 flex items-center justify-between text-sm font-bold text-slate-200 cursor-pointer"
             >
               <span className="flex items-center gap-2.5">
-                <Feather className="w-4 h-4 text-amber-400" /> Đóng Góp
+                <Feather className="w-4 h-4 text-amber-400" /> {t('nav.contribute')}
               </span>
               <ChevronDown className={`w-4 h-4 text-amber-400 transition-transform ${mobileExpandedGroup === 'dong-gop' ? 'rotate-180' : ''}`} />
             </button>
@@ -1283,22 +1285,22 @@ export default function LiturgicalHeader() {
             {mobileExpandedGroup === 'dong-gop' && (
               <div className="pl-6 space-y-2 py-2 border-l-2 border-amber-500/30 ml-2">
                 <Link href="/dong-gop" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-amber-400">
-                  <Feather className="w-3.5 h-3.5 text-amber-400" /> Sứ Mạng Đóng Góp
+                  <Feather className="w-3.5 h-3.5 text-amber-400" /> {locale === 'en' ? 'Contribution Mission' : (locale === 'la' ? 'Missio Collationis' : 'Sứ Mạng Đóng Góp')}
                 </Link>
                 <Link href="/tac-gia" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-sky-400">
-                  <Users className="w-3.5 h-3.5 text-sky-400" /> Đội Ngũ Tác Giả
+                  <Users className="w-3.5 h-3.5 text-sky-400" /> {locale === 'en' ? 'Authors Team' : (locale === 'la' ? 'Auctores' : 'Đội Ngũ Tác Giả')}
                 </Link>
                 <Link href="/noi-dung-can-thiet" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-emerald-400">
-                  <ClipboardList className="w-3.5 h-3.5 text-emerald-400" /> Đề Tài Cần Nghiên Cứu
+                  <ClipboardList className="w-3.5 h-3.5 text-emerald-400" /> {locale === 'en' ? 'Needed Research Topics' : (locale === 'la' ? 'Themata Necessaria' : 'Đề Tài Cần Nghiên Cứu')}
                 </Link>
                 <Link href="/huong-dan-viet-bai" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-indigo-400">
-                  <BookOpen className="w-3.5 h-3.5 text-indigo-400" /> Quy Chuẩn Soạn Thảo
+                  <BookOpen className="w-3.5 h-3.5 text-indigo-400" /> {locale === 'en' ? 'Editorial Guidelines' : (locale === 'la' ? 'Normae Scripturae' : 'Quy Chuẩn Soạn Thảo')}
                 </Link>
                 <Link href="/dieu-khoan-tac-gia" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-rose-400">
-                  <Scale className="w-3.5 h-3.5 text-rose-400" /> Điều Khoản Tác Giả
+                  <Scale className="w-3.5 h-3.5 text-rose-400" /> {t('footer.author_terms')}
                 </Link>
                 <Link href="/soan-bai" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-amber-400 font-bold hover:text-amber-300">
-                  <PenTool className="w-3.5 h-3.5 text-amber-400" /> Phòng Soạn Thảo
+                  <PenTool className="w-3.5 h-3.5 text-amber-400" /> {locale === 'en' ? 'Write Studio' : (locale === 'la' ? 'Scriptorium' : 'Phòng Soạn Thảo')}
                 </Link>
               </div>
             )}
@@ -1306,17 +1308,17 @@ export default function LiturgicalHeader() {
 
           {/* 6. SÁCH TRANH THIẾU NHI */}
           <Link href="/sach-tranh" className="block py-2.5 text-sm font-bold text-amber-400 hover:text-amber-300 flex items-center gap-2.5">
-            <BookOpen className="w-4 h-4 text-amber-400" /> Sách Tranh Thiếu Nhi
+            <BookOpen className="w-4 h-4 text-amber-400" /> {t('nav.storybooks')}
           </Link>
 
           {/* 6. ĐẤU TRƯỜNG */}
           <Link href="/quiz" className="block py-2.5 text-sm font-bold text-slate-200 hover:text-amber-400 flex items-center gap-2.5">
-            <Flame className="w-4 h-4 text-amber-400" /> Đấu Trường
+            <Flame className="w-4 h-4 text-amber-400" /> {t('nav.quiz')}
           </Link>
 
           {/* 7. CỔNG GAME GIÁO LÝ */}
           <Link href="/game" className="block py-2.5 text-sm font-bold text-amber-400 hover:text-amber-300 flex items-center gap-2.5">
-            <Gamepad2 className="w-4 h-4 text-amber-400" /> Cổng Game Giáo Lý
+            <Gamepad2 className="w-4 h-4 text-amber-400" /> {locale === 'en' ? 'Catechism Games' : (locale === 'la' ? 'Ludi Catechetici' : 'Cổng Game Giáo Lý')}
           </Link>
 
           {/* User Links in Drawer */}
@@ -1324,10 +1326,10 @@ export default function LiturgicalHeader() {
             {user ? (
               <div className="space-y-1">
                 <Link href="/ho-so" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-xs font-bold text-slate-200 hover:text-amber-400">
-                  <User className="w-4 h-4 text-amber-400" /> Hồ Sơ
+                  <User className="w-4 h-4 text-amber-400" /> {t('nav.profile')}
                 </Link>
                 <Link href="/cai-dat" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-xs font-bold text-slate-200 hover:text-amber-400">
-                  <Settings className="w-4 h-4 text-indigo-400" /> Cài Đặt
+                  <Settings className="w-4 h-4 text-indigo-400" /> {locale === 'en' ? 'Settings' : (locale === 'la' ? 'Optiones' : 'Cài Đặt')}
                 </Link>
                 {isAdmin && (
                   <Link 
@@ -1336,32 +1338,32 @@ export default function LiturgicalHeader() {
                     className="flex items-center justify-between py-2 text-xs font-bold text-amber-400 hover:text-amber-300"
                   >
                     <span className="flex items-center gap-2">
-                      <Shield className="w-4 h-4 text-amber-400" /> Trung Tâm Quản Trị
+                      <Shield className="w-4 h-4 text-amber-400" /> {t('nav.admin')}
                     </span>
                     {pendingCount > 0 && (
                       <span className="px-2 py-0.5 rounded-full bg-red-500 text-white font-mono text-[10px] font-black">
-                        {pendingCount} cần duyệt
+                        {pendingCount} {locale === 'en' ? 'pending' : (locale === 'la' ? 'approbanda' : 'cần duyệt')}
                       </span>
                     )}
                   </Link>
                 )}
                 {isAdmin && (
                   <Link href="/soan-bai" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-xs font-bold text-amber-400 hover:text-amber-300">
-                    <PenTool className="w-4 h-4 text-amber-400" /> Phòng Soạn Thảo
+                    <PenTool className="w-4 h-4 text-amber-400" /> {locale === 'en' ? 'Write Studio' : (locale === 'la' ? 'Scriptorium' : 'Phòng Soạn Thảo')}
                   </Link>
                 )}
                 {isAdmin && (
                   <Link href="/admin/quang-ba" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-xs font-bold text-amber-400 hover:text-amber-300">
-                    <Megaphone className="w-4 h-4 text-amber-400" /> Chiến Dịch Quảng Bá
+                    <Megaphone className="w-4 h-4 text-amber-400" /> {locale === 'en' ? 'Campaigns' : (locale === 'la' ? 'Promotio' : 'Chiến Dịch Quảng Bá')}
                   </Link>
                 )}
                 <button type="button" onClick={() => { setIsMobileMenuOpen(false); logout(); }} className="w-full text-left flex items-center gap-2 py-2 text-xs font-bold text-red-400 cursor-pointer">
-                  <LogOut className="w-4 h-4" /> Đăng Xuất
+                  <LogOut className="w-4 h-4" /> {t('nav.logout')}
                 </button>
               </div>
             ) : (
               <Link href="/dang-nhap" className="w-full py-3 rounded-2xl bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2">
-                <LogIn className="w-4 h-4" /> Đăng Nhập / Đăng Ký
+                <LogIn className="w-4 h-4" /> {t('nav.login')}
               </Link>
             )}
           </div>
