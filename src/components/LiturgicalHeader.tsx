@@ -247,7 +247,7 @@ export default function LiturgicalHeader() {
           className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-slate-200 hover:bg-amber-500/15 hover:text-amber-400 transition-colors group cursor-pointer"
         >
           <Settings className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform" />
-          <span>{locale === 'en' ? 'Settings' : (locale === 'la' ? 'Optiones' : 'Cài Đặt')}</span>
+          <span>{t('nav.settings')}</span>
         </Link>
 
         {/* 3. Trung Tâm Quản Trị (Admin) */}
@@ -277,7 +277,7 @@ export default function LiturgicalHeader() {
             className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-amber-400 hover:bg-amber-500/15 transition-colors group cursor-pointer"
           >
             <FileText className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
-            <span>{locale === 'en' ? 'Write Studio' : (locale === 'la' ? 'Scriptorium' : 'Phòng Soạn Thảo')}</span>
+            <span>{t('nav.write_studio')}</span>
           </Link>
         )}
 
@@ -289,7 +289,7 @@ export default function LiturgicalHeader() {
             className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-amber-400 hover:bg-amber-500/15 transition-colors group cursor-pointer"
           >
             <Megaphone className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
-            <span>{locale === 'en' ? 'Campaigns' : (locale === 'la' ? 'Promotio' : 'Chiến Dịch Quảng Bá')}</span>
+            <span>{t('nav.campaigns')}</span>
           </Link>
         )}
 
@@ -479,7 +479,7 @@ export default function LiturgicalHeader() {
                     </div>
                     <div>
                       <div className="font-bold text-xs text-slate-100 group-hover:text-amber-400">{t('nav.bible')}</div>
-                      <div className="text-[10px] text-slate-400 lowercase">73 Sách Cựu &amp; Tân Ước</div>
+                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_bible_desc')}</div>
                     </div>
                   </Link>
 
@@ -489,7 +489,7 @@ export default function LiturgicalHeader() {
                     </div>
                     <div>
                       <div className="font-bold text-xs text-slate-100 group-hover:text-emerald-400">{t('nav.map')}</div>
-                      <div className="text-[10px] text-slate-400 lowercase">Địa danh &amp; vùng đất Thánh</div>
+                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_map_desc')}</div>
                     </div>
                   </Link>
 
@@ -499,7 +499,7 @@ export default function LiturgicalHeader() {
                     </div>
                     <div>
                       <div className="font-bold text-xs text-slate-100 group-hover:text-purple-400">{t('nav.timeline')}</div>
-                      <div className="text-[10px] text-slate-400 lowercase">Lịch sử cứu độ qua các thời kỳ</div>
+                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_timeline_desc')}</div>
                     </div>
                   </Link>
 
@@ -509,7 +509,7 @@ export default function LiturgicalHeader() {
                     </div>
                     <div>
                       <div className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">{t('nav.characters')}</div>
-                      <div className="text-[10px] text-slate-400 lowercase">Gia phả &amp; tiểu sử Thánh</div>
+                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_characters_desc')}</div>
                     </div>
                   </Link>
                 </div>
@@ -549,8 +549,8 @@ export default function LiturgicalHeader() {
                       <FileText className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-amber-400">Bài Viết</div>
-                      <div className="text-[10px] text-slate-400 lowercase">Suy niệm &amp; thần học</div>
+                      <div className="font-bold text-xs text-slate-100 group-hover:text-amber-400">{t('nav.sub_articles')}</div>
+                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_articles_desc')}</div>
                     </div>
                   </Link>
 
@@ -559,8 +559,8 @@ export default function LiturgicalHeader() {
                       <Library className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">Tủ Sách</div>
-                      <div className="text-[10px] text-slate-400 lowercase">Sách điện tử PDF, EPUB</div>
+                      <div className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">{t('nav.sub_books')}</div>
+                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_books_desc')}</div>
                     </div>
                   </Link>
 
@@ -569,8 +569,8 @@ export default function LiturgicalHeader() {
                       <BookOpen className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-rose-400">Tài Liệu</div>
-                      <div className="text-[10px] text-slate-400 lowercase">Giáo án &amp; văn kiện PDF/Word</div>
+                      <div className="font-bold text-xs text-slate-100 group-hover:text-rose-400">{t('nav.sub_docs')}</div>
+                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_docs_desc')}</div>
                     </div>
                   </Link>
                 </div>
@@ -612,8 +612,8 @@ export default function LiturgicalHeader() {
                       <Feather className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-amber-400">Sứ Mạng Đóng Góp</div>
-                      <div className="text-[10px] text-slate-400 lowercase">Tham gia đội ngũ tác giả</div>
+                      <div className="font-bold text-xs text-slate-100 group-hover:text-amber-400">{t('nav.sub_mission')}</div>
+                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_mission_desc')}</div>
                     </div>
                   </Link>
 
@@ -622,8 +622,8 @@ export default function LiturgicalHeader() {
                       <Users className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-sky-400">Đội Ngũ Tác Giả</div>
-                      <div className="text-[10px] text-slate-400 lowercase">Hồ sơ học giả &amp; chuyên gia</div>
+                      <div className="font-bold text-xs text-slate-100 group-hover:text-sky-400">{t('nav.sub_authors')}</div>
+                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_authors_desc')}</div>
                     </div>
                   </Link>
 
@@ -632,8 +632,8 @@ export default function LiturgicalHeader() {
                       <ClipboardList className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-emerald-400">Đề Tài Cần Nghiên Cứu</div>
-                      <div className="text-[10px] text-slate-400 lowercase">Danh mục chủ đề ưu tiên</div>
+                      <div className="font-bold text-xs text-slate-100 group-hover:text-emerald-400">{t('nav.sub_topics')}</div>
+                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_topics_desc')}</div>
                     </div>
                   </Link>
 
@@ -642,8 +642,8 @@ export default function LiturgicalHeader() {
                       <BookOpen className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">Quy Chuẩn Soạn Thảo</div>
-                      <div className="text-[10px] text-slate-400 lowercase">Quy cách &amp; mẫu khối HTML</div>
+                      <div className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">{t('nav.sub_guidelines')}</div>
+                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_guidelines_desc')}</div>
                     </div>
                   </Link>
 
@@ -652,8 +652,8 @@ export default function LiturgicalHeader() {
                       <Scale className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-rose-400">Điều Khoản Tác Giả</div>
-                      <div className="text-[10px] text-slate-400 lowercase">Bản quyền &amp; trách nhiệm</div>
+                      <div className="font-bold text-xs text-slate-100 group-hover:text-rose-400">{t('nav.sub_author_terms')}</div>
+                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_author_terms_desc')}</div>
                     </div>
                   </Link>
 
@@ -662,8 +662,8 @@ export default function LiturgicalHeader() {
                       <PenTool className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-bold text-xs text-amber-400 group-hover:text-amber-300">Phòng Soạn Thảo</div>
-                      <div className="text-[10px] text-slate-400 lowercase">Trực quan &amp; mã HTML</div>
+                      <div className="font-bold text-xs text-amber-400 group-hover:text-amber-300">{t('nav.sub_studio')}</div>
+                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_studio_desc')}</div>
                     </div>
                   </Link>
                 </div>
@@ -743,7 +743,7 @@ export default function LiturgicalHeader() {
                   : ''
               }`}
             >
-              <span>Kinh Thánh</span>
+              <span>{t('nav.bible')}</span>
               <ChevronDown className="w-3 h-3 text-amber-400/80 transition-transform group-hover:rotate-180" />
             </Link>
 
@@ -751,19 +751,19 @@ export default function LiturgicalHeader() {
               <div className="absolute top-full left-0 w-56 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl p-2 space-y-1 z-50 backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-200">
                 <Link href="/kinh-thanh" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-amber-500/15 group transition-colors">
                   <BookOpen className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-amber-400">73 Sách Thánh</span>
+                  <span className="font-bold text-xs text-slate-100 group-hover:text-amber-400">{t('nav.bible')}</span>
                 </Link>
                 <Link href="/ban-do" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-emerald-500/15 group transition-colors">
                   <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-emerald-400">Bản Đồ 3D</span>
+                  <span className="font-bold text-xs text-slate-100 group-hover:text-emerald-400">{t('nav.map')}</span>
                 </Link>
                 <Link href="/lich-su" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-purple-500/15 group transition-colors">
                   <Clock className="w-4 h-4 text-purple-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-purple-400">Dòng Thời Gian</span>
+                  <span className="font-bold text-xs text-slate-100 group-hover:text-purple-400">{t('nav.timeline')}</span>
                 </Link>
                 <Link href="/nhan-vat" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-indigo-500/15 group transition-colors">
                   <Users className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">Nhân Vật</span>
+                  <span className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">{t('nav.characters')}</span>
                 </Link>
               </div>
             )}
@@ -799,15 +799,15 @@ export default function LiturgicalHeader() {
               <div className="absolute top-full left-0 w-56 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl p-2 space-y-1 z-50 backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-200">
                 <Link href="/thu-vien" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-amber-500/15 group transition-colors">
                   <FileText className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-amber-400">Bài Viết &amp; Suy Niệm</span>
+                  <span className="font-bold text-xs text-slate-100 group-hover:text-amber-400">{t('nav.sub_articles')}</span>
                 </Link>
                 <Link href="/thu-vien/sach" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-indigo-500/15 group transition-colors">
                   <Library className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">Tủ Sách Điện Tử</span>
+                  <span className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">{t('nav.sub_books')}</span>
                 </Link>
                 <Link href="/thu-vien/tai-lieu" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-rose-500/15 group transition-colors">
                   <BookOpen className="w-4 h-4 text-rose-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-rose-400">Tài Liệu Giáo Án</span>
+                  <span className="font-bold text-xs text-slate-100 group-hover:text-rose-400">{t('nav.sub_docs')}</span>
                 </Link>
               </div>
             )}
@@ -845,27 +845,27 @@ export default function LiturgicalHeader() {
               <div className="absolute top-full left-0 w-56 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl p-2 space-y-1 z-50 backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-200">
                 <Link href="/dong-gop" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-amber-500/15 group transition-colors">
                   <Feather className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-amber-400">Sứ Mạng Đóng Góp</span>
+                  <span className="font-bold text-xs text-slate-100 group-hover:text-amber-400">{t('nav.sub_mission')}</span>
                 </Link>
                 <Link href="/tac-gia" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-sky-500/15 group transition-colors">
                   <Users className="w-4 h-4 text-sky-400 shrink-0" />
-                  <span className="font-bold text-xs text-sky-400">Đội Ngũ Tác Giả</span>
+                  <span className="font-bold text-xs text-sky-400">{t('nav.sub_authors')}</span>
                 </Link>
                 <Link href="/noi-dung-can-thiet" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-emerald-500/15 group transition-colors">
                   <ClipboardList className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-emerald-400">Đề Tài Nghiên Cứu</span>
+                  <span className="font-bold text-xs text-slate-100 group-hover:text-emerald-400">{t('nav.sub_topics')}</span>
                 </Link>
                 <Link href="/huong-dan-viet-bai" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-indigo-500/15 group transition-colors">
                   <BookOpen className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">Quy Chuẩn Soạn Thảo</span>
+                  <span className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">{t('nav.sub_guidelines')}</span>
                 </Link>
                 <Link href="/dieu-khoan-tac-gia" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-rose-500/15 group transition-colors">
                   <Scale className="w-4 h-4 text-rose-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-rose-400">Điều Khoản Tác Giả</span>
+                  <span className="font-bold text-xs text-slate-100 group-hover:text-rose-400">{t('nav.sub_author_terms')}</span>
                 </Link>
                 <Link href="/soan-bai" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 group transition-colors border border-amber-500/20">
                   <PenTool className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="font-bold text-xs font-black">Phòng Soạn Thảo</span>
+                  <span className="font-bold text-xs font-black">{t('nav.sub_studio')}</span>
                 </Link>
               </div>
             )}
@@ -1218,16 +1218,16 @@ export default function LiturgicalHeader() {
             {mobileExpandedGroup === 'kinh-thanh' && (
               <div className="pl-6 space-y-2 py-2 border-l-2 border-amber-500/30 ml-2">
                 <Link href="/kinh-thanh" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-amber-400">
-                  <BookOpen className="w-3.5 h-3.5 text-amber-400" /> {locale === 'en' ? 'Books (73 Canonical Books)' : (locale === 'la' ? 'Libri (73 Libri)' : 'Sách (73 Sách Thánh)')}
+                  <BookOpen className="w-3.5 h-3.5 text-amber-400" /> {t('nav.bible')} ({t('nav.sub_bible_desc')})
                 </Link>
                 <Link href="/ban-do" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-emerald-400">
-                  <MapPin className="w-3.5 h-3.5 text-emerald-400" /> {locale === 'en' ? 'Holy Land 3D Map' : (locale === 'la' ? 'Terra Sancta 3D' : 'Bản Đồ 3D Thánh Địa')}
+                  <MapPin className="w-3.5 h-3.5 text-emerald-400" /> {t('nav.map')}
                 </Link>
                 <Link href="/lich-su" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-purple-400">
-                  <Clock className="w-3.5 h-3.5 text-purple-400" /> {locale === 'en' ? 'Salvation History Timeline' : (locale === 'la' ? 'Historia Salutis' : 'Dòng Thời Gian Cứu Độ')}
+                  <Clock className="w-3.5 h-3.5 text-purple-400" /> {t('nav.timeline')}
                 </Link>
                 <Link href="/nhan-vat" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-indigo-400">
-                  <Users className="w-3.5 h-3.5 text-indigo-400" /> {locale === 'en' ? 'Biblical Figures' : (locale === 'la' ? 'Personae Biblicae' : 'Nhân Vật Kinh Thánh')}
+                  <Users className="w-3.5 h-3.5 text-indigo-400" /> {t('nav.characters')}
                 </Link>
               </div>
             )}
@@ -1253,13 +1253,13 @@ export default function LiturgicalHeader() {
             {mobileExpandedGroup === 'thu-vien' && (
               <div className="pl-6 space-y-2 py-2 border-l-2 border-indigo-500/30 ml-2">
                 <Link href="/thu-vien" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-amber-400">
-                  <FileText className="w-3.5 h-3.5 text-amber-400" /> {locale === 'en' ? 'Treatises & Meditations' : (locale === 'la' ? 'Tractatus & Meditationes' : 'Bài Viết & Suy Niệm')}
+                  <FileText className="w-3.5 h-3.5 text-amber-400" /> {t('nav.sub_articles')} ({t('nav.sub_articles_desc')})
                 </Link>
                 <Link href="/thu-vien/sach" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-indigo-400">
-                  <Library className="w-3.5 h-3.5 text-indigo-400" /> {locale === 'en' ? 'E-Books (PDF/EPUB)' : (locale === 'la' ? 'Libri Electronici' : 'Tủ Sách Điện Tử (PDF/EPUB)')}
+                  <Library className="w-3.5 h-3.5 text-indigo-400" /> {t('nav.sub_books')}
                 </Link>
                 <Link href="/thu-vien/tai-lieu" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-rose-400">
-                  <BookOpen className="w-3.5 h-3.5 text-rose-400" /> {locale === 'en' ? 'Documents & Catechesis' : (locale === 'la' ? 'Documenta & Catechesis' : 'Tài Liệu & Giáo Án')}
+                  <BookOpen className="w-3.5 h-3.5 text-rose-400" /> {t('nav.sub_docs')}
                 </Link>
               </div>
             )}
@@ -1285,22 +1285,22 @@ export default function LiturgicalHeader() {
             {mobileExpandedGroup === 'dong-gop' && (
               <div className="pl-6 space-y-2 py-2 border-l-2 border-amber-500/30 ml-2">
                 <Link href="/dong-gop" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-amber-400">
-                  <Feather className="w-3.5 h-3.5 text-amber-400" /> {locale === 'en' ? 'Contribution Mission' : (locale === 'la' ? 'Missio Collationis' : 'Sứ Mạng Đóng Góp')}
+                  <Feather className="w-3.5 h-3.5 text-amber-400" /> {t('nav.sub_mission')}
                 </Link>
                 <Link href="/tac-gia" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-sky-400">
-                  <Users className="w-3.5 h-3.5 text-sky-400" /> {locale === 'en' ? 'Authors Team' : (locale === 'la' ? 'Auctores' : 'Đội Ngũ Tác Giả')}
+                  <Users className="w-3.5 h-3.5 text-sky-400" /> {t('nav.sub_authors')}
                 </Link>
                 <Link href="/noi-dung-can-thiet" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-emerald-400">
-                  <ClipboardList className="w-3.5 h-3.5 text-emerald-400" /> {locale === 'en' ? 'Needed Research Topics' : (locale === 'la' ? 'Themata Necessaria' : 'Đề Tài Cần Nghiên Cứu')}
+                  <ClipboardList className="w-3.5 h-3.5 text-emerald-400" /> {t('nav.sub_topics')}
                 </Link>
                 <Link href="/huong-dan-viet-bai" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-indigo-400">
-                  <BookOpen className="w-3.5 h-3.5 text-indigo-400" /> {locale === 'en' ? 'Editorial Guidelines' : (locale === 'la' ? 'Normae Scripturae' : 'Quy Chuẩn Soạn Thảo')}
+                  <BookOpen className="w-3.5 h-3.5 text-indigo-400" /> {t('nav.sub_guidelines')}
                 </Link>
                 <Link href="/dieu-khoan-tac-gia" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-rose-400">
-                  <Scale className="w-3.5 h-3.5 text-rose-400" /> {t('footer.author_terms')}
+                  <Scale className="w-3.5 h-3.5 text-rose-400" /> {t('nav.sub_author_terms')}
                 </Link>
                 <Link href="/soan-bai" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-amber-400 font-bold hover:text-amber-300">
-                  <PenTool className="w-3.5 h-3.5 text-amber-400" /> {locale === 'en' ? 'Write Studio' : (locale === 'la' ? 'Scriptorium' : 'Phòng Soạn Thảo')}
+                  <PenTool className="w-3.5 h-3.5 text-amber-400" /> {t('nav.sub_studio')}
                 </Link>
               </div>
             )}
@@ -1318,7 +1318,7 @@ export default function LiturgicalHeader() {
 
           {/* 7. CỔNG GAME GIÁO LÝ */}
           <Link href="/game" className="block py-2.5 text-sm font-bold text-amber-400 hover:text-amber-300 flex items-center gap-2.5">
-            <Gamepad2 className="w-4 h-4 text-amber-400" /> {locale === 'en' ? 'Catechism Games' : (locale === 'la' ? 'Ludi Catechetici' : 'Cổng Game Giáo Lý')}
+            <Gamepad2 className="w-4 h-4 text-amber-400" /> {locale === 'en' ? 'Games' : (locale === 'la' ? 'Ludi' : 'Game')}
           </Link>
 
           {/* User Links in Drawer */}

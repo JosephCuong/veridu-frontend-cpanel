@@ -52,48 +52,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
     window.dispatchEvent(new CustomEvent('localeChange', { detail: newLocale }));
 
-    // URL Routing transition
-    const currentPath = pathname || '/';
-
-    // Synchronize googtrans cookie for automated body translation
-    try {
-      if (typeof window !== 'undefined') {
-        const hostname = window.location.hostname;
-        if (newLocale === 'en') {
-          document.cookie = 'googtrans=/vi/en; path=/;';
-          document.cookie = `googtrans=/vi/en; path=/; domain=.${hostname};`;
-        } else if (newLocale === 'la') {
-          document.cookie = 'googtrans=/vi/la; path=/;';
-          document.cookie = `googtrans=/vi/la; path=/; domain=.${hostname};`;
-        } else {
-          document.cookie = 'googtrans=; path=/; max-age=0;';
-          document.cookie = `googtrans=; path=/; domain=.${hostname}; max-age=0;`;
-          document.cookie = 'googtrans=/vi/vi; path=/;';
-        }
-      }
-    } catch {
-      // Ignore SSR cookie errors
-    }
-
-    if (newLocale === 'en') {
-      if (!currentPath.startsWith('/en')) {
-        const cleanPath = currentPath.replace(/^\/(la)/, '') || '/';
-        const target = cleanPath === '/' ? '/en' : `/en${cleanPath}`;
-        router.push(target);
-      }
-    } else if (newLocale === 'la') {
-      if (!currentPath.startsWith('/la')) {
-        const cleanPath = currentPath.replace(/^\/(en)/, '') || '/';
-        const target = cleanPath === '/' ? '/la' : `/la${cleanPath}`;
-        router.push(target);
-      }
-    } else {
-      // Return to Vietnamese (no prefix)
-      if (currentPath.startsWith('/en') || currentPath.startsWith('/la')) {
-        const viPath = currentPath.replace(/^\/(en|la)/, '') || '/';
-        router.push(viPath);
-      }
-    }
+    // Set in-place locale state without redirecting URL or reloading page
+    // This guarantees 100% layout and visual stability across all views.
   };
 
   const dictionary = useMemo(() => DICTIONARIES[locale] || viDictionary, [locale]);

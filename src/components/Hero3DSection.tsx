@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { 
   BookOpen, Compass, Clock, Award, PlayCircle, ArrowRight, MapPin
 } from 'lucide-react';
+import { useTranslation } from '@/context/LanguageContext';
 
 declare global {
   namespace JSX {
@@ -47,81 +48,83 @@ interface ThemeConfig {
   iconType: 'book' | 'compass' | 'clock' | 'award';
 }
 
-const THEMES: Record<string, ThemeConfig> = {
-  gold: {
-    id: 'gold',
-    name: 'Kinh Thánh 73 Sách',
-    subname: 'Bản dịch Cố LM. Nguyễn Thế Thuấn',
-    badge: 'Kinh Thánh Trọn Bộ 73 Sách',
-    innerColor: '#78350f',
-    midColor: '#451a03',
-    outerColor: '#020617',
-    glowColor: 'rgba(245, 158, 11, 0.25)',
-    accentText: 'from-amber-400 via-amber-300 to-yellow-500',
-    modelOrbit: '0deg 75deg 380%',
-    description: 'Nghiên cứu và suy niệm trọn bộ 73 Sách Cựu Ước & Tân Ước với bản dịch chuẩn xác, hệ thống chú giải thần học và đối chiếu câu chữ.',
-    ctaText: 'Đọc Kinh Thánh',
-    ctaLink: '/kinh-thanh',
-    iconType: 'book'
-  },
-  emerald: {
-    id: 'emerald',
-    name: 'Thánh Địa Khảo Cổ',
-    subname: 'Giêrusalem, Galilê & Đất Hứa',
-    badge: 'Khảo Cứu Địa Lý Thánh Địa',
-    innerColor: '#064e3b',
-    midColor: '#022c22',
-    outerColor: '#020617',
-    glowColor: 'rgba(16, 185, 129, 0.25)',
-    accentText: 'from-emerald-400 via-teal-300 to-emerald-500',
-    modelOrbit: '45deg 65deg 380%',
-    description: 'Khám phá các địa danh và di tích khảo cổ Thánh Kinh qua không gian 3D tương tác tại Giêrusalem, Đồi Sọ Golgotha và Biển Hồ Galilê.',
-    ctaText: 'Khám Phá Bản Đồ',
-    ctaLink: '/ban-do',
-    iconType: 'compass'
-  },
-  purple: {
-    id: 'purple',
-    name: 'Lịch Sử Cứu Độ',
-    subname: 'Từ Khởi Nguyên đến Phục Sinh',
-    badge: 'Tiến Trình Lịch Sử Cứu Độ',
-    innerColor: '#4c1d95',
-    midColor: '#2e1065',
-    outerColor: '#020617',
-    glowColor: 'rgba(168, 85, 247, 0.25)',
-    accentText: 'from-purple-400 via-indigo-300 to-purple-500',
-    modelOrbit: '-45deg 80deg 380%',
-    description: 'Hành trình 4000 năm Lịch sử Cứu độ: từ Giao ước thời các Tổ phụ, thời Ngôn sứ đến mầu nhiệm Nhập Thể và Phục Sinh cứu độ muôn dân.',
-    ctaText: 'Xem Dòng Thời Gian',
-    ctaLink: '/lich-su',
-    iconType: 'clock'
-  },
-  crimson: {
-    id: 'crimson',
-    name: 'Đấu Trường Giáo Lý',
-    subname: 'Học hỏi Giáo lý & Đố vui Đức Tin',
-    badge: 'Đấu Trường Giáo Lý & Kinh Thánh',
-    innerColor: '#881337',
-    midColor: '#450a0a',
-    outerColor: '#020617',
-    glowColor: 'rgba(244, 63, 94, 0.25)',
-    accentText: 'from-rose-400 via-red-300 to-rose-500',
-    modelOrbit: '90deg 90deg 380%',
-    description: 'Không gian thi đua kiến thức Giáo lý Hội Thánh và Kinh Thánh với phòng thi trực tiếp cùng cộng đoàn, tích lũy điểm thưởng và vinh danh.',
-    ctaText: 'Vào Đấu Trường',
-    ctaLink: '/quiz',
-    iconType: 'award'
-  }
-};
-
 export default function Hero3DSection() {
+  const { t } = useTranslation();
   const [activeTheme, setActiveTheme] = useState<string>('gold');
   const auraRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
 
-  const currentConfig = THEMES[activeTheme] || THEMES.gold;
+  // Dynamic Theme Definitions using Liturgical Theological Dictionary
+  const themes: Record<string, ThemeConfig> = useMemo(() => ({
+    gold: {
+      id: 'gold',
+      name: t('home.theme_bible_name', 'Kinh Thánh 73 Sách'),
+      subname: t('home.theme_bible_sub', 'Bản dịch Cố LM. Nguyễn Thế Thuấn'),
+      badge: t('home.theme_bible_badge', 'Kinh Thánh Trọn Bộ 73 Sách'),
+      innerColor: '#78350f',
+      midColor: '#451a03',
+      outerColor: '#020617',
+      glowColor: 'rgba(245, 158, 11, 0.25)',
+      accentText: 'from-amber-400 via-amber-300 to-yellow-500',
+      modelOrbit: '0deg 75deg 380%',
+      description: t('home.theme_bible_desc', 'Nghiên cứu và suy niệm trọn bộ 73 Sách Cựu Ước & Tân Ước với bản dịch chuẩn xác, hệ thống chú giải thần học và đối chiếu câu chữ.'),
+      ctaText: t('home.theme_bible_cta', 'Đọc Kinh Thánh'),
+      ctaLink: '/kinh-thanh',
+      iconType: 'book'
+    },
+    emerald: {
+      id: 'emerald',
+      name: t('home.theme_map_name', 'Thánh Địa Khảo Cổ'),
+      subname: t('home.theme_map_sub', 'Giêrusalem, Galilê & Đất Hứa'),
+      badge: t('home.theme_map_badge', 'Khảo Cứu Địa Lý Thánh Địa'),
+      innerColor: '#064e3b',
+      midColor: '#022c22',
+      outerColor: '#020617',
+      glowColor: 'rgba(16, 185, 129, 0.25)',
+      accentText: 'from-emerald-400 via-teal-300 to-emerald-500',
+      modelOrbit: '45deg 65deg 380%',
+      description: t('home.theme_map_desc', 'Khám phá các địa danh và di tích khảo cổ Thánh Kinh qua không gian 3D tương tác tại Giêrusalem, Đồi Sọ Golgotha và Biển Hồ Galilê.'),
+      ctaText: t('home.theme_map_cta', 'Khám Phá Bản Đồ'),
+      ctaLink: '/ban-do',
+      iconType: 'compass'
+    },
+    purple: {
+      id: 'purple',
+      name: t('home.theme_timeline_name', 'Lịch Sử Cứu Độ'),
+      subname: t('home.theme_timeline_sub', 'Từ Khởi Nguyên đến Phục Sinh'),
+      badge: t('home.theme_timeline_badge', 'Tiến Trình Lịch Sử Cứu Độ'),
+      innerColor: '#4c1d95',
+      midColor: '#2e1065',
+      outerColor: '#020617',
+      glowColor: 'rgba(168, 85, 247, 0.25)',
+      accentText: 'from-purple-400 via-indigo-300 to-purple-500',
+      modelOrbit: '-45deg 80deg 380%',
+      description: t('home.theme_timeline_desc', 'Hành trình 4000 năm Lịch sử Cứu độ: từ Giao ước thời các Tổ phụ, thời Ngôn sứ đến mầu nhiệm Nhập Thể và Phục Sinh cứu độ muôn dân.'),
+      ctaText: t('home.theme_timeline_cta', 'Xem Dòng Thời Gian'),
+      ctaLink: '/lich-su',
+      iconType: 'clock'
+    },
+    crimson: {
+      id: 'crimson',
+      name: t('home.theme_quiz_name', 'Đấu Trường Giáo Lý'),
+      subname: t('home.theme_quiz_sub', 'Học hỏi Giáo lý & Đố vui Đức Tin'),
+      badge: t('home.theme_quiz_badge', 'Đấu Trường Giáo Lý & Kinh Thánh'),
+      innerColor: '#881337',
+      midColor: '#450a0a',
+      outerColor: '#020617',
+      glowColor: 'rgba(244, 63, 94, 0.25)',
+      accentText: 'from-rose-400 via-red-300 to-rose-500',
+      modelOrbit: '90deg 90deg 380%',
+      description: t('home.theme_quiz_desc', 'Không gian thi đua kiến thức Giáo lý Hội Thánh và Kinh Thánh với phòng thi trực tiếp cùng cộng đoàn, tích lũy điểm thưởng và vinh danh.'),
+      ctaText: t('home.theme_quiz_cta', 'Vào Đấu Trường'),
+      ctaLink: '/quiz',
+      iconType: 'award'
+    }
+  }), [t]);
+
+  const currentConfig = themes[activeTheme] || themes.gold;
 
   // High-Performance 3D Mouse Parallax & Tilt (0 React re-renders via RAF & Direct DOM ref)
   useEffect(() => {
@@ -178,6 +181,7 @@ export default function Hero3DSection() {
     >
       {/* 🌟 Radiant Holy Candlelight Background Ambient Glow */}
       <div 
+        ref={auraRef}
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[120px] pointer-events-none transition-colors duration-700 z-0 will-change-transform"
         style={{ backgroundColor: currentConfig.glowColor, transform: 'translate3d(-50%, -50%, 0)' }}
       />
@@ -197,9 +201,9 @@ export default function Hero3DSection() {
           </div>
 
           <h1 className="font-serif font-bold text-4xl sm:text-6xl lg:text-7xl tracking-tight text-white leading-tight">
-            <span className="text-slate-100">Học Kinh Thánh</span> <br className="hidden sm:inline" />
+            <span className="text-slate-100">{t('home.hero_title_1', 'Học Kinh Thánh')}</span> <br className="hidden sm:inline" />
             <span className={`text-transparent bg-clip-text bg-gradient-to-r ${currentConfig.accentText}`}>
-              &amp; Sống Đức Tin
+              {t('home.hero_title_2', '& Sống Đức Tin')}
             </span>
           </h1>
 
@@ -221,7 +225,7 @@ export default function Hero3DSection() {
               href="/khoa-hoc"
               className="px-7 py-4 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-serif font-bold text-sm border border-white/20 backdrop-blur-md transition-all hover:scale-105 flex items-center gap-2"
             >
-              <span>Xem Các Khóa Học</span>
+              <span>{t('home.view_courses_btn', 'Xem Các Khóa Học')}</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -232,7 +236,6 @@ export default function Hero3DSection() {
           
           {/* Glassmorphic Aura Ring Behind Sacred Card with GPU Transform Ref */}
           <div 
-            ref={auraRef}
             className="absolute w-72 h-72 sm:w-96 sm:h-96 rounded-full border border-amber-400/20 bg-amber-500/10 backdrop-blur-2xl shadow-[0_0_80px_rgba(245,158,11,0.25)] pointer-events-none will-change-transform"
             style={{ transform: 'translate3d(0, 0, 0)' }}
           />
@@ -252,7 +255,7 @@ export default function Hero3DSection() {
             {/* Card Header: Latin Sacred Monogram */}
             <div className="relative z-10 pt-1 space-y-1">
               <div className="text-[10px] tracking-[0.25em] font-serif font-black text-amber-300/90 uppercase drop-shadow-sm">
-                ✦ VERIDU SACRA SCRIPTURA ✦
+                {t('home.card_latin_header', '✦ VERIDU SACRA SCRIPTURA ✦')}
               </div>
               <div className="text-[11px] font-sans text-slate-300/80 tracking-wider">
                 {currentConfig.badge}
@@ -298,7 +301,7 @@ export default function Hero3DSection() {
                 href={currentConfig.ctaLink} 
                 className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 cursor-pointer"
               >
-                <span>Mở Khảo Cứu</span>
+                <span>{t('home.card_open_study', 'Mở Khảo Cứu')}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -308,11 +311,11 @@ export default function Hero3DSection() {
         {/* RIGHT COLUMN: 4-THEME SACRED CATHOLIC CARDS (100% SVG Icons) */}
         <div className="lg:col-span-3 space-y-3 flex flex-col justify-center">
           <span className="text-xs font-semibold tracking-wider text-amber-200/90 text-center lg:text-left block font-serif">
-            Hành Trình Khám Phá:
+            {t('home.hero_explore_label', 'Hành Trình Khám Phá:')}
           </span>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
-            {Object.values(THEMES).map((theme) => {
+            {Object.values(themes).map((theme) => {
               const isActive = activeTheme === theme.id;
               return (
                 <div
@@ -358,4 +361,3 @@ export default function Hero3DSection() {
     </section>
   );
 }
-
