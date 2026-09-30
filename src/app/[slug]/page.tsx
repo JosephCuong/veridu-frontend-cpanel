@@ -425,8 +425,13 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
         <div className="flex flex-col lg:flex-row gap-8">
           <main className="flex-1 w-full max-w-[850px] mx-auto space-y-8">
             <ArticleLanguageBanner 
+              articleId={article.id}
+              articleSlug={resolvedParams.slug}
+              articleTitle={cleanTitle}
               hasManualEnglish={!!(article.content_en && article.content_en.trim().length > 0)} 
               titleEn={article.title_en} 
+              contentEn={article.content_en}
+              excerptEn={article.excerpt_en}
             />
             <article className="p-6 sm:p-12 rounded-3xl glass-panel space-y-8 relative overflow-hidden veridu-scholarly-article">
               <header className="border-b border-slate-200/50 dark:border-white/10 pb-8 text-center sm:text-left space-y-4 relative z-10">

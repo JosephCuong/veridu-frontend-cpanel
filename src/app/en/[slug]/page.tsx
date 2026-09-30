@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getLibraryArticleBySlug, fetchArticleAuthorProfile } from '@/lib/api';
 import { ArrowLeft, Tag, Calendar, User, Globe, Share2 } from 'lucide-react';
 import VisualArticleRenderer from '@/components/VisualArticleRenderer';
+import ArticleLanguageBanner from '@/components/ArticleLanguageBanner';
 
 export const dynamic = 'force-dynamic';
 
@@ -93,23 +94,16 @@ export default async function EnglishArticlePage({
           </div>
         </div>
 
-        {/* TRANSLATION NOTICE BANNER */}
-        {!isTranslated && (
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Globe className="w-4 h-4 shrink-0" />
-              <span>
-                An official English translation for this treatise is currently in preparation by the scholarly editorial team. Displaying the original text.
-              </span>
-            </div>
-            <Link
-              href={`/${resolvedParams.slug}`}
-              className="underline font-bold shrink-0 ml-3"
-            >
-              View in Vietnamese &rarr;
-            </Link>
-          </div>
-        )}
+        {/* BILINGUAL / TRANSLATION ACTION BANNER */}
+        <ArticleLanguageBanner 
+          articleId={article.id}
+          articleSlug={resolvedParams.slug}
+          articleTitle={article.title}
+          hasManualEnglish={isTranslated}
+          titleEn={article.title_en}
+          contentEn={article.content_en}
+          excerptEn={article.excerpt_en}
+        />
 
         {/* ARTICLE HEADER */}
         <header className="space-y-4 border-b border-[var(--border-card)] pb-8">

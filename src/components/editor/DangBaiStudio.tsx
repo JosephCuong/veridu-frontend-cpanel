@@ -54,7 +54,8 @@ import {
   Radio,
   Volume2,
   Columns,
-  Library
+  Library,
+  Feather
 } from 'lucide-react';
 import { getStoredUser, UserProfile } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
@@ -154,6 +155,11 @@ function DangBaiContent() {
   const [isReadingTimeManual, setIsReadingTimeManual] = useState(false);
   const [contentHtml, setContentHtml] = useState<string>(editId ? '' : DEFAULT_INITIAL_CONTENT);
   const [existingStatus, setExistingStatus] = useState<string>('published');
+
+  // English Translation States (Bilingual Editing)
+  const [titleEn, setTitleEn] = useState('');
+  const [excerptEn, setExcerptEn] = useState('');
+  const [contentEn, setContentEn] = useState('');
 
   // Media (Audio Podcast & Video Embed) State
   const [audioUrl, setAudioUrl] = useState('');
@@ -321,6 +327,9 @@ function DangBaiContent() {
           setExistingStatus(p.status || 'published');
           setAudioUrl(p.audio_url || '');
           setVideoUrl(p.video_url || '');
+          setTitleEn(p.title_en || '');
+          setExcerptEn(p.excerpt_en || '');
+          setContentEn(p.content_en || '');
 
           // Check if article content has local audio path
           const localAudioMatch = html.match(/<(?:source|audio)\s+[^>]*?src=["'](audio\/[^"']+)["']/i);
@@ -1361,7 +1370,11 @@ function DangBaiContent() {
         reading_time: readingTime.trim() || calculateReadingTime(finalHtml),
         published_at: publishedDate ? new Date(publishedDate).toISOString() : new Date().toISOString(),
         audio_url: audioUrl ? audioUrl.trim() : null,
-        video_url: videoUrl ? videoUrl.trim() : null
+        video_url: videoUrl ? videoUrl.trim() : null,
+        title_en: titleEn.trim() || null,
+        excerpt_en: excerptEn.trim() || null,
+        content_en: contentEn.trim() || null,
+        available_languages: (titleEn.trim() || contentEn.trim()) ? ['vi', 'en'] : ['vi']
       };
 
       if (isEdit) {
@@ -1596,6 +1609,60 @@ function DangBaiContent() {
             placeholder="Tóm tắt ngắn gọn nội dung cốt lõi của bài viết để hiển thị trên thẻ bài và kết quả tìm kiếm..."
             className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs outline-none focus:border-amber-500 resize-y"
           />
+        </div>
+
+        {/* BILINGUAL / SCHOLARLY ENGLISH TRANSLATION */}
+        <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="font-bold text-[var(--text-main)] flex items-center gap-1.5 text-xs text-amber-500">
+              <Feather className="w-3.5 h-3.5" />
+              <span>Bản Dịch Tiếng Anh (English)</span>
+            </span>
+            {titleEn.trim() && (
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">
+                ✓ Đã có
+              </span>
+            )}
+          </div>
+
+          <div>
+            <label className="font-bold text-[var(--text-muted)] block mb-1 text-[11px]">
+              Tiêu Đề Tiếng Anh (English Title)
+            </label>
+            <input
+              type="text"
+              value={titleEn}
+              onChange={(e) => setTitleEn(e.target.value)}
+              placeholder="e.g. Theological Foundations of Christian Faith"
+              className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs outline-none focus:border-amber-500"
+            />
+          </div>
+
+          <div>
+            <label className="font-bold text-[var(--text-muted)] block mb-1 text-[11px]">
+              Tóm Tắt Tiếng Anh (English Excerpt)
+            </label>
+            <textarea
+              rows={2}
+              value={excerptEn}
+              onChange={(e) => setExcerptEn(e.target.value)}
+              placeholder="Brief English summary for international portal..."
+              className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs outline-none focus:border-amber-500 resize-y"
+            />
+          </div>
+
+          <div>
+            <label className="font-bold text-[var(--text-muted)] block mb-1 text-[11px]">
+              Nội Dung Tiếng Anh (English Content)
+            </label>
+            <textarea
+              rows={5}
+              value={contentEn}
+              onChange={(e) => setContentEn(e.target.value)}
+              placeholder="Dán hoặc soạn thảo bản dịch tiếng Anh (HTML / Markdown)..."
+              className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] font-mono text-[11px] outline-none focus:border-amber-500 resize-y"
+            />
+          </div>
         </div>
 
         {/* MEDIA SECTION: PODCAST AUDIO & VIDEO */}

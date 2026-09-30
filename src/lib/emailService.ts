@@ -283,3 +283,76 @@ export async function sendAuthorApprovalNotice(app: AuthorApplicationEmailData) 
     return { success: false, error: error.message };
   }
 }
+
+export interface TranslationSubmissionEmailData {
+  articleId?: number | string;
+  articleSlug?: string;
+  articleTitleVi: string;
+  contributorName: string;
+  contributorEmail: string;
+  titleEn: string;
+  contentEn: string;
+  notes?: string;
+}
+
+/**
+ * Gửi email cảnh báo cho Ban Biên Tập khi có học giả/độc giả đóng góp bản dịch tiếng Anh
+ */
+export async function sendAdminNewTranslationAlert(sub: TranslationSubmissionEmailData) {
+  try {
+    const transporter = getTransporter();
+    const adminEmail = process.env.GMAIL_USER || 'veridu.net@gmail.com';
+
+    if (!transporter) {
+      console.log(`[EmailService - MOCK] Đã có bản dịch mới từ: ${sub.contributorName} (${sub.contributorEmail}) cho bài: ${sub.articleTitleVi}`);
+      return { success: false, reason: 'GMAIL_APP_PASSWORD_MISSING' };
+    }
+
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="vi">
+    <head><meta charset="utf-8"/></head>
+    <body style="background:#090d16; color:#e2e8f0; font-family:-apple-system,BlinkMacSystemFont,sans-serif; padding:24px;">
+      <div style="max-width:600px; margin:0 auto; background:#0f172a; border:1px solid #334155; border-radius:16px; padding:24px; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+        <h2 style="color:#f59e0b; margin-top:0; font-family:serif;">📜 Đề Xuất Bản Dịch Tiếng Anh Mới</h2>
+        <p style="color:#cbd5e1; font-size:14px; line-height:1.6;">
+          Học giả / độc giả <strong>${sub.contributorName}</strong> (<a href="mailto:${sub.contributorEmail}" style="color:#38bdf8;">${sub.contributorEmail}</a>) vừa nộp đề xuất bản dịch tiếng Anh:
+        </p>
+        <div style="background:#1e293b; padding:16px; border-radius:12px; margin:16px 0; border-left:4px solid #f59e0b;">
+          <p style="margin:0 0 6px 0; color:#94a3b8; font-size:11px; text-transform:uppercase; font-weight:bold;">BÀI VIẾT GỐC TIẾNG VIỆT:</p>
+          <p style="margin:0; font-weight:bold; color:#f8fafc; font-size:15px;">${sub.articleTitleVi}</p>
+        </div>
+        <div style="background:#1e293b; padding:16px; border-radius:12px; margin:16px 0; border-left:4px solid #10b981;">
+          <p style="margin:0 0 6px 0; color:#94a3b8; font-size:11px; text-transform:uppercase; font-weight:bold;">TIÊU ĐỀ TIẾNG ANH ĐỀ XUẤT:</p>
+          <p style="margin:0 0 10px 0; font-weight:bold; color:#f8fafc; font-size:15px;">${sub.titleEn}</p>
+          ${sub.notes ? `<p style="margin:8px 0 0 0; color:#cbd5e1; font-size:13px; font-style:italic; border-top:1px solid #334155; pt:8px;">“${sub.notes}”</p>` : ''}
+        </div>
+        <div style="background:#0b1120; padding:16px; border-radius:12px; margin:16px 0; max-height:220px; overflow-y:auto; font-size:13px; color:#cbd5e1; line-height:1.6; border:1px solid #1e293b;">
+          <p style="margin:0 0 6px 0; color:#94a3b8; font-size:11px; text-transform:uppercase; font-weight:bold;">TRÍCH ĐOẠN NỘI DUNG DỊCH:</p>
+          <div>${sub.contentEn.substring(0, 500)}${sub.contentEn.length > 500 ? '...' : ''}</div>
+        </div>
+        <div style="text-align:center; margin-top:24px;">
+          <a href="https://www.cruxveritatis.org/${sub.articleSlug || ''}" style="background:#f59e0b; color:#020617; padding:12px 24px; border-radius:10px; text-decoration:none; font-weight:bold; display:inline-block; font-size:14px;">
+            ✍️ Vào Trang Bài Viết Để Duyệt Bản Dịch
+          </a>
+        </div>
+      </div>
+    </body>
+    </html>
+    `;
+
+    const info = await transporter.sendMail({
+      from: `"Cổng Học Vụ VERIDU" <${adminEmail}>`,
+      to: adminEmail,
+      subject: `[VERIDU - DỊCH THUẬT] 📜 Đề xuất bản dịch: ${sub.titleEn}`,
+      html: htmlContent
+    });
+
+    console.log(`[EmailService] Đã gửi thông báo bản dịch mới tới ${adminEmail}:`, info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error: any) {
+    console.error(`[EmailService] Lỗi khi gửi thông báo bản dịch mới:`, error);
+    return { success: false, error: error.message };
+  }
+}
+
