@@ -1,9 +1,10 @@
 'use client';
-
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { normalizeAndSyncHtml } from '@/lib/htmlProcessor';
 import { X } from 'lucide-react';
 import ScriptureQuickPeekModal, { ScripturePeekTarget } from '@/components/ScriptureQuickPeekModal';
+import { parseSingleCitation } from '@/lib/bibleReferenceParser';
 
 interface VisualArticleRendererProps {
   contentHtml: string;
@@ -416,13 +417,22 @@ export default function VisualArticleRenderer({
 
         if (book && !isNaN(chapter)) {
           e.preventDefault();
+          const rect = scriptureLink.getBoundingClientRect();
           setScriptureTarget({
             bookSlug: book,
             bookName,
             chapter,
             verseStart: verse,
             verseEnd,
-            rawRef
+            rawRef,
+            anchorRect: {
+              top: rect.top,
+              bottom: rect.bottom,
+              left: rect.left,
+              right: rect.right,
+              width: rect.width,
+              height: rect.height,
+            }
           });
           setIsScriptureModalOpen(true);
           return;
@@ -437,14 +447,58 @@ export default function VisualArticleRenderer({
         const chapter = parseInt(bibleHrefMatch[2], 10);
         const hashMatch = href.match(/#v(?:erse-?)?(\d+)/i);
         const verse = hashMatch ? parseInt(hashMatch[1], 10) : 1;
+        const rect = link.getBoundingClientRect();
         setScriptureTarget({
           bookSlug,
           chapter,
           verseStart: verse,
-          rawRef: link.textContent?.trim() || `${bookSlug} ${chapter}`
+          rawRef: link.textContent?.trim() || `${bookSlug} ${chapter}`,
+          anchorRect: {
+            top: rect.top,
+            bottom: rect.bottom,
+            left: rect.left,
+            right: rect.right,
+            width: rect.width,
+            height: rect.height,
+          }
         });
         setIsScriptureModalOpen(true);
         return;
+      }
+
+      // D2. Any link containing /kinh-thanh or having scripture badges (e.g. "Mt 21:11-12", "Lc 8:1-3", "Ga 19:25")
+      if (href.includes('/kinh-thanh') || link.classList.contains('scripture-link-badge') || link.classList.contains('scripture-ref-link')) {
+        const textToParse = link.textContent?.trim() || '';
+        const parsed = parseSingleCitation(textToParse);
+        if (parsed) {
+          e.preventDefault();
+          let verseStart = 1;
+          let verseEnd = 1;
+          if (parsed.verseRange) {
+            const vParts = parsed.verseRange.split(/[\-–—]/);
+            verseStart = parseInt(vParts[0], 10) || 1;
+            verseEnd = vParts[1] ? (parseInt(vParts[1], 10) || verseStart) : verseStart;
+          }
+          const rect = link.getBoundingClientRect();
+          setScriptureTarget({
+            bookSlug: parsed.bookSlug,
+            bookName: parsed.bookName,
+            chapter: parsed.chapter,
+            verseStart,
+            verseEnd,
+            rawRef: textToParse || parsed.label,
+            anchorRect: {
+              top: rect.top,
+              bottom: rect.bottom,
+              left: rect.left,
+              right: rect.right,
+              width: rect.width,
+              height: rect.height,
+            }
+          });
+          setIsScriptureModalOpen(true);
+          return;
+        }
       }
 
       // E. Scholarly Anchors (#chu-thich, #tham-chieu, #bang-thuat-ngu, #thu-muc-tai-lieu)
@@ -582,7 +636,7 @@ export default function VisualArticleRenderer({
       )}
 
       {/* 🖼️ GLASSMORPHIC IMAGE LIGHTBOX MODAL */}
-      {lightboxSrc && (
+      {lightboxSrc && typeof document !== 'undefined' && createPortal(
         <div 
           className="fixed inset-0 z-[9999] bg-slate-950/90 backdrop-blur-2xl flex items-center justify-center p-4 sm:p-8 animate-in fade-in"
           onClick={() => setLightboxSrc(null)}
@@ -617,7 +671,8 @@ export default function VisualArticleRenderer({
               </p>
             ) : null}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* 📖 STAINED-GLASS SCRIPTURE QUICK PEEK MODAL */}
