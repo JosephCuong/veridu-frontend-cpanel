@@ -55,7 +55,9 @@ import {
   Volume2,
   Columns,
   Library,
-  Feather
+  Feather,
+  Copy,
+  Globe
 } from 'lucide-react';
 import { getStoredUser, UserProfile } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
@@ -160,6 +162,7 @@ function DangBaiContent() {
   const [titleEn, setTitleEn] = useState('');
   const [excerptEn, setExcerptEn] = useState('');
   const [contentEn, setContentEn] = useState('');
+  const [editingLang, setEditingLang] = useState<'vi' | 'en'>('vi');
 
   // Media (Audio Podcast & Video Embed) State
   const [audioUrl, setAudioUrl] = useState('');
@@ -180,15 +183,43 @@ function DangBaiContent() {
 
   // UI Studio Controls: 'visual' (Live Visual Canvas WYSIWYG) | 'code' (HTML Code Editor) | 'preview' (Reader View)
   const [activeTab, setActiveTab] = useState<'visual' | 'code' | 'preview'>('visual');
+  
   // Seamless Bi-directional Sync between Visual Canvas and Code Editor
   const switchTab = (newTab: 'visual' | 'code' | 'preview') => {
     if (activeTab === 'visual' && visualCanvasRef.current) {
       const currentCanvasHtml = visualCanvasRef.current.innerHTML;
-      setContentHtml(currentCanvasHtml);
+      if (editingLang === 'en') {
+        setContentEn(currentCanvasHtml);
+      } else {
+        setContentHtml(currentCanvasHtml);
+      }
     } else if (activeTab === 'code' && visualCanvasRef.current) {
-      visualCanvasRef.current.innerHTML = contentHtml;
+      visualCanvasRef.current.innerHTML = editingLang === 'en' ? contentEn : contentHtml;
     }
     setActiveTab(newTab);
+  };
+
+  // Switch Active Editing Language between Vietnamese and English
+  const switchEditingLang = (newLang: 'vi' | 'en') => {
+    if (newLang === editingLang) return;
+
+    // Save current active DOM content before switching
+    if (activeTab === 'visual' && visualCanvasRef.current) {
+      const currentHtml = visualCanvasRef.current.innerHTML;
+      if (editingLang === 'vi') {
+        setContentHtml(currentHtml);
+      } else {
+        setContentEn(currentHtml);
+      }
+    }
+
+    setEditingLang(newLang);
+
+    // Load target language into visual canvas if mounted
+    if (visualCanvasRef.current) {
+      const targetHtml = newLang === 'en' ? contentEn : contentHtml;
+      visualCanvasRef.current.innerHTML = targetHtml || '';
+    }
   };
 
   // Studio 3-Column Panels State
@@ -200,13 +231,14 @@ function DangBaiContent() {
   const [canvasDevice, setCanvasDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [analysisNotice, setAnalysisNotice] = useState<string | null>(null);
 
-  // Dynamic Document Outline (Headings Extractor for Column 3)
+  // Dynamic Document Outline (Headings Extractor for Column 3) - Tracks Active Language
+  const currentActiveContent = editingLang === 'en' ? contentEn : contentHtml;
   const documentHeadings = useMemo(() => {
-    if (!contentHtml) return [];
+    if (!currentActiveContent) return [];
     try {
       if (typeof window !== 'undefined') {
         const parser = new DOMParser();
-        const doc = parser.parseFromString(contentHtml, 'text/html');
+        const doc = parser.parseFromString(currentActiveContent, 'text/html');
         const nodes = doc.querySelectorAll('h1, h2, h3, h4');
         const list: { level: number; text: string; id: string }[] = [];
         nodes.forEach((n, idx) => {
@@ -225,7 +257,7 @@ function DangBaiContent() {
     } catch {
       return [];
     }
-  }, [contentHtml]);
+  }, [currentActiveContent]);
 
   const scrollToHeading = (text: string) => {
     if (!visualCanvasRef.current) return;
@@ -272,6 +304,7 @@ function DangBaiContent() {
 
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const englishFileInputRef = useRef<HTMLInputElement>(null);
   const visualCanvasRef = useRef<HTMLDivElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const isUpdatingDomFromState = useRef(false);
@@ -383,26 +416,31 @@ function DangBaiContent() {
       .finally(() => setIsLoadingPost(false));
   }, [editId]);
 
-  // Sync contentHtml to visual canvas when switching tabs or when contentHtml changes externally
+  // Sync active language content to visual canvas when switching tabs or when content changes externally
   useEffect(() => {
     if (activeTab === 'visual' && visualCanvasRef.current) {
-      if (visualCanvasRef.current.innerHTML !== contentHtml && !isUpdatingDomFromState.current) {
-        visualCanvasRef.current.innerHTML = contentHtml || '';
+      const targetContent = editingLang === 'en' ? contentEn : contentHtml;
+      if (visualCanvasRef.current.innerHTML !== targetContent && !isUpdatingDomFromState.current) {
+        visualCanvasRef.current.innerHTML = targetContent || '';
       }
     }
-  }, [activeTab, contentHtml]);
+  }, [activeTab, contentHtml, contentEn, editingLang]);
 
-  // Sync DOM changes back to contentHtml state
+  // Sync DOM changes back to active language state
   const handleCanvasInput = useCallback(() => {
     if (visualCanvasRef.current) {
       isUpdatingDomFromState.current = true;
       const currentInnerHtml = visualCanvasRef.current.innerHTML;
-      setContentHtml(currentInnerHtml);
+      if (editingLang === 'en') {
+        setContentEn(currentInnerHtml);
+      } else {
+        setContentHtml(currentInnerHtml);
+      }
       setTimeout(() => {
         isUpdatingDomFromState.current = false;
       }, 50);
     }
-  }, []);
+  }, [editingLang]);
 
   const handleTitleChange = (val: string) => {
     setTitle(val);
@@ -928,10 +966,18 @@ function DangBaiContent() {
       handleCanvasInput();
     } else {
       // In code mode or preview mode: append or update state directly
-      const newHtml = contentHtml ? `${contentHtml}\n\n${htmlSnippet}` : htmlSnippet;
-      setContentHtml(newHtml);
-      if (visualCanvasRef.current) {
-        visualCanvasRef.current.innerHTML = newHtml;
+      if (editingLang === 'en') {
+        const newHtml = contentEn ? `${contentEn}\n\n${htmlSnippet}` : htmlSnippet;
+        setContentEn(newHtml);
+        if (visualCanvasRef.current) {
+          visualCanvasRef.current.innerHTML = newHtml;
+        }
+      } else {
+        const newHtml = contentHtml ? `${contentHtml}\n\n${htmlSnippet}` : htmlSnippet;
+        setContentHtml(newHtml);
+        if (visualCanvasRef.current) {
+          visualCanvasRef.current.innerHTML = newHtml;
+        }
       }
     }
 
@@ -1281,14 +1327,135 @@ function DangBaiContent() {
     setTimeout(() => setMessage(null), 4000);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Check if filename indicates an English translation
+  const isEnglishFileName = (name: string): boolean => {
+    const lower = name.toLowerCase();
+    return (
+      lower.includes('-en') ||
+      lower.includes('_en') ||
+      lower.includes('.en.') ||
+      lower.includes('english') ||
+      lower.includes('tieng-anh') ||
+      lower.includes('tienganh') ||
+      lower.endsWith('_en.html') ||
+      lower.endsWith('-en.html')
+    );
+  };
+
+  // Process Uploaded English HTML File (Bilingual Translation Ingestion)
+  const processEnglishHtmlFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const rawText = event.target?.result as string;
+      if (!rawText || !rawText.trim()) {
+        setMessage({ type: 'error', text: 'Tệp tiếng Anh tải lên rỗng hoặc không hợp lệ.' });
+        return;
+      }
+
+      // 1. Auto-extract English Title
+      const extractedTitle = extractTitleFromHtml(rawText);
+      if (extractedTitle) {
+        setTitleEn(extractedTitle);
+      }
+
+      // 2. Auto-extract English Excerpt
+      const extractedDesc = extractExcerptFromHtml(rawText);
+      if (extractedDesc) {
+        setExcerptEn(extractedDesc);
+      }
+
+      // 3. Clean HTML & Load into contentEn
+      const cleanHtml = normalizeAndSyncHtml(rawText);
+      setContentEn(cleanHtml);
+
+      if (editingLang === 'en' && visualCanvasRef.current) {
+        visualCanvasRef.current.innerHTML = cleanHtml;
+      }
+
+      setMessage({ 
+        type: 'success', 
+        text: `Đã nạp thành công bản dịch Tiếng Anh: "${file.name}" (${(file.size / 1024).toFixed(1)} KB)!` 
+      });
+      setTimeout(() => setMessage(null), 4000);
+    };
+
+    reader.readAsText(file);
+  };
+
+  const handleEnglishFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    processHtmlFile(file);
+    processEnglishHtmlFile(file);
     e.target.value = '';
   };
 
-  // Drag and Drop Handlers
+  // 1-Click Clone 11-Block Structure from Vietnamese to English
+  const handleCloneViStructure = () => {
+    let currentViHtml = contentHtml;
+    if (editingLang === 'vi' && visualCanvasRef.current) {
+      currentViHtml = visualCanvasRef.current.innerHTML;
+      setContentHtml(currentViHtml);
+    }
+
+    if (!currentViHtml.trim()) {
+      setMessage({ type: 'error', text: 'Chưa có nội dung tiếng Việt để sao chép cấu trúc!' });
+      return;
+    }
+
+    if (contentEn.trim()) {
+      const confirmReplace = window.confirm(
+        'Bản tiếng Anh hiện đã có nội dung. Bạn có chắc muốn ghi đè cấu trúc từ bản Tiếng Việt sang không?'
+      );
+      if (!confirmReplace) return;
+    }
+
+    setContentEn(currentViHtml);
+    if (!titleEn.trim() && title.trim()) {
+      setTitleEn(title);
+    }
+    if (!excerptEn.trim() && excerpt.trim()) {
+      setExcerptEn(excerpt);
+    }
+    if (editingLang === 'en' && visualCanvasRef.current) {
+      visualCanvasRef.current.innerHTML = currentViHtml;
+    }
+    setMessage({ 
+      type: 'success', 
+      text: 'Đã sao chép toàn bộ cấu trúc 11 khối từ bản Tiếng Việt sang bản Tiếng Anh! Bạn có thể dịch trực tiếp trên khung này.' 
+    });
+    setTimeout(() => setMessage(null), 4000);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    if (files.length >= 2) {
+      const fileList = Array.from(files);
+      let enFile = fileList.find(f => isEnglishFileName(f.name));
+      let viFile = fileList.find(f => f !== enFile);
+      if (!enFile) {
+        enFile = fileList[1];
+        viFile = fileList[0];
+      }
+      if (viFile) processHtmlFile(viFile);
+      if (enFile) processEnglishHtmlFile(enFile);
+      setMessage({
+        type: 'success',
+        text: `Đã nạp đồng thời 2 tệp: Tiếng Việt ("${viFile?.name}") & Tiếng Anh ("${enFile?.name}")!`
+      });
+    } else {
+      const file = files[0];
+      if (editingLang === 'en' || isEnglishFileName(file.name)) {
+        processEnglishHtmlFile(file);
+      } else {
+        processHtmlFile(file);
+      }
+    }
+    e.target.value = '';
+  };
+
+  // Drag and Drop Handlers (Supports Dropping 2 Files Simultaneously)
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
@@ -1302,11 +1469,37 @@ function DangBaiContent() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file && (file.name.endsWith('.html') || file.name.endsWith('.htm') || file.name.endsWith('.txt'))) {
-      processHtmlFile(file);
-    } else {
+
+    const files = Array.from(e.dataTransfer.files).filter(
+      (f) => f.name.endsWith('.html') || f.name.endsWith('.htm') || f.name.endsWith('.txt')
+    );
+
+    if (files.length === 0) {
       setMessage({ type: 'error', text: 'Vui lòng kéo thả file có định dạng .html hoặc .htm' });
+      return;
+    }
+
+    if (files.length >= 2) {
+      let enFile = files.find(f => isEnglishFileName(f.name));
+      let viFile = files.find(f => f !== enFile);
+      if (!enFile) {
+        enFile = files[1];
+        viFile = files[0];
+      }
+      if (viFile) processHtmlFile(viFile);
+      if (enFile) processEnglishHtmlFile(enFile);
+      setMessage({
+        type: 'success',
+        text: `Đã nạp đồng thời 2 tệp: Tiếng Việt ("${viFile?.name}") & Tiếng Anh ("${enFile?.name}")!`
+      });
+      return;
+    }
+
+    const file = files[0];
+    if (editingLang === 'en' || isEnglishFileName(file.name)) {
+      processEnglishHtmlFile(file);
+    } else {
+      processHtmlFile(file);
     }
   };
 
@@ -1318,17 +1511,28 @@ function DangBaiContent() {
     }
 
     // Get current HTML from canvas with strict priority
-    let finalHtml = contentHtml;
+    let finalViHtml = contentHtml;
+    let finalEnHtml = contentEn;
+
     if (activeTab === 'visual' && visualCanvasRef.current) {
-      finalHtml = visualCanvasRef.current.innerHTML;
-      setContentHtml(finalHtml);
-    } else if (!finalHtml.trim() && visualCanvasRef.current?.innerHTML) {
-      finalHtml = visualCanvasRef.current.innerHTML;
-      setContentHtml(finalHtml);
+      const currentCanvasHtml = visualCanvasRef.current.innerHTML;
+      if (editingLang === 'en') {
+        finalEnHtml = currentCanvasHtml;
+        setContentEn(finalEnHtml);
+      } else {
+        finalViHtml = currentCanvasHtml;
+        setContentHtml(finalViHtml);
+      }
+    } else if (editingLang === 'en' && !finalEnHtml.trim() && visualCanvasRef.current?.innerHTML) {
+      finalEnHtml = visualCanvasRef.current.innerHTML;
+      setContentEn(finalEnHtml);
+    } else if (editingLang === 'vi' && !finalViHtml.trim() && visualCanvasRef.current?.innerHTML) {
+      finalViHtml = visualCanvasRef.current.innerHTML;
+      setContentHtml(finalViHtml);
     }
 
-    if (!finalHtml.trim()) {
-      setMessage({ type: 'error', text: 'Nội dung bài viết không được để trống!' });
+    if (!finalViHtml.trim()) {
+      setMessage({ type: 'error', text: 'Nội dung bài viết tiếng Việt không được để trống!' });
       return;
     }
 
@@ -1336,9 +1540,9 @@ function DangBaiContent() {
     if (geoTimelineJson.trim()) {
       try {
         const parsed = JSON.parse(geoTimelineJson);
-        finalHtml = finalHtml.replace(/<script\s+type="application\/json"\s+id="veridu-article-geo-timeline"[^>]*>[\s\S]*?<\/script>/gi, '').trim();
-        finalHtml += `\n<script type="application/json" id="veridu-article-geo-timeline">${JSON.stringify(parsed)}</script>`;
-        setContentHtml(finalHtml);
+        finalViHtml = finalViHtml.replace(/<script\s+type="application\/json"\s+id="veridu-article-geo-timeline"[^>]*>[\s\S]*?<\/script>/gi, '').trim();
+        finalViHtml += `\n<script type="application/json" id="veridu-article-geo-timeline">${JSON.stringify(parsed)}</script>`;
+        setContentHtml(finalViHtml);
       } catch (err) {
         console.warn('Lỗi khi đính kèm inline geoTimelineJson:', err);
       }
@@ -1364,17 +1568,17 @@ function DangBaiContent() {
         category,
         article_type: articleType,
         featured_image: formatImageUrl(featuredImage.trim()),
-        content: finalHtml,
+        content: finalViHtml,
         status: postStatus,
         author_name: authorName.trim() || getFullAuthorName(user || getStoredUser()),
-        reading_time: readingTime.trim() || calculateReadingTime(finalHtml),
+        reading_time: readingTime.trim() || calculateReadingTime(finalViHtml),
         published_at: publishedDate ? new Date(publishedDate).toISOString() : new Date().toISOString(),
         audio_url: audioUrl ? audioUrl.trim() : null,
         video_url: videoUrl ? videoUrl.trim() : null,
         title_en: titleEn.trim() || null,
         excerpt_en: excerptEn.trim() || null,
-        content_en: contentEn.trim() || null,
-        available_languages: (titleEn.trim() || contentEn.trim()) ? ['vi', 'en'] : ['vi']
+        content_en: finalEnHtml.trim() || null,
+        available_languages: (titleEn.trim() || finalEnHtml.trim()) ? ['vi', 'en'] : ['vi']
       };
 
       if (isEdit) {
@@ -1615,7 +1819,7 @@ function DangBaiContent() {
         <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-3">
           <div className="flex items-center justify-between">
             <span className="font-bold text-[var(--text-main)] flex items-center gap-1.5 text-xs text-amber-500">
-              <Feather className="w-3.5 h-3.5" />
+              <Globe className="w-3.5 h-3.5" />
               <span>Bản Dịch Tiếng Anh (English)</span>
             </span>
             {titleEn.trim() && (
@@ -1625,6 +1829,46 @@ function DangBaiContent() {
             )}
           </div>
 
+          {/* Quick Action Toolbar for English Translation */}
+          <div className="grid grid-cols-2 gap-1.5 pt-1">
+            <button
+              type="button"
+              onClick={() => {
+                switchEditingLang('en');
+                if (activeTab !== 'visual') switchTab('visual');
+              }}
+              className={`p-2 rounded-xl text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer border ${
+                editingLang === 'en'
+                  ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-xs'
+                  : 'bg-[var(--bg-card)] border-[var(--border-card)] text-amber-500 hover:bg-amber-500/10'
+              }`}
+              title="Chuyển sang biên tập bản tiếng Anh trên Live Canvas"
+            >
+              <Edit3 className="w-3 h-3" />
+              <span>{editingLang === 'en' ? 'Đang soạn EN' : 'Soạn Trên Canvas'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => englishFileInputRef.current?.click()}
+              className="p-2 rounded-xl text-[11px] font-bold bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-main)] hover:border-amber-500/40 hover:text-amber-500 transition flex items-center justify-center gap-1 cursor-pointer"
+              title="Tải tệp HTML bản dịch tiếng Anh"
+            >
+              <Upload className="w-3 h-3 text-indigo-400" />
+              <span>Tải File .HTML</span>
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleCloneViStructure}
+            className="w-full py-1.5 px-2 rounded-xl text-[10px] font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-600 dark:text-amber-300 border border-amber-500/30 flex items-center justify-center gap-1 transition cursor-pointer"
+            title="Sao chép toàn bộ bố cục 11 phân hệ phụng vụ từ Tiếng Việt sang để dịch nội dung"
+          >
+            <Copy className="w-3 h-3" />
+            <span>📋 Sao Chép Cấu Trúc Từ Tiếng Việt</span>
+          </button>
+
           <div>
             <label className="font-bold text-[var(--text-muted)] block mb-1 text-[11px]">
               Tiêu Đề Tiếng Anh (English Title)
@@ -1633,7 +1877,7 @@ function DangBaiContent() {
               type="text"
               value={titleEn}
               onChange={(e) => setTitleEn(e.target.value)}
-              placeholder="e.g. Theological Foundations of Christian Faith"
+              placeholder="e.g. The Divine Name YHWH and Biblical Monotheism"
               className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs outline-none focus:border-amber-500"
             />
           </div>
@@ -1646,20 +1890,30 @@ function DangBaiContent() {
               rows={2}
               value={excerptEn}
               onChange={(e) => setExcerptEn(e.target.value)}
-              placeholder="Brief English summary for international portal..."
+              placeholder="Brief scholarly summary for international readers (/en)..."
               className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs outline-none focus:border-amber-500 resize-y"
             />
           </div>
 
           <div>
-            <label className="font-bold text-[var(--text-muted)] block mb-1 text-[11px]">
-              Nội Dung Tiếng Anh (English Content)
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="font-bold text-[var(--text-muted)] block text-[11px]">
+                Nội Dung Tiếng Anh (HTML)
+              </label>
+              <span className="text-[9px] font-mono text-[var(--text-muted)]">
+                {contentEn.length.toLocaleString('vi-VN')} ký tự
+              </span>
+            </div>
             <textarea
-              rows={5}
+              rows={4}
               value={contentEn}
-              onChange={(e) => setContentEn(e.target.value)}
-              placeholder="Dán hoặc soạn thảo bản dịch tiếng Anh (HTML / Markdown)..."
+              onChange={(e) => {
+                setContentEn(e.target.value);
+                if (editingLang === 'en' && visualCanvasRef.current) {
+                  visualCanvasRef.current.innerHTML = e.target.value;
+                }
+              }}
+              placeholder="Nội dung mã HTML bản dịch tiếng Anh..."
               className="w-full p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] font-mono text-[11px] outline-none focus:border-amber-500 resize-y"
             />
           </div>
@@ -2333,15 +2587,27 @@ function DangBaiContent() {
             <div className="p-4 rounded-2xl bg-[var(--bg-main)] border border-dashed border-[var(--border-card)] text-center space-y-3">
               <Upload className="w-8 h-8 text-[var(--text-muted)] mx-auto" />
               <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
-                Kéo thả hoặc tải lên tệp <code className="px-1 py-0.5 rounded bg-[var(--bg-card)] font-mono text-[10px]">.html</code> để tự động trích xuất tiêu đề, hình ảnh và chuyển hóa thành định dạng Stained-Glass.
+                Kéo thả hoặc tải lên tệp <code className="px-1 py-0.5 rounded bg-[var(--bg-card)] font-mono text-[10px]">.html</code> để tự động chuyển hóa thành phong cách Stained-Glass của VERIDU.
               </p>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-md shadow-indigo-600/20"
-              >
-                Chọn Tệp .HTML Từ Máy Tính
-              </button>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-md shadow-indigo-600/20"
+                >
+                  Chọn Tệp .HTML (Hoặc chọn cả 2 tệp VI &amp; EN)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => englishFileInputRef.current?.click()}
+                  className="w-full py-2 bg-amber-500/15 hover:bg-amber-500/25 text-amber-600 dark:text-amber-400 border border-amber-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <span>🇬🇧</span> Nạp Riêng Tệp .HTML Tiếng Anh
+                </button>
+              </div>
+              <p className="text-[10px] text-amber-500/80 italic">
+                💡 Mẹo: Bạn có thể kéo thả cùng lúc 2 tệp (bản tiếng Anh có hậu tố _en.html hoặc thẻ lang=&quot;en&quot;).
+              </p>
             </div>
           )}
 
@@ -2373,11 +2639,21 @@ function DangBaiContent() {
       }`}
     >
       
-      {/* Hidden Global File Input for .HTML Files */}
+      {/* Hidden Global File Input for .HTML Files (Supports selecting both VI & EN files together) */}
       <input 
         type="file" 
         ref={fileInputRef} 
         onChange={handleFileUpload} 
+        accept=".html,.htm,.txt" 
+        multiple
+        className="hidden" 
+      />
+
+      {/* Hidden Dedicated File Input for English Translation HTML */}
+      <input 
+        type="file" 
+        ref={englishFileInputRef} 
+        onChange={handleEnglishFileUpload} 
         accept=".html,.htm,.txt" 
         className="hidden" 
       />
@@ -2389,7 +2665,7 @@ function DangBaiContent() {
             <Upload className="w-16 h-16 text-amber-400 mx-auto animate-bounce" />
             <h3 className="font-serif font-bold text-2xl text-white">Thả Tệp .HTML Vào Đây</h3>
             <p className="text-sm text-amber-200/80">
-              Hệ thống sẽ tự động phân tích tiêu đề, bố cục và chuyển hóa thành định dạng Stained-Glass của VERIDU.
+              Hỗ trợ kéo thả 1 tệp hoặc cùng lúc 2 tệp (Tiếng Việt &amp; Tiếng Anh). Hệ thống sẽ tự động nhận diện và nạp song song vào cả hai bản!
             </p>
           </div>
         </div>
@@ -2448,7 +2724,7 @@ function DangBaiContent() {
           </div>
         </div>
 
-        {/* Center: TAB SWITCHER (Trực Quan | Mã Nguồn | Xem Trước) + DEVICE SWITCHER */}
+        {/* Center: TAB SWITCHER (Trực Quan | Mã Nguồn | Xem Trước) + LANGUAGE SWITCHER + DEVICE SWITCHER */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           
           {/* Mode Switcher Pill */}
@@ -2493,6 +2769,40 @@ function DangBaiContent() {
             >
               <Eye className="w-3.5 h-3.5" />
               <span className="hidden md:inline">Xem Trước</span>
+            </button>
+          </div>
+
+          {/* Bilingual Language Switcher Pill [ 🇻🇳 Tiếng Việt | 🇬🇧 English ] */}
+          <div className="flex items-center gap-1 bg-[var(--bg-main)] p-1 rounded-2xl border border-[var(--border-card)]">
+            <button
+              type="button"
+              onClick={() => switchEditingLang('vi')}
+              className={`px-2.5 sm:px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                editingLang === 'vi'
+                  ? 'bg-amber-500 text-slate-950 shadow-xs font-black'
+                  : 'text-[var(--text-muted)] hover:text-amber-500'
+              }`}
+              title="Biên tập bài viết gốc Tiếng Việt"
+            >
+              <span>🇻🇳</span>
+              <span className="hidden sm:inline">Tiếng Việt</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => switchEditingLang('en')}
+              className={`px-2.5 sm:px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                editingLang === 'en'
+                  ? 'bg-amber-500 text-slate-950 shadow-xs font-black'
+                  : 'text-[var(--text-muted)] hover:text-amber-500'
+              }`}
+              title="Biên tập bản dịch quốc tế Tiếng Anh (/en/[slug])"
+            >
+              <span>🇬🇧</span>
+              <span className="hidden sm:inline">English</span>
+              {titleEn.trim() && (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" title="Đã có nội dung tiếng Anh" />
+              )}
             </button>
           </div>
 
@@ -2705,6 +3015,43 @@ function DangBaiContent() {
               </div>
             )}
 
+            {/* Bilingual Active Editing Helper Bar */}
+            {editingLang === 'en' && (
+              <div className="w-full p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-wrap items-center justify-between gap-3 text-xs animate-in fade-in">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🇬🇧</span>
+                  <div>
+                    <span className="font-bold text-amber-500 font-serif block sm:inline">
+                      Đang Biên Tập Bản Dịch Tiếng Anh (English)
+                    </span>
+                    <span className="text-[var(--text-muted)] text-[11px] sm:ml-2">
+                      Nội dung này phục vụ độc giả quốc tế qua đường dẫn <code className="font-mono text-amber-400">/en/{slug || 'bai-viet'}</code>.
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCloneViStructure}
+                    className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/40 text-[11px] flex items-center gap-1.5 transition cursor-pointer"
+                    title="Sao chép toàn bộ 11 phân hệ bách khoa từ bài tiếng Việt sang để chỉ việc dịch nội dung văn bản"
+                  >
+                    <Copy className="w-3 h-3" />
+                    <span>📋 Sao Chép Cấu Trúc Tiếng Việt</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => englishFileInputRef.current?.click()}
+                    className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                    title="Tải tệp .html tiếng Anh đã dịch sẵn"
+                  >
+                    <Upload className="w-3 h-3" />
+                    <span>Tải Tệp HTML Tiếng Anh</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* ══════════════════════════════════════════════════════════════════════════════
                 MODE 1: 🎨 LIVE VISUAL CANVAS (DIRECT WYSIWYG IN-PLACE EDITING)
                 ══════════════════════════════════════════════════════════════════════════════ */}
@@ -2736,15 +3083,22 @@ function DangBaiContent() {
                   {/* Article Category & Title Header in Canvas */}
                   <div className="border-b border-[var(--border-card)] pb-6 mb-8 text-center space-y-3">
                     <span className="inline-block px-3 py-1 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-serif text-xs font-black uppercase tracking-wider border border-amber-500/20">
-                      {category}
+                      {category} {editingLang === 'en' ? '• English Edition' : ''}
                     </span>
                     <h1 
                       contentEditable
                       suppressContentEditableWarning
-                      onBlur={(e) => setTitle(e.currentTarget.textContent || '')}
+                      onBlur={(e) => {
+                        const val = e.currentTarget.textContent || '';
+                        if (editingLang === 'en') {
+                          setTitleEn(val);
+                        } else {
+                          setTitle(val);
+                        }
+                      }}
                       className="font-serif font-black text-2xl sm:text-4xl text-[var(--text-main)] leading-tight outline-none focus:ring-2 focus:ring-amber-500/40 rounded-xl px-2 py-1 transition cursor-text"
                     >
-                      {title || 'Tiêu Đề Bài Viết...'}
+                      {editingLang === 'en' ? (titleEn || 'English Title...') : (title || 'Tiêu Đề Bài Viết...')}
                     </h1>
                   </div>
 
@@ -2795,18 +3149,26 @@ function DangBaiContent() {
 
                 <div className="rounded-3xl border border-[var(--border-card)] bg-slate-950 p-4 sm:p-6 shadow-2xl space-y-3">
                   <div className="flex items-center justify-between pb-3 border-b border-slate-800 text-xs">
-                    <span className="font-mono text-slate-400">article_content.html</span>
+                    <span className="font-mono text-slate-400">
+                      {editingLang === 'en' ? 'article_content_en.html (English)' : 'article_content_vi.html (Tiếng Việt)'}
+                    </span>
                     <span className="text-[10px] font-mono text-slate-500">
-                      {contentHtml.length.toLocaleString('vi-VN')} ký tự
+                      {(editingLang === 'en' ? contentEn : contentHtml).length.toLocaleString('vi-VN')} ký tự
                     </span>
                   </div>
 
                   <textarea
-                    value={contentHtml}
-                    onChange={(e) => setContentHtml(e.target.value)}
+                    value={editingLang === 'en' ? contentEn : contentHtml}
+                    onChange={(e) => {
+                      if (editingLang === 'en') {
+                        setContentEn(e.target.value);
+                      } else {
+                        setContentHtml(e.target.value);
+                      }
+                    }}
                     rows={26}
                     className="w-full bg-transparent text-amber-200 font-mono text-xs sm:text-sm leading-relaxed outline-none resize-y border-none p-0 focus:ring-0 selection:bg-indigo-500/40"
-                    placeholder="<p>Dán mã HTML bài viết tại đây...</p>"
+                    placeholder={editingLang === 'en' ? "<p>Paste or write English HTML content here...</p>" : "<p>Dán mã HTML bài viết tại đây...</p>"}
                     spellCheck={false}
                   />
                 </div>
@@ -2829,19 +3191,19 @@ function DangBaiContent() {
                 <div className="rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-2xl p-6 sm:p-10 md:p-12 overflow-hidden">
                   <div className="border-b border-[var(--border-card)] pb-6 mb-8 text-center space-y-3">
                     <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-serif font-black uppercase tracking-wider">
-                      {category}
+                      {category} {editingLang === 'en' ? '• English Edition' : ''}
                     </span>
                     <h1 className="font-serif font-black text-2xl sm:text-4xl lg:text-5xl text-[var(--text-main)] leading-tight">
-                      {title || 'Tiêu Đề Bài Viết Xem Trước'}
+                      {(editingLang === 'en' ? titleEn : title) || 'Tiêu Đề Bài Viết Xem Trước'}
                     </h1>
-                    {excerpt && (
+                    {(editingLang === 'en' ? excerptEn : excerpt) && (
                       <p className="font-serif italic text-sm sm:text-base text-[var(--text-muted)] max-w-2xl mx-auto leading-relaxed pt-2">
-                        {excerpt}
+                        {editingLang === 'en' ? excerptEn : excerpt}
                       </p>
                     )}
                   </div>
 
-                  <VisualArticleRenderer contentHtml={contentHtml} />
+                  <VisualArticleRenderer contentHtml={editingLang === 'en' ? contentEn : contentHtml} />
                 </div>
               </div>
             )}

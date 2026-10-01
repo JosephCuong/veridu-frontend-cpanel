@@ -27,7 +27,11 @@ export async function POST(request: Request) {
       reading_time,
       published_at,
       audio_url,
-      video_url
+      video_url,
+      title_en,
+      excerpt_en,
+      content_en,
+      available_languages
     } = body;
 
     if (!title || !content) {
@@ -98,7 +102,11 @@ export async function POST(request: Request) {
           reading_time: finalReadingTime,
           published_at: finalPublishedAt,
           audio_url: finalAudioUrl,
-          video_url: finalVideoUrl
+          video_url: finalVideoUrl,
+          title_en: title_en ? String(title_en).trim() : null,
+          excerpt_en: excerpt_en ? String(excerpt_en).trim() : null,
+          content_en: content_en ? convertGoogleDriveImagesInHtml(String(content_en)) : null,
+          available_languages: available_languages || ((title_en || content_en) ? ['vi', 'en'] : ['vi'])
         }
       ])
       .select();
@@ -112,10 +120,12 @@ export async function POST(request: Request) {
 
     // Flush ISR Cache immediately on post creation
     try {
+      revalidatePath('/', 'layout');
       revalidatePath('/thu-vien');
-      revalidatePath('/');
+      revalidatePath('/en');
       if (finalSlug) {
         revalidatePath(`/${finalSlug}`);
+        revalidatePath(`/en/${finalSlug}`);
         revalidatePath(`/thu-vien/${finalSlug}`);
       }
     } catch (e) {
