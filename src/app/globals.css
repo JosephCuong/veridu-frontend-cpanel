@@ -1487,6 +1487,19 @@ dfn.veridu-term:focus {
   outline: none;
 }
 
+.hebrew-inline {
+  font-family: 'SBL Hebrew', 'Ezra SIL', 'Times New Roman', serif;
+  font-size: 1.2em;
+  direction: rtl;
+  unicode-bidi: embed;
+  color: var(--crimson-primary);
+  font-weight: 700;
+  padding: 0 0.2rem;
+}
+html.dark .hebrew-inline {
+  color: var(--crimson-primary, #f87171);
+}
+
 /* ─── 7. CATECHETICAL CALLOUTS ──────────────────────────────────────────── */
 .catechetical-callout {
   margin: 1.75rem 0;

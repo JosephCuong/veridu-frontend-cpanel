@@ -2,8 +2,8 @@
 ## (VERIDU CANONICAL ARTICLE SPECIFICATION & AGENT AUTHORING GUIDE)
 
 > **Dành cho**: Trợ lý AI (Writing Agents), Ban Học Vụ, Giảng Viên & Tác Giả Nghiên Cứu.  
-> **Bài viết hình mẫu tham chiếu**: [Vương Quốc Israel Cổ Đại — ID #48](https://www.cruxveritatis.org/vuong-quoc-israel-co-dai-khao-co-hoc-can-dong-buoc-ngoat-lich-su-va-hanh-trinh-duc-tin-doc-than)  
-> **Ngôn ngữ thiết kế**: Stained-Glass Glassmorphism, Hổ phách Phụng vụ (Liturgical Amber), Tương thích Dark/Light Mode.  
+> **Bài viết hình mẫu kim cương tham chiếu**: [Danh Xưng YHWH Và Căn Tính Độc Thần Của Đức Chúa](https://www.cruxveritatis.org/danh-xung-yhwh-va-can-tinh-doc-than-cua-duc-chua) & [Vương Quốc Israel Cổ Đại — ID #48](https://www.cruxveritatis.org/vuong-quoc-israel-co-dai-khao-co-hoc-can-dong-buoc-ngoat-lich-su-va-hanh-trinh-duc-tin-doc-than)  
+> **Định dạng chuẩn tắc**: Tệp HTML Đầy Đủ (Standalone Previewable HTML) có thẻ `<head>`, biến CSS `:root`, typography Lora/Inter và cổ ngữ Hebrew `.hebrew-inline`.  
 > **Bản dịch Kinh Thánh chuẩn**: Cố Lm. Nguyễn Thế Thuấn, CSsR (NTT) kèm chú dẫn nguồn bắt buộc.  
 
 ---

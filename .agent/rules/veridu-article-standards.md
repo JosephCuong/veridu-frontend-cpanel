@@ -5,16 +5,11 @@ globs: ["src/app/**", "src/lib/**", "*.md", "scratch/**"]
 
 # VERIDU Scholarly Article Standard Rule
 
-Mọi tác vụ soạn thảo, chuẩn hóa, biên tập bài viết hoặc sinh mã HTML bài đọc trên VERIDU (Crux Veritatis) BẮT BUỘC phải tuân thủ chuẩn mực đúc kết từ bài mẫu ID #48:
+Mọi tác vụ soạn thảo, chuẩn hóa, biên tập bài viết hoặc sinh mã HTML bài đọc trên VERIDU (Crux Veritatis) BẮT BUỘC phải tuân thủ chuẩn mực đúc kết từ bài mẫu kim cương **"Danh Xưng YHWH Và Căn Tính Độc Thần Của Đức Chúa"**:
 
-## 1. Phân định Khung Hệ Thống vs Thân Bài HTML
-- **KHÔNG ĐƯỢC CHÈN VÀO HTML:** Tiêu đề H1, Ảnh bìa (Cover Image), Tác giả, Ngày đăng, Thời gian đọc, Thẻ mục lục (TOC), Nút chia sẻ mạng xã hội. Tất cả các thành phần này do Next.js Template (`src/app/[slug]/page.tsx`) tự động kết xuất.
-- **THẺ BỌC DUY NHẤT:** Toàn bộ nội dung thân bài bắt buộc phải nằm trong thẻ:
-  ```html
-  <article class="veridu-scholarly-article">
-    <!-- Nội dung thân bài -->
-  </article>
-  ```
+## 1. Định Dạng Xuất Bản: Standalone Previewable HTML
+- Agent BẮT BUỘC xuất ra một **Tệp HTML Đầy Đủ (Standalone Previewable HTML)** bắt đầu từ `<!DOCTYPE html>` đến `</html>`, có `<head>` chứa `<title>`, `<meta name="description">`, link Google Fonts (Lora, Inter) và thẻ `<style>` biến CSS chuẩn `:root` để có thể mở xem offline độc lập trên máy tính.
+- Khi nạp vào `/soan-bai`, hệ thống tự động bóc tách Tiêu đề, Tóm tắt, Ảnh bìa, Audio Podcast và làm sạch thân bài `<article class="veridu-scholarly-article">` đưa vào CSDL Supabase.
 
 ## 2. Các Khối Cốt Lõi (8 Khối Thân Bài)
 1. **Abstract Research Card (`.abstract-research`):** Tóm tắt học thuật, đặt ngay sau mở đầu.

@@ -367,10 +367,36 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
     excerpt: article.excerpt,
   });
 
-  // Clean mounting placeholders so the article body flows uninterrupted
+  // Mounting placeholders: replace with elegant interactive jump banners if geo/timeline data exists, or clean them
+  const hasGeoTimelineData = effectiveLocations.length > 0 || effectiveTimelineEvents.length > 0;
+  
+  const timelineBannerHtml = hasGeoTimelineData ? `
+<div class="article-geo-callout not-prose my-6 p-4 sm:p-5 rounded-2xl bg-amber-500/10 border-l-4 border-amber-500 shadow-sm flex items-center justify-between gap-4 transition-all hover:bg-amber-500/15">
+  <div class="flex items-center gap-2.5 text-xs font-serif font-bold text-amber-700 dark:text-amber-400">
+    <span class="text-base">⏳</span>
+    <span>Trục Niên Biểu Lịch Sử Cứu Độ</span>
+  </div>
+  <a href="#geo-timeline-section" class="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 cursor-pointer">
+    <span>Xem mốc thời gian</span>
+    <span>↓</span>
+  </a>
+</div>` : '';
+
+  const mapBannerHtml = hasGeoTimelineData ? `
+<div class="article-geo-callout not-prose my-6 p-4 sm:p-5 rounded-2xl bg-indigo-500/10 border-l-4 border-indigo-500 shadow-sm flex items-center justify-between gap-4 transition-all hover:bg-indigo-500/15">
+  <div class="flex items-center gap-2.5 text-xs font-serif font-bold text-indigo-700 dark:text-indigo-400">
+    <span class="text-base">🗺️</span>
+    <span>Bản Đồ Tọa Độ Khảo Cổ Cận Đông</span>
+  </div>
+  <a href="#geo-timeline-section" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer">
+    <span>Mở bản đồ tương tác</span>
+    <span>↓</span>
+  </a>
+</div>` : '';
+
   const cleanHtmlContent = htmlContent
-    .replace(/<veridu-timeline-placeholder\b[^>]*>(?:<\/veridu-timeline-placeholder>)?/gi, '')
-    .replace(/<veridu-map-placeholder\b[^>]*>(?:<\/veridu-map-placeholder>)?/gi, '');
+    .replace(/<veridu-timeline-placeholder\b[^>]*>(?:<\/veridu-timeline-placeholder>)?/gi, timelineBannerHtml)
+    .replace(/<veridu-map-placeholder\b[^>]*>(?:<\/veridu-map-placeholder>)?/gi, mapBannerHtml);
 
   // 1. TEMPLATE BÀI TƯƠNG TÁC (HTML/JS Sandbox Fullscreen)
   if (articleType === 'interactive') {
@@ -471,7 +497,7 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
 
             {/* Dedicated Scholarly Explorer Section: Geo & Timeline (Placed cleanly outside <article>) */}
             {(effectiveLocations.length > 0 || effectiveTimelineEvents.length > 0) && (
-              <div className="relative z-10">
+              <div id="geo-timeline-section" className="relative z-10 scroll-mt-24">
                 <ArticleGeoTimelineWidget 
                   locations={effectiveLocations} 
                   timelineEvents={effectiveTimelineEvents} 
