@@ -33,4 +33,5 @@ Mọi bài viết nghiên cứu/thần học/khảo cổ tiêu chuẩn phải k�
 3. `<div class="dictionary-meta">`
 4. `<div class="bibliography">`
 
-Chi tiết đầy đủ xem tại file cẩm nang: `VERIDU_CANONICAL_ARTICLE_SPEC.md`.
+Chi tiết đầy đủ xem tại file cẩm nang: `VERIDU_CANONICAL_ARTICLE_SPEC.md` và cẩm nang phẫu thuật chuyển đổi file thô: `VERIDU_AGENT_ARTICLE_TRANSFORMATION_GUIDE.md`.
+
