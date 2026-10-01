@@ -21,7 +21,9 @@ import {
   ListChecks,
   Compass,
   ArrowRight,
-  Bookmark
+  Bookmark,
+  ExternalLink,
+  Sparkles
 } from 'lucide-react';
 
 interface SnippetItem {
@@ -35,205 +37,196 @@ interface SnippetItem {
 
 const SNIPPETS_DATA: SnippetItem[] = [
   {
-    id: 'scripture',
-    name: '1. Khối Lời Chúa Soi Đường (Sacred Scripture Callout)',
-    desc: 'Dùng để trích dẫn câu Lời Chúa cốt lõi của bài viết, có huy hiệu tra cứu và trích dẫn chuẩn phụng vụ.',
-    category: 'Kinh Thánh',
-    code: `<div class="sacred-scripture veridu-scripture-quote">
-  <div class="scripture-badge">
-    <span>✝ Lời Chúa</span>
-    <a href="/kinh-thanh/gio-an/3?t=ntt#v30" target="_blank" class="scripture-superlink scripture-ref-link" data-book="gio-an" data-book-name="Gio-an" data-chapter="3" data-verse="30" data-raw-ref="Ga 3:30">Ga 3:30 ↗</a>
-  </div>
-  <blockquote class="scripture-verse">
-    "Người phải lớn lên, còn thầy phải nhỏ lại."
-  </blockquote>
-  <p class="scripture-citation">Tin Mừng theo Thánh Gioan</p>
-</div>`,
-    previewHtml: `<div class="sacred-scripture veridu-scripture-quote my-2 p-4 rounded-2xl bg-amber-500/10 border-l-4 border-amber-500">
-  <div class="scripture-badge flex items-center justify-between text-xs font-serif font-bold text-amber-500 mb-1">
-    <span>✝ Lời Chúa</span>
-    <span class="scripture-ref-link text-amber-500 font-mono font-bold">Ga 3:30 ↗</span>
-  </div>
-  <blockquote class="scripture-verse italic text-sm font-serif text-[var(--text-main)] my-1.5">
-    "Người phải lớn lên, còn thầy phải nhỏ lại."
-  </blockquote>
-  <p class="scripture-citation text-[11px] text-[var(--text-muted)] font-serif">— Tin Mừng theo Thánh Gioan</p>
+    id: 'wrapper',
+    name: '1. Thẻ Bọc Thân Bài Học Thuật (Article Wrapper)',
+    desc: 'Bắt buộc bọc toàn bộ nội dung thân bài trong thẻ duy nhất này. Không chèn H1, Cover Image, TOC vì hệ thống tự kết xuất.',
+    category: 'Bộ Khung Cốt Lõi',
+    code: `<article class="veridu-scholarly-article">
+  <!-- Toàn bộ nội dung thân bài gồm 8 khối và 4 khối kết thúc học thuật đặt tại đây -->
+</article>`,
+    previewHtml: `<div class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs font-mono text-amber-600 dark:text-amber-400">
+  &lt;article class="veridu-scholarly-article"&gt;<br/>
+  &nbsp;&nbsp;<span class="text-[var(--text-muted)] font-serif italic">// Nội dung thân bài học thuật chuẩn mực...</span><br/>
+  &lt;/article&gt;
 </div>`
   },
   {
     id: 'abstract',
-    name: '2. Bản Tóm Tắt Nghiên Cứu Thần Học (Abstract Card)',
-    desc: 'Đặt ngay đầu bài viết dưới tiêu đề chính, nêu bật luận điểm và phạm vi khảo cứu (80 - 150 từ).',
+    name: '2. Bản Tóm Tắt Nghiên Cứu Thần Học (Abstract Research Card)',
+    desc: 'Đặt ngay đầu bài viết, nêu bật câu hỏi nghiên cứu, luận điểm cốt lõi và phương pháp luận (80 - 150 từ).',
     category: 'Cấu Trúc',
     code: `<div class="abstract-research">
   <div class="abstract-header">
-    <span class="abstract-tag">Tóm Tắt Nghiên Cứu (Abstract)</span>
+    <span class="abstract-title">
+      <span>📖</span> TÓM TẮT NGHIÊN CỨU THẦN HỌC
+    </span>
+    <span class="abstract-badge">VERIDU RESEARCH</span>
   </div>
-  <p class="abstract-content">
-    Khảo cứu này làm sáng tỏ bối cảnh lịch sử của biến cố Gioan Tẩy Giả bị trảm quyết dưới góc nhìn chính trị - xã hội Do Thái thế kỷ I, luật hôn nhân Cựu Ước (Lv 18:16) và chứng tá tiên tri cho Đấng Mêxia.
+  <p class="abstract-body leading-relaxed my-4 text-[var(--text-main)] text-base sm:text-lg">
+    Khảo cứu này làm sáng tỏ bối cảnh lịch sử của biến cố dưới góc nhìn khảo cổ học Cận Đông cổ đại, đối chiếu bản văn Kinh Thánh theo bản dịch Cố Lm. Nguyễn Thế Thuấn và khai mở chiều kích thần học cứu độ.
   </p>
 </div>`,
-    previewHtml: `<div class="abstract-research p-4 rounded-2xl bg-[var(--bg-main)] border border-amber-500/30 my-2">
-  <div class="abstract-header mb-1.5">
-    <span class="abstract-tag text-xs font-serif font-bold uppercase tracking-wider text-amber-500">✝ Tóm Tắt Nghiên Cứu (Abstract)</span>
+    previewHtml: `<div class="abstract-research p-4 rounded-2xl bg-[var(--bg-main)] border border-amber-500/30 my-2 space-y-2">
+  <div class="abstract-header flex items-center justify-between border-b border-amber-500/20 pb-2">
+    <span class="abstract-title text-xs font-serif font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+      <span>📖</span> TÓM TẮT NGHIÊN CỨU THẦN HỌC
+    </span>
+    <span class="abstract-badge px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[10px] font-mono font-bold">VERIDU RESEARCH</span>
   </div>
-  <p class="abstract-content text-xs text-[var(--text-muted)] font-serif leading-relaxed">
-    Khảo cứu này làm sáng tỏ bối cảnh lịch sử của biến cố Gioan Tẩy Giả bị trảm quyết dưới góc nhìn chính trị - xã hội Do Thái thế kỷ I, luật hôn nhân Cựu Ước (Lv 18:16) và chứng tá tiên tri cho Đấng Mêxia.
+  <p class="abstract-body text-xs text-[var(--text-muted)] font-serif leading-relaxed italic">
+    Khảo cứu này làm sáng tỏ bối cảnh lịch sử của biến cố dưới góc nhìn khảo cổ học Cận Đông cổ đại, đối chiếu bản văn Kinh Thánh theo bản dịch Cố Lm. Nguyễn Thế Thuấn và khai mở chiều kích thần học cứu độ.
   </p>
 </div>`
   },
   {
-    id: 'scripture-meta',
-    name: '3. Bảng Danh Mục Bằng Chứng Thánh Kinh (Scripture Meta Claims)',
-    desc: 'Liệt kê các đối chiếu chương câu Kinh Thánh củng cố cho luận điểm nghiên cứu thần học.',
-    category: 'Đối Chiếu',
-    code: `<div class="scripture-meta">
-  <div class="meta-title">Đối Chiếu Thánh Kinh Liên Hệ</div>
-  <div class="scripture-list">
-    <div class="scripture-item">
-      <span class="ref-badge">Mt 14:3-12</span>
-      <span class="ref-desc">Bản tường thuật của Mát-thêu về cái chết của Gioan Tẩy Giả.</span>
-    </div>
-    <div class="scripture-item">
-      <span class="ref-badge">Mc 6:17-29</span>
-      <span class="ref-desc">Chi tiết tiệc sinh nhật vua Hê-rô-đê và vũ điệu của Hê-rô-đia.</span>
-    </div>
-  </div>
-</div>`,
-    previewHtml: `<div class="scripture-meta p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] my-2 space-y-2">
-  <div class="meta-title text-xs font-serif font-bold text-amber-500 uppercase tracking-wider">Đối Chiếu Thánh Kinh Liên Hệ</div>
-  <div class="space-y-1.5">
-    <div class="flex items-center gap-2 text-xs font-serif">
-      <span class="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-500 font-mono font-bold text-[10px]">Mt 14:3-12</span>
-      <span class="text-[var(--text-muted)]">Bản tường thuật của Mát-thêu về cuộc trảm quyết.</span>
-    </div>
-    <div class="flex items-center gap-2 text-xs font-serif">
-      <span class="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-500 font-mono font-bold text-[10px]">Mc 6:17-29</span>
-      <span class="text-[var(--text-muted)]">Chi tiết tiệc sinh nhật vua Hê-rô-đê và vũ điệu Hê-rô-đia.</span>
-    </div>
-  </div>
+    id: 'heading-roman',
+    name: '3. Đề Mục Phân Đoạn La Mã (Roman Headings)',
+    desc: 'Phân đoạn các đề mục chính trong bài viết bằng số La Mã (I, II, III...), font serif trang trọng, có viền chân vàng nhạt.',
+    category: 'Bố Cục',
+    code: `<h2 id="i-boi-canh-khao-co" class="veridu-heading-roman font-serif text-2xl md:text-3xl font-bold text-amber-500/90 mt-10 mb-4 pb-2 border-b border-amber-500/20">
+  I. Bối Cảnh Lịch Sử &amp; Di Chỉ Khảo Cổ Cận Đông
+</h2>`,
+    previewHtml: `<div class="my-2">
+  <h2 class="font-serif text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400 pb-1 border-b border-amber-500/20">
+    I. Bối Cảnh Lịch Sử &amp; Di Chỉ Khảo Cổ Cận Đông
+  </h2>
 </div>`
   },
   {
-    id: 'poetry-prayer',
-    name: '4. Khối Thơ & Lời Nguyện Kính (Poetry & Prayer Block)',
-    desc: 'Được định dạng canh lề trang trọng, dùng cho các bài thánh thi, thơ ca tụng hoặc lời nguyện kết bài.',
-    category: 'Linh Đạo',
-    code: `<div class="prayer-block">
-  <div class="prayer-cross">✝</div>
-  <div class="prayer-title">Lời Nguyện Suy Niệm</div>
-  <div class="prayer-content">
-    Lạy Chúa Giêsu, xin cho con biết can đảm làm chứng cho Chân Lý<br/>
-    Dẫu giữa muôn vàn gian nan và thử thách của thế gian.<br/>
-    Amen.
+    id: 'scripture',
+    name: '4. Khối Lời Chúa Soi Đường (Sacred Scripture Callout)',
+    desc: 'Trích dẫn Lời Chúa theo bản dịch Cố Lm. Nguyễn Thế Thuấn, CSsR, có huy hiệu tra cứu chuẩn phụng vụ.',
+    category: 'Kinh Thánh',
+    code: `<div class="sacred-scripture">
+  <div class="scripture-badge">
+    <span>Ga 3:30</span>
+    <span class="text-xs opacity-75 font-sans">Bản dịch Cố Lm. Nguyễn Thế Thuấn, CSsR</span>
+  </div>
+  <div class="scripture-content font-serif text-lg leading-relaxed italic text-amber-200/90">
+    "Người phải lớn lên, còn tôi phải nhỏ lại."
   </div>
 </div>`,
-    previewHtml: `<div class="prayer-block p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 text-center my-2 space-y-1">
-  <div class="text-indigo-400 font-serif text-sm">✝</div>
-  <div class="text-xs font-serif font-bold text-indigo-400 uppercase tracking-wider">Lời Nguyện Suy Niệm</div>
-  <p class="text-xs italic font-serif text-[var(--text-muted)] leading-relaxed pt-1">
-    Lạy Chúa Giêsu, xin cho con biết can đảm làm chứng cho Chân Lý<br/>
-    Dẫu giữa muôn vàn gian nan và thử thách của thế gian.<br/>
-    <strong>Amen.</strong>
-  </p>
-</div>`
-  },
-  {
-    id: 'dictionary',
-    name: '5. Khối Thuật Ngữ Giáo Lý & Tín Lý (Theological Dictionary Block)',
-    desc: 'Giải nghĩa các thuật ngữ tiếng Hí-pri, Hy Lạp, Latinh hoặc các tín điều Công giáo chuyên sâu.',
-    category: 'Thần Học',
-    code: `<div class="dictionary-meta">
-  <div class="dict-title">Thuật Ngữ Tín Lý: Theotokos (Θεοτόκος)</div>
-  <p class="dict-desc">
-    Tiếng Hy Lạp nghĩa là "Đấng Cưu Mang Thiên Chúa" (Mẹ Thiên Chúa), tín điều được Công đồng Chung Êphêsô (năm 431) long trọng định tín nhằm khẳng định Đức Kitô vừa là Thiên Chúa thật, vừa là người thật.
-  </p>
-</div>`,
-    previewHtml: `<div class="dictionary-meta p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 my-2">
-  <div class="dict-title font-serif font-bold text-xs text-indigo-400 uppercase tracking-wider mb-1">Thuật Ngữ Tín Lý: Theotokos (Θεοτόκος)</div>
-  <p class="dict-desc text-xs text-[var(--text-muted)] font-serif leading-relaxed">
-    Tiếng Hy Lạp nghĩa là "Đấng Cưu Mang Thiên Chúa" (Mẹ Thiên Chúa), tín điều được Công đồng Chung Êphêsô (năm 431) long trọng định tín khẳng định thiên tính và nhân tính của Đức Kitô.
-  </p>
-</div>`
-  },
-  {
-    id: 'footnotes',
-    name: '6. Khối Chú Thích Chân Trang (Footnotes & References)',
-    desc: 'Được đặt ở cuối bài viết để ghi rõ nguồn trích dẫn học thuật, văn kiện Tòa Thánh hoặc số đoạn Sách Giáo Lý CCC.',
-    category: 'Học Thuật',
-    code: `<!-- Trong thân bài viết, chèn thẻ sup liên kết: -->
-Theo lời dạy của Công đồng Vatican II<sup><a href="#fn1" class="footnote-ref">[1]</a></sup>...
-
-<!-- Ở cuối bài viết, chèn khối Chú Thích: -->
-<div class="footnotes-section">
-  <h4 class="footnotes-title">Chú Thích & Tài Liệu Tham Khảo</h4>
-  <ol class="footnotes-list">
-    <li id="fn1" class="footnote-item">
-      <span class="footnote-num">1.</span> 
-      Hiến chế Tín lý về Mặc khải <em>Dei Verbum</em>, số 12.
-    </li>
-    <li id="fn2" class="footnote-item">
-      <span class="footnote-num">2.</span> 
-      <em>Sách Giáo Lý Hội Thánh Công Giáo (CCC)</em>, triệt 1213.
-    </li>
-  </ol>
-</div>`,
-    previewHtml: `<div class="footnotes-section p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] my-2">
-  <h4 class="footnotes-title font-serif font-bold text-xs uppercase tracking-wider text-amber-500 mb-2">Chú Thích & Tài Liệu Tham Khảo</h4>
-  <ol class="footnotes-list space-y-1 text-xs text-[var(--text-muted)] font-serif">
-    <li class="footnote-item flex items-start gap-2">
-      <span class="footnote-num font-bold text-amber-500">1.</span> 
-      <span>Hiến chế Tín lý về Mặc khải <em>Dei Verbum</em>, số 12.</span>
-    </li>
-    <li class="footnote-item flex items-start gap-2">
-      <span class="footnote-num font-bold text-amber-500">2.</span> 
-      <span><em>Sách Giáo Lý Hội Thánh Công Giáo (CCC)</em>, triệt 1213.</span>
-    </li>
-  </ol>
-</div>`
-  },
-  {
-    id: 'liturgical-image',
-    name: '7. Khung Hình Ảnh Phụng Vụ Kèm Chú Thích (Image Box)',
-    desc: 'Định dạng hình ảnh thánh thiêng chuẩn tỷ lệ, có chú thích niên đại, địa danh khảo cổ hoặc tác giả.',
-    category: 'Hình Ảnh',
-    code: `<figure class="liturgical-image-box">
-  <img src="https://example.com/anh-khao-co.jpg" alt="Bia đá Tel Dan" loading="lazy" />
-  <figcaption>
-    Bia đá Tel Dan (thế kỷ IX TCN) với dòng chữ khắc Aram nhắc đến "Nhà Đa-vít". Hiện lưu giữ tại Bảo tàng Israel.
-  </figcaption>
-</figure>`,
-    previewHtml: `<div class="liturgical-image-box p-3 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] text-center my-2">
-  <div class="h-24 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-xs font-serif text-amber-500 font-bold mb-2">
-    🖼️ Khung Ảnh Phụng Vụ / Khảo Cổ
+    previewHtml: `<div class="sacred-scripture my-2 p-4 rounded-2xl bg-amber-500/10 border-l-4 border-amber-500 space-y-2">
+  <div class="scripture-badge flex items-center justify-between text-xs font-serif font-bold text-amber-600 dark:text-amber-400">
+    <span>✝ Ga 3:30</span>
+    <span class="text-[10px] text-[var(--text-muted)] font-sans">Bản dịch Cố Lm. Nguyễn Thế Thuấn, CSsR</span>
   </div>
-  <p class="text-[11px] text-[var(--text-muted)] font-serif italic">
-    Bia đá Tel Dan (thế kỷ IX TCN) với dòng chữ khắc Aram nhắc đến "Nhà Đa-vít". Hiện lưu giữ tại Bảo tàng Israel.
-  </p>
+  <div class="scripture-content italic text-xs font-serif text-[var(--text-main)]">
+    "Người phải lớn lên, còn tôi phải nhỏ lại."
+  </div>
 </div>`
   },
   {
     id: 'callout',
-    name: '8. Hộp Lưu Ý Giáo Lý & Huấn Quyền (Catechetical Callout)',
-    desc: 'Dùng để nhấn mạnh điểm lưu ý thần học quan trọng, mẹo ghi nhớ đức tin hoặc cảnh báo tránh các ngộ nhận.',
-    category: 'Sư Phạm',
-    code: `<div class="catechetical-callout callout-important">
-  <div class="callout-icon">💡</div>
+    name: '5. Hộp Lưu Ý Giáo Lý & Huấn Quyền (Catechetical Callout)',
+    desc: 'Nhấn mạnh điểm giáo lý cốt lõi, trích dẫn Sách Giáo Lý Hội Thánh Công Giáo (CCC) hoặc văn kiện Tòa Thánh.',
+    category: 'Huấn Quyền',
+    code: `<div class="catechetical-callout catechetical-important">
+  <div class="callout-header">
+    <span class="callout-icon">⛪</span>
+    <span class="callout-title">Ý NGHĨA GIÁO LÝ &amp; HUẤN QUYỀN HỘI THÁNH</span>
+  </div>
   <div class="callout-content">
-    <div class="callout-title">Điểm Giáo Lý Cốt Lõi (CCC 84)</div>
-    <p class="callout-body">
-      "Kinh Thánh và Thánh Truyền họp thành một kho tàng duy nhất chứa đựng Lời Thiên Chúa được ủy thác cho Hội Thánh."
-    </p>
+    <p class="mb-2">Kinh Thánh và Thánh Truyền họp thành một kho tàng duy nhất chứa đựng Lời Thiên Chúa được ủy thác cho Hội Thánh.</p>
+    <div class="callout-ref">Sách Giáo Lý Hội Thánh Công Giáo (CCC) #84; Hiến chế Dei Verbum #9.</div>
   </div>
 </div>`,
-    previewHtml: `<div class="catechetical-callout p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 my-2 flex items-start gap-3">
-  <span class="text-lg">💡</span>
-  <div>
-    <div class="callout-title font-serif font-bold text-xs text-amber-500 uppercase tracking-wider mb-0.5">Điểm Giáo Lý Cốt Lõi (CCC 84)</div>
-    <p class="callout-body text-xs text-[var(--text-muted)] font-serif italic">
-      "Kinh Thánh và Thánh Truyền họp thành một kho tàng duy nhất chứa đựng Lời Thiên Chúa được ủy thác cho Hội Thánh."
-    </p>
+    previewHtml: `<div class="catechetical-callout p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 my-2 space-y-1.5">
+  <div class="flex items-center gap-2">
+    <span class="text-sm">⛪</span>
+    <span class="font-serif font-bold text-xs text-amber-600 dark:text-amber-400 uppercase tracking-wider">Ý NGHĨA GIÁO LÝ &amp; HUẤN QUYỀN HỘI THÁNH</span>
   </div>
+  <p class="text-xs text-[var(--text-muted)] font-serif leading-relaxed">
+    Kinh Thánh và Thánh Truyền họp thành một kho tàng duy nhất chứa đựng Lời Thiên Chúa được ủy thác cho Hội Thánh.
+  </p>
+  <div class="text-[10px] font-mono text-amber-600/80 dark:text-amber-400/80">CCC #84; Hiến chế Dei Verbum #9.</div>
+</div>`
+  },
+  {
+    id: 'image-lightbox',
+    name: '6. Hình Ảnh Khảo Cổ Phụng Vụ Có Lightbox (Image Block)',
+    desc: 'Hình ảnh khảo cổ/thánh tích có thuộc tính data-lightbox="true" để phóng to và chú thích học thuật.',
+    category: 'Khảo Cổ',
+    code: `<figure class="wp-block-image veridu-image-block my-8 text-center" data-lightbox="true">
+  <img src="https://example.com/anh-khao-co.jpg" alt="Mô tả di chỉ khảo cổ" class="rounded-xl shadow-2xl mx-auto border border-amber-500/20 max-w-full h-auto" loading="lazy" />
+  <figcaption class="mt-3 text-sm text-[var(--text-muted)] italic font-serif">Di chỉ thành cổ thời kỳ Đệ Nhất Đền Thờ. Nguồn: Viện Khảo cổ học Israel.</figcaption>
+</figure>`,
+    previewHtml: `<div class="p-3 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] text-center my-2">
+  <div class="h-20 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-xs font-serif text-amber-600 dark:text-amber-400 font-bold mb-1.5">
+    🖼️ Ảnh Khảo Cổ (Hỗ trợ Lightbox 🔍)
+  </div>
+  <p class="text-[11px] text-[var(--text-muted)] font-serif italic">
+    Di chỉ thành cổ thời kỳ Đệ Nhất Đền Thờ. Nguồn: Viện Khảo cổ học Israel.
+  </p>
+</div>`
+  },
+  {
+    id: 'prayer-block',
+    name: '7. Khối Lời Nguyện Chiêm Niệm (Prayer Block)',
+    desc: 'Đóng khung phụng vụ trang trọng ở phần kết thúc bài viết, đúc kết bài học hiện sinh cho đời sống cầu nguyện.',
+    category: 'Linh Đạo',
+    code: `<div class="prayer-block">
+  <div class="prayer-header">
+    <span class="prayer-cross">✝</span>
+    <span class="prayer-title">LỜI NGUYỆN SUY NIỆM</span>
+  </div>
+  <p class="prayer-verse">
+    Lạy Chúa, xin ban cho chúng con một đức tin kiên vững dẫu giữa muôn vàn phong ba bão táp của cuộc đời. Amen.
+  </p>
+</div>`,
+    previewHtml: `<div class="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 text-center my-2 space-y-1">
+  <div class="text-xs font-serif font-bold text-indigo-400 uppercase tracking-wider flex items-center justify-center gap-1">
+    <span>✝</span> LỜI NGUYỆN SUY NIỆM
+  </div>
+  <p class="text-xs italic font-serif text-[var(--text-muted)] leading-relaxed">
+    Lạy Chúa, xin ban cho chúng con một đức tin kiên vững dẫu giữa muôn vàn phong ba bão táp của cuộc đời. Amen.
+  </p>
+</div>`
+  },
+  {
+    id: 'ending-metas',
+    name: '8. Bộ 4 Khối Kết Thúc Học Thuật Bắt Buộc (Concluding Metas)',
+    desc: 'Bao gồm Chú thích 2 chiều, Bảng đối chiếu Kinh Thánh, Từ điển thuật ngữ, và Thư mục tài liệu chuẩn mực.',
+    category: 'Học Thuật',
+    code: `<!-- 1. CHÚ THÍCH HỌC THUẬT (FOOTNOTES) -->
+<div class="veridu-footnotes">
+  <h4 id="chu-thich" class="font-serif font-bold text-lg text-amber-600 dark:text-amber-400 mt-6 mb-2">Chú Thích Học Thuật</h4>
+  <ol class="list-decimal list-inside space-y-2 text-sm text-[var(--text-muted)] font-serif">
+    <li id="fn-1"><a href="#fnref-1" class="text-amber-500 hover:underline mr-1">↩</a> Nguồn tài liệu khảo cứu [1]...</li>
+  </ol>
+</div>
+
+<!-- 2. ĐỐI CHIẾU KINH THÁNH (SCRIPTURE META) -->
+<div class="scripture-meta">
+  <h3 id="tham-chieu" class="font-serif font-bold text-xl text-[var(--text-main)] mt-8 mb-3">Tham Chiếu Bản Văn Thánh Kinh</h3>
+  <div class="scripture-item">
+    <div class="scripture-claim">Luận điểm nghiên cứu đối chiếu</div>
+    <div class="scripture-ref"><a href="/kinh-thanh" class="text-amber-500 hover:underline">St 12:1-4</a></div>
+  </div>
+</div>
+
+<!-- 3. TỪ ĐIỂN THUẬT NGỮ (DICTIONARY META) -->
+<div class="dictionary-meta">
+  <div class="dictionary-title" id="bang-thuat-ngu">TRA CỨU THUẬT NGỮ THẦN HỌC &amp; KHẢO CỔ HỌC</div>
+  <div class="dictionary-entry">
+    <span class="dictionary-term">Berît (בְּרִית):</span>
+    <span class="dictionary-def">(Tiếng Híp-ri) "Giao ước" – mối tương quan thiêng liêng ràng buộc giữa Thiên Chúa và dân tộc tuyển chọn.</span>
+  </div>
+</div>
+
+<!-- 4. THƯ MỤC TÀI LIỆU THAM KHẢO (BIBLIOGRAPHY) -->
+<div class="bibliography">
+  <h3 id="thu-muc-tai-lieu" class="font-serif font-bold text-xl text-[var(--text-main)] mt-8 mb-3">Thư Mục Tài Liệu Tham Khảo Chuẩn Mực</h3>
+  <p class="leading-relaxed my-3 text-[var(--text-main)] text-base">Vaux, Roland de. <em>Ancient Israel: Its Life and Institutions</em>. London: Darton, Longman &amp; Todd, 1961.</p>
+</div>`,
+    previewHtml: `<div class="p-3 rounded-2xl bg-[var(--bg-main)] border border-amber-500/30 my-2 space-y-1.5 text-xs font-serif">
+  <div class="font-bold text-amber-600 dark:text-amber-400">📚 Bộ 4 Khối Học Thuật Kết Bài:</div>
+  <ul class="list-disc list-inside text-[var(--text-muted)] space-y-0.5 text-[11px]">
+    <li><code>.veridu-footnotes</code>: Chú thích liên kết 2 chiều</li>
+    <li><code>.scripture-meta</code>: Bảng đối chiếu bản văn Kinh Thánh</li>
+    <li><code>.dictionary-meta</code>: Từ điển thuật ngữ Thần học &amp; Khảo cổ</li>
+    <li><code>.bibliography</code>: Thư mục tài liệu tham khảo học thuật</li>
+  </ul>
 </div>`
   }
 ];
@@ -248,6 +241,7 @@ export default function StyleGuidePage() {
   };
 
   const TOC_ITEMS = [
+    { id: 'bai-mau', label: '⭐ Bài Viết Mẫu Chuẩn Mực (ID #48)' },
     { id: 'ton-chi', label: '1. Tôn Chỉ Huấn Quyền' },
     { id: 'phap-luat', label: '2. Tuân Thủ Pháp Luật' },
     { id: 'cau-truc', label: '3. Bộ Khung Cấu Trúc Bài' },
@@ -256,12 +250,14 @@ export default function StyleGuidePage() {
   ];
 
   const CHECKLIST_ITEMS = [
-    'Trích dẫn Kinh Thánh đúng chương/câu từ bản dịch Công giáo chuẩn',
-    'Tín lý & giáo huấn chuẩn xác theo Sách Giáo Lý CCC',
-    'Nghiêm cấm đạo văn và sao chép nội dung trái phép',
-    'Chấp hành Luật Tôn giáo 2016 & Luật An ninh mạng Việt Nam',
-    'Bài viết có cấu trúc rõ ràng: Abstract, Đề mục H2-H3, Chú thích',
-    'Đã soát lỗi chính tả tiếng Việt và tính mỹ thuật bố cục'
+    'Bọc toàn bộ thân bài trong <article class="veridu-scholarly-article">',
+    'Có khối Abstract Research Card (.abstract-research) với header và badge',
+    'Trích dẫn Kinh Thánh theo bản dịch Cố Lm. Nguyễn Thế Thuấn, CSsR',
+    'Hình ảnh khảo cổ dùng figure.veridu-image-block có data-lightbox="true"',
+    'Đủ 4 khối kết thúc: Footnotes, Scripture Meta, Dictionary, Bibliography',
+    'Không chèn trùng lặp Tiêu đề H1, Ảnh bìa, TOC (do template tự kết xuất)',
+    'Tín lý & giáo huấn chuẩn xác theo Sách Giáo Lý CCC và Huấn Quyền',
+    'Nghiêm cấm đạo văn; chấp hành nghiêm túc Pháp luật Việt Nam'
   ];
 
   return (
@@ -271,15 +267,15 @@ export default function StyleGuidePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-serif font-bold uppercase tracking-wider mb-4">
             <BookMarked className="w-3.5 h-3.5" />
-            <span>Quy Chuẩn Soạn Thảo &amp; Phong Cách Học Thuật</span>
+            <span>Quy Chuẩn Soạn Thảo &amp; Phong Cách Học Thuật VERIDU</span>
           </div>
 
           <h1 className="font-serif font-black text-3xl sm:text-5xl text-[var(--text-main)] leading-tight mb-4">
-            Hướng Dẫn Viết Bài VERIDU
+            Hướng Dẫn Viết Bài Chuẩn Mực
           </h1>
 
           <p className="text-sm sm:text-base text-[var(--text-muted)] max-w-3xl mx-auto font-serif leading-relaxed">
-            Quy chuẩn toàn diện nhằm bảo đảm mỗi tác phẩm đạt tính chuẩn mực cao nhất về Thần Học Công Giáo, tuân thủ Huấn Quyền Hội Thánh, chấp hành nghiêm túc Pháp luật Việt Nam và thể hiện vẻ đẹp của thiết kế Stained-Glass.
+            Cẩm nang quy chuẩn toàn diện nhằm bảo đảm mỗi công trình nghiên cứu trên VERIDU (Crux Veritatis) đạt tính chuẩn mực cao nhất về Thần Học Công Giáo, tuân phục Huấn Quyền Hội Thánh, chấp hành nghiêm túc Pháp luật Việt Nam và thể hiện thẩm mỹ Stained-Glass thanh nhã.
           </p>
         </div>
       </section>
@@ -291,6 +287,61 @@ export default function StyleGuidePage() {
           {/* LEFT COLUMN: 70% (lg:col-span-8) - MAIN GUIDELINES & LIVE SNIPPETS */}
           <main className="lg:col-span-8 space-y-12">
             
+            {/* SPECIAL SECTION: GOLDEN STANDARD ARTICLE */}
+            <section id="bai-mau" className="scroll-mt-24 p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-amber-500/15 via-[var(--bg-card)] to-amber-500/5 border-2 border-amber-500/40 shadow-xl space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-amber-500/20 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-xl shadow-lg">
+                    ⭐
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                      BÀI MẪU CHUẨN MỰC HỆ THỐNG (GOLDEN STANDARD)
+                    </span>
+                    <h2 className="font-serif font-black text-xl sm:text-2xl text-[var(--text-main)]">
+                      Vương Quốc Israel Cổ Đại (Bài Viết ID #48)
+                    </h2>
+                  </div>
+                </div>
+
+                <a 
+                  href="/vuong-quoc-israel-co-dai-khao-co-hoc-can-dong-buoc-ngoat-lich-su-va-hanh-trinh-duc-tin-doc-than"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-xs transition shadow-md shrink-0"
+                >
+                  <span>Mở Xem Bài Mẫu Thực Tế</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+
+              <p className="text-xs sm:text-sm text-[var(--text-muted)] font-serif leading-relaxed">
+                Bài viết này là khuôn mẫu chuẩn mực định nghĩa cấu trúc toàn diện cho tất cả các bài nghiên cứu trên VERIDU. Toàn bộ 25 bài viết tiêu chuẩn trong hệ thống CSDL đã được đồng bộ hóa thống nhất theo kiến trúc này.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-serif">
+                <div className="p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] space-y-1">
+                  <div className="font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <span>Khung Hệ Thống (System Frame)</span>
+                  </div>
+                  <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+                    Header, Breadcrumb, Tiêu đề H1, Cover Image, Sticky TOC, Metadata, Author Card, Chân trang bản quyền. <em>(Hệ thống tự động hiển thị, không viết vào HTML)</em>.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-[var(--bg-main)] border border-[var(--border-card)] space-y-1">
+                  <div className="font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <span>Thân Bài HTML (Article Body)</span>
+                  </div>
+                  <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+                    Bắt buộc bọc trong <code>&lt;article class="veridu-scholarly-article"&gt;</code>, gồm Abstract Card, các đề mục La Mã, Lời Chúa NTT, và 4 khối kết thúc học thuật.
+                  </p>
+                </div>
+              </div>
+            </section>
+
             {/* Section 1: Theological & Magisterial Principles */}
             <section id="ton-chi" className="space-y-5 scroll-mt-24">
               <div className="flex items-center gap-3 border-b border-[var(--border-card)] pb-3">
@@ -324,7 +375,7 @@ export default function StyleGuidePage() {
                     <span>Bản Văn Kinh Thánh Chuẩn</span>
                   </h3>
                   <p className="text-xs text-[var(--text-muted)] leading-relaxed font-serif">
-                    Sử dụng các bản dịch Kinh Thánh Công giáo được Hội đồng Giám mục phê chuẩn (NPDCTK, Lm. Nguyễn Thế Thuấn) hoặc nguyên ngữ Hy Lạp/Do Thái.
+                    Ưu tiên sử dụng bản dịch của Cố Lm. Nguyễn Thế Thuấn, CSsR cho các phân tích chú giải ngữ nghĩa và đối chiếu nguyên ngữ Híp-ri / Hy Lạp.
                   </p>
                 </div>
 
@@ -413,17 +464,17 @@ export default function StyleGuidePage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                 <div className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] space-y-1.5">
                   <span className="text-[10px] font-mono font-bold text-amber-500">PHẦN 1</span>
-                  <h4 className="font-serif font-bold text-xs sm:text-sm text-[var(--text-main)]">Tiêu Đề &amp; Abstract</h4>
+                  <h4 className="font-serif font-bold text-xs sm:text-sm text-[var(--text-main)]">Thẻ Bọc &amp; Abstract</h4>
                   <p className="text-xs text-[var(--text-muted)] font-serif">
-                    Tiêu đề học thuật rõ ý. Bản tóm tắt luận điểm nghiên cứu (80 - 150 từ) ngay đầu bài.
+                    Thẻ bọc &lt;article&gt;, kèm bản tóm tắt luận điểm nghiên cứu (.abstract-research) ngay đầu bài.
                   </p>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] space-y-1.5">
                   <span className="text-[10px] font-mono font-bold text-amber-500">PHẦN 2</span>
-                  <h4 className="font-serif font-bold text-xs sm:text-sm text-[var(--text-main)]">Dẫn Nhập &amp; Bối Cảnh</h4>
+                  <h4 className="font-serif font-bold text-xs sm:text-sm text-[var(--text-main)]">Dẫn Nhập &amp; Khảo Cổ</h4>
                   <p className="text-xs text-[var(--text-muted)] font-serif">
-                    Giới thiệu hoàn cảnh lịch sử, địa lý, các nhân vật và vấn đề thần học được đặt ra.
+                    Giới thiệu hoàn cảnh lịch sử, bối cảnh Cận Đông Cổ Đại (ANE) và các di chỉ khảo cổ liên hệ.
                   </p>
                 </div>
 
@@ -431,15 +482,15 @@ export default function StyleGuidePage() {
                   <span className="text-[10px] font-mono font-bold text-amber-500">PHẦN 3</span>
                   <h4 className="font-serif font-bold text-xs sm:text-sm text-[var(--text-main)]">Luận Điểm &amp; Chú Giải</h4>
                   <p className="text-xs text-[var(--text-muted)] font-serif">
-                    Chia nhỏ bằng các đề mục H2, H3. Dẫn chứng nguyên ngữ, Kinh Thánh và giáo phụ.
+                    Chia nhỏ bằng các đề mục La Mã H2. Khối Lời Chúa NTT, hộp giáo lý và hình ảnh lightbox.
                   </p>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] space-y-1.5">
                   <span className="text-[10px] font-mono font-bold text-amber-500">PHẦN 4</span>
-                  <h4 className="font-serif font-bold text-xs sm:text-sm text-[var(--text-main)]">Chú Thích &amp; Tài Liệu</h4>
+                  <h4 className="font-serif font-bold text-xs sm:text-sm text-[var(--text-main)]">Bộ 4 Khối Kết Thúc</h4>
                   <p className="text-xs text-[var(--text-muted)] font-serif">
-                    Khối chú thích chân trang số tự động và danh mục tài liệu tham khảo (Bibliography).
+                    Bắt buộc đủ 4 khối: Chú thích cuối trang, Đối chiếu Kinh Thánh, Từ điển, và Thư mục tham khảo.
                   </p>
                 </div>
               </div>
@@ -456,7 +507,7 @@ export default function StyleGuidePage() {
                     4. Hệ Thống 8 Khối Chuẩn Mẫu (Live HTML Snippets)
                   </h2>
                   <p className="text-xs text-[var(--text-muted)] font-serif">
-                    Bấm &ldquo;Sao Chép Mã Mẫu&rdquo; để dán vào trình soạn thảo hoặc file HTML của bạn.
+                    Bấm &ldquo;Sao Chép Mã&rdquo; để dán vào trình soạn thảo hoặc file HTML của bạn.
                   </p>
                 </div>
               </div>
@@ -521,7 +572,7 @@ export default function StyleGuidePage() {
                           <FileCode2 className="w-3 h-3 text-indigo-400" />
                           <span>Mã Nguồn HTML:</span>
                         </span>
-                        <pre className="p-3 rounded-xl bg-slate-950 text-amber-300 font-mono text-[11px] overflow-x-auto leading-relaxed border border-slate-800 max-h-40">
+                        <pre className="p-3 rounded-xl bg-slate-950 text-amber-300 font-mono text-[11px] overflow-x-auto leading-relaxed border border-slate-800 max-h-48">
                           <code>{item.code}</code>
                         </pre>
                       </div>
@@ -593,7 +644,7 @@ export default function StyleGuidePage() {
             <div className="p-5 rounded-3xl bg-gradient-to-br from-[var(--bg-card)] to-amber-500/5 border border-amber-500/30 shadow-md space-y-3">
               <span className="text-xs font-serif font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
                 <ListChecks className="w-4 h-4" />
-                <span>Checklist 6 Tiêu Chí Tự Kiểm Tra</span>
+                <span>Checklist 8 Điểm Chuẩn Mực</span>
               </span>
 
               <div className="space-y-2 pt-1">
@@ -619,6 +670,16 @@ export default function StyleGuidePage() {
                 <PenTool className="w-3.5 h-3.5" />
                 <span>Vào Phòng Soạn Thảo</span>
               </Link>
+
+              <a
+                href="/vuong-quoc-israel-co-dai-khao-co-hoc-can-dong-buoc-ngoat-lich-su-va-hanh-trinh-duc-tin-doc-than"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-2.5 px-4 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30 font-serif font-bold text-xs flex items-center justify-center gap-1.5 transition"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Xem Bài Mẫu ID #48</span>
+              </a>
 
               <Link
                 href="/noi-dung-can-thiet"
