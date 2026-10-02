@@ -68,24 +68,24 @@ export default function LanguageSwitcher({ className = '', compact = false }: La
         onClick={() => setIsOpen((prev) => !prev)}
         aria-label="Chọn ngôn ngữ / Select Language"
         aria-expanded={isOpen}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-900/80 hover:bg-slate-850 border border-slate-700/60 text-slate-200 hover:border-amber-500/50 hover:text-amber-400 transition-all shadow-md text-xs font-semibold cursor-pointer"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-stone-100 dark:bg-slate-900/80 hover:bg-stone-200 dark:hover:bg-slate-850 border border-stone-300 dark:border-slate-700/60 text-stone-800 dark:text-slate-200 hover:border-amber-500/50 hover:text-amber-700 dark:hover:text-amber-400 transition-all shadow-sm text-xs font-semibold cursor-pointer"
         title="Ngôn ngữ / Language"
       >
-        <Globe className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+        <Globe className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
         <span className="text-xs uppercase tracking-wider">{activeOption.code}</span>
         <span className="text-sm leading-none">{activeOption.flag}</span>
         <ChevronDown
-          className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${
+          className={`w-3 h-3 text-stone-500 dark:text-slate-400 transition-transform duration-200 ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
-          <div className="px-3.5 py-2 border-b border-slate-800 text-[10px] font-bold uppercase tracking-wider text-amber-400 font-serif flex items-center justify-between">
+        <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white dark:bg-slate-900/95 backdrop-blur-xl border border-stone-200 dark:border-slate-700/80 shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+          <div className="px-3.5 py-2 border-b border-stone-200 dark:border-slate-800 text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 font-serif flex items-center justify-between">
             <span>🌐 {t('header.language', 'Chọn Ngôn Ngữ')}</span>
-            <span className="font-mono text-[9px] text-slate-500">i18n</span>
+            <span className="font-mono text-[9px] text-stone-400 dark:text-slate-500">i18n</span>
           </div>
 
           <div className="py-1">
@@ -98,26 +98,26 @@ export default function LanguageSwitcher({ className = '', compact = false }: La
                   onClick={() => handleSelect(option.code)}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 text-left text-xs transition-colors cursor-pointer ${
                     isSelected
-                      ? 'bg-amber-500/15 text-amber-300 font-bold'
-                      : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                      ? 'bg-amber-500/15 text-amber-800 dark:text-amber-300 font-bold'
+                      : 'text-stone-700 dark:text-slate-300 hover:bg-stone-100 dark:hover:bg-slate-800/80 hover:text-stone-900 dark:hover:text-white'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <span className="text-lg leading-none">{option.flag}</span>
                     <div className="flex flex-col">
                       <span className="font-medium text-xs">{option.nativeLabel}</span>
-                      <span className="text-[10px] text-slate-400 uppercase tracking-wider font-mono">
+                      <span className="text-[10px] text-stone-500 dark:text-slate-400 uppercase tracking-wider font-mono">
                         {option.code} · {option.label}
                       </span>
                     </div>
                   </div>
-                  {isSelected && <Check className="w-3.5 h-3.5 text-amber-400 shrink-0 ml-2" />}
+                  {isSelected && <Check className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 ml-2" />}
                 </button>
               );
             })}
           </div>
 
-          <div className="px-3.5 py-2 mt-1 border-t border-slate-800 text-[9px] text-slate-400 font-serif leading-tight">
+          <div className="px-3.5 py-2 mt-1 border-t border-stone-200 dark:border-slate-800 text-[9px] text-stone-500 dark:text-slate-400 font-serif leading-tight">
             ✝️ Bản dịch hàn lâm &amp; Phụng vụ chuẩn tắc
           </div>
         </div>

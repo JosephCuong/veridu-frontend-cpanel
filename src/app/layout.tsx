@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Lora } from "next/font/google";
+import { Inter, Lora, Cinzel } from "next/font/google";
 import BackToTop from "@/components/BackToTop";
 import LiturgicalHeader from "@/components/LiturgicalHeader";
 import Footer from "@/components/Footer";
@@ -21,8 +21,14 @@ const lora = Lora({
   display: "swap",
 });
 
+const cinzel = Cinzel({
+  variable: "--font-cinzel",
+  subsets: ["latin"],
+  display: "swap",
+});
+
 export const viewport: Viewport = {
-  themeColor: "#0f172a",
+  themeColor: "#FAF7F2",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -126,7 +132,7 @@ export default function RootLayout({
     <html
       lang="vi"
       suppressHydrationWarning
-      className={`${inter.variable} ${lora.variable} antialiased dark`}
+      className={`${inter.variable} ${lora.variable} ${cinzel.variable} antialiased light`}
     >
       <head>
         {/* ── GOOGLE TAG (gtag.js) - STRICTLY IN HEAD FOR GOOGLE SEARCH CONSOLE VERIFICATION ── */}
@@ -170,7 +176,7 @@ export default function RootLayout({
         {/* Theme Initializer Script */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localStorage.getItem('veridu-theme');if(e==='light'){c.add('light')}else{c.add('dark')}}catch(e){}}();`,
+            __html: `!function(){try{var d=document.documentElement,c=d.classList;var e=localStorage.getItem('veridu-theme')||localStorage.getItem('veridu_theme');c.remove('light','dark');if(e==='dark'){c.add('dark')}else{c.add('light')}}catch(x){}}();`,
           }}
         />
 
