@@ -8,8 +8,9 @@ import { getStoredUser, logout, UserProfile } from '@/lib/auth';
 import { calculateLevelInfo } from '@/lib/gamification';
 import { 
   Flame, Moon, Sun, Menu, X, User, LogOut, LogIn, ChevronDown, 
-  BookOpen, MapPin, Clock, Users, FileText, Library, Award, Shield, Cross,
-  Zap, Droplets, Settings, Gamepad2, Scroll, MoreHorizontal, Feather, ClipboardList, Scale, PenTool, Megaphone
+  BookOpen, MapPin, Clock, Users, FileText, Library, Award, Shield, 
+  Sparkles, Settings, Gamepad2, GraduationCap, Trophy, HelpCircle,
+  PenTool, Megaphone, Compass, BookMarked, Layers, ChevronRight
 } from 'lucide-react';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useTranslation } from '@/context/LanguageContext';
@@ -22,7 +23,7 @@ export default function LiturgicalHeader() {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  // Dropdown states for Desktop/Tablet Nav menus
+  // Active mega menu dropdown state
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -34,11 +35,35 @@ export default function LiturgicalHeader() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState<number>(0);
-  const desktopUserMenuRef = useRef<HTMLDivElement>(null);
-  const tabletUserMenuRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   const isAdmin = user?.role === 'Quản Trị Viên' || user?.role === 'admin';
 
+  // Toggle Theme (Dark / Light)
+  const toggleTheme = () => {
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    if (newMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('veridu_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('veridu_theme', 'light');
+    }
+  };
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('veridu_theme');
+    if (savedTheme === 'light') {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove('dark');
+    } else {
+      setIsDarkMode(true);
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
+  // Fetch Admin moderation badge count if admin
   useEffect(() => {
     if (isAdmin) {
       fetch('/api/admin/moderation')
@@ -55,11 +80,11 @@ export default function LiturgicalHeader() {
     }
   }, [user, isAdmin]);
 
+  // Sync user profile & live updates
   useEffect(() => {
     const currentUser = getStoredUser();
     setUser(currentUser);
 
-    // Background live sync with Supabase profiles
     if (currentUser?.id && (typeof currentUser.id === 'string' && currentUser.id.includes('-') || currentUser.email)) {
       import('@/lib/supabaseClient').then(async ({ supabase }) => {
         try {
@@ -93,7 +118,6 @@ export default function LiturgicalHeader() {
       });
     }
 
-    // Live update when EXP / Mana / Streak changes
     const handleUserUpdate = (e: any) => {
       if (e.detail) {
         setUser(e.detail);
@@ -101,16 +125,12 @@ export default function LiturgicalHeader() {
         setUser(getStoredUser());
       }
     };
+
     window.addEventListener('veridu_user_updated', handleUserUpdate);
 
-    // Sync dark mode from DOM
-    const isDark = document.documentElement.classList.contains('dark');
-    setIsDarkMode(isDark);
-
-    // Scroll listener for Smart Reveal & Translucent Glass
+    // Scroll listener for Smart Reveal
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-
       if (currentScrollY > 20) {
         setIsScrolled(true);
       } else {
@@ -128,7 +148,6 @@ export default function LiturgicalHeader() {
       } else {
         setIsVisible(true);
       }
-
       setLastScrollY(currentScrollY);
     };
 
@@ -137,63 +156,33 @@ export default function LiturgicalHeader() {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('veridu_user_updated', handleUserUpdate);
     };
-  }, [lastScrollY]);
+  }, [lastScrollY, isAdmin]);
 
-  // Click-Outside & Escape key listener
+  // Click outside to close user menu
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (
-        (desktopUserMenuRef.current && desktopUserMenuRef.current.contains(target)) ||
-        (tabletUserMenuRef.current && tabletUserMenuRef.current.contains(target))
-      ) {
-        return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setIsUserMenuOpen(false);
       }
-      setIsUserMenuOpen(false);
     };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
         setIsUserMenuOpen(false);
         setOpenDropdown(null);
       }
     };
-
-    if (isUserMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('keydown', handleKeyDown);
-    }
-
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isUserMenuOpen]);
+  }, []);
 
-  // Close drawer and dropdowns on route change
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-    setIsUserMenuOpen(false);
-    setOpenDropdown(null);
-  }, [pathname]);
-
-  const toggleTheme = () => {
-    if (isDarkMode) {
-      setIsDarkMode(false);
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
-      localStorage.setItem('veridu-theme', 'light');
-    } else {
-      setIsDarkMode(true);
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-      localStorage.setItem('veridu-theme', 'dark');
-    }
-  };
-
-  const handleMouseEnter = (name: string) => {
+  // Dropdown hover helpers
+  const handleMouseEnter = (menuKey: string) => {
     if (dropdownTimeoutRef.current) clearTimeout(dropdownTimeoutRef.current);
-    setOpenDropdown(name);
+    setOpenDropdown(menuKey);
   };
 
   const handleMouseLeave = () => {
@@ -209,101 +198,170 @@ export default function LiturgicalHeader() {
     ? '/images/veridu_logo_light.png' 
     : '/images/veridu_logo_dark.png';
 
-  // Gamification Level
+  // Gamification Level Calculation
   const levelInfo = calculateLevelInfo(user?.points || 100, (user as any)?.selected_title || (user as any)?.current_title);
 
-  // Hide global header in dedicated studios, document reader or storybook reader
+  // Focus Mode: Hide Header on dedicated editors and course players
+  const isCoursePlayer = pathname !== '/khoa-hoc' && !!pathname?.startsWith('/khoa-hoc/');
   if (
+    pathname === '/soan-bai' || 
+    pathname?.startsWith('/soan-bai/') || 
     pathname?.startsWith('/thu-vien/doc/') || 
     (pathname !== '/sach-tranh' && pathname?.startsWith('/sach-tranh/')) ||
     pathname?.startsWith('/admin/khoa-hoc') ||
-    pathname?.startsWith('/khoa-hoc/studio')
+    pathname?.startsWith('/khoa-hoc/studio') ||
+    isCoursePlayer
   ) {
     return null;
   }
 
-  // Ultra-Sleek Streamlined User Menu Popover Card (Glassmorphic)
+  // Unified User Dropdown Modal
   const renderUserMenuDropdown = () => {
     if (!isUserMenuOpen || !user) return null;
+
+    const streakCount = user.streak || 1;
+    const displayName = user.displayName || user.fullName || 'Tín Hữu';
+    const christianName = user.christianName ? `${user.christianName} ` : '';
+    const fullDisplayName = `${christianName}${displayName}`.trim();
+    const title = (user as any).selected_title || (user as any).current_title || 'NGƯỜI TÌM HIỂU';
+
     return (
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="absolute right-0 top-full mt-2 w-48 bg-slate-900/95 dark:bg-slate-900/95 border border-slate-700/80 dark:border-slate-800 rounded-2xl shadow-2xl p-1.5 space-y-0.5 z-50 animate-in zoom-in-95 duration-150 backdrop-blur-2xl select-none"
+        className="absolute right-0 top-full mt-2.5 w-80 bg-slate-950/98 border border-amber-500/30 rounded-3xl shadow-2xl p-4 space-y-3.5 z-50 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-2xl select-none"
       >
-        {/* 1. Hồ Sơ */}
-        <Link 
-          href="/ho-so" 
-          onClick={() => setIsUserMenuOpen(false)}
-          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-slate-200 hover:bg-amber-500/15 hover:text-amber-400 transition-colors group cursor-pointer"
-        >
-          <User className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
-          <span>{t('nav.profile')}</span>
-        </Link>
-
-        {/* 2. Cài Đặt */}
-        <Link 
-          href="/cai-dat" 
-          onClick={() => setIsUserMenuOpen(false)}
-          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-slate-200 hover:bg-amber-500/15 hover:text-amber-400 transition-colors group cursor-pointer"
-        >
-          <Settings className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform" />
-          <span>{t('nav.settings')}</span>
-        </Link>
-
-        {/* 3. Trung Tâm Quản Trị (Admin) */}
-        {isAdmin && (
-          <Link 
-            href="/admin" 
-            onClick={() => setIsUserMenuOpen(false)}
-            className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-serif font-bold text-amber-400 hover:bg-amber-500/15 transition-colors group cursor-pointer"
-          >
-            <span className="flex items-center gap-2.5">
-              <Shield className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
-              <span>{t('nav.admin')}</span>
-            </span>
-            {pendingCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-red-500 text-white font-mono text-[10px] font-black">
-                {pendingCount}
-              </span>
+        {/* User Identity Header Card */}
+        <div className="flex items-center gap-3 pb-3 border-b border-white/10">
+          <div className="relative w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-serif text-lg font-black overflow-hidden border border-amber-500/40 shadow-inner shrink-0">
+            {user.avatar ? (
+              <Image src={user.avatar} alt="Avatar" fill className="object-cover" sizes="48px" />
+            ) : (
+              user.christianName ? user.christianName[0] : '✝'
             )}
-          </Link>
-        )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h4 className="font-serif font-bold text-sm text-white truncate">
+              {fullDisplayName}
+            </h4>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-mono font-bold text-[10px] uppercase border border-amber-500/30">
+                {locale === 'en' ? `LVL ${levelInfo.level}` : (locale === 'la' ? `GRADUS ${levelInfo.level}` : `CẤP ${levelInfo.level}`)}
+              </span>
+              <span className="text-[11px] text-slate-400 truncate">
+                {title}
+              </span>
+            </div>
+            {(user.parish || user.diocese) && (
+              <p className="text-[10px] text-slate-400 truncate mt-0.5 font-serif italic">
+                {user.parish ? `${user.parish}, ` : ''}{user.diocese || ''}
+              </p>
+            )}
+          </div>
+        </div>
 
-        {/* 4. Đăng Bài (Admin) */}
+        {/* Faith Stats Bar: Streak & Progress Bar */}
+        <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 space-y-2">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-slate-300 flex items-center gap-1.5 font-medium">
+              <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              <span>Chuỗi chuyên cần</span>
+            </span>
+            <span className="font-bold text-amber-400 font-mono">
+              {streakCount} {locale === 'en' ? 'Days' : (locale === 'la' ? 'Dies' : 'Ngày liên tục')}
+            </span>
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+              <span>{levelInfo.currentExp} Manna</span>
+              <span>{levelInfo.nextLevelExp} Manna (Cấp {levelInfo.level + 1})</span>
+            </div>
+            <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-amber-500 to-amber-300 rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(100, Math.max(5, levelInfo.progressPercent))}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ADMIN COMMAND CENTER (Exclusive for Administrators) */}
         {isAdmin && (
-          <Link 
-            href="/soan-bai" 
-            onClick={() => setIsUserMenuOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-amber-400 hover:bg-amber-500/15 transition-colors group cursor-pointer"
-          >
-            <FileText className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
-            <span>{t('nav.write_studio')}</span>
-          </Link>
+          <div className="p-3 rounded-2xl bg-gradient-to-br from-amber-500/20 via-amber-500/10 to-transparent border border-amber-500/40 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-serif font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                <Shield className="w-3.5 h-3.5 text-amber-400" />
+                <span>Trung Tâm Quản Trị</span>
+              </span>
+              {pendingCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-red-500 text-white font-mono text-[10px] font-black animate-pulse">
+                  {pendingCount} chờ duyệt
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-1.5 pt-1">
+              <Link
+                href="/admin"
+                onClick={() => setIsUserMenuOpen(false)}
+                className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-xs transition-all shadow-sm"
+              >
+                <span>Bảng Quản Trị</span>
+                <ChevronRight className="w-3 h-3" />
+              </Link>
+              <Link
+                href="/soan-bai"
+                onClick={() => setIsUserMenuOpen(false)}
+                className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-serif font-bold text-xs border border-white/20 transition-all"
+              >
+                <PenTool className="w-3 h-3 text-amber-400" />
+                <span>Soạn Bài</span>
+              </Link>
+            </div>
+          </div>
         )}
 
-        {/* 5. Chiến Dịch Quảng Bá (Admin) */}
-        {isAdmin && (
+        {/* Personal Links */}
+        <div className="space-y-0.5 pt-1">
           <Link 
-            href="/admin/quang-ba" 
+            href="/ho-so" 
             onClick={() => setIsUserMenuOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-amber-400 hover:bg-amber-500/15 transition-colors group cursor-pointer"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-slate-200 hover:bg-amber-500/15 hover:text-amber-400 transition-colors group cursor-pointer"
           >
-            <Megaphone className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
-            <span>{t('nav.campaigns')}</span>
+            <User className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+            <span>{t('nav.profile')}</span>
           </Link>
-        )}
 
-        {/* 4. Đăng Xuất */}
-        <div className="pt-1 border-t border-slate-800 my-0.5">
+          <Link 
+            href="/khoa-hoc" 
+            onClick={() => setIsUserMenuOpen(false)}
+            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-slate-200 hover:bg-amber-500/15 hover:text-amber-400 transition-colors group cursor-pointer"
+          >
+            <GraduationCap className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+            <span>Khóa Học Của Tôi</span>
+          </Link>
+
+          <Link 
+            href="/cai-dat" 
+            onClick={() => setIsUserMenuOpen(false)}
+            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-slate-200 hover:bg-amber-500/15 hover:text-amber-400 transition-colors group cursor-pointer"
+          >
+            <Settings className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform" />
+            <span>{t('nav.settings')}</span>
+          </Link>
+        </div>
+
+        {/* Sign Out */}
+        <div className="pt-2 border-t border-white/10">
           <button 
             type="button"
             onClick={() => {
               setIsUserMenuOpen(false);
               logout();
             }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-bold text-red-400 hover:bg-red-500/15 transition-colors cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-serif font-bold text-rose-400 hover:bg-rose-500/15 transition-colors cursor-pointer"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="w-3.5 h-3.5" />
             <span>{t('nav.logout')}</span>
           </button>
         </div>
@@ -311,647 +369,344 @@ export default function LiturgicalHeader() {
     );
   };
 
-  // Ẩn Header toàn cục trên trang soạn thảo và trang phát bài học LMS (/khoa-hoc/[slug]) để tạo Chế độ Tập Trung (Focus Mode)
-  const isCoursePlayer = pathname !== '/khoa-hoc' && !!pathname?.startsWith('/khoa-hoc/');
-
-  if (pathname === '/soan-bai' || pathname?.startsWith('/soan-bai/') || isCoursePlayer) {
-    return null;
-  }
-
-
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 notranslate ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       } ${
         isScrolled
-          ? 'bg-slate-950/90 dark:bg-slate-950/90 backdrop-blur-xl border-b border-amber-500/20 shadow-2xl'
-          : 'bg-transparent border-b border-white/10 backdrop-blur-xs'
+          ? 'bg-slate-950/92 backdrop-blur-2xl border-b border-amber-500/20 shadow-2xl'
+          : 'bg-slate-950/75 border-b border-white/10 backdrop-blur-md'
       }`}
     >
-      
-      {/* ========================================================
-          1. LARGE DESKTOP (xl: >= 1280px): 2-TIER GRAND LITURGICAL
-      ======================================================== */}
-      <div className="hidden xl:block w-full">
+      {/* ────────────────────────────────────────────────────────
+          UNIFIED 1-TIER SLIMLINE MASTER HEADER (Height: 68px)
+      ──────────────────────────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-[68px] flex items-center justify-between gap-4">
         
-        {/* TIER 1: CENTERED LOGO & BALANCED UTILITIES */}
-        <div className="max-w-7xl mx-auto px-8 lg:px-12 h-16 flex items-center justify-between relative border-b border-white/10">
-          
-          {/* Left: Balanced slogan */}
-          <div className="flex-1 flex items-center">
-            <span className="font-serif text-[10px] tracking-[0.28em] uppercase font-bold text-amber-400/90 drop-shadow-xs">
-              VIA · VITA · VERITAS
-            </span>
-          </div>
-
-          {/* Center: Hero Logo */}
-          <div className="shrink-0 flex justify-center items-center px-4">
-            <Link href="/" className="group flex items-center justify-center transition-transform hover:scale-105">
-              <div className="relative h-10 w-44 flex items-center justify-center">
-                <Image 
-                  src={logoSrc} 
-                  alt="VERIDU Logo" 
-                  width={180} 
-                  height={50}
-                  priority
-                  className="object-contain max-h-10 w-auto transition-opacity duration-300 drop-shadow-md"
-                />
-              </div>
-            </Link>
-          </div>
-
-          {/* Right: Full Streak & User Pill */}
-          <div className="flex-1 flex items-center justify-end gap-2.5 shrink-0">
-            {user ? (
-              <div className="flex items-center gap-2">
-                
-                {/* Admin Quick Launcher */}
-                {isAdmin && (
-                  <Link
-                    href="/admin"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 font-serif font-bold text-xs shadow-xs transition-all hover:scale-105 group cursor-pointer"
-                    title="Trung Tâm Quản Trị & Kiểm Duyệt"
-                  >
-                    <Shield className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
-                    <span>{t('nav.admin')}</span>
-                    {pendingCount > 0 && (
-                      <span className="px-1.5 py-0.2 rounded-full bg-red-500 text-white font-mono text-[10px] font-black animate-pulse">
-                        {pendingCount}
-                      </span>
-                    )}
-                  </Link>
-                )}
-
-                {/* Streak Badge */}
-                <div 
-                  title={`Chuỗi học tập: ${user.streak || 1} ngày`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/15 border border-amber-500/30 rounded-full text-amber-400 font-bold text-xs shadow-xs"
-                >
-                  <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-400 animate-pulse" />
-                  <span>{user.streak || 1} {locale === 'en' ? 'Days' : (locale === 'la' ? 'Dies' : 'Ngày')}</span>
-                </div>
-                
-                {/* Full Desktop User Pill */}
-                <div className="relative" ref={desktopUserMenuRef}>
-                  <button
-                    type="button"
-                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center gap-2 p-1 pl-1.5 pr-3 rounded-full bg-slate-900/80 hover:bg-slate-850 border border-slate-700/60 hover:border-amber-500/50 text-slate-100 transition-all text-xs font-bold shadow-md cursor-pointer group"
-                  >
-                    <div className="relative w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-serif text-xs font-black overflow-hidden border border-amber-500/30">
-                      {user.avatar ? (
-                        <Image src={user.avatar} alt="Avatar" fill className="object-cover" sizes="28px" />
-                      ) : (
-                        user.christianName ? user.christianName[0] : '✝'
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="font-serif font-bold text-slate-100 truncate max-w-[130px]">
-                        {user.christianName ? `${user.christianName} ` : ''}{user.displayName}
-                      </span>
-                      <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-400 font-mono font-black text-[10px] uppercase border border-amber-500/30">
-                        {locale === 'en' ? `LVL ${levelInfo.level}` : (locale === 'la' ? `GRADUS ${levelInfo.level}` : `CẤP ${levelInfo.level}`)}
-                      </span>
-                    </div>
-
-                    <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180 text-amber-400' : 'group-hover:text-amber-400'}`} />
-                  </button>
-
-                  {renderUserMenuDropdown()}
-                </div>
-
-              </div>
-            ) : (
-              <Link
-                href="/dang-nhap"
-                className="flex items-center gap-1.5 px-4 py-1.5 bg-amber-500 text-slate-950 rounded-full font-bold text-xs shadow-md shadow-amber-500/20 hover:bg-amber-400 transition-all hover:scale-105"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>{t('nav.login')}</span>
-              </Link>
-            )}
-
-            {/* Language Switcher */}
-            <LanguageSwitcher />
-
-            {/* Theme Toggle Button */}
-            <button 
-              onClick={toggleTheme}
-              aria-label="Chuyển đổi giao diện Sáng / Tối"
-              className="p-2 rounded-full bg-slate-900/80 hover:bg-slate-850 border border-slate-700/60 text-amber-400 hover:border-amber-500/50 transition-all shadow-md cursor-pointer"
-              title={isDarkMode ? 'Chế độ Tối (Nhấp để chuyển sang Sáng)' : 'Chế độ Sáng (Nhấp để chuyển sang Tối)'}
-            >
-              {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
-            </button>
-          </div>
-
-        </div>
-
-        {/* TIER 2: HIGH-CONTRAST HORIZONTAL NAVIGATION */}
-        <div className="max-w-7xl mx-auto px-6 h-12 flex items-center justify-center">
-          <nav className="flex items-center gap-8 text-xs uppercase font-serif font-bold tracking-wider">
-            
-            {/* 1. KINH THÁNH */}
-            <div 
-              className="relative py-2"
-              onMouseEnter={() => handleMouseEnter('kinh-thanh')}
-              onMouseLeave={handleMouseLeave}
-            >
-              <Link 
-                href="/kinh-thanh" 
-                className={`flex items-center gap-1.5 py-1 text-slate-200 hover:text-amber-400 transition-colors drop-shadow-xs ${
-                  pathname.startsWith('/kinh-thanh') || pathname === '/ban-do' || pathname === '/lich-su' || pathname === '/nhan-vat' 
-                    ? 'text-amber-400 font-black border-b-2 border-amber-400 pb-0.5' 
-                    : ''
-                }`}
-              >
-                <span>{t('nav.bible')}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-amber-400/80 transition-transform group-hover:rotate-180" />
-              </Link>
-
-              {openDropdown === 'kinh-thanh' && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 w-64 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl p-2 space-y-1 z-50 backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-200">
-                  <Link href="/kinh-thanh" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-amber-500/15 group transition-colors">
-                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
-                      <BookOpen className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-amber-400">{t('nav.bible')}</div>
-                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_bible_desc')}</div>
-                    </div>
-                  </Link>
-
-                  <Link href="/ban-do" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-emerald-500/15 group transition-colors">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
-                      <MapPin className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-emerald-400">{t('nav.map')}</div>
-                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_map_desc')}</div>
-                    </div>
-                  </Link>
-
-                  <Link href="/lich-su" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-purple-500/15 group transition-colors">
-                    <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/30">
-                      <Clock className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-purple-400">{t('nav.timeline')}</div>
-                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_timeline_desc')}</div>
-                    </div>
-                  </Link>
-
-                  <Link href="/nhan-vat" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-indigo-500/15 group transition-colors">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-500/30">
-                      <Users className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">{t('nav.characters')}</div>
-                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_characters_desc')}</div>
-                    </div>
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {/* 2. KHÓA HỌC */}
-            <Link 
-              href="/khoa-hoc" 
-              className={`py-1 text-slate-200 hover:text-amber-400 transition-colors drop-shadow-xs ${
-                pathname.startsWith('/khoa-hoc') ? 'text-amber-400 font-black border-b-2 border-amber-400 pb-0.5' : ''
-              }`}
-            >
-              {t('nav.courses')}
-            </Link>
-
-            {/* 3. THƯ VIỆN */}
-            <div 
-              className="relative py-2"
-              onMouseEnter={() => handleMouseEnter('thu-vien')}
-              onMouseLeave={handleMouseLeave}
-            >
-              <Link 
-                href="/thu-vien" 
-                className={`flex items-center gap-1.5 py-1 text-slate-200 hover:text-amber-400 transition-colors drop-shadow-xs ${
-                  pathname.startsWith('/thu-vien') ? 'text-amber-400 font-black border-b-2 border-amber-400 pb-0.5' : ''
-                }`}
-              >
-                <span>{t('nav.library')}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-amber-400/80 transition-transform group-hover:rotate-180" />
-              </Link>
-
-              {openDropdown === 'thu-vien' && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 w-64 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl p-2 space-y-1 z-50 backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-200">
-                  <Link href="/thu-vien" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-amber-500/15 group transition-colors">
-                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
-                      <FileText className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-amber-400">{t('nav.sub_articles')}</div>
-                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_articles_desc')}</div>
-                    </div>
-                  </Link>
-
-                  <Link href="/thu-vien/sach" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-indigo-500/15 group transition-colors">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-500/30">
-                      <Library className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">{t('nav.sub_books')}</div>
-                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_books_desc')}</div>
-                    </div>
-                  </Link>
-
-                  <Link href="/thu-vien/tai-lieu" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-rose-500/15 group transition-colors">
-                    <div className="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/30">
-                      <BookOpen className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-rose-400">{t('nav.sub_docs')}</div>
-                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_docs_desc')}</div>
-                    </div>
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {/* 4. GIÁO LÝ */}
-            <Link 
-              href="/giao-ly" 
-              className={`py-1 text-slate-200 hover:text-amber-400 transition-colors drop-shadow-xs ${
-                pathname.startsWith('/giao-ly') ? 'text-amber-400 font-black border-b-2 border-amber-400 pb-0.5' : ''
-              }`}
-            >
-              {t('nav.catechism')}
-            </Link>
-
-            {/* 5. ĐÓNG GÓP */}
-            <div 
-              className="relative py-2"
-              onMouseEnter={() => handleMouseEnter('dong-gop')}
-              onMouseLeave={handleMouseLeave}
-            >
-              <Link 
-                href="/dong-gop" 
-                className={`flex items-center gap-1.5 py-1 text-slate-200 hover:text-amber-400 transition-colors drop-shadow-xs ${
-                  pathname === '/dong-gop' || pathname === '/noi-dung-can-thiet' || pathname === '/huong-dan-viet-bai' || pathname === '/dieu-khoan-tac-gia' || pathname === '/soan-bai' || pathname === '/tac-gia' || pathname?.startsWith('/tac-gia/')
-                    ? 'text-amber-400 font-black border-b-2 border-amber-400 pb-0.5' 
-                    : ''
-                }`}
-              >
-                <span>{t('nav.contribute')}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-amber-400/80 transition-transform group-hover:rotate-180" />
-              </Link>
-
-              {openDropdown === 'dong-gop' && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 w-64 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl p-2 space-y-1 z-50 backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-200">
-                  <Link href="/dong-gop" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-amber-500/15 group transition-colors">
-                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
-                      <Feather className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-amber-400">{t('nav.sub_mission')}</div>
-                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_mission_desc')}</div>
-                    </div>
-                  </Link>
-
-                  <Link href="/tac-gia" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-sky-500/15 group transition-colors">
-                    <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0 border border-sky-500/30">
-                      <Users className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-sky-400">{t('nav.sub_authors')}</div>
-                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_authors_desc')}</div>
-                    </div>
-                  </Link>
-
-                  <Link href="/noi-dung-can-thiet" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-emerald-500/15 group transition-colors">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
-                      <ClipboardList className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-emerald-400">{t('nav.sub_topics')}</div>
-                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_topics_desc')}</div>
-                    </div>
-                  </Link>
-
-                  <Link href="/huong-dan-viet-bai" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-indigo-500/15 group transition-colors">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-500/30">
-                      <BookOpen className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">{t('nav.sub_guidelines')}</div>
-                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_guidelines_desc')}</div>
-                    </div>
-                  </Link>
-
-                  <Link href="/dieu-khoan-tac-gia" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-rose-500/15 group transition-colors">
-                    <div className="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/30">
-                      <Scale className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-xs text-slate-100 group-hover:text-rose-400">{t('nav.sub_author_terms')}</div>
-                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_author_terms_desc')}</div>
-                    </div>
-                  </Link>
-
-                  <Link href="/soan-bai" className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 group transition-colors">
-                    <div className="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center shrink-0">
-                      <PenTool className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-xs text-amber-400 group-hover:text-amber-300">{t('nav.sub_studio')}</div>
-                      <div className="text-[10px] text-slate-400 lowercase">{t('nav.sub_studio_desc')}</div>
-                    </div>
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {/* 6. SÁCH TRANH */}
-            <Link 
-              href="/sach-tranh" 
-              className={`py-1 text-slate-200 hover:text-amber-400 transition-colors drop-shadow-xs ${
-                pathname.startsWith('/sach-tranh') ? 'text-amber-400 font-black border-b-2 border-amber-400 pb-0.5' : ''
-              }`}
-            >
-              {t('nav.storybooks')}
-            </Link>
-
-            {/* 6. ĐẤU TRƯỜNG */}
-            <Link 
-              href="/quiz" 
-              className={`py-1 text-slate-200 hover:text-amber-400 transition-colors drop-shadow-xs ${
-                pathname.startsWith('/quiz') ? 'text-amber-400 font-black border-b-2 border-amber-400 pb-0.5' : ''
-              }`}
-            >
-              {t('nav.quiz')}
-            </Link>
-
-            {/* 7. GAME */}
-            <Link 
-              href="/game" 
-              className={`py-1 text-slate-200 hover:text-amber-400 transition-colors drop-shadow-xs ${
-                pathname.startsWith('/game') ? 'text-amber-400 font-black border-b-2 border-amber-400 pb-0.5' : ''
-              }`}
-            >
-              {locale === 'en' ? 'Games' : (locale === 'la' ? 'Ludi' : 'Game')}
-            </Link>
-
-          </nav>
-        </div>
-
-      </div>
-
-      {/* ========================================================
-          2. LAPTOP & MEDIUM DESKTOP (lg to xl: 1024px - 1279px): SLEEK 1-ROW
-      ======================================================== */}
-      <div className="hidden lg:flex xl:hidden w-full h-16 px-6 lg:px-8 items-center justify-between border-b border-white/10">
-        
-        {/* Left: Brand Logo */}
-        <div className="shrink-0 flex items-center">
+        {/* 1. LEFT: BRAND LOGO & MOTTO */}
+        <div className="flex items-center gap-3.5 shrink-0">
           <Link href="/" className="group flex items-center transition-transform hover:scale-105">
-            <div className="relative h-9 w-32 lg:w-36 flex items-center">
+            <div className="relative h-9 w-32 sm:w-36 flex items-center">
               <Image 
                 src={logoSrc} 
                 alt="VERIDU Logo" 
                 width={150} 
-                height={42}
+                height={40}
                 priority
-                className="object-contain max-h-9 w-auto transition-opacity duration-300 drop-shadow-md"
+                className="object-contain max-h-9 w-auto drop-shadow-md"
               />
             </div>
           </Link>
+
+          <div className="hidden lg:block h-5 w-px bg-white/15" />
+
+          <span className="hidden xl:inline-block font-serif text-[10px] tracking-[0.24em] uppercase font-bold text-amber-400/90 drop-shadow-xs">
+            VIA · VITA · VERITAS
+          </span>
         </div>
 
-        {/* Center: High-Contrast Navigation */}
-        <nav className="flex items-center gap-4 lg:gap-5 text-xs uppercase font-serif font-bold tracking-wider">
+        {/* 2. CENTER: 4 HIGH-IMPACT MEGA-MENUS (Desktop >= 1024px) */}
+        <nav className="hidden lg:flex items-center gap-1 xl:gap-2 text-xs uppercase font-serif font-bold tracking-wider">
           
-          {/* 1. KINH THÁNH */}
+          {/* MENU 1: LỜI CHÚA & LỊCH SỬ */}
           <div 
-            className="relative py-2"
-            onMouseEnter={() => handleMouseEnter('kinh-thanh-tab')}
+            className="relative"
+            onMouseEnter={() => handleMouseEnter('scripture')}
             onMouseLeave={handleMouseLeave}
           >
-            <Link 
-              href="/kinh-thanh" 
-              className={`flex items-center gap-1 py-1 text-slate-200 hover:text-amber-400 transition-colors ${
-                pathname.startsWith('/kinh-thanh') || pathname === '/ban-do' || pathname === '/lich-su' || pathname === '/nhan-vat' 
-                  ? 'text-amber-400 font-black' 
-                  : ''
+            <button
+              type="button"
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all cursor-pointer ${
+                openDropdown === 'scripture' || pathname.startsWith('/kinh-thanh') || pathname === '/ban-do' || pathname === '/lich-su' || pathname === '/nhan-vat'
+                  ? 'bg-amber-500/15 text-amber-300 font-black'
+                  : 'text-slate-200 hover:text-amber-400 hover:bg-white/5'
               }`}
             >
-              <span>{t('nav.bible')}</span>
-              <ChevronDown className="w-3 h-3 text-amber-400/80 transition-transform group-hover:rotate-180" />
-            </Link>
+              <span>{isEn ? 'Scripture & History' : 'Lời Chúa & Lịch Sử'}</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${openDropdown === 'scripture' ? 'rotate-180 text-amber-400' : 'text-slate-400'}`} />
+            </button>
 
-            {openDropdown === 'kinh-thanh-tab' && (
-              <div className="absolute top-full left-0 w-56 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl p-2 space-y-1 z-50 backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-200">
-                <Link href="/kinh-thanh" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-amber-500/15 group transition-colors">
-                  <BookOpen className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-amber-400">{t('nav.bible')}</span>
+            {openDropdown === 'scripture' && (
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 w-[460px] bg-slate-950/98 border border-slate-700/80 rounded-3xl shadow-2xl p-3 grid grid-cols-2 gap-2 z-50 backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-150">
+                <Link 
+                  href="/kinh-thanh" 
+                  onClick={() => setOpenDropdown(null)}
+                  className="flex items-start gap-3 p-3 rounded-2xl hover:bg-amber-500/15 group transition-colors border border-transparent hover:border-amber-500/30"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30 mt-0.5">
+                    <BookOpen className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs text-white group-hover:text-amber-400 font-serif">Kinh Thánh 73 Sách</div>
+                    <div className="text-[11px] text-slate-400 lowercase line-clamp-1">Bản dịch LM. Nguyễn Thế Thuấn</div>
+                  </div>
                 </Link>
-                <Link href="/ban-do" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-emerald-500/15 group transition-colors">
-                  <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-emerald-400">{t('nav.map')}</span>
+
+                <Link 
+                  href="/ban-do" 
+                  onClick={() => setOpenDropdown(null)}
+                  className="flex items-start gap-3 p-3 rounded-2xl hover:bg-emerald-500/15 group transition-colors border border-transparent hover:border-emerald-500/30"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30 mt-0.5">
+                    <MapPin className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs text-white group-hover:text-emerald-400 font-serif">Bản Đồ Khảo Cổ 3D</div>
+                    <div className="text-[11px] text-slate-400 lowercase line-clamp-1">Giêrusalem, Galilê & Đất Hứa</div>
+                  </div>
                 </Link>
-                <Link href="/lich-su" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-purple-500/15 group transition-colors">
-                  <Clock className="w-4 h-4 text-purple-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-purple-400">{t('nav.timeline')}</span>
+
+                <Link 
+                  href="/lich-su" 
+                  onClick={() => setOpenDropdown(null)}
+                  className="flex items-start gap-3 p-3 rounded-2xl hover:bg-purple-500/15 group transition-colors border border-transparent hover:border-purple-500/30"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/30 mt-0.5">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs text-white group-hover:text-purple-400 font-serif">Lịch Sử Cứu Độ</div>
+                    <div className="text-[11px] text-slate-400 lowercase line-clamp-1">4000 năm Lịch sử Cứu độ</div>
+                  </div>
                 </Link>
-                <Link href="/nhan-vat" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-indigo-500/15 group transition-colors">
-                  <Users className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">{t('nav.characters')}</span>
+
+                <Link 
+                  href="/nhan-vat" 
+                  onClick={() => setOpenDropdown(null)}
+                  className="flex items-start gap-3 p-3 rounded-2xl hover:bg-indigo-500/15 group transition-colors border border-transparent hover:border-indigo-500/30"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-500/30 mt-0.5">
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs text-white group-hover:text-indigo-400 font-serif">Nhân Vật Thánh Kinh</div>
+                    <div className="text-[11px] text-slate-400 lowercase line-clamp-1">Tổ phụ, Ngôn sứ, Tông đồ</div>
+                  </div>
                 </Link>
               </div>
             )}
           </div>
 
-          {/* 2. KHÓA HỌC */}
-          <Link 
-            href="/khoa-hoc" 
-            className={`py-1 text-slate-200 hover:text-amber-400 transition-colors ${
-              pathname.startsWith('/khoa-hoc') ? 'text-amber-400 font-black' : ''
-            }`}
-          >
-            {t('nav.courses')}
-          </Link>
-
-          {/* 3. THƯ VIỆN */}
+          {/* MENU 2: THẦN HỌC & TRI THỨC */}
           <div 
-            className="relative py-2"
-            onMouseEnter={() => handleMouseEnter('thu-vien-tab')}
+            className="relative"
+            onMouseEnter={() => handleMouseEnter('theology')}
             onMouseLeave={handleMouseLeave}
           >
-            <Link 
-              href="/thu-vien" 
-              className={`flex items-center gap-1 py-1 text-slate-200 hover:text-amber-400 transition-colors ${
-                pathname.startsWith('/thu-vien') ? 'text-amber-400 font-black' : ''
+            <button
+              type="button"
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all cursor-pointer ${
+                openDropdown === 'theology' || pathname.startsWith('/thu-vien') || pathname.startsWith('/giao-ly') || pathname === '/sach-tranh'
+                  ? 'bg-amber-500/15 text-amber-300 font-black'
+                  : 'text-slate-200 hover:text-amber-400 hover:bg-white/5'
               }`}
             >
-              <span>{t('nav.library')}</span>
-              <ChevronDown className="w-3 h-3 text-amber-400/80 transition-transform group-hover:rotate-180" />
-            </Link>
+              <span>{isEn ? 'Theology & Library' : 'Thần Học & Tri Thức'}</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${openDropdown === 'theology' ? 'rotate-180 text-amber-400' : 'text-slate-400'}`} />
+            </button>
 
-            {openDropdown === 'thu-vien-tab' && (
-              <div className="absolute top-full left-0 w-56 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl p-2 space-y-1 z-50 backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-200">
-                <Link href="/thu-vien" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-amber-500/15 group transition-colors">
-                  <FileText className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-amber-400">{t('nav.sub_articles')}</span>
+            {openDropdown === 'theology' && (
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 w-[460px] bg-slate-950/98 border border-slate-700/80 rounded-3xl shadow-2xl p-3 grid grid-cols-2 gap-2 z-50 backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-150">
+                <Link 
+                  href="/thu-vien" 
+                  onClick={() => setOpenDropdown(null)}
+                  className="flex items-start gap-3 p-3 rounded-2xl hover:bg-amber-500/15 group transition-colors border border-transparent hover:border-amber-500/30"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30 mt-0.5">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs text-white group-hover:text-amber-400 font-serif">Thư Viện Bài Viết</div>
+                    <div className="text-[11px] text-slate-400 lowercase line-clamp-1">Khảo cứu & suy niệm học thuật</div>
+                  </div>
                 </Link>
-                <Link href="/thu-vien/sach" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-indigo-500/15 group transition-colors">
-                  <Library className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">{t('nav.sub_books')}</span>
+
+                <Link 
+                  href="/giao-ly" 
+                  onClick={() => setOpenDropdown(null)}
+                  className="flex items-start gap-3 p-3 rounded-2xl hover:bg-rose-500/15 group transition-colors border border-transparent hover:border-rose-500/30"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/30 mt-0.5">
+                    <BookMarked className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs text-white group-hover:text-rose-400 font-serif">Giáo Lý Hội Thánh</div>
+                    <div className="text-[11px] text-slate-400 lowercase line-clamp-1">Tra cứu 4 phần & thẻ lật</div>
+                  </div>
                 </Link>
-                <Link href="/thu-vien/tai-lieu" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-rose-500/15 group transition-colors">
-                  <BookOpen className="w-4 h-4 text-rose-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-rose-400">{t('nav.sub_docs')}</span>
+
+                <Link 
+                  href="/thu-vien/sach" 
+                  onClick={() => setOpenDropdown(null)}
+                  className="flex items-start gap-3 p-3 rounded-2xl hover:bg-indigo-500/15 group transition-colors border border-transparent hover:border-indigo-500/30"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-500/30 mt-0.5">
+                    <Library className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs text-white group-hover:text-indigo-400 font-serif">Tủ Sách & Tài Liệu</div>
+                    <div className="text-[11px] text-slate-400 lowercase line-clamp-1">Sách kinh điển PDF, EPUB</div>
+                  </div>
+                </Link>
+
+                <Link 
+                  href="/sach-tranh" 
+                  onClick={() => setOpenDropdown(null)}
+                  className="flex items-start gap-3 p-3 rounded-2xl hover:bg-teal-500/15 group transition-colors border border-transparent hover:border-teal-500/30"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center shrink-0 border border-teal-500/30 mt-0.5">
+                    <Layers className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs text-white group-hover:text-teal-400 font-serif">Sách Tranh Công Giáo</div>
+                    <div className="text-[11px] text-slate-400 lowercase line-clamp-1">Sách tranh tương tác sinh động</div>
+                  </div>
                 </Link>
               </div>
             )}
           </div>
 
-          {/* 4. GIÁO LÝ */}
-          <Link 
-            href="/giao-ly" 
-            className={`py-1 text-slate-200 hover:text-amber-400 transition-colors ${
-              pathname.startsWith('/giao-ly') ? 'text-amber-400 font-black' : ''
+          {/* MENU 3: KHÓA HỌC */}
+          <Link
+            href="/khoa-hoc"
+            className={`px-3 py-2 rounded-xl transition-all ${
+              pathname.startsWith('/khoa-hoc')
+                ? 'bg-amber-500/15 text-amber-300 font-black'
+                : 'text-slate-200 hover:text-amber-400 hover:bg-white/5'
             }`}
           >
-            {t('nav.catechism')}
+            <span>{isEn ? 'Courses' : 'Khóa Học'}</span>
           </Link>
 
-          {/* 5. ĐÓNG GÓP */}
+          {/* MENU 4: ĐẤU TRƯỜNG & ĐÓNG GÓP */}
           <div 
-            className="relative py-2"
-            onMouseEnter={() => handleMouseEnter('dong-gop-tab')}
+            className="relative"
+            onMouseEnter={() => handleMouseEnter('arena')}
             onMouseLeave={handleMouseLeave}
           >
-            <Link 
-              href="/dong-gop" 
-              className={`flex items-center gap-1 py-1 text-slate-200 hover:text-amber-400 transition-colors ${
-                pathname === '/dong-gop' || pathname === '/noi-dung-can-thiet' || pathname === '/huong-dan-viet-bai' || pathname === '/dieu-khoan-tac-gia' || pathname === '/soan-bai' || pathname === '/tac-gia' || pathname?.startsWith('/tac-gia/')
-                  ? 'text-amber-400 font-black' 
-                  : ''
+            <button
+              type="button"
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all cursor-pointer ${
+                openDropdown === 'arena' || pathname === '/quiz' || pathname.startsWith('/game') || pathname === '/dong-gop'
+                  ? 'bg-amber-500/15 text-amber-300 font-black'
+                  : 'text-slate-200 hover:text-amber-400 hover:bg-white/5'
               }`}
             >
-              <span>{t('nav.contribute')}</span>
-              <ChevronDown className="w-3 h-3 text-amber-400/80 transition-transform group-hover:rotate-180" />
-            </Link>
+              <span>{isEn ? 'Arena & Community' : 'Đấu Trường & Cộng Đoàn'}</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${openDropdown === 'arena' ? 'rotate-180 text-amber-400' : 'text-slate-400'}`} />
+            </button>
 
-            {openDropdown === 'dong-gop-tab' && (
-              <div className="absolute top-full left-0 w-56 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl p-2 space-y-1 z-50 backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-200">
-                <Link href="/dong-gop" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-amber-500/15 group transition-colors">
-                  <Feather className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-amber-400">{t('nav.sub_mission')}</span>
+            {openDropdown === 'arena' && (
+              <div className="absolute top-full right-0 mt-1.5 w-[460px] bg-slate-950/98 border border-slate-700/80 rounded-3xl shadow-2xl p-3 grid grid-cols-2 gap-2 z-50 backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-150">
+                <Link 
+                  href="/quiz" 
+                  onClick={() => setOpenDropdown(null)}
+                  className="flex items-start gap-3 p-3 rounded-2xl hover:bg-amber-500/15 group transition-colors border border-transparent hover:border-amber-500/30"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30 mt-0.5">
+                    <Trophy className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs text-white group-hover:text-amber-400 font-serif">Đấu Trường Giáo Lý</div>
+                    <div className="text-[11px] text-slate-400 lowercase line-clamp-1">Phòng thi đố vui trực tiếp</div>
+                  </div>
                 </Link>
-                <Link href="/tac-gia" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-sky-500/15 group transition-colors">
-                  <Users className="w-4 h-4 text-sky-400 shrink-0" />
-                  <span className="font-bold text-xs text-sky-400">{t('nav.sub_authors')}</span>
+
+                <Link 
+                  href="/game" 
+                  onClick={() => setOpenDropdown(null)}
+                  className="flex items-start gap-3 p-3 rounded-2xl hover:bg-purple-500/15 group transition-colors border border-transparent hover:border-purple-500/30"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/30 mt-0.5">
+                    <Gamepad2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs text-white group-hover:text-purple-400 font-serif">Trò Chơi Đức Tin</div>
+                    <div className="text-[11px] text-slate-400 lowercase line-clamp-1">Triệu phú & Đất hứa</div>
+                  </div>
                 </Link>
-                <Link href="/noi-dung-can-thiet" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-emerald-500/15 group transition-colors">
-                  <ClipboardList className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-emerald-400">{t('nav.sub_topics')}</span>
+
+                <Link 
+                  href="/dong-gop" 
+                  onClick={() => setOpenDropdown(null)}
+                  className="flex items-start gap-3 p-3 rounded-2xl hover:bg-emerald-500/15 group transition-colors border border-transparent hover:border-emerald-500/30"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30 mt-0.5">
+                    <PenTool className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs text-white group-hover:text-emerald-400 font-serif">Đóng Góp Bài Viết</div>
+                    <div className="text-[11px] text-slate-400 lowercase line-clamp-1">Ứng tuyển tác giả học thuật</div>
+                  </div>
                 </Link>
-                <Link href="/huong-dan-viet-bai" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-indigo-500/15 group transition-colors">
-                  <BookOpen className="w-4 h-4 text-indigo-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-indigo-400">{t('nav.sub_guidelines')}</span>
-                </Link>
-                <Link href="/dieu-khoan-tac-gia" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-rose-500/15 group transition-colors">
-                  <Scale className="w-4 h-4 text-rose-400 shrink-0" />
-                  <span className="font-bold text-xs text-slate-100 group-hover:text-rose-400">{t('nav.sub_author_terms')}</span>
-                </Link>
-                <Link href="/soan-bai" className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 group transition-colors border border-amber-500/20">
-                  <PenTool className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="font-bold text-xs font-black">{t('nav.sub_studio')}</span>
+
+                <Link 
+                  href="/huong-dan-viet-bai" 
+                  onClick={() => setOpenDropdown(null)}
+                  className="flex items-start gap-3 p-3 rounded-2xl hover:bg-indigo-500/15 group transition-colors border border-transparent hover:border-indigo-500/30"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-500/30 mt-0.5">
+                    <HelpCircle className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs text-white group-hover:text-indigo-400 font-serif">Quy Chuẩn Soạn Bài</div>
+                    <div className="text-[11px] text-slate-400 lowercase line-clamp-1">Sổ tay khối chuẩn VERIDU</div>
+                  </div>
                 </Link>
               </div>
             )}
           </div>
-
-          {/* 6. SÁCH TRANH */}
-          <Link 
-            href="/sach-tranh" 
-            className={`py-1 text-slate-200 hover:text-amber-400 transition-colors ${
-              pathname.startsWith('/sach-tranh') ? 'text-amber-400 font-black' : ''
-            }`}
-          >
-            {t('nav.storybooks')}
-          </Link>
-
-          {/* 7. ĐẤU TRƯỜNG */}
-          <Link 
-            href="/quiz" 
-            className={`py-1 text-slate-200 hover:text-amber-400 transition-colors ${
-              pathname.startsWith('/quiz') ? 'text-amber-400 font-black' : ''
-            }`}
-          >
-            {t('nav.quiz')}
-          </Link>
-
-          {/* 8. GAME */}
-          <Link 
-            href="/game" 
-            className={`py-1 text-slate-200 hover:text-amber-400 transition-colors ${
-              pathname.startsWith('/game') ? 'text-amber-400 font-black' : ''
-            }`}
-          >
-            {locale === 'en' ? 'Games' : (locale === 'la' ? 'Ludi' : 'Game')}
-          </Link>
 
         </nav>
 
-        {/* Right: Streamlined Utilities */}
-        <div className="flex items-center gap-2.5 shrink-0">
+        {/* 3. RIGHT: STREAMLINED UTILITIES & UNIFIED USER HUB */}
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           
-          {/* Admin Quick Launcher */}
-          {isAdmin && (
-            <Link
-              href="/admin"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 font-serif font-bold text-xs shadow-xs transition-all hover:scale-105 group cursor-pointer"
-              title="Trung Tâm Quản Trị"
-            >
-              <Shield className="w-3.5 h-3.5 text-amber-400" />
-              {pendingCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-red-500 text-white font-mono text-[10px] font-black">
-                  {pendingCount}
-                </span>
-              )}
-            </Link>
-          )}
+          {/* Language Switcher */}
+          <LanguageSwitcher compact />
 
-          {/* Compact Streak Pill */}
-          {user && (
-            <div 
-              title={`Chuỗi học tập liên tục: ${user.streak || 1} ngày`}
-              className="flex items-center gap-1 px-2.5 py-1.5 bg-amber-500/15 border border-amber-500/30 rounded-full text-amber-400 font-bold text-xs shadow-xs"
-            >
-              <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-400 animate-pulse" />
-              <span>{user.streak || 1}</span>
-            </div>
-          )}
+          {/* Theme Toggle Button */}
+          <button 
+            type="button"
+            onClick={toggleTheme}
+            aria-label="Chuyển đổi giao diện Sáng / Tối"
+            className="p-2 rounded-full bg-slate-900/80 hover:bg-slate-850 border border-slate-700/60 text-amber-400 hover:border-amber-500/50 transition-all shadow-md cursor-pointer"
+            title={isDarkMode ? 'Chế độ Tối (Nhấp để chuyển sang Sáng)' : 'Chế độ Sáng (Nhấp để chuyển sang Tối)'}
+          >
+            {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
+          </button>
 
-          {/* Compact User Pill */}
+          {/* UNIFIED USER HUB (Pill Trigger) */}
           {user ? (
-            <div className="relative" ref={tabletUserMenuRef}>
+            <div className="relative" ref={userMenuRef}>
               <button
                 type="button"
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center gap-1.5 p-1 pl-1 pr-2 rounded-full bg-slate-900/80 hover:bg-slate-850 border border-slate-700/60 hover:border-amber-500/50 text-slate-100 transition-all text-xs font-bold shadow-md cursor-pointer group"
+                className="flex items-center gap-2 p-1 pl-1.5 pr-2.5 rounded-full bg-slate-900/80 hover:bg-slate-850 border border-slate-700/60 hover:border-amber-500/50 text-slate-100 transition-all text-xs font-bold shadow-md cursor-pointer group"
                 title={`${user.christianName || ''} ${user.displayName || ''}`}
               >
-                <div className="relative w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-serif text-xs font-black overflow-hidden border border-amber-500/30">
+                {/* Avatar with potential Admin indicator */}
+                <div className="relative w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-serif text-xs font-black overflow-hidden border border-amber-500/40">
                   {user.avatar ? (
                     <Image src={user.avatar} alt="Avatar" fill className="object-cover" sizes="28px" />
                   ) : (
                     user.christianName ? user.christianName[0] : '✝'
                   )}
+                  {isAdmin && (
+                    <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-amber-400 ring-1 ring-slate-950" />
+                  )}
                 </div>
 
+                {/* Level Badge */}
                 <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-400 font-mono font-black text-[10px] uppercase border border-amber-500/30">
-                  {locale === 'en' ? `LVL ${levelInfo.level}` : (locale === 'la' ? `GRADUS ${levelInfo.level}` : `CẤP ${levelInfo.level}`)}
+                  CẤP {levelInfo.level}
+                </span>
+
+                {/* Streak Counter */}
+                <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-amber-400 font-bold">
+                  <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  <span>{user.streak || 1}</span>
                 </span>
 
                 <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180 text-amber-400' : 'group-hover:text-amber-400'}`} />
@@ -962,137 +717,19 @@ export default function LiturgicalHeader() {
           ) : (
             <Link
               href="/dang-nhap"
-              className="flex items-center gap-1 px-3.5 py-1.5 bg-amber-500 text-slate-950 rounded-full font-bold text-xs shadow-sm hover:bg-amber-400 transition-all"
+              className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 rounded-full font-serif font-bold text-xs shadow-md shadow-amber-500/20 hover:scale-105 transition-all"
             >
               <LogIn className="w-3.5 h-3.5" />
               <span>{t('nav.login')}</span>
             </Link>
           )}
 
-          {/* Language Switcher */}
-          <LanguageSwitcher />
-
-          {/* Theme Toggle Button */}
+          {/* MOBILE / TABLET MENU TOGGLE BUTTON */}
           <button 
-            onClick={toggleTheme}
-            aria-label="Chuyển đổi giao diện Sáng / Tối"
-            className="p-2 rounded-full bg-slate-900/80 hover:bg-slate-850 border border-slate-700/60 text-amber-400 hover:border-amber-500/50 transition-all shadow-md cursor-pointer"
-            title={isDarkMode ? 'Chế độ Tối (Nhấp để chuyển sang Sáng)' : 'Chế độ Sáng (Nhấp để chuyển sang Tối)'}
-          >
-            {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
-          </button>
-
-        </div>
-
-      </div>
-
-      {/* ========================================================
-          3. TABLET DEDICATED (md to lg: 768px - 1023px): ELEGANT & SPACIOUS
-      ======================================================== */}
-      <div className="hidden md:flex lg:hidden w-full h-16 px-5 sm:px-6 items-center justify-between border-b border-white/10">
-        
-        {/* Left: Brand Logo */}
-        <div className="shrink-0 flex items-center">
-          <Link href="/" className="group flex items-center transition-transform hover:scale-105">
-            <div className="relative h-9 w-32 flex items-center">
-              <Image 
-                src={logoSrc} 
-                alt="VERIDU Logo" 
-                width={140} 
-                height={40}
-                priority
-                className="object-contain max-h-9 w-auto transition-opacity duration-300 drop-shadow-md"
-              />
-            </div>
-          </Link>
-        </div>
-
-        {/* Right: Clean Utilities & Hamburger Menu */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          
-          {/* Admin Badge (Tablet) */}
-          {isAdmin && (
-            <Link
-              href="/admin"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 font-serif font-bold text-xs shadow-xs transition-all hover:scale-105 group cursor-pointer"
-              title="Trung Tâm Quản Trị"
-            >
-              <Shield className="w-3.5 h-3.5 text-amber-400" />
-              <span className="hidden sm:inline">Admin</span>
-              {pendingCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-red-500 text-white font-mono text-[10px] font-black">
-                  {pendingCount}
-                </span>
-              )}
-            </Link>
-          )}
-
-          {/* Streak Pill */}
-          {user && (
-            <div 
-              title={`Chuỗi học tập liên tục: ${user.streak || 1} ngày`}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/15 border border-amber-500/30 rounded-full text-amber-400 font-bold text-xs shadow-xs"
-            >
-              <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-400 animate-pulse" />
-              <span>{user.streak || 1}</span>
-            </div>
-          )}
-
-          {/* User Profile Pill or Login */}
-          {user ? (
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center gap-1.5 p-1 pl-1 pr-2 rounded-full bg-slate-900/80 hover:bg-slate-850 border border-slate-700/60 hover:border-amber-500/50 text-slate-100 transition-all text-xs font-bold shadow-md cursor-pointer group"
-                title={`${user.christianName || ''} ${user.displayName || ''}`}
-              >
-                <div className="relative w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-serif text-xs font-black overflow-hidden border border-amber-500/30">
-                  {user.avatar ? (
-                    <Image src={user.avatar} alt="Avatar" fill className="object-cover" sizes="28px" />
-                  ) : (
-                    user.christianName ? user.christianName[0] : '✝'
-                  )}
-                </div>
-
-                <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-400 font-mono font-black text-[10px] uppercase border border-amber-500/30">
-                  {locale === 'en' ? `LVL ${levelInfo.level}` : (locale === 'la' ? `GRADUS ${levelInfo.level}` : `CẤP ${levelInfo.level}`)}
-                </span>
-
-                <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180 text-amber-400' : 'group-hover:text-amber-400'}`} />
-              </button>
-
-              {renderUserMenuDropdown()}
-            </div>
-          ) : (
-            <Link
-              href="/dang-nhap"
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-amber-500 text-slate-950 rounded-full font-bold text-xs shadow-sm hover:bg-amber-400 transition-all"
-            >
-              <LogIn className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{t('nav.login')}</span>
-            </Link>
-          )}
-
-          {/* Language Switcher */}
-          <LanguageSwitcher />
-
-          {/* Theme Toggle Button */}
-          <button 
-            onClick={toggleTheme}
-            aria-label="Chuyển đổi giao diện Sáng / Tối"
-            className="p-2 rounded-full bg-slate-900/80 hover:bg-slate-850 border border-slate-700/60 text-amber-400 hover:border-amber-500/50 transition-all shadow-md cursor-pointer"
-            title={isDarkMode ? 'Chế độ Tối (Nhấp để chuyển sang Sáng)' : 'Chế độ Sáng (Nhấp để chuyển sang Tối)'}
-          >
-            {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
-          </button>
-
-          {/* Tablet Menu Hamburger Button (Min 44x44px touch target) */}
-          <button 
+            type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Mở menu danh mục"
-            className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-amber-500/20 border border-slate-700/60 hover:border-amber-500/50 text-slate-200 hover:text-amber-400 shadow-sm transition-all cursor-pointer flex items-center justify-center"
-            title="Mở toàn bộ danh mục"
+            className="lg:hidden p-2 rounded-xl bg-slate-900/80 border border-slate-700/60 text-slate-200 hover:text-amber-400 shadow-sm cursor-pointer ml-1"
           >
             {isMobileMenuOpen ? <X className="w-5 h-5 text-amber-400" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -1101,269 +738,190 @@ export default function LiturgicalHeader() {
 
       </div>
 
-      {/* ========================================================
-          4. MOBILE (< 768px): COMPACT 1-ROW HEADER
-      ======================================================== */}
-      <div className="md:hidden w-full h-16 px-4 flex items-center justify-between border-b border-white/10">
-        
-        {/* Left: Mobile Menu Toggle Button */}
-        <button 
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label="Mở menu"
-          className="p-2 rounded-xl bg-slate-900/80 border border-slate-700/60 text-slate-200 hover:text-amber-400 shadow-sm cursor-pointer"
-        >
-          {isMobileMenuOpen ? <X className="w-5 h-5 text-amber-400" /> : <Menu className="w-5 h-5" />}
-        </button>
-
-        {/* Center: Brand Logo */}
-        <Link href="/" className="flex items-center justify-center">
-          <div className="relative h-8 w-32 flex items-center justify-center">
-            <Image 
-              src={logoSrc} 
-              alt="VERIDU Logo" 
-              width={140} 
-              height={40}
-              priority
-              className="object-contain max-h-8 w-auto drop-shadow-md"
-            />
-          </div>
-        </Link>
-
-        {/* Right: Theme Toggle & User Avatar */}
-        <div className="flex items-center gap-2">
-          {user && (
-            <div 
-              title={`Chuỗi: ${user.streak || 1} ngày`}
-              className="flex items-center gap-1 px-2 py-1 bg-amber-500/15 border border-amber-500/30 rounded-full text-amber-400 font-bold text-[11px]"
-            >
-              <Flame className="w-3 h-3 fill-amber-400 text-amber-400" />
-              <span>{user.streak || 1}</span>
-            </div>
-          )}
-
-          {/* Language Switcher */}
-          <LanguageSwitcher compact />
-
-          <button 
-            onClick={toggleTheme}
-            aria-label="Đổi giao diện Sáng / Tối"
-            className="p-2 rounded-xl bg-slate-900/80 border border-slate-700/60 text-amber-400 shadow-sm cursor-pointer"
-          >
-            {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
-          </button>
-
-          {user ? (
-            <Link href="/ho-so" className="w-8 h-8 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center font-serif text-xs font-black overflow-hidden shadow-sm">
-              {user.avatar ? (
-                <Image src={user.avatar} alt="Avatar" fill className="object-cover" sizes="32px" />
-              ) : (
-                user.christianName ? user.christianName[0] : 'G'
-              )}
-            </Link>
-          ) : (
-            <Link href="/dang-nhap" className="p-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs shadow-sm">
-              <LogIn className="w-4 h-4" />
-            </Link>
-          )}
-        </div>
-
-      </div>
-
-      {/* ========================================================
-          5. ADAPTIVE MENU DRAWER (Mobile & Tablet: < 1024px)
-      ======================================================== */}
+      {/* ────────────────────────────────────────────────────────
+          ADAPTIVE MOBILE DRAWER (Below lg: < 1024px)
+      ──────────────────────────────────────────────────────── */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden border-t border-slate-800 bg-slate-950/98 p-5 sm:p-6 space-y-4 shadow-2xl backdrop-blur-2xl max-h-[85vh] overflow-y-auto animate-in slide-in-from-top-4 duration-300 text-slate-200">
+        <div className="lg:hidden border-t border-slate-800 bg-slate-950/98 p-5 space-y-4 shadow-2xl backdrop-blur-2xl max-h-[85vh] overflow-y-auto animate-in slide-in-from-top-4 duration-300 text-slate-200">
           
-          {/* User Profile Card Summary */}
+          {/* User card if logged in */}
           {user && (
-            <div className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent border border-amber-500/20 flex items-center justify-between">
+            <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center font-serif font-black overflow-hidden">
+                <div className="relative w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-serif text-sm font-black border border-amber-500/40 overflow-hidden">
                   {user.avatar ? (
-                    <Image src={user.avatar} alt="Avatar" width={40} height={40} className="object-cover" />
+                    <Image src={user.avatar} alt="Avatar" fill className="object-cover" sizes="40px" />
                   ) : (
-                    '✝'
+                    user.christianName ? user.christianName[0] : '✝'
                   )}
                 </div>
                 <div>
-                  <div className="font-serif font-bold text-sm text-slate-100">
-                    {user.christianName} {user.displayName}
+                  <div className="font-serif font-bold text-xs text-white">
+                    {user.christianName ? `${user.christianName} ` : ''}{user.displayName}
                   </div>
-                  <div className="text-[11px] text-amber-400 font-mono font-bold">
-                    {locale === 'en' ? `LVL ${levelInfo.level}` : (locale === 'la' ? `GRADUS ${levelInfo.level}` : `CẤP ${levelInfo.level}`)} · {levelInfo.title}
+                  <div className="text-[10px] text-amber-400 font-mono">
+                    CẤP {levelInfo.level} · {levelInfo.currentExp} Manna · 🔥 {user.streak || 1} ngày
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/15 border border-amber-500/30 rounded-full text-amber-400 font-bold text-xs">
-                <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                <span>{user.streak || 1} {locale === 'en' ? 'Days' : (locale === 'la' ? 'Dies' : 'Ngày')}</span>
-              </div>
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 font-serif font-bold text-[11px]"
+                >
+                  Admin
+                </Link>
+              )}
             </div>
           )}
 
-          {/* 1. KINH THÁNH GROUP */}
+          {/* Group 1: Lời Chúa & Lịch Sử */}
           <div className="space-y-1">
-            <button 
-              onClick={() => setMobileExpandedGroup(mobileExpandedGroup === 'kinh-thanh' ? null : 'kinh-thanh')}
-              className="w-full py-2.5 flex items-center justify-between text-sm font-bold text-slate-200 cursor-pointer"
-            >
-              <span className="flex items-center gap-2.5">
-                <BookOpen className="w-4 h-4 text-amber-400" /> {t('nav.bible')}
-              </span>
-              <ChevronDown className={`w-4 h-4 text-amber-400 transition-transform ${mobileExpandedGroup === 'kinh-thanh' ? 'rotate-180' : ''}`} />
-            </button>
-
-            {mobileExpandedGroup === 'kinh-thanh' && (
-              <div className="pl-6 space-y-2 py-2 border-l-2 border-amber-500/30 ml-2">
-                <Link href="/kinh-thanh" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-amber-400">
-                  <BookOpen className="w-3.5 h-3.5 text-amber-400" /> {t('nav.bible')} ({t('nav.sub_bible_desc')})
-                </Link>
-                <Link href="/ban-do" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-emerald-400">
-                  <MapPin className="w-3.5 h-3.5 text-emerald-400" /> {t('nav.map')}
-                </Link>
-                <Link href="/lich-su" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-purple-400">
-                  <Clock className="w-3.5 h-3.5 text-purple-400" /> {t('nav.timeline')}
-                </Link>
-                <Link href="/nhan-vat" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-indigo-400">
-                  <Users className="w-3.5 h-3.5 text-indigo-400" /> {t('nav.characters')}
-                </Link>
-              </div>
-            )}
+            <div className="text-[11px] font-serif font-bold uppercase tracking-wider text-amber-400 px-2 py-1">
+              Lời Chúa &amp; Lịch Sử
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              <Link
+                href="/kinh-thanh"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-amber-500/15 text-xs text-slate-200 font-serif"
+              >
+                <BookOpen className="w-4 h-4 text-amber-400" />
+                <span>Kinh Thánh</span>
+              </Link>
+              <Link
+                href="/ban-do"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-emerald-500/15 text-xs text-slate-200 font-serif"
+              >
+                <MapPin className="w-4 h-4 text-emerald-400" />
+                <span>Bản Đồ 3D</span>
+              </Link>
+              <Link
+                href="/lich-su"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-purple-500/15 text-xs text-slate-200 font-serif"
+              >
+                <Clock className="w-4 h-4 text-purple-400" />
+                <span>Lịch Sử</span>
+              </Link>
+              <Link
+                href="/nhan-vat"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-indigo-500/15 text-xs text-slate-200 font-serif"
+              >
+                <Users className="w-4 h-4 text-indigo-400" />
+                <span>Nhân Vật</span>
+              </Link>
+            </div>
           </div>
 
-          {/* 2. KHÓA HỌC */}
-          <Link href="/khoa-hoc" className="block py-2.5 text-sm font-bold text-slate-200 hover:text-amber-400 flex items-center gap-2.5">
-            <Award className="w-4 h-4 text-amber-400" /> {t('nav.courses')}
-          </Link>
-
-          {/* 3. THƯ VIỆN GROUP */}
-          <div className="space-y-1">
-            <button 
-              onClick={() => setMobileExpandedGroup(mobileExpandedGroup === 'thu-vien' ? null : 'thu-vien')}
-              className="w-full py-2.5 flex items-center justify-between text-sm font-bold text-slate-200 cursor-pointer"
-            >
-              <span className="flex items-center gap-2.5">
-                <Library className="w-4 h-4 text-indigo-400" /> {t('nav.library')}
-              </span>
-              <ChevronDown className={`w-4 h-4 text-indigo-400 transition-transform ${mobileExpandedGroup === 'thu-vien' ? 'rotate-180' : ''}`} />
-            </button>
-
-            {mobileExpandedGroup === 'thu-vien' && (
-              <div className="pl-6 space-y-2 py-2 border-l-2 border-indigo-500/30 ml-2">
-                <Link href="/thu-vien" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-amber-400">
-                  <FileText className="w-3.5 h-3.5 text-amber-400" /> {t('nav.sub_articles')} ({t('nav.sub_articles_desc')})
-                </Link>
-                <Link href="/thu-vien/sach" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-indigo-400">
-                  <Library className="w-3.5 h-3.5 text-indigo-400" /> {t('nav.sub_books')}
-                </Link>
-                <Link href="/thu-vien/tai-lieu" className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-rose-400">
-                  <BookOpen className="w-3.5 h-3.5 text-rose-400" /> {t('nav.sub_docs')}
-                </Link>
-              </div>
-            )}
+          {/* Group 2: Thần Học & Tri Thức */}
+          <div className="space-y-1 pt-2 border-t border-white/10">
+            <div className="text-[11px] font-serif font-bold uppercase tracking-wider text-amber-400 px-2 py-1">
+              Thần Học &amp; Tri Thức
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              <Link
+                href="/thu-vien"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-amber-500/15 text-xs text-slate-200 font-serif"
+              >
+                <FileText className="w-4 h-4 text-amber-400" />
+                <span>Bài Viết</span>
+              </Link>
+              <Link
+                href="/giao-ly"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-rose-500/15 text-xs text-slate-200 font-serif"
+              >
+                <BookMarked className="w-4 h-4 text-rose-400" />
+                <span>Giáo Lý</span>
+              </Link>
+              <Link
+                href="/thu-vien/sach"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-indigo-500/15 text-xs text-slate-200 font-serif"
+              >
+                <Library className="w-4 h-4 text-indigo-400" />
+                <span>Tủ Sách</span>
+              </Link>
+              <Link
+                href="/sach-tranh"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-teal-500/15 text-xs text-slate-200 font-serif"
+              >
+                <Layers className="w-4 h-4 text-teal-400" />
+                <span>Sách Tranh</span>
+              </Link>
+            </div>
           </div>
 
-          {/* 4. GIÁO LÝ */}
-          <Link href="/giao-ly" onClick={() => setIsMobileMenuOpen(false)} className="block py-2.5 text-sm font-bold text-slate-200 hover:text-amber-400 flex items-center gap-2.5">
-            <Cross className="w-4 h-4 text-rose-400" /> {t('nav.catechism')}
-          </Link>
-
-          {/* 5. ĐÓNG GÓP GROUP */}
-          <div className="space-y-1">
-            <button 
-              onClick={() => setMobileExpandedGroup(mobileExpandedGroup === 'dong-gop' ? null : 'dong-gop')}
-              className="w-full py-2.5 flex items-center justify-between text-sm font-bold text-slate-200 cursor-pointer"
-            >
-              <span className="flex items-center gap-2.5">
-                <Feather className="w-4 h-4 text-amber-400" /> {t('nav.contribute')}
-              </span>
-              <ChevronDown className={`w-4 h-4 text-amber-400 transition-transform ${mobileExpandedGroup === 'dong-gop' ? 'rotate-180' : ''}`} />
-            </button>
-
-            {mobileExpandedGroup === 'dong-gop' && (
-              <div className="pl-6 space-y-2 py-2 border-l-2 border-amber-500/30 ml-2">
-                <Link href="/dong-gop" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-amber-400">
-                  <Feather className="w-3.5 h-3.5 text-amber-400" /> {t('nav.sub_mission')}
-                </Link>
-                <Link href="/tac-gia" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-sky-400">
-                  <Users className="w-3.5 h-3.5 text-sky-400" /> {t('nav.sub_authors')}
-                </Link>
-                <Link href="/noi-dung-can-thiet" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-emerald-400">
-                  <ClipboardList className="w-3.5 h-3.5 text-emerald-400" /> {t('nav.sub_topics')}
-                </Link>
-                <Link href="/huong-dan-viet-bai" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-indigo-400">
-                  <BookOpen className="w-3.5 h-3.5 text-indigo-400" /> {t('nav.sub_guidelines')}
-                </Link>
-                <Link href="/dieu-khoan-tac-gia" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-slate-300 hover:text-rose-400">
-                  <Scale className="w-3.5 h-3.5 text-rose-400" /> {t('nav.sub_author_terms')}
-                </Link>
-                <Link href="/soan-bai" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-1.5 text-xs text-amber-400 font-bold hover:text-amber-300">
-                  <PenTool className="w-3.5 h-3.5 text-amber-400" /> {t('nav.sub_studio')}
-                </Link>
-              </div>
-            )}
+          {/* Group 3: Khóa Học & Đấu Trường */}
+          <div className="space-y-1 pt-2 border-t border-white/10">
+            <div className="text-[11px] font-serif font-bold uppercase tracking-wider text-amber-400 px-2 py-1">
+              Khóa Học &amp; Đấu Trường
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              <Link
+                href="/khoa-hoc"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-500/15 text-amber-300 text-xs font-serif font-bold"
+              >
+                <GraduationCap className="w-4 h-4 text-amber-400" />
+                <span>Khóa Học</span>
+              </Link>
+              <Link
+                href="/quiz"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-amber-500/15 text-xs text-slate-200 font-serif"
+              >
+                <Trophy className="w-4 h-4 text-amber-400" />
+                <span>Đấu Trường</span>
+              </Link>
+              <Link
+                href="/game"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-purple-500/15 text-xs text-slate-200 font-serif"
+              >
+                <Gamepad2 className="w-4 h-4 text-purple-400" />
+                <span>Trò Chơi</span>
+              </Link>
+              <Link
+                href="/dong-gop"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-emerald-500/15 text-xs text-slate-200 font-serif"
+              >
+                <PenTool className="w-4 h-4 text-emerald-400" />
+                <span>Đóng Góp</span>
+              </Link>
+            </div>
           </div>
 
-          {/* 6. SÁCH TRANH THIẾU NHI */}
-          <Link href="/sach-tranh" className="block py-2.5 text-sm font-bold text-amber-400 hover:text-amber-300 flex items-center gap-2.5">
-            <BookOpen className="w-4 h-4 text-amber-400" /> {t('nav.storybooks')}
-          </Link>
-
-          {/* 6. ĐẤU TRƯỜNG */}
-          <Link href="/quiz" className="block py-2.5 text-sm font-bold text-slate-200 hover:text-amber-400 flex items-center gap-2.5">
-            <Flame className="w-4 h-4 text-amber-400" /> {t('nav.quiz')}
-          </Link>
-
-          {/* 7. CỔNG GAME GIÁO LÝ */}
-          <Link href="/game" className="block py-2.5 text-sm font-bold text-amber-400 hover:text-amber-300 flex items-center gap-2.5">
-            <Gamepad2 className="w-4 h-4 text-amber-400" /> {locale === 'en' ? 'Games' : (locale === 'la' ? 'Ludi' : 'Game')}
-          </Link>
-
-          {/* User Links in Drawer */}
-          <div className="pt-4 border-t border-slate-800 space-y-1">
+          {/* Footer Actions */}
+          <div className="pt-3 border-t border-white/10 flex items-center justify-between">
             {user ? (
-              <div className="space-y-1">
-                <Link href="/ho-so" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-xs font-bold text-slate-200 hover:text-amber-400">
-                  <User className="w-4 h-4 text-amber-400" /> {t('nav.profile')}
-                </Link>
-                <Link href="/cai-dat" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-xs font-bold text-slate-200 hover:text-amber-400">
-                  <Settings className="w-4 h-4 text-indigo-400" /> {locale === 'en' ? 'Settings' : (locale === 'la' ? 'Optiones' : 'Cài Đặt')}
-                </Link>
-                {isAdmin && (
-                  <Link 
-                    href="/admin" 
-                    onClick={() => setIsMobileMenuOpen(false)} 
-                    className="flex items-center justify-between py-2 text-xs font-bold text-amber-400 hover:text-amber-300"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Shield className="w-4 h-4 text-amber-400" /> {t('nav.admin')}
-                    </span>
-                    {pendingCount > 0 && (
-                      <span className="px-2 py-0.5 rounded-full bg-red-500 text-white font-mono text-[10px] font-black">
-                        {pendingCount} {locale === 'en' ? 'pending' : (locale === 'la' ? 'approbanda' : 'cần duyệt')}
-                      </span>
-                    )}
-                  </Link>
-                )}
-                {isAdmin && (
-                  <Link href="/soan-bai" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-xs font-bold text-amber-400 hover:text-amber-300">
-                    <PenTool className="w-4 h-4 text-amber-400" /> {locale === 'en' ? 'Write Studio' : (locale === 'la' ? 'Scriptorium' : 'Phòng Soạn Thảo')}
-                  </Link>
-                )}
-                {isAdmin && (
-                  <Link href="/admin/quang-ba" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-xs font-bold text-amber-400 hover:text-amber-300">
-                    <Megaphone className="w-4 h-4 text-amber-400" /> {locale === 'en' ? 'Campaigns' : (locale === 'la' ? 'Promotio' : 'Chiến Dịch Quảng Bá')}
-                  </Link>
-                )}
-                <button type="button" onClick={() => { setIsMobileMenuOpen(false); logout(); }} className="w-full text-left flex items-center gap-2 py-2 text-xs font-bold text-red-400 cursor-pointer">
-                  <LogOut className="w-4 h-4" /> {t('nav.logout')}
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  logout();
+                }}
+                className="text-xs text-rose-400 font-serif font-bold flex items-center gap-1.5"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>{t('nav.logout')}</span>
+              </button>
             ) : (
-              <Link href="/dang-nhap" className="w-full py-3 rounded-2xl bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2">
-                <LogIn className="w-4 h-4" /> {t('nav.login')}
+              <Link
+                href="/dang-nhap"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-full py-2.5 rounded-xl bg-amber-500 text-slate-950 font-serif font-bold text-xs flex items-center justify-center gap-2"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>{t('nav.login')}</span>
               </Link>
             )}
           </div>

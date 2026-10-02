@@ -175,10 +175,10 @@ export default function ArticleReaderClient({
     if (contextLocale !== initialLocale && (initialLocale === 'vi' || initialLocale === 'en')) {
       setLocale(initialLocale);
     }
-  }, [initialLocale]);
+  }, [initialLocale, contextLocale, setLocale]);
 
   // Handle language switch
-  const handleSwitchLanguage = (targetLang: 'vi' | 'en') => {
+  const handleSwitchLanguage = React.useCallback((targetLang: 'vi' | 'en') => {
     if (targetLang === currentLang) return;
 
     if (targetLang === 'en' && !hasEnglishTranslation) {
@@ -206,7 +206,7 @@ export default function ArticleReaderClient({
 
       setIsTransitioning(false);
     }, 120);
-  };
+  }, [currentLang, hasEnglishTranslation, showToast, setLocale, article.slug]);
 
   // Sync when user clicks language in LiturgicalHeader
   const prevContextLocaleRef = useRef(contextLocale);
@@ -219,7 +219,7 @@ export default function ArticleReaderClient({
         handleSwitchLanguage('vi');
       }
     }
-  }, [contextLocale, currentLang]);
+  }, [contextLocale, currentLang, handleSwitchLanguage]);
 
   // Support Browser Back and Forward buttons
   useEffect(() => {
