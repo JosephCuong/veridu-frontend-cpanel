@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Lora, Cinzel } from "next/font/google";
+import { Inter, Lora, Cinzel, Playfair_Display } from "next/font/google";
 import BackToTop from "@/components/BackToTop";
 import LiturgicalHeader from "@/components/LiturgicalHeader";
 import Footer from "@/components/Footer";
@@ -24,6 +24,12 @@ const lora = Lora({
 const cinzel = Cinzel({
   variable: "--font-cinzel",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin", "vietnamese"],
   display: "swap",
 });
 
@@ -132,7 +138,7 @@ export default function RootLayout({
     <html
       lang="vi"
       suppressHydrationWarning
-      className={`${inter.variable} ${lora.variable} ${cinzel.variable} antialiased light`}
+      className={`${inter.variable} ${lora.variable} ${cinzel.variable} ${playfair.variable} antialiased light`}
     >
       <head>
         {/* ── GOOGLE TAG (gtag.js) - STRICTLY IN HEAD FOR GOOGLE SEARCH CONSOLE VERIFICATION ── */}

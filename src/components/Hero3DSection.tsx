@@ -4,9 +4,11 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
-  BookOpen, Compass, Clock, Award, ArrowRight, Sparkles, ChevronRight
+  BookOpen, Compass, Clock, Award, ArrowRight, Sparkles, ChevronRight, Pause, Play
 } from 'lucide-react';
 import { useTranslation } from '@/context/LanguageContext';
+import { HERO_BACKGROUND_SLIDES, HERO_CARD_IMAGES } from '@/config/heroMediaConfig';
+import { getGoogleDriveImageUrl } from '@/lib/driveHelper';
 
 interface ThemeConfig {
   id: string;
@@ -28,6 +30,11 @@ export default function Hero3DSection() {
   const { t, isEn } = useTranslation();
   const [activeTheme, setActiveTheme] = useState<string>('gold');
   const [isDark, setIsDark] = useState<boolean>(false);
+  
+  // Background Carousel State
+  const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0);
+  const [isSlidePaused, setIsSlidePaused] = useState<boolean>(false);
+
   const archRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
@@ -46,6 +53,15 @@ export default function Hero3DSection() {
       observer.disconnect();
     };
   }, []);
+
+  // Auto-advance Background Carousel every 7 seconds
+  useEffect(() => {
+    if (isSlidePaused || HERO_BACKGROUND_SLIDES.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentSlideIndex((prev) => (prev + 1) % HERO_BACKGROUND_SLIDES.length);
+    }, 7000);
+    return () => clearInterval(interval);
+  }, [isSlidePaused]);
 
   // 4 Core Liturgical Themes
   const themes: Record<string, ThemeConfig> = useMemo(() => ({
@@ -112,6 +128,7 @@ export default function Hero3DSection() {
   }), [t, isEn]);
 
   const currentConfig = themes[activeTheme] || themes.gold;
+  const currentCardMedia = HERO_CARD_IMAGES[activeTheme] || HERO_CARD_IMAGES.gold;
 
   // Gentle 3D Mouse Parallax Tilt for Gothic Stained Glass Window
   useEffect(() => {
@@ -156,14 +173,47 @@ export default function Hero3DSection() {
   return (
     <section 
       ref={containerRef}
+      onMouseEnter={() => setIsSlidePaused(true)}
+      onMouseLeave={() => setIsSlidePaused(false)}
       className="relative min-h-[85vh] sm:min-h-[90vh] w-full flex items-center justify-center px-4 sm:px-6 lg:px-12 pt-28 sm:pt-32 lg:pt-36 pb-16 sm:pb-24 overflow-hidden transition-colors duration-700 bg-[#FAF7F2] dark:bg-[#0B0D12]"
     >
+      {/* ────────────────────────────────────────────────────────
+          🌟 BACKGROUND IMAGE CAROUSEL / SLIDER (GOOGLE DRIVE READY)
+      ──────────────────────────────────────────────────────── */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none select-none">
+        {HERO_BACKGROUND_SLIDES.map((slide, idx) => {
+          const isActive = idx === currentSlideIndex;
+          const directUrl = getGoogleDriveImageUrl(slide.imageUrl, 2400);
+
+          return (
+            <div
+              key={slide.id}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                isActive ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <div 
+                className={`absolute inset-0 bg-cover bg-center transition-transform duration-[10000ms] ease-out ${
+                  isActive ? 'scale-105' : 'scale-100'
+                }`}
+                style={{
+                  backgroundImage: `url("${directUrl}")`,
+                }}
+              />
+            </div>
+          );
+        })}
+
+        {/* Ambient Gradient Overlays: Parchment in Light, Cathedral Twilight in Dark */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#FAF7F2]/90 via-[#FAF7F2]/82 to-[#FAF7F2]/96 dark:from-[#0B0D12]/92 dark:via-[#0B0D12]/85 dark:to-[#0B0D12]/98 backdrop-blur-[1px]" />
+      </div>
+
       {/* ────────────────────────────────────────────────────────
           🌟 LUX DIVINA — HEAVENLY CONICAL SUNBEAM & AMBIENT LIGHT
       ──────────────────────────────────────────────────────── */}
       {/* Top Conical Rosette Window Beam */}
       <div 
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[850px] sm:w-[1100px] h-[500px] sm:h-[650px] pointer-events-none z-0 opacity-80 dark:opacity-60 transition-opacity duration-700"
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[850px] sm:w-[1100px] h-[500px] sm:h-[650px] pointer-events-none z-1 opacity-80 dark:opacity-60 transition-opacity duration-700"
         style={{
           background: isDark
             ? 'radial-gradient(ellipse 65% 55% at 50% 0%, rgba(251, 191, 36, 0.22) 0%, rgba(180, 83, 9, 0.08) 50%, transparent 80%)'
@@ -171,16 +221,16 @@ export default function Hero3DSection() {
         }}
       />
 
-      {/* Volumetric Cathedral Light Rays (Subtle Angles) */}
+      {/* Volumetric Cathedral Light Rays */}
       <div 
-        className="absolute inset-0 pointer-events-none z-0 opacity-25 dark:opacity-20"
+        className="absolute inset-0 pointer-events-none z-1 opacity-25 dark:opacity-20"
         style={{
           backgroundImage: 'linear-gradient(115deg, transparent 40%, rgba(251, 191, 36, 0.15) 50%, transparent 60%), linear-gradient(65deg, transparent 35%, rgba(245, 158, 11, 0.12) 48%, transparent 58%)'
         }}
       />
 
       {/* Subtle Cathedral Vault Arch Silhouette Background */}
-      <div className="absolute inset-0 pointer-events-none z-0 opacity-[0.04] dark:opacity-[0.06] flex items-center justify-center">
+      <div className="absolute inset-0 pointer-events-none z-1 opacity-[0.04] dark:opacity-[0.06] flex items-center justify-center">
         <div className="w-[1200px] h-[800px] rounded-t-[600px] border-[2px] border-amber-900 dark:border-amber-400" />
       </div>
 
@@ -193,17 +243,17 @@ export default function Hero3DSection() {
         <div className="lg:col-span-7 space-y-6 text-center lg:text-left animate-in fade-in slide-in-from-left duration-700">
           
           {/* Liturgical Theme Badge with Latin Cross */}
-          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-amber-500/10 dark:bg-amber-500/15 border border-amber-600/30 dark:border-amber-400/30 text-amber-800 dark:text-amber-300 text-xs font-cinzel font-bold uppercase tracking-wider backdrop-blur-md shadow-xs">
+          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-amber-500/10 dark:bg-amber-500/15 border border-amber-600/30 dark:border-amber-400/30 text-amber-800 dark:text-amber-300 text-xs font-playfair font-bold uppercase tracking-wider backdrop-blur-md shadow-xs">
             <span className="text-amber-600 dark:text-amber-400 text-sm">✝</span>
             <span>{currentConfig.badge}</span>
           </div>
 
-          {/* Grand Classical Scripture Headline */}
-          <h1 className="font-serif font-black text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-[1.14]">
-            <span className="text-stone-900 dark:text-stone-100 font-serif">
+          {/* Grand Classical Scripture Headline (Playfair Display) */}
+          <h1 className="font-playfair font-black text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-[1.14]">
+            <span className="text-stone-900 dark:text-stone-100">
               {t('home.hero_title_1', 'Học Kinh Thánh')}
             </span> <br />
-            <span className={`text-transparent bg-clip-text bg-gradient-to-r ${currentConfig.accentText} font-serif`}>
+            <span className={`text-transparent bg-clip-text bg-gradient-to-r ${currentConfig.accentText}`}>
               {t('home.hero_title_2', '& Sống Đức Tin')}
             </span>
           </h1>
@@ -241,26 +291,26 @@ export default function Hero3DSection() {
           {/* FAITH & SCHOLARLY STATS BAR (Proof Points) */}
           <div className="pt-6 border-t border-stone-300/80 dark:border-white/15 grid grid-cols-2 sm:grid-cols-4 gap-4 text-left">
             <div className="space-y-0.5">
-              <div className="text-lg sm:text-xl font-cinzel font-black text-amber-700 dark:text-amber-400">73 Sách</div>
+              <div className="text-lg sm:text-xl font-playfair font-black text-amber-700 dark:text-amber-400">73 Sách</div>
               <div className="text-[11px] text-stone-600 dark:text-slate-400 font-sans uppercase tracking-wider">Cựu &amp; Tân Ước</div>
             </div>
             <div className="space-y-0.5">
-              <div className="text-lg sm:text-xl font-cinzel font-black text-amber-700 dark:text-amber-400">4000 Năm</div>
+              <div className="text-lg sm:text-xl font-playfair font-black text-amber-700 dark:text-amber-400">4000 Năm</div>
               <div className="text-[11px] text-stone-600 dark:text-slate-400 font-sans uppercase tracking-wider">Lịch Sử Cứu Độ</div>
             </div>
             <div className="space-y-0.5">
-              <div className="text-lg sm:text-xl font-cinzel font-black text-amber-700 dark:text-amber-400">Tọa Độ 3D</div>
+              <div className="text-lg sm:text-xl font-playfair font-black text-amber-700 dark:text-amber-400">Tọa Độ 3D</div>
               <div className="text-[11px] text-stone-600 dark:text-slate-400 font-sans uppercase tracking-wider">Khảo Cổ Thánh Địa</div>
             </div>
             <div className="space-y-0.5">
-              <div className="text-lg sm:text-xl font-cinzel font-black text-amber-700 dark:text-amber-400">Học Giả</div>
+              <div className="text-lg sm:text-xl font-playfair font-black text-amber-700 dark:text-amber-400">Học Giả</div>
               <div className="text-[11px] text-stone-600 dark:text-slate-400 font-sans uppercase tracking-wider">Ban Học Vụ VERIDU</div>
             </div>
           </div>
 
         </div>
 
-        {/* RIGHT COLUMN: GOTHIC STAINED-GLASS WINDOW ART (CHRIST RISEN) + THEME DOCK */}
+        {/* RIGHT COLUMN: GOTHIC STAINED-GLASS WINDOW ART + THEME DOCK */}
         <div className="lg:col-span-5 flex flex-col items-center justify-center relative">
           
           {/* Radiant Halo Behind the Gothic Window */}
@@ -269,7 +319,7 @@ export default function Hero3DSection() {
             style={{ backgroundColor: currentConfig.glowColor }}
           />
 
-          {/* ⛪ GOTHIC STAINED-GLASS ARCH WINDOW (Authentic Pointed Arch Frame) */}
+          {/* ⛪ GOTHIC STAINED-GLASS ARCH WINDOW (Pointed Arch Frame) */}
           <div
             ref={archRef}
             className="relative w-72 sm:w-80 md:w-88 h-[470px] sm:h-[500px] rounded-t-[170px] sm:rounded-t-[190px] rounded-b-3xl p-3.5 bg-gradient-to-b from-[#C5A059] via-[#E8D4A2] to-[#8C6D2D] dark:from-[#D4AF37] dark:via-[#9A7B2C] dark:to-[#382B0A] shadow-[0_20px_50px_rgba(197,160,89,0.35)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.85)] flex flex-col items-center justify-between text-center transition-all duration-300 overflow-hidden group select-none will-change-transform"
@@ -278,19 +328,20 @@ export default function Hero3DSection() {
             {/* Inner Gothic Window Arch Container */}
             <div className="relative w-full h-full rounded-t-[155px] sm:rounded-t-[175px] rounded-b-2xl overflow-hidden bg-slate-950 flex flex-col justify-between">
               
-              {/* Sacred Stained Glass Image: Christ Risen in Cathedral Window */}
+              {/* Sacred Stained Glass Image (Google Drive Compatible & Unoptimized for Vercel) */}
               <div className="absolute inset-0 z-0">
                 <Image
-                  src="/images/stained_glass_christ.jpg"
-                  alt="Đức Kitô Phục Sinh — Cửa Sổ Kính Màu Nhà Thờ Chính Tòa"
+                  src={getGoogleDriveImageUrl(currentCardMedia.imageUrl || '/images/stained_glass_christ.jpg', 1200)}
+                  alt={currentCardMedia.alt || 'Đức Kitô Phục Sinh — Cửa Sổ Kính Màu'}
                   fill
                   priority
-                  className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out"
+                  unoptimized={true}
+                  className="object-cover object-center group-hover:scale-105 transition-all duration-700 ease-out"
                   sizes="(max-width: 768px) 320px, 380px"
                 />
                 
                 {/* Subtle Inner Glass Vignette & Tint */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/75 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80 pointer-events-none" />
                 
                 {/* Moving Divine Light Sweep */}
                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
@@ -299,14 +350,14 @@ export default function Hero3DSection() {
               {/* Upper Arch Rosette Header: Latin Inscription */}
               <div className="relative z-10 pt-5 sm:pt-6 px-4">
                 <div className="inline-block px-3 py-1 rounded-full bg-slate-950/70 border border-amber-400/40 backdrop-blur-md">
-                  <span className="font-cinzel text-[10px] sm:text-[11px] font-black tracking-[0.25em] text-amber-300 uppercase drop-shadow-md">
-                    ✦ LUX CHRISTI ✦
+                  <span className="font-playfair text-[10px] sm:text-[11px] font-black tracking-[0.25em] text-amber-300 uppercase drop-shadow-md">
+                    {currentCardMedia.badgeTitle || '✦ LUX CHRISTI ✦'}
                   </span>
                 </div>
               </div>
 
               {/* Middle Area: Sacred Monogram Symbols */}
-              <div className="relative z-10 flex justify-between w-full px-5 text-amber-300/80 font-cinzel font-black text-sm drop-shadow-md select-none">
+              <div className="relative z-10 flex justify-between w-full px-5 text-amber-300/80 font-playfair font-black text-sm drop-shadow-md select-none">
                 <span>Α</span>
                 <span>Ω</span>
               </div>
@@ -314,7 +365,7 @@ export default function Hero3DSection() {
               {/* Lower Glass Overlay Card: Active Theme Focus & Quick CTA */}
               <div className="relative z-10 m-2 p-3 sm:p-3.5 rounded-2xl bg-slate-950/85 border border-amber-400/40 backdrop-blur-xl space-y-2 text-left">
                 <div className="flex items-center justify-between">
-                  <span className="font-cinzel text-[10px] font-bold tracking-widest uppercase text-amber-400">
+                  <span className="font-playfair text-[10px] font-bold tracking-widest uppercase text-amber-400">
                     {currentConfig.latinMonogram}
                   </span>
                   <span className="text-[10px] text-slate-300 font-mono">
@@ -322,7 +373,7 @@ export default function Hero3DSection() {
                   </span>
                 </div>
 
-                <div className="font-serif font-black text-sm sm:text-base text-white truncate">
+                <div className="font-playfair font-black text-sm sm:text-base text-white truncate">
                   {currentConfig.name}
                 </div>
 
@@ -365,6 +416,28 @@ export default function Hero3DSection() {
         </div>
 
       </div>
+
+      {/* ────────────────────────────────────────────────────────
+          🌟 SUBTLE BACKGROUND SLIDE INDICATORS (AT BOTTOM CENTER)
+      ──────────────────────────────────────────────────────── */}
+      {HERO_BACKGROUND_SLIDES.length > 1 && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 pointer-events-auto bg-black/20 dark:bg-white/5 py-1 px-2.5 rounded-full backdrop-blur-md border border-stone-300/30 dark:border-white/10">
+          {HERO_BACKGROUND_SLIDES.map((slide, idx) => (
+            <button
+              key={slide.id}
+              type="button"
+              onClick={() => setCurrentSlideIndex(idx)}
+              className={`transition-all duration-300 rounded-full cursor-pointer ${
+                idx === currentSlideIndex 
+                  ? 'w-6 h-1.5 bg-amber-600 dark:bg-amber-400' 
+                  : 'w-1.5 h-1.5 bg-stone-400/60 dark:bg-white/30 hover:bg-amber-500/80'
+              }`}
+              title={slide.title}
+              aria-label={`Chuyển tới ảnh nền ${idx + 1}: ${slide.title}`}
+            />
+          ))}
+        </div>
+      )}
 
     </section>
   );

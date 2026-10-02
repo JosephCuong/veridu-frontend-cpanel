@@ -50,7 +50,9 @@ export default async function CoursesPage({
     { id: 'cuu-uoc', name: 'Kinh Thánh Cựu Ước', count: getCategoryCount('cựu ước'), term: 'cựu ước' },
     { id: 'tan-uoc', name: 'Kinh Thánh Tân Ước', count: getCategoryCount('tân ước'), term: 'tân ước' },
     { id: 'phung-vu', name: 'Thần Học Phụng Vụ', count: getCategoryCount('phụng vụ'), term: 'phụng vụ' },
+    { id: 'than-hoc', name: 'Thần Học Tín Lý', count: getCategoryCount('thần học'), term: 'thần học' },
     { id: 'giao-ly', name: 'Giáo Lý Dự Tòng & Hôn Nhân', count: getCategoryCount('giáo lý'), term: 'giáo lý' },
+    { id: 'triet-hoc', name: 'Triết Học Kitô Giáo', count: getCategoryCount('triết học'), term: 'triết học' },
   ];
 
   // Filtering

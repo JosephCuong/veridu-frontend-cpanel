@@ -71,11 +71,24 @@ export function resolveMediaUrl(url: string, type: 'image' | 'audio' = 'image'):
   const driveId = extractGoogleDriveFileId(trimmed);
   if (driveId) {
     if (type === 'image') {
-      return `https://drive.google.com/thumbnail?id=${driveId}&sz=w2000`;
+      return `https://lh3.googleusercontent.com/d/${driveId}=w2000`;
     } else {
       return `https://docs.google.com/uc?export=download&id=${driveId}`;
     }
   }
 
+  return trimmed;
+}
+
+export function getGoogleDriveImageUrl(urlOrId: string, width = 2000): string {
+  if (!urlOrId) return '';
+  const trimmed = urlOrId.trim();
+  if (trimmed.startsWith('/') || trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
+    return trimmed;
+  }
+  const driveId = extractGoogleDriveFileId(trimmed);
+  if (driveId) {
+    return `https://lh3.googleusercontent.com/d/${driveId}=w${width}`;
+  }
   return trimmed;
 }

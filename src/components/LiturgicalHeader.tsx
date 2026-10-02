@@ -276,7 +276,7 @@ export default function LiturgicalHeader() {
         { label: isEn ? 'Liturgy' : 'Phụng Vụ', href: '/khoa-hoc?category=phung-vu' },
         { label: isEn ? 'Scripture' : 'Kinh Thánh', href: '/khoa-hoc?category=cuu-uoc' },
         { label: isEn ? 'Catechesis' : 'Giáo Lý', href: '/khoa-hoc?category=giao-ly' },
-        { label: isEn ? 'Theology' : 'Thần Học', href: '/khoa-hoc?category=phung-vu' },
+        { label: isEn ? 'Theology' : 'Thần Học', href: '/khoa-hoc?category=than-hoc' },
         { label: isEn ? 'Philosophy' : 'Triết Học', href: '/khoa-hoc?category=triet-hoc' },
       ],
     },
@@ -473,6 +473,7 @@ export default function LiturgicalHeader() {
                 width={128} 
                 height={32}
                 priority
+                unoptimized={true}
                 className="object-contain max-h-7 sm:max-h-8 w-auto drop-shadow-xs"
               />
             </div>
@@ -480,7 +481,7 @@ export default function LiturgicalHeader() {
         </div>
 
         {/* 2. CENTER: 5 REFINED EDITORIAL MENUS (Desktop >= 1024px) */}
-        <nav className="hidden lg:flex items-center gap-1 xl:gap-2.5 text-[11px] sm:text-xs font-cinzel font-bold tracking-[0.14em] uppercase">
+        <nav className="hidden lg:flex items-center gap-1 xl:gap-2.5 text-[11px] sm:text-xs font-playfair font-bold tracking-[0.08em] uppercase">
           {navGroups.map((group, idx) => {
             const isGroupActive = group.matchPrefixes.some(prefix => pathname === prefix || pathname.startsWith(prefix + '/'));
             const isOpen = openDropdown === group.id;
@@ -666,7 +667,7 @@ export default function LiturgicalHeader() {
                 <button
                   type="button"
                   onClick={() => setMobileExpandedGroup(isExpanded ? null : group.id)}
-                  className="w-full flex items-center justify-between py-1.5 px-2 text-xs font-cinzel font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400"
+                  className="w-full flex items-center justify-between py-1.5 px-2 text-xs font-playfair font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400"
                 >
                   <span>{group.title}</span>
                   <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180 text-amber-600' : 'text-stone-400'}`} />
