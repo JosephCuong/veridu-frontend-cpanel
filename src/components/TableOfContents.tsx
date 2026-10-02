@@ -9,56 +9,66 @@ interface Heading {
   level: number;
 }
 
-export default function TableOfContents() {
+interface TableOfContentsProps {
+  locale?: 'vi' | 'en' | 'la';
+  contentKey?: string | number;
+}
+
+export default function TableOfContents({ locale = 'vi', contentKey }: TableOfContentsProps = {}) {
   const [headings, setHeadings] = useState<Heading[]>([]);
   const [activeId, setActiveId] = useState<string>('');
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
-    // Parse only h2 (highest level headings) from article content
-    const elements = Array.from(document.querySelectorAll('.article-content h2'));
-    
-    const parsed = elements.map((el, index) => {
-      if (!el.id) {
-        const text = el.textContent || '';
-        const slug = text
-          .toLowerCase()
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(/đ/g, 'd')
-          .replace(/Đ/g, 'd')
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/(^-|-$)+/g, '');
-        el.id = slug || `heading-${index}`;
-      }
-      return {
-        id: el.id,
-        text: el.textContent || '',
-        level: 2
-      };
-    });
-
-    setHeadings(parsed);
-
-    // Set up IntersectionObserver to highlight active heading
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visibleEntries = entries.filter(entry => entry.isIntersecting);
-        if (visibleEntries.length > 0) {
-          visibleEntries.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-          setActiveId(visibleEntries[0].target.id);
+    // Small timeout to allow DOM to finish rendering after language / content switches
+    const timer = setTimeout(() => {
+      // Parse only h2 (highest level headings) from article content
+      const elements = Array.from(document.querySelectorAll('.article-content h2'));
+      
+      const parsed = elements.map((el, index) => {
+        if (!el.id) {
+          const text = el.textContent || '';
+          const slug = text
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/đ/g, 'd')
+            .replace(/Đ/g, 'd')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)+/g, '');
+          el.id = slug || `heading-${index}`;
         }
-      },
-      { rootMargin: '0px 0px -60% 0px', threshold: 0.1 }
-    );
+        return {
+          id: el.id,
+          text: el.textContent || '',
+          level: 2
+        };
+      });
 
-    elements.forEach((el) => observer.observe(el));
+      setHeadings(parsed);
 
-    return () => {
-      elements.forEach((el) => observer.unobserve(el));
-      observer.disconnect();
-    };
-  }, []);
+      // Set up IntersectionObserver to highlight active heading
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const visibleEntries = entries.filter(entry => entry.isIntersecting);
+          if (visibleEntries.length > 0) {
+            visibleEntries.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+            setActiveId(visibleEntries[0].target.id);
+          }
+        },
+        { rootMargin: '0px 0px -60% 0px', threshold: 0.1 }
+      );
+
+      elements.forEach((el) => observer.observe(el));
+
+      return () => {
+        elements.forEach((el) => observer.unobserve(el));
+        observer.disconnect();
+      };
+    }, 60);
+
+    return () => clearTimeout(timer);
+  }, [locale, contentKey]);
 
   if (headings.length === 0) return null;
 
@@ -71,14 +81,14 @@ export default function TableOfContents() {
       <div className="glass-panel rounded-2xl border p-5 bg-[var(--bg-card)]/90 border-amber-500/30 shadow-xl backdrop-blur-xl transition-colors duration-200">
         <div className="flex items-center justify-between border-b border-amber-500/20 pb-3 mb-4">
           <h3 className="font-serif font-bold text-amber-500 uppercase tracking-widest text-[0.8rem] flex items-center gap-2">
-            <List className="w-4 h-4" /> Mục Lục
+            <List className="w-4 h-4" /> {locale === 'en' ? 'Table of Contents' : (locale === 'la' ? 'Index Rerum' : 'Mục Lục')}
           </h3>
           <button
             type="button"
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1 rounded-md text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors"
-            title={isCollapsed ? "Mở rộng mục lục" : "Thu gọn mục lục"}
-            aria-label={isCollapsed ? "Mở rộng mục lục" : "Thu gọn mục lục"}
+            className="p-1 rounded-md text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer"
+            title={isCollapsed ? (locale === 'en' ? "Expand Table of Contents" : "Mở rộng mục lục") : (locale === 'en' ? "Collapse Table of Contents" : "Thu gọn mục lục")}
+            aria-label={isCollapsed ? (locale === 'en' ? "Expand Table of Contents" : "Mở rộng mục lục") : (locale === 'en' ? "Collapse Table of Contents" : "Thu gọn mục lục")}
           >
             <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`} />
           </button>

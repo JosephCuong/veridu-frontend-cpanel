@@ -1,28 +1,12 @@
 import React from 'react';
-import { 
-  getLibraryArticleBySlug, 
-  fetchArticleGeoAndTimeline, 
-  fetchArticleAuthorProfile, 
-  fetchRelatedContent 
-} from '@/lib/api';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Metadata } from 'next';
-
-import VisualArticleRenderer from '@/components/VisualArticleRenderer';
-import ArticleGeoTimelineWidget from '@/components/ArticleGeoTimelineWidget';
-import ShareButtons from '@/components/ShareButtons';
-import TableOfContents from '@/components/TableOfContents';
-import AdminEditFloatingButton from '@/components/AdminEditFloatingButton';
-import ArticleAuthorCard from '@/components/ArticleAuthorCard';
-import ArticleRelatedContent from '@/components/ArticleRelatedContent';
-import ArticleCitationAndLicense from '@/components/ArticleCitationAndLicense';
-import ArticleLanguageBanner from '@/components/ArticleLanguageBanner';
-import { BookOpen, Heart, ArrowLeft, Cross, Calendar, Clock, User, Tag, Headphones, Video } from 'lucide-react';
-import { formatImageUrl } from '@/lib/htmlProcessor';
-import { extractQuotesAndImagesFromHtml } from '@/lib/quoteExtractor';
+import { ArrowLeft } from 'lucide-react';
+import { getLibraryArticleBySlug } from '@/lib/api';
 import { supabase } from '@/lib/supabaseClient';
+import { prepareArticlePageData } from '@/lib/articlePageHelper';
+import ArticleReaderClient from '@/components/article/ArticleReaderClient';
 
 export const revalidate = 3600; // 1-hour Edge CDN caching with on-demand ISR revalidation
 export const dynamicParams = true; // Allow new articles published after build time
@@ -110,293 +94,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-const MetaDataRow = ({ article }: { article: any }) => {
-  const authorName = article.author_name || article.author || 'Ban Biên Tập VERIDU';
-  const readingTime = article.reading_time || article.readingTime || '5 phút';
-  
-  let formattedDate = '';
-  const dateVal = article.published_at || article.created_at;
-  if (dateVal) {
-    try {
-      const d = new Date(dateVal);
-      if (!isNaN(d.getTime())) {
-        const day = String(d.getDate()).padStart(2, '0');
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const year = d.getFullYear();
-        formattedDate = `${day}/${month}/${year}`;
-      }
-    } catch (e) {}
-  }
-
-  return (
-    <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs font-semibold text-slate-700 dark:text-slate-300 mt-6">
-      {authorName && (
-        <div className="flex items-center gap-1.5 bg-[var(--bg-main)] px-3 py-1.5 rounded-full border border-[var(--border-card)]">
-          <User className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-          <span>{authorName}</span>
-        </div>
-      )}
-      {formattedDate && (
-        <div className="flex items-center gap-1.5">
-          <Calendar className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
-          <span>{formattedDate}</span>
-        </div>
-      )}
-      {readingTime && (
-        <div className="flex items-center gap-1.5">
-          <Clock className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
-          <span>{readingTime}</span>
-        </div>
-      )}
-      {article.category && (
-        <div className="flex items-center gap-1.5">
-          <Tag className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
-          <span>{article.category}</span>
-        </div>
-      )}
-      {(article.audio_url || article.contentHtml?.includes('<audio') || article.interactiveHtml?.includes('<audio')) && (
-        <a 
-          href="#podcast-audio" 
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-300 font-bold border border-amber-500/30 transition-all cursor-pointer group"
-          title="Nhấp để nghe bản Audio Podcast"
-        >
-          <Headphones className="w-3.5 h-3.5 text-amber-500 group-hover:scale-110 transition-transform" />
-          <span>🎧 Có Podcast Audio</span>
-        </a>
-      )}
-      {(article.video_url || article.contentHtml?.includes('veridu-embed-video') || article.interactiveHtml?.includes('veridu-embed-video')) && (
-        <a 
-          href="#video-embed" 
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-300 font-bold border border-rose-500/30 transition-all cursor-pointer group"
-          title="Nhấp để xem Video phụ đề"
-        >
-          <Video className="w-3.5 h-3.5 text-rose-500 group-hover:scale-110 transition-transform" />
-          <span>🎬 Có Video Phụ Đề</span>
-        </a>
-      )}
-    </div>
-  );
-};
-
-const HeroBanner = ({ imageUrl }: { imageUrl?: string }) => {
-  if (!imageUrl) return null;
-  const isGoogleDrive = imageUrl.includes('googleusercontent.com') || imageUrl.includes('drive.google.com');
-  return (
-    <div className="w-full h-[40vh] sm:h-[50vh] relative z-0 overflow-hidden">
-      <div className="absolute inset-0 bg-black/30 z-10"></div>
-      <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-main)] via-[var(--bg-main)]/50 to-transparent z-10"></div>
-      <Image 
-        src={imageUrl} 
-        alt="Cover" 
-        fill 
-        className="object-cover animate-fadeIn" 
-        sizes="100vw" 
-        priority 
-        unoptimized={isGoogleDrive}
-      />
-    </div>
-  );
-};
-
 export default async function ShortArticlePage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = await params;
   if (RESERVED_SLUGS.has(resolvedParams.slug)) {
     notFound();
   }
 
-  const [article, geoTimeline] = await Promise.all([
-    getLibraryArticleBySlug(resolvedParams.slug),
-    fetchArticleGeoAndTimeline(resolvedParams.slug)
-  ]);
+  const pageData = await prepareArticlePageData(resolvedParams.slug);
 
-  if (!article) {
+  if (!pageData) {
     notFound();
   }
 
-  const [authorProfile, relatedItems] = await Promise.all([
-    fetchArticleAuthorProfile(article.author_id, article.author_name || article.author),
-    fetchRelatedContent(article, geoTimeline || undefined)
-  ]);
-
+  const { article, articleJsonLd, cleanTitle } = pageData;
   const articleType = article.article_type || 'standard';
-  const titleText = typeof article.title === 'string' ? article.title : 'Bài Viết VERIDU';
-  const htmlContent = article.interactiveHtml || article.contentHtml || '';
-  const prayerText = (article as any).prayerText as string | undefined;
-
-  // Effective Locations & Timeline with Self-Contained Fallback
-  let effectiveLocations = geoTimeline?.locations || [];
-  let effectiveTimelineEvents = geoTimeline?.timelineEvents || [];
-
-  if (article && (effectiveLocations.length === 0 || effectiveTimelineEvents.length === 0)) {
-    const rawContent = htmlContent;
-    const scriptMatch = rawContent.match(/<script\s+type="application\/json"\s+id="veridu-article-geo-timeline"[^>]*>([\s\S]*?)<\/script>/i);
-    if (scriptMatch) {
-      try {
-        const parsed = JSON.parse(scriptMatch[1]);
-        if (effectiveLocations.length === 0 && Array.isArray(parsed.locations) && parsed.locations.length > 0) {
-          effectiveLocations = parsed.locations.map((item: any, idx: number) => ({
-            id: item.id || `loc-${idx}`,
-            slug: item.slug || `loc-${idx}`,
-            name: item.name || item.title || '',
-            name_en: item.name_en || '',
-            name_original: item.ancient_name || item.name_original || '',
-            meaning: item.meaning || '',
-            region: item.region || 'Thánh Địa (Holy Land)',
-            testament: item.testament || 'cuu-uoc',
-            era: item.era || item.historical_period || 'Kinh Thánh',
-            latitude: Number(item.latitude ?? item.lat),
-            longitude: Number(item.longitude ?? item.lng ?? item.lon),
-            importance_level: item.importance_level || 2,
-            image_url: item.image_url || '',
-            summary: item.summary || item.description || '',
-            description: item.description || item.summary || '',
-            events: item.events || [],
-            scriptures: item.scriptures || item.biblical_references || item.bible_references || [],
-            theology: item.theology || '',
-            ancient_name: item.ancient_name || item.name_original || '',
-            historical_period: item.historical_period || '',
-            archaeological_evidence: item.archaeological_evidence || '',
-            bible_references: Array.isArray(item.biblical_references) ? item.biblical_references : (Array.isArray(item.bible_references) ? item.bible_references : (item.biblical_references ? [item.biblical_references] : [])),
-            article_slugs: [resolvedParams.slug]
-          }));
-        }
-        if (effectiveTimelineEvents.length === 0 && (Array.isArray(parsed.timeline_events) || Array.isArray(parsed.events))) {
-          const rawEvents = parsed.timeline_events || parsed.events;
-          effectiveTimelineEvents = rawEvents.map((ev: any, idx: number) => {
-            const yr = typeof ev.year_bce_ce === 'number' ? ev.year_bce_ce : (typeof ev.order_year === 'number' ? ev.order_year : (typeof ev.year === 'number' ? ev.year : 0));
-            return {
-              id: ev.id || `evt-${idx}`,
-              slug: ev.slug || ev.id || `evt-${idx}`,
-              order_year: yr,
-              year_label: ev.display_date || ev.year_label || (yr < 0 ? `${Math.abs(yr)} TCN` : `${yr} SCN`),
-              title: ev.event_title || ev.title || 'Sự kiện',
-              subtitle: ev.subtitle || ev.biblical_anchor || '',
-              biblical_anchor: ev.biblical_anchor || ev.scripture || '',
-              archaeological_anchor: ev.archaeological_anchor || ev.archaeology || '',
-              significance: ev.significance || ev.theology || ev.summary || '',
-              summary: ev.summary || ev.significance || '',
-              description: ev.description || ev.content || '',
-              content: ev.content || ev.description || '',
-              theology: ev.theology || ev.significance || '',
-              article_slug: resolvedParams.slug,
-              article_slugs: [resolvedParams.slug],
-              bible_references: ev.biblical_anchor ? [ev.biblical_anchor] : [],
-              era_id: ev.era_id || 'era-cuu-uoc',
-              era_name: ev.era_name || ev.period || '',
-              category: ev.category || 'cuu-uoc'
-            };
-          }).sort((a: any, b: any) => a.order_year - b.order_year);
-        }
-      } catch (err) {
-        console.error('Failed to parse inline geo-timeline JSON:', err);
-      }
-    }
-  }
-  
-  const coverImage = formatImageUrl(article.featured_image || article.thumbnail);
-
-  // Domain for share buttons (Short SEO URL)
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
-  const articleUrl = `${siteUrl}/${resolvedParams.slug}`;
-  const cleanTitle = titleText.replace(/<[^>]+>/g, '');
-  const defaultDesc = article.excerpt ? article.excerpt.replace(/<[^>]+>/g, '').substring(0, 160) : 'Khám phá thư viện tài liệu Công giáo trên VERIDU.';
-  const ogDynamicUrl = `${siteUrl}/api/og?title=${encodeURIComponent(cleanTitle)}&category=${encodeURIComponent(article.category || 'Thần Học & Thánh Kinh')}&author=${encodeURIComponent(article.author_name || article.author || 'Ban Học Vụ VERIDU')}`;
-  const defaultImage = (article.thumbnail && !article.thumbnail.includes('default-og-image')) ? article.thumbnail : ((article.featured_image && !article.featured_image.includes('default-og-image')) ? article.featured_image : ogDynamicUrl);
-
-  // Structured Data (JSON-LD) for Article & Breadcrumb
-  const articleJsonLd = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Article",
-        "@id": `${articleUrl}#article`,
-        "isPartOf": { "@id": `${siteUrl}/#website` },
-        "headline": cleanTitle,
-        "description": (article.excerpt || defaultDesc).replace(/<[^>]+>/g, '').substring(0, 200),
-        "image": [coverImage || defaultImage],
-        "datePublished": article.created_at || new Date().toISOString(),
-        "dateModified": article.updated_at || article.created_at || new Date().toISOString(),
-        "author": {
-          "@type": "Person",
-          "name": article.author || "Ban Biên Tập VERIDU"
-        },
-        "publisher": {
-          "@type": "Organization",
-          "@id": `${siteUrl}/#organization`,
-          "name": "VERIDU",
-          "logo": {
-            "@type": "ImageObject",
-            "url": `${siteUrl}/favicon.ico`
-          }
-        },
-        "mainEntityOfPage": articleUrl
-      },
-      {
-        "@type": "BreadcrumbList",
-        "@id": `${articleUrl}#breadcrumb`,
-        "itemListElement": [
-          {
-            "@type": "ListItem",
-            "position": 1,
-            "name": "Trang Chủ",
-            "item": siteUrl
-          },
-          {
-            "@type": "ListItem",
-            "position": 2,
-            "name": "Thư Viện",
-            "item": `${siteUrl}/thu-vien`
-          },
-          {
-            "@type": "ListItem",
-            "position": 3,
-            "name": cleanTitle,
-            "item": articleUrl
-          }
-        ]
-      }
-    ]
-  };
-
-
-  // Extract sacred scripture block and content images for QuoteCardModal
-  const { sacredScripture, images: extractedImages } = extractQuotesAndImagesFromHtml(htmlContent, {
-    title: cleanTitle,
-    featured_image: coverImage || defaultImage,
-    thumbnail: article.thumbnail,
-    excerpt: article.excerpt,
-  });
-
-  // Mounting placeholders: replace with elegant interactive jump banners if geo/timeline data exists, or clean them
-  const hasGeoTimelineData = effectiveLocations.length > 0 || effectiveTimelineEvents.length > 0;
-  
-  const timelineBannerHtml = hasGeoTimelineData ? `
-<div class="article-geo-callout not-prose my-6 p-4 sm:p-5 rounded-2xl bg-amber-500/10 border-l-4 border-amber-500 shadow-sm flex items-center justify-between gap-4 transition-all hover:bg-amber-500/15">
-  <div class="flex items-center gap-2.5 text-xs font-serif font-bold text-amber-700 dark:text-amber-400">
-    <span class="text-base">⏳</span>
-    <span>Trục Niên Biểu Lịch Sử Cứu Độ</span>
-  </div>
-  <a href="#geo-timeline-section" class="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 cursor-pointer">
-    <span>Xem mốc thời gian</span>
-    <span>↓</span>
-  </a>
-</div>` : '';
-
-  const mapBannerHtml = hasGeoTimelineData ? `
-<div class="article-geo-callout not-prose my-6 p-4 sm:p-5 rounded-2xl bg-indigo-500/10 border-l-4 border-indigo-500 shadow-sm flex items-center justify-between gap-4 transition-all hover:bg-indigo-500/15">
-  <div class="flex items-center gap-2.5 text-xs font-serif font-bold text-indigo-700 dark:text-indigo-400">
-    <span class="text-base">🗺️</span>
-    <span>Bản Đồ Tọa Độ Khảo Cổ Cận Đông</span>
-  </div>
-  <a href="#geo-timeline-section" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer">
-    <span>Mở bản đồ tương tác</span>
-    <span>↓</span>
-  </a>
-</div>` : '';
-
-  const cleanHtmlContent = htmlContent
-    .replace(/<veridu-timeline-placeholder\b[^>]*>(?:<\/veridu-timeline-placeholder>)?/gi, timelineBannerHtml)
-    .replace(/<veridu-map-placeholder\b[^>]*>(?:<\/veridu-map-placeholder>)?/gi, mapBannerHtml);
 
   // 1. TEMPLATE BÀI TƯƠNG TÁC (HTML/JS Sandbox Fullscreen)
   if (articleType === 'interactive') {
@@ -434,116 +145,11 @@ export default async function ShortArticlePage({ params }: { params: Promise<{ s
     );
   }
 
-  // 2. TEMPLATE BÀI TỰ ĐỘNG / TĨNH
+  // 2. UNIFIED STAINED-GLASS ARTICLE READER (Client-Side Smooth Switching)
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] transition-colors duration-300 pb-20">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
-      />
-      <HeroBanner imageUrl={coverImage} />
-
-      <div className={`max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative z-20 ${coverImage ? '-mt-24' : 'pt-24 sm:pt-28 md:pt-36'}`}>
-        <Link href="/thu-vien" className="inline-flex items-center text-xs font-bold text-amber-800 dark:text-amber-400 hover:underline mb-4 bg-[var(--bg-card)]/50 backdrop-blur px-3 py-1.5 rounded-full border border-[var(--border-card)] shadow-md">
-          <ArrowLeft className="w-4 h-4 mr-1.5" /> Quay Lại Thư Viện
-        </Link>
-        
-        <div className="flex flex-col lg:flex-row gap-8">
-          <main className="flex-1 w-full max-w-[850px] mx-auto space-y-8">
-            <ArticleLanguageBanner 
-              articleId={article.id}
-              articleSlug={resolvedParams.slug}
-              articleTitle={cleanTitle}
-              hasManualEnglish={!!(article.content_en && article.content_en.trim().length > 0)} 
-              titleEn={article.title_en} 
-              contentEn={article.content_en}
-              excerptEn={article.excerpt_en}
-            />
-            <article className="p-6 sm:p-12 rounded-3xl glass-panel space-y-8 relative overflow-hidden veridu-scholarly-article">
-              <header className="border-b border-slate-200/50 dark:border-white/10 pb-8 text-center sm:text-left space-y-4 relative z-10">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-3.5 py-1.5 rounded-full bg-slate-500/20 border border-slate-500/30 text-[var(--text-main)] text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm">
-                    <Tag className="w-3.5 h-3.5" /> {article.category || 'Bài Viết'}
-                  </span>
-                  {article.content_en && (
-                    <Link
-                      href={`/en/${resolvedParams.slug}`}
-                      className="px-3 py-1.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-600 dark:text-amber-400 text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-sm"
-                      title="Read English Translation"
-                    >
-                      <span>🇬🇧 Read in English</span>
-                    </Link>
-                  )}
-                </div>
-                <h1 className="text-3xl sm:text-5xl font-serif font-black text-transparent bg-clip-text bg-gradient-to-br from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 leading-[1.25] drop-shadow-sm" dangerouslySetInnerHTML={{ __html: titleText }} />
-                <MetaDataRow article={article} />
-              </header>
-              
-              <div className="article-content relative z-10">
-                <VisualArticleRenderer contentHtml={cleanHtmlContent} />
-              </div>
-              
-              {/* Tags */}
-              {(article as any).tags && (article as any).tags.length > 0 && (
-                <div className="pt-8 border-t border-slate-200/50 dark:border-white/10 flex flex-wrap gap-2 relative z-10">
-                  {(article as any).tags.map((tag: string, i: number) => (
-                    <span key={i} className="px-3 py-1 bg-white/40 dark:bg-slate-800/40 border border-white/20 rounded-lg text-xs font-semibold text-[var(--text-main)] shadow-sm">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </article>
-
-            {/* Dedicated Scholarly Explorer Section: Geo & Timeline (Placed cleanly outside <article>) */}
-            {(effectiveLocations.length > 0 || effectiveTimelineEvents.length > 0) && (
-              <div id="geo-timeline-section" className="relative z-10 scroll-mt-24">
-                <ArticleGeoTimelineWidget 
-                  locations={effectiveLocations} 
-                  timelineEvents={effectiveTimelineEvents} 
-                  articleTitle={cleanTitle} 
-                  articleSlug={article.slug}
-                />
-              </div>
-            )}
-
-            {/* 1. About the Author */}
-            <ArticleAuthorCard 
-              author={authorProfile} 
-              publishedDate={article.published_at || article.created_at} 
-            />
-
-            {/* 2. Multi-dimensional Related Content */}
-            <ArticleRelatedContent 
-              items={relatedItems} 
-            />
-
-            {/* 3. Academic Citation & Copyright License */}
-            <ArticleCitationAndLicense 
-              title={cleanTitle} 
-              authorName={authorProfile.christian_name ? `${authorProfile.christian_name} ${authorProfile.full_name}` : authorProfile.full_name} 
-              publishedDate={article.created_at} 
-              url={articleUrl} 
-            />
-          </main>
-
-          <aside className="hidden lg:block w-72 xl:w-80 shrink-0 sticky top-36 self-start">
-            <TableOfContents />
-          </aside>
-        </div>
-      </div>
-
-      <ShareButtons 
-        url={articleUrl} 
-        title={cleanTitle} 
-        quote={sacredScripture.quote}
-        quoteSource={sacredScripture.source}
-        category={article.category || 'Thần Học & Thánh Kinh'}
-        author={authorProfile.christian_name ? `${authorProfile.christian_name} ${authorProfile.full_name}` : (article.author_name || article.author || 'Ban Học Vụ VERIDU')}
-        imageUrl={coverImage || defaultImage}
-        availableImages={extractedImages}
-      />
-      <AdminEditFloatingButton articleId={article.id} />
-    </div>
+    <ArticleReaderClient 
+      initialLocale="vi"
+      {...pageData}
+    />
   );
 }

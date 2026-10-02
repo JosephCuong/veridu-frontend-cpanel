@@ -7,9 +7,11 @@ import { Feather, ShieldCheck, ChevronRight, Church } from 'lucide-react';
 interface ArticleAuthorCardProps {
   author: AuthorProfile;
   publishedDate?: string;
+  locale?: 'vi' | 'en';
 }
 
-export default function ArticleAuthorCard({ author, publishedDate }: ArticleAuthorCardProps) {
+export default function ArticleAuthorCard({ author, publishedDate, locale = 'vi' }: ArticleAuthorCardProps) {
+  const isEn = locale === 'en';
   const displayName = author.christian_name 
     ? `${author.christian_name} ${author.full_name}` 
     : author.full_name;
@@ -17,16 +19,16 @@ export default function ArticleAuthorCard({ author, publishedDate }: ArticleAuth
   const profileHref = author.id ? `/tac-gia/${author.id}` : '/tac-gia';
 
   const formattedDate = publishedDate
-    ? new Date(publishedDate).toLocaleDateString('vi-VN', {
+    ? new Date(publishedDate).toLocaleDateString(isEn ? 'en-US' : 'vi-VN', {
         day: '2-digit',
-        month: '2-digit',
+        month: isEn ? 'short' : '2-digit',
         year: 'numeric'
       })
     : null;
 
   return (
     <section 
-      aria-label="Thông tin tác giả"
+      aria-label={isEn ? "Author Information" : "Thông tin tác giả"}
       className="p-6 sm:p-8 rounded-3xl glass-panel border border-[var(--border-card)] shadow-xl relative overflow-hidden space-y-6"
     >
       {/* Top Header */}
@@ -36,7 +38,7 @@ export default function ArticleAuthorCard({ author, publishedDate }: ArticleAuth
             <Feather className="w-4 h-4" />
           </div>
           <h3 className="font-serif font-bold text-base sm:text-lg text-[var(--text-main)]">
-            Thông Tin Tác Giả
+            {isEn ? "About the Author" : "Thông Tin Tác Giả"}
           </h3>
         </div>
 
@@ -44,7 +46,7 @@ export default function ArticleAuthorCard({ author, publishedDate }: ArticleAuth
           href={profileHref}
           className="inline-flex items-center gap-1 text-xs font-serif font-bold text-amber-700 dark:text-amber-400 hover:underline transition group"
         >
-          <span>Hồ sơ tác giả</span>
+          <span>{isEn ? "Author Profile" : "Hồ sơ tác giả"}</span>
           <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
         </Link>
       </div>
@@ -82,7 +84,7 @@ export default function ArticleAuthorCard({ author, publishedDate }: ArticleAuth
             {author.is_verified_author && (
               <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300">
                 <ShieldCheck className="w-3 h-3 text-amber-500" />
-                <span>{author.role || 'Tác Giả Xác Thực'}</span>
+                <span>{author.role || (isEn ? 'Verified Scholar' : 'Tác Giả Xác Thực')}</span>
               </span>
             )}
           </div>
@@ -100,12 +102,12 @@ export default function ArticleAuthorCard({ author, publishedDate }: ArticleAuth
 
           {/* Bio text */}
           <p className="text-xs sm:text-sm text-[var(--text-muted)] font-serif leading-relaxed line-clamp-4">
-            {author.bio || 'Cộng tác viên nghiên cứu, khảo cứu thần học và linh đạo phụng vụ trên Mạng lưới Giáo lý VERIDU.'}
+            {author.bio || (isEn ? 'Research contributor in Catholic theology, biblical studies, and sacred liturgy on the VERIDU Network.' : 'Cộng tác viên nghiên cứu, khảo cứu thần học và linh đạo phụng vụ trên Mạng lưới Giáo lý VERIDU.')}
           </p>
 
           {formattedDate && (
             <p className="text-[11px] text-[var(--text-muted)] italic font-serif pt-1">
-              Bài viết được biên soạn và công bố ngày {formattedDate}.
+              {isEn ? `Article composed and published on ${formattedDate}.` : `Bài viết được biên soạn và công bố ngày ${formattedDate}.`}
             </p>
           )}
         </div>

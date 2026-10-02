@@ -15,6 +15,7 @@ interface ArticleLanguageBannerProps {
   titleEn?: string | null;
   contentEn?: string | null;
   excerptEn?: string | null;
+  activeLocale?: 'vi' | 'en' | 'la';
 }
 
 export default function ArticleLanguageBanner({
@@ -25,8 +26,10 @@ export default function ArticleLanguageBanner({
   titleEn,
   contentEn,
   excerptEn,
+  activeLocale,
 }: ArticleLanguageBannerProps) {
   const { locale, t } = useTranslation();
+  const effectiveLocale = activeLocale || locale;
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [showContributeModal, setShowContributeModal] = useState(false);
@@ -81,7 +84,7 @@ export default function ArticleLanguageBanner({
   }, [titleEn, excerptEn, contentEn]);
 
   // Only display banner when reader is browsing in English or Latin mode
-  if (locale === 'vi') return null;
+  if (effectiveLocale === 'vi') return null;
 
   // Handle Admin Quick Translation Save
   const handleAdminSave = async (e: React.FormEvent) => {
