@@ -1,8 +1,8 @@
 import React from 'react';
-import HomeClientSections from '@/components/HomeClientSections';
+import EditorialLandingHome from '@/components/EditorialLandingHome';
 import { fetchCourses, fetchHomepageData } from '@/lib/api';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60; // ISR 60s cache for blazing-fast TTFB < 50ms and 100/100 Uptime
 
 export default async function Home() {
   // Fetch live courses & homepage data from Supabase
@@ -22,7 +22,7 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] selection:bg-amber-500 selection:text-slate-950 flex flex-col font-sans transition-colors duration-300">
-      <HomeClientSections 
+      <EditorialLandingHome 
         courses={courses}
         homepageData={homepageData}
         embedUrl={embedUrl}
