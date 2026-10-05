@@ -8,7 +8,7 @@ import { getStoredUser, logout, UserProfile } from '@/lib/auth';
 import { calculateLevelInfo } from '@/lib/gamification';
 import { 
   Flame, Moon, Sun, Menu, X, User, LogOut, LogIn, ChevronDown, 
-  Shield, GraduationCap, Settings, PenTool, ChevronRight, Search, Bookmark
+  Shield, GraduationCap, Settings, PenTool, ChevronRight
 } from 'lucide-react';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useTranslation } from '@/context/LanguageContext';
@@ -211,6 +211,9 @@ export default function LiturgicalHeader() {
   // Gamification Level Calculation
   const levelInfo = calculateLevelInfo(user?.points || 100, (user as any)?.selected_title || (user as any)?.current_title);
 
+  // Logo source based on Dark/Light mode
+  const logoSrc = isDarkMode ? '/images/veridu_logo_light.png' : '/images/veridu_logo_dark.png';
+
   // Focus Mode: Hide Header on dedicated editors and course players
   const isCoursePlayer = pathname !== '/khoa-hoc' && !!pathname?.startsWith('/khoa-hoc/');
   if (
@@ -226,31 +229,31 @@ export default function LiturgicalHeader() {
   }
 
   // ────────────────────────────────────────────────────────
-  // 5 CORE STREAMLINED NAV GROUPS (EDITORIAL BRUTALIST LUXURY)
+  // 5 CORE STREAMLINED NAV GROUPS (MAX 2 WORDS PER ITEM)
   // ────────────────────────────────────────────────────────
-  const navGroups: NavGroup[] = [
+  const leftNavGroups: NavGroup[] = [
     {
       id: 'scripture',
       title: isEn ? 'Scripture' : 'Kinh Thánh',
       matchPrefixes: ['/kinh-thanh', '/ban-do', '/lich-su', '/nhan-vat'],
       items: [
-        { label: isEn ? 'Text (73 Books)' : 'Bản Văn (73 Cuốn)', href: '/kinh-thanh' },
-        { label: isEn ? 'Holy Land 3D Map' : 'Bản Đồ Thánh Địa', href: '/ban-do' },
-        { label: isEn ? 'Biblical Timeline' : 'Dòng Thời Gian', href: '/lich-su' },
-        { label: isEn ? 'Biblical Figures' : 'Nhân Vật Đức Tin', href: '/nhan-vat' },
+        { label: isEn ? 'Text' : 'Bản Văn', href: '/kinh-thanh' },
+        { label: isEn ? '3D Map' : 'Bản Đồ', href: '/ban-do' },
+        { label: isEn ? 'Timeline' : 'Thời Gian', href: '/lich-su' },
+        { label: isEn ? 'Figures' : 'Nhân Vật', href: '/nhan-vat' },
       ],
     },
     {
       id: 'courses',
-      title: isEn ? 'Academy' : 'Khóa Học',
+      title: isEn ? 'Courses' : 'Khóa Học',
       matchPrefixes: ['/khoa-hoc'],
       items: [
-        { label: isEn ? 'All Courses' : 'Tất Cả Khóa Học', href: '/khoa-hoc' },
-        { label: isEn ? 'Sacred Liturgy' : 'Phụng Vụ Thánh', href: '/khoa-hoc?category=phung-vu' },
-        { label: isEn ? 'Scripture Study' : 'Kinh Thánh Khảo Luận', href: '/khoa-hoc?category=cuu-uoc' },
-        { label: isEn ? 'Catechesis' : 'Giáo Lý Căn Bản', href: '/khoa-hoc?category=giao-ly' },
-        { label: isEn ? 'Dogmatic Theology' : 'Thần Học Tín Lý', href: '/khoa-hoc?category=than-hoc' },
-        { label: isEn ? 'Christian Philosophy' : 'Triết Học Kitô Giáo', href: '/khoa-hoc?category=triet-hoc' },
+        { label: isEn ? 'All' : 'Tất Cả', href: '/khoa-hoc' },
+        { label: isEn ? 'Liturgy' : 'Phụng Vụ', href: '/khoa-hoc?category=phung-vu' },
+        { label: isEn ? 'Scripture' : 'Kinh Thánh', href: '/khoa-hoc?category=cuu-uoc' },
+        { label: isEn ? 'Catechesis' : 'Giáo Lý', href: '/khoa-hoc?category=giao-ly' },
+        { label: isEn ? 'Theology' : 'Thần Học', href: '/khoa-hoc?category=than-hoc' },
+        { label: isEn ? 'Philosophy' : 'Triết Học', href: '/khoa-hoc?category=triet-hoc' },
       ],
     },
     {
@@ -258,21 +261,24 @@ export default function LiturgicalHeader() {
       title: isEn ? 'Catechism' : 'Giáo Lý',
       matchPrefixes: ['/giao-ly', '/quiz', '/game'],
       items: [
-        { label: isEn ? 'Catechism of the Catholic Church' : 'Bản Văn Giáo Lý', href: '/giao-ly' },
-        { label: isEn ? 'Study Flashcards' : 'Thẻ Lật Ôn Tập', href: '/giao-ly/the-lat' },
-        { label: isEn ? 'Quiz Arena' : 'Đấu Trường Đức Tin', href: '/quiz' },
-        { label: isEn ? 'Faith Webgames' : 'Trò Chơi Trắc Nghiệm', href: '/game' },
+        { label: isEn ? 'Text' : 'Bản Văn', href: '/giao-ly' },
+        { label: isEn ? 'Flashcards' : 'Thẻ Lật', href: '/giao-ly/the-lat' },
+        { label: isEn ? 'Arena' : 'Đấu Trường', href: '/quiz' },
+        { label: isEn ? 'Games' : 'Trò Chơi', href: '/game' },
       ],
     },
+  ];
+
+  const rightNavGroups: NavGroup[] = [
     {
       id: 'library',
       title: isEn ? 'Library' : 'Thư Viện',
       matchPrefixes: ['/thu-vien', '/sach-tranh'],
       items: [
-        { label: isEn ? 'Articles & Treatises' : 'Bài Viết Khảo Cứu', href: '/thu-vien' },
-        { label: isEn ? 'Theology Bookshelf' : 'Tủ Sách Thần Học', href: '/thu-vien/sach' },
-        { label: isEn ? 'Illustrated Storybooks' : 'Sách Tranh Thánh Kinh', href: '/sach-tranh' },
-        { label: isEn ? 'Documents & Records' : 'Văn Kiện & Tài Liệu', href: '/thu-vien/tai-lieu' },
+        { label: isEn ? 'Articles' : 'Bài Viết', href: '/thu-vien' },
+        { label: isEn ? 'Bookshelf' : 'Tủ Sách', href: '/thu-vien/sach' },
+        { label: isEn ? 'Storybooks' : 'Sách Tranh', href: '/sach-tranh' },
+        { label: isEn ? 'Documents' : 'Tài Liệu', href: '/thu-vien/tai-lieu' },
       ],
     },
     {
@@ -280,14 +286,16 @@ export default function LiturgicalHeader() {
       title: isEn ? 'Contact' : 'Liên Hệ',
       matchPrefixes: ['/dong-gop', '/tac-gia', '/huong-dan-viet-bai', '/dieu-khoan-su-dung', '/chinh-sach-bao-mat'],
       items: [
-        { label: isEn ? 'Mission Donation' : 'Đóng Góp Sứ Vụ', href: '/dong-gop' },
-        { label: isEn ? 'Editorial Authors' : 'Đội Ngũ Tác Giả', href: '/tac-gia' },
-        { label: isEn ? 'Author Guidelines' : 'Hướng Dẫn Soạn Bài', href: '/huong-dan-viet-bai' },
-        { label: isEn ? 'Terms of Service' : 'Điều Khoản Sử Dụng', href: '/dieu-khoan-su-dung' },
-        { label: isEn ? 'Privacy Policy' : 'Chính Sách Bảo Mật', href: '/chinh-sach-bao-mat' },
+        { label: isEn ? 'Donate' : 'Đóng Góp', href: '/dong-gop' },
+        { label: isEn ? 'Authors' : 'Tác Giả', href: '/tac-gia' },
+        { label: isEn ? 'Write' : 'Soạn Bài', href: '/huong-dan-viet-bai' },
+        { label: isEn ? 'Terms' : 'Điều Khoản', href: '/dieu-khoan-su-dung' },
+        { label: isEn ? 'Privacy' : 'Chính Sách', href: '/chinh-sach-bao-mat' },
       ],
     },
   ];
+
+  const allNavGroups = [...leftNavGroups, ...rightNavGroups];
 
   // Unified User Dropdown Modal
   const renderUserMenuDropdown = () => {
@@ -302,7 +310,7 @@ export default function LiturgicalHeader() {
     return (
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="absolute right-0 top-full mt-3 w-76 sm:w-80 bg-[#FAF7F2] dark:bg-[#0B0D12] border border-stone-200 dark:border-amber-500/30 rounded-2xl shadow-2xl p-4 space-y-3.5 z-50 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-2xl select-none"
+        className="absolute right-0 top-full mt-2 w-76 sm:w-80 bg-[#FAF7F2] dark:bg-[#0B0D12] border border-stone-200 dark:border-amber-500/30 rounded-2xl shadow-2xl p-4 space-y-3.5 z-50 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-2xl select-none"
       >
         {/* User Identity Header Card */}
         <div className="flex items-center gap-3 pb-3 border-b border-stone-200 dark:border-white/10">
@@ -450,15 +458,15 @@ export default function LiturgicalHeader() {
       }`}
     >
       {/* ══════════════════════════════════════════════════════════════════════════
-          TIER 1: TOP UTILITY BAR (Black / Obsidian Dark Elegant Ribbon)
-          Faithful reproduction of reference template top utility bar
+          TIER 1: TOP UTILITY BAR (Black / Obsidian Dark Ribbon)
+          Left: Sacred Scripture Motto | Right: Theme Toggle, Language, User Login
          ══════════════════════════════════════════════════════════════════════════ */}
-      <div className="w-full bg-[#111215] text-[#9CA3AF] dark:bg-[#07080A] dark:text-[#7E828E] border-b border-black/40 dark:border-white/5 text-[10px] sm:text-[10.5px] font-mono tracking-[0.14em] uppercase select-none transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-7.5 sm:h-8 flex items-center justify-between">
+      <div className="w-full bg-[#111215] text-[#9CA3AF] dark:bg-[#07080A] dark:text-[#7E828E] border-b border-black/40 dark:border-white/5 text-[10px] sm:text-[10.5px] font-mono tracking-[0.12em] uppercase select-none transition-colors">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 sm:h-9 flex items-center justify-between gap-3">
           
           {/* Left: Sacred Scripture Motto */}
           <div className="flex items-center gap-2 truncate">
-            <span className="text-amber-500 dark:text-amber-400 font-serif">✝</span>
+            <span className="text-amber-500 dark:text-amber-400 font-serif text-xs">✝</span>
             <span className="font-semibold text-stone-200 dark:text-stone-300 truncate hover:text-amber-400 transition-colors">
               {isEn 
                 ? '"YOUR WORD IS A LAMP TO MY FEET" — PS 119:105' 
@@ -466,43 +474,76 @@ export default function LiturgicalHeader() {
             </span>
           </div>
 
-          {/* Right: Quick Utility Links */}
-          <div className="hidden md:flex items-center gap-2.5 sm:gap-3 shrink-0 text-stone-400 dark:text-stone-400">
-            <Link 
-              href="/dong-gop" 
-              className="hover:text-amber-400 dark:hover:text-amber-300 transition-colors"
+          {/* Right: Core Utilities moved to Tier 1 (Theme, Language, User/Login) */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            
+            {/* Theme Toggle Button */}
+            <button 
+              type="button"
+              onClick={toggleTheme}
+              aria-label="Chuyển đổi giao diện Sáng / Tối"
+              className="p-1 rounded-md text-stone-400 hover:text-amber-400 hover:bg-white/5 transition-colors cursor-pointer"
+              title={isDarkMode ? 'Chế độ Tối (Nhấp để chuyển sang Sáng)' : 'Chế độ Sáng (Nhấp để chuyển sang Tối)'}
             >
-              {isEn ? 'DONATE' : 'ĐÓNG GÓP'}
-            </Link>
-            <span className="text-stone-600 dark:text-stone-600">•</span>
-            <Link 
-              href="/thu-vien/tai-lieu" 
-              className="hover:text-amber-400 dark:hover:text-amber-300 transition-colors"
-            >
-              {isEn ? 'DOCUMENTS' : 'VĂN KIỆN'}
-            </Link>
-            <span className="text-stone-600 dark:text-stone-600">•</span>
-            <Link 
-              href="/tac-gia" 
-              className="hover:text-amber-400 dark:hover:text-amber-300 transition-colors"
-            >
-              {isEn ? 'AUTHORS' : 'TÁC GIẢ'}
-            </Link>
-            <span className="text-stone-600 dark:text-stone-600">•</span>
-            <Link 
-              href="/dieu-khoan-su-dung" 
-              className="hover:text-amber-400 dark:hover:text-amber-300 transition-colors"
-            >
-              {isEn ? 'HELP' : 'TRỢ GIÚP'}
-            </Link>
+              {isDarkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-stone-400" />}
+            </button>
+
+            <span className="text-stone-700 dark:text-stone-800">|</span>
+
+            {/* Language Switcher */}
+            <LanguageSwitcher compact />
+
+            <span className="text-stone-700 dark:text-stone-800">|</span>
+
+            {/* User Hub Trigger or Login Button */}
+            {user ? (
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center gap-1.5 py-0.5 px-2 rounded-md hover:bg-white/5 text-stone-200 transition-all text-[11px] font-bold cursor-pointer group"
+                  title={`${user.christianName || ''} ${user.displayName || ''}`}
+                >
+                  <div className="relative w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-serif text-[10px] font-black overflow-hidden border border-amber-500/40">
+                    {user.avatar ? (
+                      <Image src={user.avatar} alt="Avatar" fill className="object-cover" sizes="20px" />
+                    ) : (
+                      user.christianName ? user.christianName[0] : '✝'
+                    )}
+                  </div>
+
+                  <span className="px-1 py-0.2 rounded bg-amber-500/20 text-amber-400 font-mono text-[9px] uppercase border border-amber-500/30">
+                    CẤP {levelInfo.level}
+                  </span>
+
+                  <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-amber-400 font-bold">
+                    <Flame className="w-3 h-3 fill-amber-500 text-amber-500" />
+                    <span>{user.streak || 1}</span>
+                  </span>
+
+                  <ChevronDown className={`w-3 h-3 text-stone-400 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180 text-amber-400' : 'group-hover:text-amber-400'}`} />
+                </button>
+
+                {renderUserMenuDropdown()}
+              </div>
+            ) : (
+              <Link
+                href="/dang-nhap"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/40 font-mono text-[10.5px] uppercase tracking-wider transition-all"
+              >
+                <LogIn className="w-3 h-3" />
+                <span>{isEn ? 'LOGIN' : 'ĐĂNG NHẬP'}</span>
+              </Link>
+            )}
+
           </div>
 
         </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════════
-          TIER 2: MAIN NAVIGATION BAR (Editorial Centered Logo Architecture)
-          Left: 5 Editorial Menus | Center: VERIDU Brand | Right: Action Tools
+          TIER 2: MAIN NAVIGATION BAR (Symmetrical Balanced Editorial Layout)
+          Left: 3 Sacred Menus | Center: Original VERIDU Flame Logo | Right: 2 Library Menus
          ══════════════════════════════════════════════════════════════════════════ */}
       <div 
         className={`w-full transition-all duration-300 ${
@@ -514,11 +555,12 @@ export default function LiturgicalHeader() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-[68px] flex items-center justify-between relative">
           
           {/* ────────────────────────────────────────────────────────
-              1. LEFT COLUMN: 5 REFINED EDITORIAL MENUS (Desktop >= 1024px)
+              1. LEFT COLUMN: 3 SACRED STUDY MENUS (Desktop >= 1024px)
+                 Kinh Thánh • Khóa Học • Giáo Lý
              ──────────────────────────────────────────────────────── */}
-          <div className="flex-1 hidden lg:flex items-center justify-start gap-4 xl:gap-6">
-            <nav className="flex items-center gap-1 xl:gap-2 text-[11px] xl:text-xs font-playfair font-bold tracking-[0.14em] uppercase">
-              {navGroups.map((group) => {
+          <div className="flex-1 hidden lg:flex items-center justify-start gap-4 xl:gap-8">
+            <nav className="flex items-center gap-1 xl:gap-3 text-[11px] xl:text-xs font-playfair font-bold tracking-[0.14em] uppercase">
+              {leftNavGroups.map((group) => {
                 const isGroupActive = group.matchPrefixes.some(prefix => pathname === prefix || pathname.startsWith(prefix + '/'));
                 const isOpen = openDropdown === group.id;
 
@@ -541,9 +583,9 @@ export default function LiturgicalHeader() {
                       <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'rotate-180 text-amber-600 dark:text-amber-400' : 'text-stone-400 dark:text-stone-500'}`} />
                     </button>
 
-                    {/* Slim Elegant Dropdown Card (Editorial Style) */}
+                    {/* Slim Elegant Dropdown Card (2 Words per Item) */}
                     {isOpen && (
-                      <div className="absolute top-full left-0 mt-2 w-52 sm:w-56 bg-white/98 dark:bg-[#11141E]/98 backdrop-blur-2xl border border-stone-200 dark:border-amber-500/25 rounded-2xl shadow-xl p-1.5 space-y-0.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="absolute top-full left-0 mt-2 w-44 sm:w-48 bg-white/98 dark:bg-[#11141E]/98 backdrop-blur-2xl border border-stone-200 dark:border-amber-500/25 rounded-2xl shadow-xl p-1.5 space-y-0.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                         {group.items.map((item) => {
                           const isItemActive = pathname === item.href || (item.href !== '/khoa-hoc' && pathname.startsWith(item.href));
                           return (
@@ -558,7 +600,7 @@ export default function LiturgicalHeader() {
                               }`}
                             >
                               <span>{item.label}</span>
-                              <ChevronRight className="w-3 h-3 text-stone-400/60 dark:text-stone-500/60 group-hover:text-amber-600" />
+                              <ChevronRight className="w-3 h-3 text-stone-400/60 dark:text-stone-500/60" />
                             </Link>
                           );
                         })}
@@ -571,130 +613,87 @@ export default function LiturgicalHeader() {
           </div>
 
           {/* ────────────────────────────────────────────────────────
-              2. CENTER COLUMN: MAJESTIC CENTER BRAND LOGO
-              Matches "MAFIA THE GAME" exact central prominent hierarchy
+              2. CENTER COLUMN: ORIGINAL VERIDU LOGO WITH SACRED FLAME
+                 No VIA-VITA-VERITAS text underneath
              ──────────────────────────────────────────────────────── */}
-          <div className="shrink-0 flex flex-col items-center justify-center text-center px-4 group select-none">
-            <Link href="/" className="flex flex-col items-center justify-center transition-transform hover:scale-[1.02]">
-              <span className="font-playfair font-black text-2xl sm:text-[26px] tracking-[0.26em] text-stone-900 dark:text-amber-400 group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors uppercase leading-none">
-                VERIDU
-              </span>
-              <span className="font-mono text-[8.5px] sm:text-[9.5px] tracking-[0.34em] text-stone-500 dark:text-stone-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors uppercase font-medium leading-none mt-1">
-                VIA · VITA · VERITAS
-              </span>
+          <div className="shrink-0 flex items-center justify-center px-4 select-none">
+            <Link href="/" className="flex items-center justify-center transition-transform hover:scale-105">
+              <div className="relative h-9 sm:h-10 md:h-11 w-36 sm:w-44 flex items-center justify-center">
+                <Image 
+                  src={logoSrc} 
+                  alt="VERIDU Logo" 
+                  width={180} 
+                  height={44}
+                  priority
+                  unoptimized={true}
+                  className="object-contain max-h-9 sm:max-h-10 md:max-h-11 w-auto drop-shadow-xs"
+                />
+              </div>
             </Link>
           </div>
 
           {/* ────────────────────────────────────────────────────────
-              3. RIGHT COLUMN: EDITORIAL UTILITIES & USER HUB
-              Matches Search, Wishlist, Theme, Login on reference
+              3. RIGHT COLUMN: 2 COMMUNITY & LIBRARY MENUS (Desktop >= 1024px)
+                 Thư Viện • Liên Hệ
              ──────────────────────────────────────────────────────── */}
-          <div className="flex-1 hidden lg:flex items-center justify-end gap-3 sm:gap-4">
-            
-            {/* Search Tool Link */}
-            <Link 
-              href="/search"
-              className="flex items-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] xl:text-xs font-playfair font-bold uppercase tracking-[0.14em] text-stone-800 dark:text-stone-200 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-stone-200/40 dark:hover:bg-white/5 transition-all cursor-pointer"
-              title="Tìm kiếm bài viết, tài liệu, kinh thánh"
-            >
-              <Search className="w-3.5 h-3.5 text-stone-500 dark:text-stone-400 group-hover:text-amber-600" />
-              <span>{isEn ? 'SEARCH' : 'TÌM KIẾM'}</span>
-            </Link>
+          <div className="flex-1 hidden lg:flex items-center justify-end gap-4 xl:gap-8">
+            <nav className="flex items-center gap-1 xl:gap-3 text-[11px] xl:text-xs font-playfair font-bold tracking-[0.14em] uppercase">
+              {rightNavGroups.map((group) => {
+                const isGroupActive = group.matchPrefixes.some(prefix => pathname === prefix || pathname.startsWith(prefix + '/'));
+                const isOpen = openDropdown === group.id;
 
-            {/* Saved Scripture / Faith Notes */}
-            <Link 
-              href="/ho-so"
-              className="flex items-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] xl:text-xs font-playfair font-bold uppercase tracking-[0.14em] text-stone-800 dark:text-stone-200 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-stone-200/40 dark:hover:bg-white/5 transition-all cursor-pointer"
-              title="Sổ tay lưu trữ bài viết & câu Kinh Thánh"
-            >
-              <Bookmark className="w-3.5 h-3.5 text-stone-500 dark:text-stone-400 group-hover:text-amber-600" />
-              <span>{isEn ? 'SAVED' : 'ĐÃ LƯU'}</span>
-            </Link>
+                return (
+                  <div 
+                    key={group.id}
+                    className="relative"
+                    onMouseEnter={() => handleMouseEnter(group.id)}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <button
+                      type="button"
+                      className={`flex items-center gap-1 py-1.5 px-2.5 rounded-lg transition-all cursor-pointer ${
+                        isOpen || isGroupActive
+                          ? 'text-amber-800 dark:text-amber-300 font-black bg-amber-500/10'
+                          : 'text-stone-800 dark:text-stone-200 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-stone-200/40 dark:hover:bg-white/5'
+                      }`}
+                    >
+                      <span>{group.title}</span>
+                      <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'rotate-180 text-amber-600 dark:text-amber-400' : 'text-stone-400 dark:text-stone-500'}`} />
+                    </button>
 
-            {/* Theme Toggle Button */}
-            <button 
-              type="button"
-              onClick={toggleTheme}
-              aria-label="Chuyển đổi giao diện Sáng / Tối"
-              className="p-1.5 rounded-full bg-stone-100 dark:bg-slate-900/80 hover:bg-stone-200 dark:hover:bg-slate-850 border border-stone-300 dark:border-slate-700/60 text-stone-700 dark:text-amber-400 hover:border-amber-500/50 transition-all shadow-xs cursor-pointer"
-              title={isDarkMode ? 'Chế độ Tối (Nhấp để chuyển sang Sáng)' : 'Chế độ Sáng (Nhấp để chuyển sang Tối)'}
-            >
-              {isDarkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-stone-700" />}
-            </button>
-
-            {/* Language Switcher */}
-            <LanguageSwitcher compact />
-
-            {/* User Hub Trigger or Login Button */}
-            {user ? (
-              <div className="relative" ref={userMenuRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center gap-1.5 p-1 pl-1.5 pr-2.5 rounded-full bg-stone-100 dark:bg-slate-900/80 hover:bg-stone-200 dark:hover:bg-slate-850 border border-stone-300 dark:border-slate-700/60 hover:border-amber-500/50 text-stone-900 dark:text-slate-100 transition-all text-xs font-bold shadow-xs cursor-pointer group"
-                  title={`${user.christianName || ''} ${user.displayName || ''}`}
-                >
-                  <div className="relative w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center font-serif text-xs font-black overflow-hidden border border-amber-500/40">
-                    {user.avatar ? (
-                      <Image src={user.avatar} alt="Avatar" fill className="object-cover" sizes="28px" />
-                    ) : (
-                      user.christianName ? user.christianName[0] : '✝'
-                    )}
-                    {isAdmin && (
-                      <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-amber-500 ring-1 ring-white dark:ring-slate-950" />
+                    {/* Slim Elegant Dropdown Card (2 Words per Item) */}
+                    {isOpen && (
+                      <div className="absolute top-full right-0 mt-2 w-44 sm:w-48 bg-white/98 dark:bg-[#11141E]/98 backdrop-blur-2xl border border-stone-200 dark:border-amber-500/25 rounded-2xl shadow-xl p-1.5 space-y-0.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                        {group.items.map((item) => {
+                          const isItemActive = pathname === item.href || (item.href !== '/khoa-hoc' && pathname.startsWith(item.href));
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              onClick={() => setOpenDropdown(null)}
+                              className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-serif transition-colors ${
+                                isItemActive
+                                  ? 'bg-amber-500/15 text-amber-800 dark:text-amber-300 font-bold'
+                                  : 'text-stone-700 dark:text-stone-300 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-stone-100 dark:hover:bg-white/5 font-medium'
+                              }`}
+                            >
+                              <span>{item.label}</span>
+                              <ChevronRight className="w-3 h-3 text-stone-400/60 dark:text-stone-500/60" />
+                            </Link>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
-
-                  <span className="px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-700 dark:text-amber-400 font-mono font-black text-[9px] sm:text-[10px] uppercase border border-amber-500/30">
-                    CẤP {levelInfo.level}
-                  </span>
-
-                  <span className="hidden xl:inline-flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-400 font-bold">
-                    <Flame className="w-3 h-3 fill-amber-500 text-amber-500" />
-                    <span>{user.streak || 1}</span>
-                  </span>
-
-                  <ChevronDown className={`w-3 h-3 text-stone-500 dark:text-slate-400 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180 text-amber-600 dark:text-amber-400' : 'group-hover:text-amber-600 dark:group-hover:text-amber-400'}`} />
-                </button>
-
-                {renderUserMenuDropdown()}
-              </div>
-            ) : (
-              <Link
-                href="/dang-nhap"
-                className="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white dark:text-slate-950 rounded-full font-playfair font-bold text-xs uppercase tracking-wider shadow-sm hover:scale-105 transition-all"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>{isEn ? 'LOGIN' : 'ĐĂNG NHẬP'}</span>
-              </Link>
-            )}
-
+                );
+              })}
+            </nav>
           </div>
 
           {/* ────────────────────────────────────────────────────────
               4. MOBILE ACTIONS BAR (Screen < 1024px)
              ──────────────────────────────────────────────────────── */}
           <div className="flex lg:hidden items-center gap-2">
-            
-            {/* Search Icon */}
-            <Link 
-              href="/search"
-              aria-label="Tìm kiếm"
-              className="p-1.5 rounded-xl bg-stone-100 dark:bg-slate-900/80 border border-stone-300 dark:border-slate-700/60 text-stone-700 dark:text-slate-200 hover:text-amber-700 shadow-xs"
-            >
-              <Search className="w-4 h-4" />
-            </Link>
-
-            {/* Theme Toggle */}
-            <button 
-              type="button"
-              onClick={toggleTheme}
-              aria-label="Chuyển đổi giao diện Sáng / Tối"
-              className="p-1.5 rounded-xl bg-stone-100 dark:bg-slate-900/80 border border-stone-300 dark:border-slate-700/60 text-stone-700 dark:text-amber-400 shadow-xs"
-            >
-              {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-stone-700" />}
-            </button>
-
             {/* Mobile Menu Toggle Button */}
             <button 
               type="button"
@@ -704,7 +703,6 @@ export default function LiturgicalHeader() {
             >
               {isMobileMenuOpen ? <X className="w-5 h-5 text-amber-600 dark:text-amber-400" /> : <Menu className="w-5 h-5" />}
             </button>
-
           </div>
 
         </div>
@@ -749,16 +747,26 @@ export default function LiturgicalHeader() {
             </div>
           )}
 
-          {/* Quick Language bar for mobile */}
+          {/* Quick Language & Theme bar for mobile */}
           <div className="flex items-center justify-between p-2 rounded-xl bg-stone-200/50 dark:bg-white/5">
             <span className="text-xs font-mono font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
               {isEn ? 'Language' : 'Ngôn ngữ'}:
             </span>
-            <LanguageSwitcher compact />
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher compact />
+              <button 
+                type="button"
+                onClick={toggleTheme}
+                aria-label="Đổi giao diện"
+                className="p-1.5 rounded-lg bg-white dark:bg-slate-800 text-stone-700 dark:text-amber-400 shadow-xs"
+              >
+                {isDarkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+              </button>
+            </div>
           </div>
 
-          {/* 5 Mobile Nav Accordions */}
-          {navGroups.map((group) => {
+          {/* 5 Mobile Nav Accordions with Concise 2-Word Labels */}
+          {allNavGroups.map((group) => {
             const isExpanded = mobileExpandedGroup === group.id;
 
             return (

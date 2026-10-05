@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { 
   BookOpen, GraduationCap, Shield, Library, Cross, Quote, ArrowRight, 
-  ChevronRight, Play, Award, Church, User, CheckCircle2, Settings, ExternalLink, Sparkles
+  ChevronRight, Play, Award, Church, User, CheckCircle2, Settings, ExternalLink
 } from 'lucide-react';
 import { useTranslation } from '@/context/LanguageContext';
 import { LANDING_MEDIA_CONFIG, PillarCardConfig, TrainingTrackConfig } from '@/config/landingMediaConfig';
@@ -24,20 +24,6 @@ export default function EditorialLandingHome({
 }: EditorialLandingHomeProps) {
   const { t, locale, isEn } = useTranslation();
   const [config, setConfig] = useState(LANDING_MEDIA_CONFIG);
-  const [isDriveModalOpen, setIsDriveModalOpen] = useState(false);
-  const [testDriveUrl, setTestDriveUrl] = useState('');
-  const [testResultUrl, setTestResultUrl] = useState('');
-
-  // Handle live test conversion for Google Drive links
-  const handleTestDriveLink = (url: string) => {
-    setTestDriveUrl(url);
-    if (!url) {
-      setTestResultUrl('');
-      return;
-    }
-    const resolved = getGoogleDriveImageUrl(url, 2000);
-    setTestResultUrl(resolved);
-  };
 
   const renderPillarIcon = (name: string, className: string) => {
     switch (name) {
@@ -56,7 +42,7 @@ export default function EditorialLandingHome({
       case 'award': return <Award className={className} />;
       case 'church': return <Church className={className} />;
       case 'user': return <User className={className} />;
-      default: return <Sparkles className={className} />;
+      default: return <Church className={className} />;
     }
   };
 
@@ -125,7 +111,7 @@ export default function EditorialLandingHome({
 
             <div className="absolute bottom-4 left-4 right-4 text-center">
               <span className="inline-block px-3 py-1 rounded-full bg-slate-950/80 border border-amber-400/40 text-amber-300 font-playfair text-xs tracking-widest uppercase backdrop-blur-md shadow-lg">
-                ✦ LUX CHRISTI ✦
+                ✝ LUX CHRISTI ✝
               </span>
             </div>
           </div>
@@ -471,109 +457,6 @@ export default function EditorialLandingHome({
           </div>
           <ArticleCarousel articles={homepageData.articles} />
         </section>
-      )}
-
-      {/* ══════════════════════════════════════════════════════════════════════════
-          7. GOOGLE DRIVE QUICK LINK GUIDE / MODAL BUTTON
-         ══════════════════════════════════════════════════════════════════════════ */}
-      <div className="fixed bottom-6 right-6 z-40">
-        <button
-          type="button"
-          onClick={() => setIsDriveModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-stone-900/90 dark:bg-amber-500 hover:bg-black dark:hover:bg-amber-400 text-white dark:text-slate-950 text-xs font-playfair font-bold shadow-2xl backdrop-blur-md border border-white/20 transition-all hover:scale-105 cursor-pointer"
-        >
-          <Settings className="w-3.5 h-3.5" />
-          <span>Hướng Dẫn Link Drive</span>
-        </button>
-      </div>
-
-      {/* Modal Hướng Dẫn & Kiểm Thử Link Google Drive */}
-      {isDriveModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div 
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-xl bg-white dark:bg-slate-900 border border-stone-300 dark:border-amber-500/30 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto"
-          >
-            <div className="flex items-center justify-between border-b border-stone-200 dark:border-white/10 pb-4">
-              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
-                <Settings className="w-5 h-5" />
-                <h3 className="font-playfair font-bold text-lg text-stone-900 dark:text-white">
-                  Hướng Dẫn Nhập Link Ảnh Google Drive
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsDriveModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-stone-100 dark:bg-white/10 flex items-center justify-center text-stone-500 hover:text-stone-900 dark:hover:text-white cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Step-by-step instructions */}
-            <div className="space-y-3 text-xs font-serif text-stone-700 dark:text-slate-300">
-              <p className="font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider text-[11px]">
-                3 Bước Lấy Link Google Drive Hợp Lệ:
-              </p>
-              <ol className="list-decimal pl-5 space-y-2 leading-relaxed">
-                <li>
-                  Tải ảnh lên Google Drive ➔ Chuột phải vào ảnh ➔ Chọn <strong>Chia sẻ (Share)</strong>.
-                </li>
-                <li>
-                  Tại mục <em>Quyền truy cập chung</em>, đổi thành: <strong>&ldquo;Bất kỳ ai có đường liên kết đều có thể xem&rdquo; (Anyone with the link can view)</strong>.
-                </li>
-                <li>
-                  Sao chép liên kết dạng: <code className="bg-stone-100 dark:bg-white/10 px-1 py-0.5 rounded text-[11px]">https://drive.google.com/file/d/MÃ_FILE/view?usp=sharing</code> và dán vào tệp <code className="text-amber-600 dark:text-amber-400 font-mono">src/config/landingMediaConfig.ts</code> hoặc gửi cho trợ lý cập nhật.
-                </li>
-              </ol>
-            </div>
-
-            {/* Live Link Tester */}
-            <div className="space-y-3 pt-2 border-t border-stone-200 dark:border-white/10">
-              <label className="block text-xs font-playfair font-bold text-stone-900 dark:text-white">
-                Kiểm Thử Link Google Drive Trực Tiếp:
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Dán link drive https://drive.google.com/file/d/... vào đây"
-                  value={testDriveUrl}
-                  onChange={(e) => handleTestDriveLink(e.target.value)}
-                  className="flex-1 px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-white/20 bg-stone-50 dark:bg-slate-950 text-xs text-stone-900 dark:text-white focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              {testResultUrl && (
-                <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-2">
-                  <div className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-bold">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Đã nhận diện thành công CDN ảnh Google:</span>
-                  </div>
-                  <div className="relative w-full h-36 rounded-xl overflow-hidden bg-black/20">
-                    <Image
-                      src={testResultUrl}
-                      alt="Ảnh kiểm thử Drive"
-                      fill
-                      unoptimized={true}
-                      className="object-contain"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="pt-2 text-right">
-              <button
-                type="button"
-                onClick={() => setIsDriveModalOpen(false)}
-                className="px-6 py-2.5 rounded-xl bg-amber-500 text-slate-950 font-playfair font-bold text-xs uppercase tracking-wider"
-              >
-                Đã Hiểu
-              </button>
-            </div>
-
-          </div>
-        </div>
       )}
 
     </div>
