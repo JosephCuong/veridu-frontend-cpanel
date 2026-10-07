@@ -42,7 +42,8 @@ export async function GET() {
       const { data: numbersData } = await supabase
         .from('catechism_paragraphs')
         .select('paragraph_number')
-        .eq('part_number', part);
+        .eq('part_number', part)
+        .range(0, 2000);
 
       const existingSet = new Set((numbersData || []).map((d: any) => d.paragraph_number).filter(Boolean));
       const exp = expectedRanges[part];
