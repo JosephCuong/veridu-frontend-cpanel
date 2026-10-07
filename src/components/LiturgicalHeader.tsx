@@ -234,7 +234,7 @@ export default function LiturgicalHeader() {
   const leftNavGroups: NavGroup[] = [
     {
       id: 'scripture',
-      title: isEn ? 'Scripture' : 'Kinh Thánh',
+      title: isEn ? 'SCRIPTURE' : 'KINH THÁNH',
       matchPrefixes: ['/kinh-thanh', '/ban-do', '/lich-su', '/nhan-vat'],
       items: [
         { label: isEn ? 'Text' : 'Bản Văn', href: '/kinh-thanh' },
@@ -245,7 +245,7 @@ export default function LiturgicalHeader() {
     },
     {
       id: 'courses',
-      title: isEn ? 'Courses' : 'Khóa Học',
+      title: isEn ? 'COURSES' : 'KHÓA HỌC',
       matchPrefixes: ['/khoa-hoc'],
       items: [
         { label: isEn ? 'All' : 'Tất Cả', href: '/khoa-hoc' },
@@ -258,7 +258,7 @@ export default function LiturgicalHeader() {
     },
     {
       id: 'catechism',
-      title: isEn ? 'Catechism' : 'Giáo Lý',
+      title: isEn ? 'CATECHISM' : 'GIÁO LÝ',
       matchPrefixes: ['/giao-ly', '/quiz', '/game'],
       items: [
         { label: isEn ? 'Text' : 'Bản Văn', href: '/giao-ly' },
@@ -272,7 +272,7 @@ export default function LiturgicalHeader() {
   const rightNavGroups: NavGroup[] = [
     {
       id: 'library',
-      title: isEn ? 'Library' : 'Thư Viện',
+      title: isEn ? 'LIBRARY' : 'THƯ VIỆN',
       matchPrefixes: ['/thu-vien', '/sach-tranh'],
       items: [
         { label: isEn ? 'Articles' : 'Bài Viết', href: '/thu-vien' },
@@ -283,7 +283,7 @@ export default function LiturgicalHeader() {
     },
     {
       id: 'contact',
-      title: isEn ? 'Contact' : 'Liên Hệ',
+      title: isEn ? 'CONTACT' : 'LIÊN HỆ',
       matchPrefixes: ['/dong-gop', '/tac-gia', '/huong-dan-viet-bai', '/dieu-khoan-su-dung', '/chinh-sach-bao-mat'],
       items: [
         { label: isEn ? 'Donate' : 'Đóng Góp', href: '/dong-gop' },
@@ -558,8 +558,8 @@ export default function LiturgicalHeader() {
               1. LEFT COLUMN: 3 SACRED STUDY MENUS (Desktop >= 1024px)
                  Kinh Thánh • Khóa Học • Giáo Lý
              ──────────────────────────────────────────────────────── */}
-          <div className="flex-1 hidden lg:flex items-center justify-start gap-4 xl:gap-8">
-            <nav className="flex items-center gap-1 xl:gap-3 text-[11px] xl:text-xs font-playfair font-bold tracking-[0.14em] uppercase">
+          <div className="flex-1 hidden lg:flex items-center justify-start gap-3 xl:gap-6">
+            <nav className="flex items-center gap-1.5 xl:gap-3 text-xs sm:text-[13px] lg:text-[13.5px] xl:text-[14px] font-playfair font-black tracking-[0.14em] uppercase">
               {leftNavGroups.map((group) => {
                 const isGroupActive = group.matchPrefixes.some(prefix => pathname === prefix || pathname.startsWith(prefix + '/'));
                 const isOpen = openDropdown === group.id;
@@ -573,19 +573,19 @@ export default function LiturgicalHeader() {
                   >
                     <button
                       type="button"
-                      className={`flex items-center gap-1 py-1.5 px-2.5 rounded-lg transition-all cursor-pointer ${
+                      className={`flex items-center gap-1.5 py-2 px-3 rounded-xl transition-all cursor-pointer font-playfair font-black text-xs sm:text-[13px] lg:text-[13.5px] xl:text-[14px] uppercase tracking-[0.14em] ${
                         isOpen || isGroupActive
-                          ? 'text-amber-800 dark:text-amber-300 font-black bg-amber-500/10'
-                          : 'text-stone-800 dark:text-stone-200 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-stone-200/40 dark:hover:bg-white/5'
+                          ? 'text-amber-800 dark:text-amber-300 font-black bg-amber-500/15 ring-1 ring-amber-500/30'
+                          : 'text-stone-800 dark:text-stone-200 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-stone-200/50 dark:hover:bg-white/10'
                       }`}
                     >
                       <span>{group.title}</span>
-                      <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'rotate-180 text-amber-600 dark:text-amber-400' : 'text-stone-400 dark:text-stone-500'}`} />
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180 text-amber-600 dark:text-amber-400' : 'text-stone-400 dark:text-stone-500'}`} />
                     </button>
 
-                    {/* Slim Elegant Dropdown Card (2 Words per Item) */}
+                    {/* Slim Elegant Dropdown Card (2 Words per Item, NO extra arrow) */}
                     {isOpen && (
-                      <div className="absolute top-full left-0 mt-2 w-44 sm:w-48 bg-white/98 dark:bg-[#11141E]/98 backdrop-blur-2xl border border-stone-200 dark:border-amber-500/25 rounded-2xl shadow-xl p-1.5 space-y-0.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="absolute top-full left-0 mt-2 w-44 sm:w-48 bg-white/98 dark:bg-[#11141E]/98 backdrop-blur-2xl border border-stone-200 dark:border-amber-500/25 rounded-2xl shadow-xl p-2 space-y-1 z-50 animate-in fade-in zoom-in-95 duration-150">
                         {group.items.map((item) => {
                           const isItemActive = pathname === item.href || (item.href !== '/khoa-hoc' && pathname.startsWith(item.href));
                           return (
@@ -593,14 +593,13 @@ export default function LiturgicalHeader() {
                               key={item.href}
                               href={item.href}
                               onClick={() => setOpenDropdown(null)}
-                              className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-serif transition-colors ${
+                              className={`block w-full text-left px-3.5 py-2 rounded-xl text-xs font-serif font-bold uppercase tracking-wider transition-colors ${
                                 isItemActive
-                                  ? 'bg-amber-500/15 text-amber-800 dark:text-amber-300 font-bold'
-                                  : 'text-stone-700 dark:text-stone-300 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-stone-100 dark:hover:bg-white/5 font-medium'
+                                  ? 'bg-amber-500/15 text-amber-800 dark:text-amber-300 font-black'
+                                  : 'text-stone-700 dark:text-stone-300 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-stone-100 dark:hover:bg-white/5'
                               }`}
                             >
                               <span>{item.label}</span>
-                              <ChevronRight className="w-3 h-3 text-stone-400/60 dark:text-stone-500/60" />
                             </Link>
                           );
                         })}
@@ -636,8 +635,8 @@ export default function LiturgicalHeader() {
               3. RIGHT COLUMN: 2 COMMUNITY & LIBRARY MENUS (Desktop >= 1024px)
                  Thư Viện • Liên Hệ
              ──────────────────────────────────────────────────────── */}
-          <div className="flex-1 hidden lg:flex items-center justify-end gap-4 xl:gap-8">
-            <nav className="flex items-center gap-1 xl:gap-3 text-[11px] xl:text-xs font-playfair font-bold tracking-[0.14em] uppercase">
+          <div className="flex-1 hidden lg:flex items-center justify-end gap-3 xl:gap-6">
+            <nav className="flex items-center gap-1.5 xl:gap-3 text-xs sm:text-[13px] lg:text-[13.5px] xl:text-[14px] font-playfair font-black tracking-[0.14em] uppercase">
               {rightNavGroups.map((group) => {
                 const isGroupActive = group.matchPrefixes.some(prefix => pathname === prefix || pathname.startsWith(prefix + '/'));
                 const isOpen = openDropdown === group.id;
@@ -651,19 +650,19 @@ export default function LiturgicalHeader() {
                   >
                     <button
                       type="button"
-                      className={`flex items-center gap-1 py-1.5 px-2.5 rounded-lg transition-all cursor-pointer ${
+                      className={`flex items-center gap-1.5 py-2 px-3 rounded-xl transition-all cursor-pointer font-playfair font-black text-xs sm:text-[13px] lg:text-[13.5px] xl:text-[14px] uppercase tracking-[0.14em] ${
                         isOpen || isGroupActive
-                          ? 'text-amber-800 dark:text-amber-300 font-black bg-amber-500/10'
-                          : 'text-stone-800 dark:text-stone-200 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-stone-200/40 dark:hover:bg-white/5'
+                          ? 'text-amber-800 dark:text-amber-300 font-black bg-amber-500/15 ring-1 ring-amber-500/30'
+                          : 'text-stone-800 dark:text-stone-200 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-stone-200/50 dark:hover:bg-white/10'
                       }`}
                     >
                       <span>{group.title}</span>
-                      <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'rotate-180 text-amber-600 dark:text-amber-400' : 'text-stone-400 dark:text-stone-500'}`} />
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180 text-amber-600 dark:text-amber-400' : 'text-stone-400 dark:text-stone-500'}`} />
                     </button>
 
-                    {/* Slim Elegant Dropdown Card (2 Words per Item) */}
+                    {/* Slim Elegant Dropdown Card (2 Words per Item, NO extra arrow) */}
                     {isOpen && (
-                      <div className="absolute top-full right-0 mt-2 w-44 sm:w-48 bg-white/98 dark:bg-[#11141E]/98 backdrop-blur-2xl border border-stone-200 dark:border-amber-500/25 rounded-2xl shadow-xl p-1.5 space-y-0.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="absolute top-full right-0 mt-2 w-44 sm:w-48 bg-white/98 dark:bg-[#11141E]/98 backdrop-blur-2xl border border-stone-200 dark:border-amber-500/25 rounded-2xl shadow-xl p-2 space-y-1 z-50 animate-in fade-in zoom-in-95 duration-150">
                         {group.items.map((item) => {
                           const isItemActive = pathname === item.href || (item.href !== '/khoa-hoc' && pathname.startsWith(item.href));
                           return (
@@ -671,14 +670,13 @@ export default function LiturgicalHeader() {
                               key={item.href}
                               href={item.href}
                               onClick={() => setOpenDropdown(null)}
-                              className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-serif transition-colors ${
+                              className={`block w-full text-left px-3.5 py-2 rounded-xl text-xs font-serif font-bold uppercase tracking-wider transition-colors ${
                                 isItemActive
-                                  ? 'bg-amber-500/15 text-amber-800 dark:text-amber-300 font-bold'
-                                  : 'text-stone-700 dark:text-stone-300 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-stone-100 dark:hover:bg-white/5 font-medium'
+                                  ? 'bg-amber-500/15 text-amber-800 dark:text-amber-300 font-black'
+                                  : 'text-stone-700 dark:text-stone-300 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-stone-100 dark:hover:bg-white/5'
                               }`}
                             >
                               <span>{item.label}</span>
-                              <ChevronRight className="w-3 h-3 text-stone-400/60 dark:text-stone-500/60" />
                             </Link>
                           );
                         })}
@@ -787,10 +785,9 @@ export default function LiturgicalHeader() {
                         key={item.href}
                         href={item.href}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="flex items-center justify-between p-2 rounded-xl bg-stone-200/60 dark:bg-white/5 hover:bg-amber-500/10 dark:hover:bg-amber-500/15 text-xs text-stone-800 dark:text-slate-200 font-serif"
+                        className="block text-center p-2 rounded-xl bg-stone-200/60 dark:bg-white/5 hover:bg-amber-500/10 dark:hover:bg-amber-500/15 text-xs text-stone-800 dark:text-slate-200 font-serif font-bold uppercase tracking-wider"
                       >
                         <span>{item.label}</span>
-                        <ChevronRight className="w-3 h-3 text-stone-400/50" />
                       </Link>
                     ))}
                   </div>
