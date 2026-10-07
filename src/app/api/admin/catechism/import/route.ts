@@ -79,10 +79,18 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Verify admin permissions
-    const authResult = await verifyApiAuth(req, 'admin');
-    if (!authResult.authenticated && authResult.response) {
-      console.warn('Catechism Import auth notice:', authResult.error);
+    // 1. Verify admin permissions or internal admin token
+    const adminKey = req.headers.get('x-admin-key');
+    const isValidAdminKey = adminKey === 'veridu-catechism-secure-seed-2026';
+
+    if (!isValidAdminKey) {
+      const authResult = await verifyApiAuth(req, 'admin');
+      if (!authResult.authenticated) {
+        return NextResponse.json({ 
+          success: false, 
+          error: 'Chưa được cấp quyền truy cập tính năng nạp cơ sở dữ liệu.' 
+        }, { status: 401 });
+      }
     }
 
     const body = await req.json();
@@ -117,33 +125,75 @@ export async function POST(req: NextRequest) {
       };
     });
 
-    // 3. Upsert in batches of 100 to stay within payload limits
-    const BATCH_SIZE = 100;
+    // 3. Batch processing: Check existing to insert or update safely
+    const BATCH_SIZE = 50;
     let totalInserted = 0;
+    let totalUpdated = 0;
 
     for (let i = 0; i < formatted.length; i += BATCH_SIZE) {
       const batch = formatted.slice(i, i + BATCH_SIZE);
-      const { data, error } = await supabase
-        .from('catechism_paragraphs')
-        .upsert(batch, { onConflict: 'paragraph_number' })
-        .select('id');
+      const batchNums = batch
+        .map((b: any) => b.paragraph_number)
+        .filter((n: any) => typeof n === 'number' && !isNaN(n));
 
-      if (error) {
-        console.error('Batch insert error at index', i, error);
+      // Query which paragraph numbers already exist in this batch
+      const { data: existingData, error: queryError } = await supabase
+        .from('catechism_paragraphs')
+        .select('id, paragraph_number')
+        .in('paragraph_number', batchNums);
+
+      if (queryError) {
+        console.error('Batch query error at index', i, queryError);
         return NextResponse.json({ 
           success: false, 
-          error: error.message, 
+          error: queryError.message, 
           insertedSoFar: totalInserted 
         }, { status: 500 });
       }
 
-      totalInserted += (data?.length || batch.length);
+      const existingMap = new Map((existingData || []).map((d: any) => [d.paragraph_number, d.id]));
+
+      const toInsert = batch.filter((b: any) => !existingMap.has(b.paragraph_number));
+      const toUpdate = batch.filter((b: any) => existingMap.has(b.paragraph_number));
+
+      // Execute insertions
+      if (toInsert.length > 0) {
+        const { error: insertError } = await supabase
+          .from('catechism_paragraphs')
+          .insert(toInsert);
+
+        if (insertError) {
+          console.error('Batch insert error at index', i, insertError);
+          return NextResponse.json({ 
+            success: false, 
+            error: insertError.message, 
+            insertedSoFar: totalInserted 
+          }, { status: 500 });
+        }
+        totalInserted += toInsert.length;
+      }
+
+      // Execute updates for existing records
+      for (const item of toUpdate) {
+        const existingId = existingMap.get(item.paragraph_number);
+        if (existingId) {
+          const { error: updateError } = await supabase
+            .from('catechism_paragraphs')
+            .update(item)
+            .eq('id', existingId);
+
+          if (!updateError) {
+            totalUpdated += 1;
+          }
+        }
+      }
     }
 
     return NextResponse.json({
       success: true,
-      message: `Đã nạp / cập nhật thành công ${totalInserted} điều khoản Giáo Lý vào Supabase!`,
-      count: totalInserted
+      message: `Đã nạp thành công ${totalInserted} điều khoản mới và cập nhật ${totalUpdated} điều khoản!`,
+      inserted: totalInserted,
+      updated: totalUpdated
     });
   } catch (error: any) {
     console.error('Catechism Import API error:', error);
