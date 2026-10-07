@@ -154,16 +154,27 @@ export default function LiturgicalHeader() {
         setIsScrolled(false);
       }
 
+      let nextVisible = true;
       if (currentScrollY > 120) {
         if (currentScrollY > lastScrollY && currentScrollY - lastScrollY > 8) {
-          setIsVisible(false);
+          nextVisible = false;
           setIsUserMenuOpen(false);
           setOpenDropdown(null);
         } else if (lastScrollY - currentScrollY > 8) {
-          setIsVisible(true);
+          nextVisible = true;
+        } else {
+          nextVisible = isVisible;
         }
       } else {
-        setIsVisible(true);
+        nextVisible = true;
+      }
+
+      setIsVisible(nextVisible);
+      if (typeof document !== 'undefined') {
+        document.documentElement.dataset.headerVisible = nextVisible ? 'true' : 'false';
+      }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('veridu_header_visibility', { detail: { isVisible: nextVisible } }));
       }
       setLastScrollY(currentScrollY);
     };

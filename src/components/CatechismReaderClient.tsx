@@ -14,19 +14,27 @@ import {
   Check, 
   Maximize2, 
   Minimize2, 
-  Type, 
   Scroll, 
   Award, 
-  ArrowRight, 
   X, 
   Search, 
-  BookMarked,
-  RotateCw,
-  ExternalLink,
-  Hash,
-  Gamepad2,
-  Library
+  Hash
 } from 'lucide-react';
+
+interface PartMeta {
+  partNumber: number;
+  slug: string;
+  roman: string;
+  title: string;
+}
+
+const DEFAULT_PARTS_LIST: PartMeta[] = [
+  { partNumber: 0, slug: 'loi-mo-dau', roman: '0', title: 'Lời Mở Đầu' },
+  { partNumber: 1, slug: 'phan-1', roman: 'I', title: 'Phần I: Tuyên Xưng Đức Tin' },
+  { partNumber: 2, slug: 'phan-2', roman: 'II', title: 'Phần II: Cử Hành Mầu Nhiệm' },
+  { partNumber: 3, slug: 'phan-3', roman: 'III', title: 'Phần III: Đời Sống Trong Đức Kitô' },
+  { partNumber: 4, slug: 'phan-4', roman: 'IV', title: 'Phần IV: Kinh Nguyện Kitô Giáo' },
+];
 
 interface CatechismReaderClientProps {
   paragraphs: CatechismParagraph[];
@@ -61,6 +69,46 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
   // Local bookmarks
   const [bookmarks, setBookmarks] = useState<Set<number>>(new Set());
   const [copiedId, setCopiedId] = useState<number | null>(null);
+
+  // Reactive sticky synchronization with LiturgicalHeader (eliminates floating gaps)
+  const [isHeaderVisible, setIsHeaderVisible] = useState<boolean>(true);
+
+  useEffect(() => {
+    // Check initial document attribute
+    if (typeof document !== 'undefined' && document.documentElement.dataset.headerVisible === 'false') {
+      setIsHeaderVisible(false);
+    }
+
+    // 1. Listen to broadcast from LiturgicalHeader
+    const handleHeaderVisibility = (e: any) => {
+      if (e.detail && typeof e.detail.isVisible === 'boolean') {
+        setIsHeaderVisible(e.detail.isVisible);
+      }
+    };
+    window.addEventListener('veridu_header_visibility', handleHeaderVisibility);
+
+    // 2. Fallback scroll watcher (matches LiturgicalHeader's 120px / 8px threshold)
+    let lastY = window.scrollY;
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      if (currentY > 120) {
+        if (currentY > lastY && currentY - lastY > 8) {
+          setIsHeaderVisible(false);
+        } else if (lastY - currentY > 8) {
+          setIsHeaderVisible(true);
+        }
+      } else {
+        setIsHeaderVisible(true);
+      }
+      lastY = currentY;
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('veridu_header_visibility', handleHeaderVisibility);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   useEffect(() => {
     try {
@@ -153,89 +201,139 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
   return (
     <div className={`space-y-6 ${isFocusMode ? 'fixed inset-0 z-50 bg-[var(--bg-main)] p-4 sm:p-8 overflow-y-auto' : ''}`}>
       
-      {/* ── 1. READING TOOLBAR ── */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-sm">
-        
-        {/* View Mode Switcher */}
-        <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto scrollbar-none">
-          <button
-            onClick={() => setViewMode('single')}
-            className={`px-3.5 py-2 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-              viewMode === 'single'
-                ? 'bg-amber-500 text-slate-950 font-black shadow-md'
-                : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-main)]'
-            }`}
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>Từng Số Đoạn</span>
-          </button>
-
-          <button
-            onClick={() => setViewMode('continuous')}
-            className={`px-3.5 py-2 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-              viewMode === 'continuous'
-                ? 'bg-amber-500 text-slate-950 font-black shadow-md'
-                : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-main)]'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span>Đọc Toàn Văn</span>
-          </button>
-
-          <button
-            onClick={() => setInBriefOnly(!inBriefOnly)}
-            className={`px-3.5 py-2 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-              inBriefOnly
-                ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/40 font-black'
-                : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-main)]'
-            }`}
-          >
-            <Scroll className="w-3.5 h-3.5" />
-            <span>{inBriefOnly ? '✓ Đang Lọc Tóm Lược' : 'Chỉ Tóm Lược'}</span>
-          </button>
-        </div>
-
-        {/* Font Size & Focus Mode Tools */}
-        <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-          {/* Font Size Adjuster */}
-          <div className="flex items-center gap-1 bg-[var(--bg-main)] p-1 rounded-2xl border border-[var(--border-card)]">
-            <button
-              onClick={() => setFontSize('normal')}
-              className={`px-2.5 py-1 rounded-xl text-xs font-serif ${fontSize === 'normal' ? 'bg-amber-500 text-slate-950 font-bold shadow-sm' : 'text-[var(--text-muted)]'}`}
-              title="Cỡ chữ tiêu chuẩn"
+      {/* ── 1. UNIFIED STICKY CONTROLLER BAR (ZERO FLOATING VOID) ── */}
+      <div 
+        className={`sticky z-30 transition-[top] duration-300 ease-out bg-[#FAF7F2]/95 dark:bg-[#0B0D12]/95 backdrop-blur-2xl border-y border-stone-200/80 dark:border-amber-500/20 shadow-md ${
+          isHeaderVisible ? 'top-[72px] sm:top-[88px] lg:top-[96px]' : 'top-0'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          
+          {/* Breadcrumbs & Quick Part Switcher */}
+          <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto scrollbar-none py-0.5">
+            <Link
+              href="/giao-ly"
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-stone-100 dark:bg-slate-900 border border-stone-200 dark:border-white/10 text-xs font-serif font-bold text-stone-700 dark:text-stone-300 hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-500/50 flex items-center gap-1 transition shrink-0 shadow-xs"
             >
-              A
+              <ChevronLeft className="w-3.5 h-3.5" />
+              <span>Trở về</span>
+            </Link>
+
+            <div className="h-4 w-[1px] bg-stone-300 dark:bg-white/15 hidden sm:block shrink-0" />
+
+            {/* Quick Part Tabs */}
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
+              {DEFAULT_PARTS_LIST.map(p => {
+                const isActive = p.slug === currentPartConfig.slug;
+                return (
+                  <Link
+                    key={p.slug}
+                    href={`/giao-ly/doc/${p.slug}`}
+                    className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-serif font-bold whitespace-nowrap transition cursor-pointer ${
+                      isActive
+                        ? 'bg-amber-500 text-slate-950 font-black shadow-sm ring-1 ring-amber-400 scale-[1.02]'
+                        : 'bg-stone-100 dark:bg-white/5 border border-stone-200/80 dark:border-white/10 text-stone-600 dark:text-stone-300 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-stone-200/60'
+                    }`}
+                  >
+                    {p.partNumber === 0 ? 'Mở Đầu' : `Phần ${p.roman}`}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Reading Controls: View Mode + In-Brief Filter + Font Size + Focus */}
+          <div className="flex items-center gap-2 sm:gap-3 justify-between md:justify-end shrink-0">
+            {/* View Mode Buttons */}
+            <div className="flex items-center gap-1 bg-stone-100 dark:bg-slate-900 p-0.5 rounded-xl border border-stone-200 dark:border-white/10">
+              <button
+                type="button"
+                onClick={() => setViewMode('single')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-serif font-bold transition flex items-center gap-1 cursor-pointer ${
+                  viewMode === 'single'
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
+                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white'
+                }`}
+                title="Chế độ đọc từng số điều khoản"
+              >
+                <BookOpen className="w-3 h-3" />
+                <span>Từng Số</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setViewMode('continuous')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-serif font-bold transition flex items-center gap-1 cursor-pointer ${
+                  viewMode === 'continuous'
+                    ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
+                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white'
+                }`}
+                title="Chế độ đọc toàn văn liên tục"
+              >
+                <Layers className="w-3 h-3" />
+                <span>Toàn Văn</span>
+              </button>
+            </div>
+
+            {/* In-Brief Toggle */}
+            <button
+              type="button"
+              onClick={() => setInBriefOnly(!inBriefOnly)}
+              className={`px-2.5 py-1.5 rounded-xl text-xs font-serif font-bold transition flex items-center gap-1 cursor-pointer shrink-0 ${
+                inBriefOnly
+                  ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/50 font-black'
+                  : 'bg-stone-100 dark:bg-slate-900 border border-stone-200 dark:border-white/10 text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-amber-300'
+              }`}
+              title="Chỉ hiển thị các điều khoản tóm lược cốt lõi"
+            >
+              <Scroll className="w-3 h-3" />
+              <span>{inBriefOnly ? '✓ Tóm Lược' : 'Tóm Lược'}</span>
             </button>
+
+            {/* Font Size Adjuster */}
+            <div className="flex items-center gap-0.5 bg-stone-100 dark:bg-slate-900 p-0.5 rounded-xl border border-stone-200 dark:border-white/10">
+              <button
+                type="button"
+                onClick={() => setFontSize('normal')}
+                className={`w-6 h-6 rounded text-[11px] font-serif flex items-center justify-center cursor-pointer ${fontSize === 'normal' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-stone-500 dark:text-stone-400'}`}
+                title="Cỡ chữ tiêu chuẩn"
+              >
+                A
+              </button>
+              <button
+                type="button"
+                onClick={() => setFontSize('large')}
+                className={`w-6 h-6 rounded text-xs font-serif flex items-center justify-center cursor-pointer ${fontSize === 'large' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-stone-500 dark:text-stone-400'}`}
+                title="Cỡ chữ lớn"
+              >
+                A+
+              </button>
+              <button
+                type="button"
+                onClick={() => setFontSize('xlarge')}
+                className={`w-6 h-6 rounded text-xs font-serif font-black flex items-center justify-center cursor-pointer ${fontSize === 'xlarge' ? 'bg-amber-500 text-slate-950 font-black' : 'text-stone-500 dark:text-stone-400'}`}
+                title="Cỡ chữ rất lớn"
+              >
+                A++
+              </button>
+            </div>
+
+            {/* Focus Mode Button */}
             <button
-              onClick={() => setFontSize('large')}
-              className={`px-2.5 py-1 rounded-xl text-sm font-serif ${fontSize === 'large' ? 'bg-amber-500 text-slate-950 font-bold shadow-sm' : 'text-[var(--text-muted)]'}`}
-              title="Cỡ chữ lớn"
+              type="button"
+              onClick={() => setIsFocusMode(!isFocusMode)}
+              className="p-1.5 rounded-xl bg-stone-100 dark:bg-slate-900 hover:bg-amber-500 hover:text-slate-950 text-stone-600 dark:text-stone-400 border border-stone-200 dark:border-white/10 transition cursor-pointer"
+              title={isFocusMode ? 'Thoát chế độ tập trung' : 'Chế độ đọc tập trung toàn màn hình'}
             >
-              A+
-            </button>
-            <button
-              onClick={() => setFontSize('xlarge')}
-              className={`px-2.5 py-1 rounded-xl text-base font-serif ${fontSize === 'xlarge' ? 'bg-amber-500 text-slate-950 font-bold shadow-sm' : 'text-[var(--text-muted)]'}`}
-              title="Cỡ chữ rất lớn"
-            >
-              A++
+              {isFocusMode ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
             </button>
           </div>
 
-          {/* Focus Mode Button */}
-          <button
-            onClick={() => setIsFocusMode(!isFocusMode)}
-            className="p-2.5 rounded-2xl bg-[var(--bg-main)] hover:bg-amber-500 hover:text-slate-950 text-[var(--text-muted)] border border-[var(--border-card)] transition cursor-pointer"
-            title={isFocusMode ? 'Thoát chế độ tập trung' : 'Chế độ đọc tập trung toàn màn hình'}
-          >
-            {isFocusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          </button>
         </div>
-
       </div>
 
       {/* ── 2. TWO-COLUMN WORKSPACE (70% READER + 30% STICKY SIDEBAR) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start w-full">
         
         {/* ════════════════════════════════════════════════════════════════════
             LEFT COLUMN: CATECHISM CONTENT READING AREA (70% - 8/12 COLUMNS)
@@ -323,27 +421,36 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
                 </div>
               )}
 
-              {/* Prev / Next Pagination Controls */}
-              <div className="flex items-center justify-between pt-6 border-t border-[var(--border-card)]/60">
+              {/* Footnotes */}
+              {activeParagraph.footnotes && (
+                <div className="pt-4 border-t border-[var(--border-card)]/60">
+                  <p className="text-[11px] font-serif italic text-[var(--text-muted)] leading-relaxed">
+                    Chú thích: {activeParagraph.footnotes}
+                  </p>
+                </div>
+              )}
+
+              {/* Navigation Arrows for Single Mode */}
+              <div className="flex items-center justify-between pt-6 border-t border-[var(--border-card)]">
                 <button
-                  disabled={currentIndex <= 0}
-                  onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
-                  className="px-4 py-2.5 rounded-2xl bg-[var(--bg-main)] hover:bg-amber-500 hover:text-slate-950 disabled:opacity-30 disabled:hover:bg-[var(--bg-main)] disabled:hover:text-[var(--text-muted)] border border-[var(--border-card)] text-xs font-serif font-bold flex items-center gap-1.5 transition cursor-pointer"
+                  disabled={currentIndex === 0}
+                  onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
+                  className="px-4 py-2 rounded-2xl bg-[var(--bg-main)] hover:bg-stone-200/60 dark:hover:bg-white/10 disabled:opacity-40 text-xs font-serif font-bold flex items-center gap-1.5 transition border border-[var(--border-card)] cursor-pointer"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  <span>Điều Khoản Trước</span>
+                  <span>Số Trước</span>
                 </button>
 
-                <span className="text-xs font-serif text-[var(--text-muted)]">
+                <span className="text-xs font-mono text-[var(--text-muted)]">
                   {currentIndex + 1} / {sortedAndFiltered.length}
                 </span>
 
                 <button
                   disabled={currentIndex >= sortedAndFiltered.length - 1}
-                  onClick={() => setCurrentIndex(prev => Math.min(sortedAndFiltered.length - 1, prev + 1))}
-                  className="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 disabled:opacity-30 border border-amber-500 text-xs font-serif font-bold flex items-center gap-1.5 transition shadow-md cursor-pointer"
+                  onClick={() => setCurrentIndex(Math.min(sortedAndFiltered.length - 1, currentIndex + 1))}
+                  className="px-4 py-2 rounded-2xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-slate-950 text-xs font-serif font-bold flex items-center gap-1.5 transition shadow-md cursor-pointer"
                 >
-                  <span>Điều Khoản Kế Tiếp</span>
+                  <span>Số Tiếp Theo</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -352,7 +459,7 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
           ) : (
             /* ── Continuous Scroll View ── */
             <div className="space-y-6">
-              {sortedAndFiltered.map((p, idx) => (
+              {sortedAndFiltered.map((p) => (
                 <article
                   key={p.id || p.paragraph_number}
                   id={`ccc-p-${p.paragraph_number}`}
@@ -365,7 +472,8 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => toggleBookmark(p.paragraph_number ?? (p as any).id ?? 0)}
-                        className={`p-1.5 rounded-xl border ${bookmarks.has(p.paragraph_number ?? (p as any).id ?? 0) ? 'bg-amber-500 text-slate-950' : 'text-[var(--text-muted)] border-transparent'}`}
+                        className={`p-1.5 rounded-xl border transition cursor-pointer ${bookmarks.has(p.paragraph_number ?? (p as any).id ?? 0) ? 'bg-amber-500 text-slate-950 border-amber-500' : 'text-[var(--text-muted)] border-transparent hover:text-amber-500'}`}
+                        title="Đánh dấu ghi nhớ"
                       >
                         <Bookmark className="w-3.5 h-3.5" />
                       </button>
@@ -397,7 +505,11 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
         {/* ════════════════════════════════════════════════════════════════════
             RIGHT COLUMN: STICKY SIDEBAR (30% - 4/12 COLUMNS)
            ════════════════════════════════════════════════════════════════════ */}
-        <aside className="lg:col-span-4 space-y-6 lg:sticky lg:top-28">
+        <aside 
+          className={`lg:col-span-4 space-y-5 lg:sticky transition-[top] duration-300 ease-out ${
+            isHeaderVisible ? 'lg:top-[160px]' : 'lg:top-[72px]'
+          }`}
+        >
           
           {/* Block 1: Fast Jump to Paragraph & Search */}
           <div className="p-5 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-sm space-y-3">
@@ -416,7 +528,7 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
               />
               <button
                 type="submit"
-                className="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-serif font-bold shadow-md cursor-pointer"
+                className="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-serif font-bold shadow-md cursor-pointer transition-colors"
               >
                 Nhảy
               </button>
@@ -435,7 +547,7 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-4 text-[var(--text-muted)] hover:text-rose-500"
+                  className="absolute right-2.5 top-4 text-[var(--text-muted)] hover:text-rose-500 cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -455,7 +567,7 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
               </span>
             </div>
 
-            <div className="max-h-72 overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-amber-500/20">
+            <div className="max-h-[min(380px,calc(100vh-280px))] overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-amber-500/20">
               {sortedAndFiltered.map((p, idx) => {
                 const isSelected = viewMode === 'single' && currentIndex === idx;
                 return (
@@ -547,7 +659,7 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
           <div className="max-w-xl w-full p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border-2 border-amber-500 shadow-2xl space-y-4 relative animate-in zoom-in-95 duration-200">
             <button
               onClick={() => { setPopoverNumber(null); setPopoverData(null); }}
-              className="absolute top-4 right-4 p-2 rounded-full bg-[var(--bg-main)] text-[var(--text-muted)] hover:text-[var(--text-main)]"
+              className="absolute top-4 right-4 p-2 rounded-full bg-[var(--bg-main)] text-[var(--text-muted)] hover:text-[var(--text-main)] cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -586,7 +698,7 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => { setPopoverNumber(null); setPopoverData(null); }}
-                className="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold font-serif"
+                className="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold font-serif cursor-pointer hover:bg-amber-400 transition-colors"
               >
                 Đóng
               </button>

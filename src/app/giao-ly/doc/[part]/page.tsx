@@ -1,9 +1,10 @@
 import React from 'react';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { fetchCatechismParagraphs } from '@/lib/api';
 import CatechismReaderClient from '@/components/CatechismReaderClient';
-import { ChevronLeft, BookOpen, Cross, Sun, Shield, Flame, Scroll, Award } from 'lucide-react';
+import { BookOpen, Scroll, Award } from 'lucide-react';
 
 export const revalidate = 3600;
 
@@ -81,12 +82,58 @@ export async function generateStaticParams() {
   ];
 }
 
-export async function generateMetadata({ params }: { params: { part: string } }) {
+export async function generateMetadata({ params }: { params: { part: string } }): Promise<Metadata> {
   const partInfo = PARTS_MAP[params.part];
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
   if (!partInfo) return { title: 'Trình Đọc Giáo Lý | VERIDU' };
+
+  const ogImages: Record<string, string> = {
+    'loi-mo-dau': `${siteUrl}/images/sacred_cathedral.jpg`,
+    'phan-1': `${siteUrl}/images/stained_glass_christ.jpg`,
+    'phan-2': `${siteUrl}/images/sacred_cathedral.jpg`,
+    'phan-3': `${siteUrl}/images/sacred_peter.jpg`,
+    'phan-4': `${siteUrl}/images/sacred_saints.jpg`,
+  };
+  const ogImage = ogImages[partInfo.slug] || `${siteUrl}/images/stained_glass_christ.jpg`;
+
   return {
     title: `${partInfo.title} (${partInfo.range}) — Trình Đọc Toàn Văn | VERIDU`,
-    description: `Khảo cứu toàn văn ${partInfo.title} của Sách Giáo Lý Hội Thánh Công Giáo với hệ thống số đoạn, chú dẫn nguồn và đối chiếu Kinh Thánh.`
+    description: `Khảo cứu toàn văn ${partInfo.title} (${partInfo.range}) của Sách Giáo Lý Hội Thánh Công Giáo. ${partInfo.desc} Đối chiếu Kinh Thánh và chú dẫn nguồn Huấn Quyền.`,
+    keywords: [
+      partInfo.title,
+      partInfo.subtitle,
+      partInfo.range,
+      'Giáo lý Hội Thánh Công Giáo',
+      'Sách Giáo Lý CCC',
+      'Tra cứu điều khoản Giáo lý',
+      'Huấn quyền Công giáo',
+      'Đức tin Kitô giáo'
+    ],
+    alternates: {
+      canonical: `${siteUrl}/giao-ly/doc/${partInfo.slug}`
+    },
+    openGraph: {
+      title: `${partInfo.title} (${partInfo.range}) | VERIDU`,
+      description: `Khảo cứu toàn văn ${partInfo.title} (${partInfo.range}) của Sách Giáo Lý Hội Thánh Công Giáo. ${partInfo.desc}`,
+      url: `${siteUrl}/giao-ly/doc/${partInfo.slug}`,
+      siteName: 'VERIDU',
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: `${partInfo.title} — VERIDU`
+        }
+      ],
+      locale: 'vi_VN',
+      type: 'article'
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${partInfo.title} (${partInfo.range}) | VERIDU`,
+      description: `Khảo cứu toàn văn ${partInfo.title} (${partInfo.range}) của Sách Giáo Lý Hội Thánh Công Giáo.`,
+      images: [ogImage]
+    }
   };
 }
 
@@ -99,52 +146,62 @@ export default async function CatechismPartPage({ params }: { params: { part: st
   // Fetch all paragraphs belonging to this part (ordered by paragraph_number ascending)
   const { data: paragraphs, count } = await fetchCatechismParagraphs(currentPart.partNumber, undefined, undefined, 1000, 0);
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Trang Chủ',
+            item: siteUrl
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Giáo Lý Hội Thánh Công Giáo',
+            item: `${siteUrl}/giao-ly`
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: currentPart.title,
+            item: `${siteUrl}/giao-ly/doc/${currentPart.slug}`
+          }
+        ]
+      },
+      {
+        '@type': 'Book',
+        name: `Sách Giáo Lý Hội Thánh Công Giáo — ${currentPart.title}`,
+        description: currentPart.desc,
+        inLanguage: 'vi',
+        author: {
+          '@type': 'Organization',
+          name: 'Hội Thánh Công Giáo — Tòa Thánh Vatican'
+        },
+        publisher: {
+          '@type': 'Organization',
+          name: 'VERIDU',
+          url: siteUrl
+        },
+        url: `${siteUrl}/giao-ly/doc/${currentPart.slug}`
+      }
+    ]
+  };
+
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col font-sans transition-colors duration-300 pb-24 pt-24 sm:pt-28 md:pt-32">
-      
-      {/* 1. COMPACT BREADCRUMB & HEADER (PROPERLY SPACED BELOW NAVBAR) */}
-      <div className="w-full border-b border-[var(--border-card)] bg-[var(--bg-card)]/90 backdrop-blur-md sticky top-16 md:top-20 z-20 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
-          
-          <div className="flex items-center gap-3">
-            <Link
-              href="/giao-ly"
-              className="px-3 py-1.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs font-serif font-bold text-[var(--text-muted)] hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-500/50 flex items-center gap-1 transition shadow-sm"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Trở về Giáo Lý</span>
-            </Link>
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col font-sans transition-colors duration-300 pb-24 pt-20 sm:pt-24 md:pt-28">
+      {/* Schema.org Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
-            <div className="h-4 w-[1px] bg-[var(--border-card)] hidden sm:block" />
-
-            <div className="text-xs font-serif hidden sm:block">
-              <span className="text-[var(--text-muted)]">Sách Giáo Lý Hội Thánh › </span>
-              <strong className="text-amber-700 dark:text-amber-400">{currentPart.title}</strong>
-            </div>
-          </div>
-
-          {/* Quick Part Switcher Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
-            {Object.values(PARTS_MAP).map(p => (
-              <Link
-                key={p.slug}
-                href={`/giao-ly/doc/${p.slug}`}
-                className={`px-3 py-1.5 rounded-xl text-xs font-serif font-bold whitespace-nowrap transition ${
-                  p.slug === currentPart.slug
-                    ? 'bg-amber-500 text-slate-950 shadow-md font-black scale-105'
-                    : 'bg-[var(--bg-main)] border border-[var(--border-card)] text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                }`}
-              >
-                {p.partNumber === 0 ? 'Mở Đầu' : `Phần ${p.roman}`}
-              </Link>
-            ))}
-          </div>
-
-        </div>
-      </div>
-
-      {/* 2. DEDICATED PART HERO (CLEAN PARCHMENT CONTRAST) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4 w-full">
+      {/* 1. DEDICATED PART HERO (CLEAN PARCHMENT CONTRAST) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-4 w-full">
         <div className="p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden backdrop-blur-xl">
           <div className="space-y-2 relative z-10">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 font-serif font-bold text-xs">
@@ -179,8 +236,8 @@ export default async function CatechismPartPage({ params }: { params: { part: st
         </div>
       </div>
 
-      {/* 3. DEDICATED 2-COLUMN FULL-TEXT READER CLIENT */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mt-2">
+      {/* 2. DEDICATED FULL-TEXT READER CLIENT (WITH UNIFIED STICKY CONTROLS) */}
+      <div className="w-full">
         <CatechismReaderClient 
           paragraphs={paragraphs} 
           currentPartConfig={currentPart} 

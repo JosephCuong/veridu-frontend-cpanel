@@ -16,11 +16,53 @@ import {
   BookMarked
 } from 'lucide-react';
 
+import type { Metadata } from 'next';
+
 export const revalidate = 3600;
 
-export const metadata = {
-  title: 'Giáo Lý Hội Thánh Công Giáo — Khảo Cứu & Học Hỏi Toàn Thư | VERIDU',
-  description: 'Trung tâm khảo cứu Sách Giáo Lý Hội Thánh Công Giáo (CCC Toàn Thư 2865 số điều khoản) với 4 Trụ Cột Đức Tin, Trình đọc toàn văn, Thẻ lật ghi nhớ và Đấu trường Quiz.',
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
+
+export const metadata: Metadata = {
+  title: 'Giáo Lý Hội Thánh Công Giáo — Khảo Cứu & Học Hỏi Toàn Thư (CCC 1 – 2865) | VERIDU',
+  description: 'Trung tâm khảo cứu toàn văn Sách Giáo Lý Hội Thánh Công Giáo với 4 Trụ Cột Đức Tin, 2.865 số điều khoản chuẩn mực, trình đọc toàn văn, thẻ lật ghi nhớ và đấu trường Quiz tương tác.',
+  keywords: [
+    'Giáo lý Hội Thánh Công Giáo',
+    'Sách Giáo Lý Công Giáo',
+    'CCC 2865',
+    'Bốn Trụ Cột Đức Tin',
+    'Tuyên xưng đức tin',
+    'Kinh Tin Kính',
+    'Bảy Bí Tích',
+    'Mười Điều Răn',
+    'Kinh Lạy Cha',
+    'Khảo cứu Giáo lý',
+    'Tra cứu điều khoản Giáo lý'
+  ],
+  alternates: {
+    canonical: `${siteUrl}/giao-ly`
+  },
+  openGraph: {
+    title: 'Giáo Lý Hội Thánh Công Giáo — Khảo Cứu & Học Hỏi Toàn Thư | VERIDU',
+    description: 'Trung tâm khảo cứu toàn văn Sách Giáo Lý Hội Thánh Công Giáo (2.865 số điều khoản) với 4 Trụ Cột Đức Tin, trình đọc toàn văn và thẻ lật ghi nhớ.',
+    url: `${siteUrl}/giao-ly`,
+    siteName: 'VERIDU',
+    images: [
+      {
+        url: `${siteUrl}/images/sacred_cathedral.jpg`,
+        width: 1200,
+        height: 630,
+        alt: 'Giáo Lý Hội Thánh Công Giáo — VERIDU'
+      }
+    ],
+    locale: 'vi_VN',
+    type: 'website'
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Giáo Lý Hội Thánh Công Giáo — Khảo Cứu & Học Hỏi Toàn Thư | VERIDU',
+    description: 'Trung tâm khảo cứu toàn văn Sách Giáo Lý Hội Thánh Công Giáo (2.865 số điều khoản) với 4 Trụ Cột Đức Tin.',
+    images: [`${siteUrl}/images/sacred_cathedral.jpg`]
+  }
 };
 
 // 4 Pillars of Catholic Catechism (Classical Cathedral Pillar Aesthetic)
@@ -97,32 +139,62 @@ export default async function GiaoLyLandingPage() {
     a.category?.toLowerCase().includes('thần học')
   );
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
-  const breadcrumbJsonLd = {
+  const catechismJsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
+    '@graph': [
       {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Trang Chủ',
-        item: siteUrl
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Trang Chủ',
+            item: siteUrl
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Giáo Lý Hội Thánh Công Giáo',
+            item: `${siteUrl}/giao-ly`
+          }
+        ]
       },
       {
-        '@type': 'ListItem',
-        position: 2,
-        name: 'Giáo Lý Hội Thánh Công Giáo',
-        item: `${siteUrl}/giao-ly`
+        '@type': 'Book',
+        name: 'Sách Giáo Lý Hội Thánh Công Giáo (CCC)',
+        description: 'Tổng hợp toàn văn 2.865 số điều khoản chuẩn mực phân theo 4 Trụ Cột Đức Tin Kitô Giáo.',
+        url: `${siteUrl}/giao-ly`,
+        inLanguage: 'vi',
+        author: {
+          '@type': 'Organization',
+          name: 'Hội Thánh Công Giáo — Tòa Thánh Vatican'
+        },
+        publisher: {
+          '@type': 'Organization',
+          name: 'VERIDU',
+          url: siteUrl
+        }
+      },
+      {
+        '@type': 'ItemList',
+        name: 'Bốn Trụ Cột Giáo Lý Hội Thánh Công Giáo',
+        itemListElement: CATHEDRAL_PILLARS.map((p, idx) => ({
+          '@type': 'ListItem',
+          position: idx + 1,
+          name: `Phần ${p.roman}: ${p.title}`,
+          description: p.desc,
+          url: `${siteUrl}/giao-ly/doc/${p.slug}`
+        }))
       }
     ]
   };
 
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col font-sans transition-colors duration-300 pb-24 pt-16 md:pt-20">
-      {/* Schema.org BreadcrumbList */}
+      {/* Schema.org BreadcrumbList & Knowledge Graph */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(catechismJsonLd) }}
       />
       
       {/* ── 1. SACRED HERO BANNER (CLEAN PARCHMENT / LIGHT & DARK COMPLIANT) ── */}
