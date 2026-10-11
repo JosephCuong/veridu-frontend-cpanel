@@ -1896,40 +1896,63 @@ export async function fetchCatechismParagraphs(
   partNumber?: number,
   searchQuery?: string,
   inBriefOnly?: boolean,
-  limit: number = 300,
+  limit: number = 2000,
   offset: number = 0
 ): Promise<{ data: CatechismParagraph[]; count: number }> {
   try {
-    let query = supabase
-      .from('catechism_paragraphs')
-      .select('*', { count: 'exact' })
-      .order('part_number', { ascending: true })
-      .order('paragraph_number', { ascending: true, nullsFirst: false });
+    const PAGE_SIZE = 1000;
+    let allRows: CatechismParagraph[] = [];
+    let totalCount = 0;
+    let currentOffset = offset;
+    const targetEnd = offset + limit;
 
-    if (partNumber !== undefined && partNumber !== null && partNumber >= 0) {
-      query = query.eq('part_number', partNumber);
-    }
+    while (currentOffset < targetEnd) {
+      const chunkLimit = Math.min(PAGE_SIZE, targetEnd - currentOffset);
+      let query = supabase
+        .from('catechism_paragraphs')
+        .select('*', { count: 'exact' })
+        .order('part_number', { ascending: true })
+        .order('paragraph_number', { ascending: true, nullsFirst: true })
+        .order('id', { ascending: true });
 
-    if (inBriefOnly) {
-      query = query.eq('is_in_brief', true);
-    }
-
-    if (searchQuery && searchQuery.trim()) {
-      const q = searchQuery.trim();
-      const numMatch = q.match(/^\d+$/);
-      if (numMatch) {
-        const num = parseInt(numMatch[0]);
-        query = query.or(`paragraph_number.eq.${num},title.ilike.%Số ${num}%`);
-      } else {
-        query = query.or(`title.ilike.%${q}%,plain_text.ilike.%${q}%,full_path.ilike.%${q}%`);
+      if (partNumber !== undefined && partNumber !== null && partNumber >= 0) {
+        query = query.eq('part_number', partNumber);
       }
+
+      if (inBriefOnly) {
+        query = query.eq('is_in_brief', true);
+      }
+
+      if (searchQuery && searchQuery.trim()) {
+        const q = searchQuery.trim();
+        const numMatch = q.match(/^\d+$/);
+        if (numMatch) {
+          const num = parseInt(numMatch[0]);
+          query = query.or(`paragraph_number.eq.${num},title.ilike.%Số ${num}%`);
+        } else {
+          query = query.or(`title.ilike.%${q}%,plain_text.ilike.%${q}%,full_path.ilike.%${q}%`);
+        }
+      }
+
+      query = query.range(currentOffset, currentOffset + chunkLimit - 1);
+
+      const { data, count, error } = await query;
+      if (error || !data) break;
+
+      if (count !== null && count !== undefined) {
+        totalCount = count;
+      }
+
+      allRows = allRows.concat(data as CatechismParagraph[]);
+
+      if (data.length < chunkLimit || (totalCount > 0 && allRows.length >= totalCount)) {
+        break;
+      }
+
+      currentOffset += data.length;
     }
 
-    query = query.range(offset, offset + limit - 1);
-
-    const { data, count, error } = await query;
-    if (error || !data) return { data: [], count: 0 };
-    return { data: data as CatechismParagraph[], count: count || 0 };
+    return { data: allRows, count: totalCount || allRows.length };
   } catch (error) {
     console.error('Lỗi khi tải danh sách đoạn Giáo Lý:', error);
     return { data: [], count: 0 };

@@ -198,6 +198,78 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
     ? 'text-base sm:text-lg leading-relaxed sm:leading-loose'
     : 'text-sm sm:text-base leading-relaxed';
 
+  // Helper: Clean & Format Catechism HTML (strip duplicate <h5 class="catechism-title">, style footnotes as [1] superscript, format headings & quotes)
+  const formatCatechismHtml = (rawHtml?: string, plainText?: string): string => {
+    let html = (rawHtml || plainText || '').trim();
+    if (!html) return '';
+
+    // 1. Remove duplicate <h5 class="catechism-title">Số XXX</h5>
+    html = html.replace(/<h5[^>]*class=["'][^"']*catechism-title[^"']*["'][^>]*>[\s\S]*?<\/h5>/gi, '');
+
+    // 2. Transform <span class="footnote-ref">N</span> into golden superscript [N]
+    html = html.replace(
+      /<span[^>]*class=["'][^"']*footnote-ref[^"']*["'][^>]*>\s*([^<]+?)\s*<\/span>/gi,
+      '<sup class="inline-flex items-center px-1 py-0.5 mx-0.5 text-[10px] font-mono font-bold text-amber-700 dark:text-amber-300 bg-amber-500/15 border border-amber-500/30 rounded align-super leading-none" title="Xem chú thích cuối đoạn">[$1]</sup>'
+    );
+
+    // 3. Style embedded headings (<h2>, <h3>, <h4>) inside content_html
+    html = html.replace(
+      /<h2([^>]*)>/gi,
+      '<h2$1 class="font-serif font-black text-base sm:text-lg text-amber-700 dark:text-amber-400 uppercase tracking-wider border-b border-amber-500/30 pb-2 mb-3 mt-1">'
+    );
+    html = html.replace(
+      /<h3([^>]*)>/gi,
+      '<h3$1 class="font-serif font-bold text-sm sm:text-base text-[var(--text-main)] uppercase tracking-wide mt-3 mb-2">'
+    );
+    html = html.replace(
+      /<h4([^>]*)>/gi,
+      '<h4$1 class="font-serif font-bold text-sm sm:text-base text-amber-600 dark:text-amber-300 italic mt-3 mb-2">'
+    );
+
+    // 4. Style liturgical quote blocks
+    html = html.replace(
+      /<div[^>]*class=["'][^"']*catechism-quote[^"']*["'][^>]*>/gi,
+      '<div class="my-3 pl-4 border-l-2 border-amber-500/60 italic text-[var(--text-muted)] bg-amber-500/5 py-2.5 pr-3 rounded-r-xl">'
+    );
+
+    // 5. Add spacing to paragraph blocks
+    html = html.replace(
+      /<p[^>]*class=["'][^"']*catechism-text[^"']*["'][^>]*>/gi,
+      '<p class="mb-3 last:mb-0 leading-relaxed">'
+    );
+
+    return html;
+  };
+
+  // Helper: Extract clean opening snippet for Sidebar TOC ("Số X — Trích câu mở đầu...")
+  const getParagraphSnippet = (p: CatechismParagraph): string => {
+    let raw = (p.plain_text || '').trim();
+    if (!raw && p.content_html) {
+      raw = p.content_html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+    // Strip leading headers before "Số XXX" if present
+    const numMatch = p.paragraph_number
+      ? new RegExp(`(?:^|\\s)Số\\s+${p.paragraph_number}\\b[:.\\s-]*`, 'i')
+      : null;
+    if (numMatch && numMatch.test(raw)) {
+      const idx = raw.search(numMatch);
+      raw = raw.slice(idx).replace(numMatch, '').trim();
+    } else {
+      raw = raw.replace(/^Số\s+\d+[:.\s-]*/i, '').trim();
+    }
+    if (!raw) return p.article_title || p.chapter_title || p.title || 'Điều khoản';
+    return raw.length > 65 ? raw.slice(0, 65).trim() + '…' : raw;
+  };
+
+  // Helper: Check if paragraph.title is a meaningful custom title (not just "GLHTCG Số X")
+  const getDistinctTitle = (p: CatechismParagraph): string | null => {
+    const t = (p.title || '').trim();
+    if (!t) return null;
+    if (/^(GLHTCG\s*)?Số\s*\d+$/i.test(t)) return null;
+    if (t === 'GLHTCG - Lời Mở Đầu') return 'Lời Mở Đầu Sách Giáo Lý';
+    return t;
+  };
+
   return (
     <div className={`space-y-6 ${isFocusMode ? 'fixed inset-0 z-50 bg-[var(--bg-main)] p-4 sm:p-8 overflow-y-auto' : ''}`}>
       
@@ -346,25 +418,30 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
               
               {/* Header Meta: Number, Section Path, Actions */}
               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border-card)]/60 pb-5">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="px-3.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 font-serif font-black text-sm">
-                      GLHTCG Số {activeParagraph.paragraph_number}
+                      {activeParagraph.paragraph_number ? `GLHTCG Số ${activeParagraph.paragraph_number}` : 'Lời Dẫn Nhập'}
                     </span>
                     {activeParagraph.is_in_brief && (
                       <span className="px-2.5 py-0.5 rounded-md bg-amber-500 text-slate-950 font-serif font-bold text-[10px] uppercase tracking-wider">
                         Tóm Lược
                       </span>
                     )}
+                    {(activeParagraph.article_title || activeParagraph.chapter_title) && (
+                      <span className="text-xs font-serif font-semibold text-amber-700/90 dark:text-amber-400/90 truncate">
+                        • {activeParagraph.article_title || activeParagraph.chapter_title}
+                      </span>
+                    )}
                   </div>
                   {activeParagraph.full_path && (
-                    <p className="text-xs text-[var(--text-muted)] font-serif line-clamp-1">
+                    <p className="text-xs text-[var(--text-muted)] font-serif leading-snug">
                       {activeParagraph.full_path}
                     </p>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={() => toggleBookmark(activeParagraph.paragraph_number ?? (activeParagraph as any).id ?? 0)}
                     className={`p-2.5 rounded-2xl border transition cursor-pointer ${
@@ -387,17 +464,17 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
                 </div>
               </div>
 
-              {/* Main Text Content */}
+              {/* Main Text Content (No Duplicate Title) */}
               <div className="space-y-4">
-                {activeParagraph.title && (
-                  <h3 className="font-serif font-bold text-lg sm:text-xl text-[var(--text-main)]">
-                    {activeParagraph.title}
+                {getDistinctTitle(activeParagraph) && (
+                  <h3 className="font-serif font-bold text-lg sm:text-xl text-amber-700 dark:text-amber-400">
+                    {getDistinctTitle(activeParagraph)}
                   </h3>
                 )}
 
                 <div 
                   className={`font-serif text-[var(--text-main)] ${fontSizeClass}`}
-                  dangerouslySetInnerHTML={{ __html: activeParagraph.content_html || activeParagraph.plain_text || '' }}
+                  dangerouslySetInnerHTML={{ __html: formatCatechismHtml(activeParagraph.content_html, activeParagraph.plain_text) }}
                 />
               </div>
 
@@ -423,9 +500,12 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
 
               {/* Footnotes */}
               {activeParagraph.footnotes && (
-                <div className="pt-4 border-t border-[var(--border-card)]/60">
-                  <p className="text-[11px] font-serif italic text-[var(--text-muted)] leading-relaxed">
-                    Chú thích: {activeParagraph.footnotes}
+                <div className="pt-4 border-t border-[var(--border-card)]/60 bg-amber-500/[0.03] p-3.5 rounded-2xl">
+                  <span className="text-[10px] font-serif font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 block mb-1">
+                    Chú dẫn Huấn Quyền &amp; Thánh Kinh:
+                  </span>
+                  <p className="text-xs font-serif italic text-[var(--text-muted)] leading-relaxed">
+                    {activeParagraph.footnotes}
                   </p>
                 </div>
               )}
@@ -465,10 +545,17 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
                   id={`ccc-p-${p.paragraph_number}`}
                   className="p-6 sm:p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-md space-y-4 hover:border-amber-500/40 transition"
                 >
-                  <div className="flex items-center justify-between border-b border-[var(--border-card)]/40 pb-3">
-                    <span className="px-3 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 font-serif font-bold text-xs">
-                      GLHTCG Số {p.paragraph_number}
-                    </span>
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-card)]/40 pb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="px-3 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 font-serif font-bold text-xs">
+                        {p.paragraph_number ? `GLHTCG Số ${p.paragraph_number}` : 'Lời Dẫn Nhập'}
+                      </span>
+                      {p.is_in_brief && (
+                        <span className="px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-serif font-bold text-[10px] uppercase">
+                          Tóm Lược
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => toggleBookmark(p.paragraph_number ?? (p as any).id ?? 0)}
@@ -482,8 +569,33 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
 
                   <div 
                     className={`font-serif text-[var(--text-main)] ${fontSizeClass}`}
-                    dangerouslySetInnerHTML={{ __html: p.content_html || p.plain_text || '' }}
+                    dangerouslySetInnerHTML={{ __html: formatCatechismHtml(p.content_html, p.plain_text) }}
                   />
+
+                  {/* Cross References in Continuous Mode */}
+                  {p.cross_references && p.cross_references.length > 0 && (
+                    <div className="pt-3 border-t border-[var(--border-card)]/40 flex flex-wrap items-center gap-1.5">
+                      <span className="text-[11px] font-serif text-[var(--text-muted)] mr-1">Đối chiếu:</span>
+                      {p.cross_references.map(ref => (
+                        <button
+                          key={ref}
+                          onClick={() => openCrossReference(ref)}
+                          className="px-2 py-0.5 rounded-lg bg-amber-500/10 hover:bg-amber-500 hover:text-slate-950 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-[11px] font-mono font-bold transition cursor-pointer"
+                        >
+                          #{ref}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Footnotes in Continuous Mode */}
+                  {p.footnotes && (
+                    <div className="pt-2 border-t border-[var(--border-card)]/40">
+                      <p className="text-[11px] font-serif italic text-[var(--text-muted)] leading-relaxed">
+                        Chú thích: {p.footnotes}
+                      </p>
+                    </div>
+                  )}
                 </article>
               ))}
             </div>
@@ -555,7 +667,7 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
             </div>
           </div>
 
-          {/* Block 2: Paragraph TOC List Navigator */}
+          {/* Block 2: Paragraph TOC List Navigator (Grouped by Chapter/Article + Opening Snippet) */}
           <div className="p-5 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-sm space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-2">
@@ -567,32 +679,54 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
               </span>
             </div>
 
-            <div className="max-h-[min(380px,calc(100vh-280px))] overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-amber-500/20">
+            <div className="max-h-[min(420px,calc(100vh-260px))] overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-amber-500/20">
               {sortedAndFiltered.map((p, idx) => {
                 const isSelected = viewMode === 'single' && currentIndex === idx;
+                const groupLabel = p.article_title || p.chapter_title || p.section_title || null;
+                const prevP = idx > 0 ? sortedAndFiltered[idx - 1] : null;
+                const prevGroupLabel = prevP ? (prevP.article_title || prevP.chapter_title || prevP.section_title || null) : null;
+                const showGroupHeader = groupLabel && groupLabel !== prevGroupLabel;
+                const snippet = getParagraphSnippet(p);
+
                 return (
-                  <button
-                    key={p.id || p.paragraph_number}
-                    onClick={() => {
-                      setCurrentIndex(idx);
-                      if (viewMode === 'continuous') {
-                        const el = document.getElementById(`ccc-p-${p.paragraph_number}`);
-                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      }
-                    }}
-                    className={`w-full px-3 py-2 rounded-xl text-left text-xs font-serif flex items-center justify-between transition cursor-pointer ${
-                      isSelected
-                        ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
-                        : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-main)]'
-                    }`}
-                  >
-                    <span className="truncate">Số {p.paragraph_number}: {p.title || 'Điều khoản'}</span>
-                    {p.is_in_brief && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300 font-bold shrink-0 ml-1">
-                        Tóm Lược
-                      </span>
+                  <React.Fragment key={p.id || p.paragraph_number || idx}>
+                    {showGroupHeader && (
+                      <div className="pt-2.5 pb-1 px-2 text-[10px] font-serif font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 border-b border-amber-500/20 truncate" title={groupLabel}>
+                        {groupLabel}
+                      </div>
                     )}
-                  </button>
+                    <button
+                      onClick={() => {
+                        setCurrentIndex(idx);
+                        if (viewMode === 'continuous') {
+                          const el = document.getElementById(`ccc-p-${p.paragraph_number}`);
+                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                      }}
+                      className={`w-full px-3 py-2 rounded-xl text-left text-xs font-serif flex items-center justify-between gap-2 transition cursor-pointer ${
+                        isSelected
+                          ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
+                          : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-main)]'
+                      }`}
+                    >
+                      <span className="truncate">
+                        <strong className={isSelected ? 'text-slate-950 font-black' : 'text-[var(--text-main)]'}>
+                          {p.paragraph_number ? `Số ${p.paragraph_number}` : 'Dẫn nhập'}
+                        </strong>
+                        {' — '}
+                        <span className="opacity-90">{snippet}</span>
+                      </span>
+                      {p.is_in_brief && (
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold shrink-0 ${
+                          isSelected
+                            ? 'bg-slate-950/20 text-slate-950'
+                            : 'bg-amber-500/20 text-amber-600 dark:text-amber-300'
+                        }`}>
+                          Tóm Lược
+                        </span>
+                      )}
+                    </button>
+                  </React.Fragment>
                 );
               })}
             </div>
@@ -679,15 +813,20 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
               </div>
             ) : popoverData ? (
               <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-                {popoverData.title && (
-                  <h5 className="font-serif font-bold text-sm text-amber-600 dark:text-amber-400">
-                    {popoverData.title}
-                  </h5>
+                {popoverData.full_path && (
+                  <p className="text-[11px] font-serif text-amber-600 dark:text-amber-400">
+                    {popoverData.full_path}
+                  </p>
                 )}
                 <div 
-                  className="font-serif text-xs leading-relaxed text-[var(--text-main)]"
-                  dangerouslySetInnerHTML={{ __html: popoverData.content_html || popoverData.plain_text || '' }}
+                  className="font-serif text-sm leading-relaxed text-[var(--text-main)]"
+                  dangerouslySetInnerHTML={{ __html: formatCatechismHtml(popoverData.content_html, popoverData.plain_text) }}
                 />
+                {popoverData.footnotes && (
+                  <p className="text-[11px] font-serif italic text-[var(--text-muted)] pt-2 border-t border-[var(--border-card)]/50">
+                    Chú thích: {popoverData.footnotes}
+                  </p>
+                )}
               </div>
             ) : (
               <p className="text-xs text-[var(--text-muted)] font-serif">

@@ -6,7 +6,7 @@ import { fetchCatechismParagraphs } from '@/lib/api';
 import CatechismReaderClient from '@/components/CatechismReaderClient';
 import { BookOpen, Scroll, Award } from 'lucide-react';
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 interface PartConfig {
   partNumber: number;
@@ -144,7 +144,7 @@ export default async function CatechismPartPage({ params }: { params: { part: st
   }
 
   // Fetch all paragraphs belonging to this part (ordered by paragraph_number ascending)
-  const { data: paragraphs, count } = await fetchCatechismParagraphs(currentPart.partNumber, undefined, undefined, 1000, 0);
+  const { data: paragraphs, count } = await fetchCatechismParagraphs(currentPart.partNumber, undefined, undefined, 2500, 0);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
   const jsonLd = {
