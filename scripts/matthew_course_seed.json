@@ -1,0 +1,772 @@
+{
+  "course": {
+    "id": 2,
+    "title": "Khảo Cứu Tin Mừng Theo Thánh Mát-thêu",
+    "slug": "tin-mung-mat-theu",
+    "description": "Khảo cứu chuyên sâu Tin Mừng Mát-thêu: Đấng Mê-si-a, Môsê Mới, Hiến Chương Nước Trời và Năm Bài Giảng Lớn.",
+    "thumbnail": "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=1200",
+    "category": "tan-uoc",
+    "level": "Trung Cấp",
+    "published": true,
+    "status": "published",
+    "instructor_name": "Ban Học Vụ & Khảo Cứu Thần Học VERIDU",
+    "instructor_title": "Hội Đồng Giảng Viên Kinh Thánh & Giáo Phụ Học",
+    "instructor_avatar": "https://lh3.googleusercontent.com/d/1iRz6nIRhfEoV_fbxVTCwW0ApQ87IqHK5",
+    "total_duration": "10 Bài Học (42 Tiết)",
+    "certificate_enabled": true,
+    "lessons": [
+      {
+        "title": "Bài 1: Dẫn Nhập Tin Mừng Thứ Nhất & Bố Cục Năm Bài Giảng",
+        "slug": "bai-1-dan-nhap-tin-mung-mat-theu",
+        "description": "Khám phá bối cảnh lịch sử, tác giả Lêvi người thu thuế, cộng đoàn Antiôkia Do Thái Kitô giáo, và kiến trúc 5 Bài Giảng tương ứng với Ngũ Thư Môsê.",
+        "order_index": 1,
+        "duration_minutes": 55,
+        "sections": [
+          {
+            "title": "1.1 Video Dẫn Nhập: Tổng Quan Kiến Trúc Tin Mừng Mát-thêu",
+            "section_type": "video",
+            "order_index": 1,
+            "media_url": "https://www.youtube.com/watch?v=G-2Et3M-9Jw",
+            "duration_minutes": 12,
+            "content_html": "<p>Video giới thiệu bối cảnh lịch sử, truyền thống Giáo phụ về thánh sử Mát-thêu, và cấu trúc văn chương 5 Bài Giảng lớn trong Tin Mừng thứ nhất.</p>"
+          },
+          {
+            "title": "1.2 Chuyên Khảo: Đức Giêsu - Đấng Môsê Mới & Bố Cục Năm Bài Giảng",
+            "section_type": "text",
+            "order_index": 2,
+            "duration_minutes": 25,
+            "content_html": "<div class=\"lesson-text-content space-y-5\">\n<blockquote class=\"scripture-callout\">\n  <div class=\"scripture-icon\">✝</div>\n  <div class=\"scripture-body\">\n    <p class=\"scripture-quote\">\n      \"Anh em đừng tưởng Thầy đến để bãi bỏ Luật Môsê hoặc lời các ngôn sứ. Thầy đến không phải là để bãi bỏ, nhưng là để kiện toàn.\"\n    </p>\n    <cite class=\"scripture-reference\">Tin Mừng theo Thánh Mát-thêu 5:17 (Bản dịch Lm. Nguyễn Thế Thuấn)</cite>\n  </div>\n</blockquote>\n\n<div class=\"abstract-research\">\n  <div class=\"abstract-badge\">KHẢO CỨU VĂN THỂ & THẦN HỌC</div>\n  <p><strong>Luận đề:</strong> Cấu trúc 5 phần của Mát-thêu là một chủ đích thần học có tính toán. Thánh sử muốn độc giả Do Thái nhìn thấy nơi Đức Giêsu một Vị Ban Luật Mới (Môsê Mới) trổi vượt hơn Môsê trên núi Sinai xưa, Đấng hoàn tất mọi lời hứa cứu độ trong Cựu Ước.</p>\n</div>\n\n<h3 class=\"font-serif font-bold text-lg text-amber-600 dark:text-amber-400\">I. Tác Giả & Cộng Đoàn Tiếp Nhận Tiên Khởi</h3>\n<p class=\"leading-relaxed\">\n  Truyền thống Giáo Phụ từ thế kỷ II (Papias thành Hierapolis, Thánh Irênê thành Lyon) đều đồng nhất tác giả Tin Mừng thứ nhất với tông đồ Mát-thêu, tức Lêvi người thu thuế được Chúa gọi (Mt 9:9). Với nghề nghiệp viên chức kiểm thuế tại Cafácnaum, ông có khả năng ghi chép tốc ký bằng cả tiếng Aram lẫn tiếng Hy Lạp phổ thông (Koine Greek).\n</p>\n\n<div class=\"dictionary-meta p-4 rounded-2xl bg-amber-500/[0.06] border border-amber-500/30\">\n  <span class=\"term-greek font-serif font-black text-amber-700 dark:text-amber-300 block mb-1\">Πληρόω (Pleroo)</span>\n  <span class=\"term-definition text-sm text-[var(--text-muted)] leading-relaxed\">\n    \"Làm cho tràn đầy\", \"kiện toàn\", \"ứng nghiệm\". Xuất hiện hơn 16 lần trong Tin Mừng Mát-thêu dưới công thức dẫn nhập: \"Điều này xảy ra để ứng nghiệm lời Đức Chúa phán qua miệng ngôn sứ...\"\n  </span>\n</div>\n\n<h3 class=\"font-serif font-bold text-lg text-amber-600 dark:text-amber-400 mt-6\">II. Bố Cục Ngũ Thư Trong Tân Ước</h3>\n<p class=\"leading-relaxed\">\n  Tương tự như 5 cuốn sách của Bộ Ngũ Thư (Genesis, Exodus, Leviticus, Numbers, Deuteronomy), Mát-thêu sắp xếp cuộc đời công khai của Chúa xoay quanh 5 bài diễn từ lớn:\n</p>\n<ul class=\"space-y-2 my-4 list-disc pl-6 text-sm text-[var(--text-muted)]\">\n  <li><strong>Bài Giảng 1 (Mt 5–7):</strong> Hiến Chương Nước Trời (Đời sống công chính mới trên Núi Bát Phúc).</li>\n  <li><strong>Bài Giảng 2 (Mt 10):</strong> Huấn Lệnh Truyền Giáo (Sứ vụ người môn đệ giữa sói dữ trần gian).</li>\n  <li><strong>Bài Giảng 3 (Mt 13):</strong> Mầu Nhiệm Nước Trời (7 dụ ngôn mạc khải Nước Thiên Chúa).</li>\n  <li><strong>Bài Giảng 4 (Mt 18):</strong> Đời Sống Cộng Đoàn Giáo Hội (Huynh đệ, tha thứ và khiêm nhường như trẻ nhỏ).</li>\n  <li><strong>Bài Giảng 5 (Mt 24–25):</strong> Bài Giảng Cánh Chung (Cuộc quang lâm và phán xét muôn dân).</li>\n</ul>\n\n<div class=\"catechetical-callout important\">\n  <div class=\"callout-title font-bold text-xs uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-1\">GIÁO HUẤN HUẤN QUYỀN (CCC 577 - 582)</div>\n  <p class=\"text-sm leading-relaxed\">Chúa Giêsu không hủy bỏ Torah, nhưng Người mạc khải ý nghĩa tối hậu của nó bằng thẩm quyền Thần linh của Con Thiên Chúa. Luật mới trong Mát-thêu không phải là một gánh nặng luân lý mới, mà là ân sủng được nội tâm hóa nơi trái tim người tín hữu nhờ Thánh Thần.</p>\n</div>\n</div>"
+          },
+          {
+            "title": "1.3 Giáo Trình Chuyên Khảo Bối Cảnh Lịch Sử Tân Ước",
+            "section_type": "pdf",
+            "order_index": 3,
+            "media_url": "https://www.cruxveritatis.org/docs/giao-trinh-tin-mung-mat-theu-chuong-1.pdf",
+            "duration_minutes": 10,
+            "content_html": "<p>Tài liệu đọc tham khảo chương 1: Bối cảnh chính trị xứ Palestine thế kỷ I dưới ách đô hộ La Mã.</p>"
+          },
+          {
+            "title": "1.4 Kiểm Tra Nhận Thức Bài 1 (4 Câu Checkpoint)",
+            "section_type": "quiz",
+            "order_index": 4,
+            "duration_minutes": 8,
+            "quiz_data": [
+              {
+                "id": 101,
+                "question": "Độc giả tiên khởi mà Tin Mừng Mát-thêu trực tiếp hướng tới là đối tượng nào?",
+                "options": [
+                  "Dân ngoại tại thành Rôma",
+                  "Các Kitô hữu gốc Do Thái",
+                  "Người Hy Lạp tại Côrintô",
+                  "Dân thành Samaria"
+                ],
+                "correct_index": 1,
+                "explanation": "Mát-thêu sử dụng vô số lời trích Cựu Ước mà không cần giải thích tập tục Do Thái, cho thấy độc giả của ngài là các tín hữu gốc Do Thái."
+              },
+              {
+                "id": 102,
+                "question": "Năm bài giảng lớn trong Tin Mừng Mát-thêu tương ứng với cấu trúc biểu tượng nào trong Cựu Ước?",
+                "options": [
+                  "Năm cuốn sách của Bộ Ngũ Thư Môsê (Torah)",
+                  "Năm cuộn sách Khôn Ngoan",
+                  "Năm giai đoạn lưu đày Babylon",
+                  "Năm vị Đại Ngôn Sứ"
+                ],
+                "correct_index": 0,
+                "explanation": "Mát-thêu xây dựng hình ảnh Chúa Giêsu như Đấng Môsê Mới ban Tân Luật trên Núi, phản ánh 5 cuốn sách Luật của Cựu Ước."
+              },
+              {
+                "id": 103,
+                "question": "Thuật ngữ Hy Lạp \"Pleroo\" mang ý nghĩa thần học nổi bật nào trong Mát-thêu?",
+                "options": [
+                  "Phán xét thế gian",
+                  "Kiện toàn và ứng nghiệm lời các ngôn sứ",
+                  "Khai trừ tội lỗi",
+                  "Thành lập Đền Thờ mới"
+                ],
+                "correct_index": 1,
+                "explanation": "Pleroo nghĩa là làm cho viên mãn, kiện toàn. Chúa Giêsu không phá hủy mà làm cho Lề Luật đạt đến sự trọn hảo."
+              },
+              {
+                "id": 104,
+                "question": "Tên gọi \"Lêvi\" trước khi đi theo Chúa Giêsu làm nghề gì?",
+                "options": [
+                  "Đánh cá tại hồ Tibêria",
+                  "Thợ mộc tại Nadarét",
+                  "Người thu thuế tại Cafácnaum",
+                  "Biệt phái tại Giêrusalem"
+                ],
+                "correct_index": 2,
+                "explanation": "Tin Mừng Mt 9:9 ghi lại việc Chúa gọi ông Mát-thêu khi ông đang ngồi tại bàn thu thuế ở Cafácnaum."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Bài 2: Gia Phả & Thời Thơ Ấu Của Đấng Emmanuel (Mt 1–2)",
+        "slug": "bai-2-gia-pha-va-thoi-tho-au",
+        "description": "Giải mã cấu trúc 3 giai đoạn 14 đời trong Gia phả, sự hiện diện đặc biệt của 4 phụ nữ ngoại giáo, và Đấng Emmanuel ứng nghiệm lời sấm ngôn sứ Isaia.",
+        "order_index": 2,
+        "duration_minutes": 50,
+        "sections": [
+          {
+            "title": "2.1 Video: Cấu Trúc Thần Học 3x14 Đời Trong Bản Gia Phả Mt 1",
+            "section_type": "video",
+            "order_index": 1,
+            "media_url": "https://www.youtube.com/watch?v=0k1q2w3e4r5",
+            "duration_minutes": 15,
+            "content_html": "<p>Khảo sát ý nghĩa con số 14 (Gematria của tên Vua Đavít: D-V-D = 4+6+4=14) và dòng dõi Đấng Mê-si-a.</p>"
+          },
+          {
+            "title": "2.2 Chuyên Khảo: Bốn Người Phụ Nữ Ngoại Giáo & Danh Xưng Emmanuel",
+            "section_type": "text",
+            "order_index": 2,
+            "duration_minutes": 25,
+            "content_html": "<div class=\"lesson-text-content space-y-4\">\n<blockquote class=\"scripture-callout\">\n  <div class=\"scripture-icon\">✝</div>\n  <div class=\"scripture-body\">\n    <p class=\"scripture-quote\">\n      \"Này đây, Trinh Nữ sẽ thụ thai và sinh hạ một con trai, và người ta sẽ gọi tên con trẻ là Emmanuel, nghĩa là: Thiên Chúa ở cùng chúng ta.\"\n    </p>\n    <cite class=\"scripture-reference\">Tin Mừng theo Thánh Mát-thêu 1:23 (Đối chiếu Is 7:14)</cite>\n  </div>\n</blockquote>\n\n<h3 class=\"font-serif font-bold text-lg text-amber-600 dark:text-amber-400\">Nghịch Lý Bốn Phụ Nữ Trong Bản Gia Phả</h3>\n<p class=\"leading-relaxed\">\n  Khác với phong tục gia phả Do Thái vốn loại trừ phụ nữ, Mát-thêu chủ ý đưa vào 4 nhân vật nữ đặc biệt trước Đức Maria:\n</p>\n<ul class=\"space-y-2 list-disc pl-6 text-sm text-[var(--text-muted)]\">\n  <li><strong>Tama (Mt 1:3):</strong> Người phụ nữ xứ Canaan mang thai với cha chồng là Giuđa.</li>\n  <li><strong>Rakháp (Mt 1:5):</strong> Người phụ nữ ngoại kiều tại Giêrikhô đã đón tiếp các do thám viên Israel.</li>\n  <li><strong>Rút (Mt 1:5):</strong> Người phụ nữ xứ Môáp tiết hạnh kết duyên cùng Bôat.</li>\n  <li><strong>Vợ của Uria (Bát-séba, Mt 1:6):</strong> Người phụ nữ liên quan đến biến cố tội lỗi của Vua Đavít.</li>\n</ul>\n\n<div class=\"catechetical-callout note\">\n  <div class=\"callout-title font-bold text-xs uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-1\">Ý NGHĨA CỨU ĐỘ PHỔ QUÁT</div>\n  <p class=\"text-sm leading-relaxed\">Sự hiện diện của họ chứng minh rằng: Ơn Cứu Độ của Đức Kitô mở ra cho muôn dân (kể cả dân ngoại), và Thiên Chúa viết thẳng trên những đường cong của lịch sử nhân loại đầy thương tổn.</p>\n</div>\n</div>"
+          },
+          {
+            "title": "2.3 Trắc Nghiệm Nhận Thức Bài 2 (3 Câu)",
+            "section_type": "quiz",
+            "order_index": 3,
+            "duration_minutes": 10,
+            "quiz_data": [
+              {
+                "id": 201,
+                "question": "Danh hiệu \"Emmanuel\" trong tiếng Do Thái có nghĩa là gì?",
+                "options": [
+                  "Đấng Cứu Độ muôn dân",
+                  "Thiên Chúa ở cùng chúng ta",
+                  "Con Vua Đavít",
+                  "Đấng Toàn Năng"
+                ],
+                "correct_index": 1,
+                "explanation": "Mt 1:23 giải nghĩa rõ: Emmanuel nghĩa là \"Thiên Chúa ở cùng chúng ta\"."
+              },
+              {
+                "id": 202,
+                "question": "Bốn người phụ nữ xuất hiện trong bản gia phả của Mát-thêu có điểm chung nổi bật nào?",
+                "options": [
+                  "Đều là nữ hoàng Israel",
+                  "Đều là người ngoại giáo hoặc có hoàn cảnh hôn nhân dị thường được ân sủng đón nhận",
+                  "Đều là nữ ngôn sứ",
+                  "Đều thuộc bộ tộc Lêvi"
+                ],
+                "correct_index": 1,
+                "explanation": "Họ là những người ngoại kiều hoặc hoàn cảnh phi truyền thống, báo trước ơn cứu độ cho muôn dân ngoại."
+              },
+              {
+                "id": 203,
+                "question": "Các Đạo Sĩ từ phương Đông đến bái lạy Chúa Hài Nhi đã dâng những lễ vật nào?",
+                "options": [
+                  "Vàng, Nhũ hương, và Mộc dược",
+                  "Bạc, Lụa là, và Dầu thơm",
+                  "Bánh miến, Rượu nho, và Dầu ôliu",
+                  "Chiên, Bò, và Chim bồ câu"
+                ],
+                "correct_index": 0,
+                "explanation": "Vàng kính Chúa là Vua, Nhũ hương kính Chúa là Thiên Chúa, Mộc dược báo trước cuộc mai táng của Người."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Bài 3: Phép Rửa Tại Sông Gio-đan & Thử Thách Sa Mạc (Mt 3–4)",
+        "slug": "bai-3-phep-rua-va-thu-thach-sa-mac",
+        "description": "Phân tích biến cố Thánh Thần ngự xuống, tiếng phán Cha-Con, ba cám dỗ đối đầu với Satan trong sa mạc, và ơn gọi 4 môn đệ đầu tiên tại Galilê.",
+        "order_index": 3,
+        "duration_minutes": 60,
+        "sections": [
+          {
+            "title": "3.1 Video: Tiếng Hô Trong Hoang Địa Của Gioan Tiền Hô",
+            "section_type": "video",
+            "order_index": 1,
+            "media_url": "https://www.youtube.com/watch?v=1a2b3c4d5e6",
+            "duration_minutes": 15,
+            "content_html": "<p>Video giải thích ý nghĩa phép rửa thống hối và sự khiêm hạ tột cùng của Chúa Giêsu khi bước xuống dòng nước Gio-đan.</p>"
+          },
+          {
+            "title": "3.2 Chuyên Khảo: Ba Cám Dỗ — Chúa Giêsu Chiến Thắng Sa-tan Bằng Lời Chúa",
+            "section_type": "text",
+            "order_index": 2,
+            "duration_minutes": 25,
+            "content_html": "<div class=\"lesson-text-content space-y-4\">\n<blockquote class=\"scripture-callout\">\n  <div class=\"scripture-icon\">✝</div>\n  <div class=\"scripture-body\">\n    <p class=\"scripture-quote\">\n      \"Người ta sống không chỉ nhờ bánh, nhưng còn nhờ mọi lời miệng Thiên Chúa phán ra.\"\n    </p>\n    <cite class=\"scripture-reference\">Tin Mừng theo Thánh Mát-thêu 4:4 (Trích dẫn Đnl 8:3)</cite>\n  </div>\n</blockquote>\n\n<h3 class=\"font-serif font-bold text-lg text-amber-600 dark:text-amber-400\">Ba Chiêu Thức Thử Thách Của Satan</h3>\n<p class=\"leading-relaxed\">\n  Chúa Giêsu trải qua 40 đêm ngày chay tịnh, tái hiện 40 năm dân Israel lang thang trong sa mạc. Trong khi Israel xưa vấp ngã vì nghi ngờ, kêu trách và thờ ngẫu tượng, Chúa Giêsu — Người Con Chí Ái — đã chiến thắng tuyệt đối cả ba cám dỗ:\n</p>\n<ul class=\"space-y-2 list-disc pl-6 text-sm text-[var(--text-muted)]\">\n  <li><strong>Cám dỗ vật chất (Biến đá thành bánh):</strong> Khước từ biến đức tin thành phương tiện thỏa mãn nhục thể.</li>\n  <li><strong>Cám dỗ quyền lực phù phiếm (Gieo mình từ nóc Đền Thờ):</strong> Khước từ thử thách lòng trung tín của Thiên Chúa bằng phép lạ biểu diễn.</li>\n  <li><strong>Cám dỗ danh vọng thế gian (Sấp mình thờ lạy Satan):</strong> Xác quyết duy chỉ thờ phượng một mình Thiên Chúa.</li>\n</ul>\n</div>"
+          },
+          {
+            "title": "3.3 Nghe Suy Niệm: Tiếng Gọi \"Hãy Theo Thầy\"",
+            "section_type": "audio",
+            "order_index": 3,
+            "media_url": "https://www.cruxveritatis.org/audio/lectio-tieng-goi.mp3",
+            "duration_minutes": 10,
+            "content_html": "<p>Chiêm niệm lời mời gọi 4 ngư phủ Phêrô, Anrê, Giacôbê và Gioan từ bỏ lưới thuyền để trở thành những kẻ lưới người.</p>"
+          },
+          {
+            "title": "3.4 Trắc Nghiệm Nhận Thức Bài 3 (3 Câu)",
+            "section_type": "quiz",
+            "order_index": 4,
+            "duration_minutes": 10,
+            "quiz_data": [
+              {
+                "id": 301,
+                "question": "Khi ma quỷ cám dỗ Chúa biến đá thành bánh, Người đã dùng sách nào trong Cựu Ước để đáp lại?",
+                "options": [
+                  "Sách Đệ Nhị Luật (Deuteronomy)",
+                  "Sách Sáng Thế",
+                  "Sách Thánh Vịnh",
+                  "Sách Ngôn Sứ Isaia"
+                ],
+                "correct_index": 0,
+                "explanation": "Cả 3 lần trả lời Satan, Chúa Giêsu đều trích dẫn từ Sách Đệ Nhị Luật (Đnl 8:3, Đnl 6:16, Đnl 6:13)."
+              },
+              {
+                "id": 302,
+                "question": "Hình ảnh chim bồ câu ngự xuống trên Chúa Giêsu tại sông Gio-đan biểu trưng cho điều gì?",
+                "options": [
+                  "Hòa bình trần gian",
+                  "Chúa Thánh Thần xức dầu tấn phong sứ vụ Mê-si-a",
+                  "Lời hứa với ông Nôê",
+                  "Sự ngây thơ vô tội"
+                ],
+                "correct_index": 1,
+                "explanation": "Thánh Thần ngự xuống xức dầu cho Đức Kitô để Người khởi sự sứ vụ Cứu thế."
+              },
+              {
+                "id": 303,
+                "question": "Chúa Giêsu bắt đầu rao giảng tại Galilê với lời hiệu triệu nào?",
+                "options": [
+                  "Hãy xây dựng lại Đền Thờ",
+                  "Anh em hãy sám hối, vì Nước Trời đã đến gần",
+                  "Hãy dâng của lễ đền tội",
+                  "Hãy cầm vũ khí chống lại La Mã"
+                ],
+                "correct_index": 1,
+                "explanation": "Mt 4:17 ghi: Từ lúc đó, Đức Giêsu bắt đầu rao giảng: \"Anh em hãy sám hối, vì Nước Trời đã đến gần\"."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Bài 4: Hiến Chương Nước Trời (Phần I) — Bát Phúc & Tân Luật (Mt 5)",
+        "slug": "bai-4-bai-giang-tren-nui-bat-phuc",
+        "description": "Đi sâu vào Tám Mối Phúc Thật, vai trò Muối của đất và Ánh sáng cho trần gian, cùng 6 phản đề kiện toàn Luật Môsê từ cội rễ con tim.",
+        "order_index": 4,
+        "duration_minutes": 75,
+        "sections": [
+          {
+            "title": "4.1 Video: Khảo Sát Địa Lý Thánh & Núi Bát Phúc Ga-li-lê",
+            "section_type": "video",
+            "order_index": 1,
+            "media_url": "https://www.youtube.com/watch?v=2b3c4d5e6f7",
+            "duration_minutes": 15,
+            "content_html": "<p>Khảo sát ngọn đồi thoai thoải bên hồ Galilê nơi Chúa quy tụ dân chúng công bố Bát Phúc.</p>"
+          },
+          {
+            "title": "4.2 Chú Giải Chuyên Sâu: Tám Mối Phúc Thật & Nghịch Lý Thần Linh (Mt 5:1-12)",
+            "section_type": "text",
+            "order_index": 2,
+            "duration_minutes": 35,
+            "content_html": "<div class=\"lesson-text-content space-y-4\">\n<blockquote class=\"scripture-callout\">\n  <div class=\"scripture-icon\">✝</div>\n  <div class=\"scripture-body\">\n    <p class=\"scripture-quote\">\n      \"Phúc thay ai có tâm hồn nghèo khó, vì Nước Trời là của họ. Phúc thay ai hiền lành, vì họ sẽ được Đất Hứa làm gia nghiệp...\"\n    </p>\n    <cite class=\"scripture-reference\">Tin Mừng theo Thánh Mát-thêu 5:3-4 (Bản dịch Lm. Nguyễn Thế Thuấn)</cite>\n  </div>\n</blockquote>\n\n<div class=\"prayer-block\">\n  <div class=\"prayer-header\">\n    <span class=\"prayer-cross\">†</span>\n    <span class=\"prayer-title\">Kinh Nguyện Suy Chiêm Tinh Thần Nghèo Khó</span>\n  </div>\n  <div class=\"prayer-content\">\n    Lạy Chúa Giêsu, Chúa đã tự hạ để đồng hành cùng những kẻ nghèo hèn và khiêm tốn. Xin thanh tẩy tâm trí con khỏi lòng kiêu ngạo tự mãn, để con hoàn toàn cậy dựa vào ân sủng Chúa, tìm được gia nghiệp đích thực nơi Nước Trời mai sau. Amen.\n  </div>\n</div>\n\n<h3 class=\"font-serif font-bold text-lg text-amber-600 dark:text-amber-400\">I. Ý Nghĩa Của Từ \"Makarios\" (Hạnh Phúc)</h3>\n<p class=\"leading-relaxed\">\n  Trong tiếng Hy Lạp, từ <em>Makarios</em> (μακάριος) không đơn thuần là cảm xúc vui vẻ chóng qua của thế tục. Từ này trong truyền thống Kinh Thánh dùng để chỉ trạng thái hoan hỷ thần linh của chính Thiên Chúa, nay được chia sẻ cho con người.\n</p>\n\n<div class=\"dictionary-meta p-4 rounded-2xl bg-amber-500/[0.06] border border-amber-500/30\">\n  <span class=\"term-greek font-serif font-black text-amber-700 dark:text-amber-300 block mb-1\">Anawim (עֲנָוִים)</span>\n  <span class=\"term-definition text-sm text-[var(--text-muted)] leading-relaxed\">\n    Trong Cựu Ước, Anawim là tầng lớp \"những người nghèo của Đức Chúa\" — những người không có điểm tựa trần gian (tiền bạc, quyền lực chính trị) nên chỉ biết đặt trọn niềm tin và sự giải thoát vào Thiên Chúa.\n  </span>\n</div>\n\n<h3 class=\"font-serif font-bold text-lg text-amber-600 dark:text-amber-400 mt-6\">II. Sáu Phản Đề Hoàn Tất Tân Luật</h3>\n<p class=\"leading-relaxed\">\n  Đức Giêsu nâng Lề Luật từ sự tuân giữ hình thức bên ngoài lên sự hoán cải tận cội rễ con tim: \"Các con đã nghe dạy... Còn Thầy, Thầy bảo các con...\":\n</p>\n<ul class=\"space-y-3 my-4 text-sm\">\n  <li class=\"p-3 bg-amber-500/5 rounded-xl border-l-2 border-amber-500\">\n    <strong>1. Đừng giết người &rarr; Đừng giận ghét huynh đệ:</strong> Cắt đứt tội giết người ngay từ mầm mống thù hằn trong tư tưởng.\n  </li>\n  <li class=\"p-3 bg-amber-500/5 rounded-xl border-l-2 border-amber-500\">\n    <strong>2. Chớ ngoại tình &rarr; Chớ nhìn phụ nữ với dục vọng:</strong> Bảo vệ sự trong sạch của con tim trước khi hành vi xảy ra.\n  </li>\n  <li class=\"p-3 bg-amber-500/5 rounded-xl border-l-2 border-amber-500\">\n    <strong>3. Mắt đền mắt &rarr; Yêu thương kẻ thù:</strong> Đỉnh cao của căn tính Kitô giáo, phản ánh lòng nhân hậu hoàn hảo của Chúa Cha trên trời (Mt 5:48).\n  </li>\n</ul>\n</div>"
+          },
+          {
+            "title": "4.3 Nghe Bài Suy Niệm: Muối Cho Đời & Ánh Sáng Cho Trần Gian",
+            "section_type": "audio",
+            "order_index": 3,
+            "media_url": "https://www.cruxveritatis.org/audio/lectio-bat-phuc.mp3",
+            "duration_minutes": 15,
+            "content_html": "<p>Suy niệm Lectio Divina về trách nhiệm biến đổi trần thế của người Kitô hữu.</p>"
+          },
+          {
+            "title": "4.4 Kiểm Tra Nhận Thức Bài 4 (4 Câu Checkpoint)",
+            "section_type": "quiz",
+            "order_index": 4,
+            "duration_minutes": 10,
+            "quiz_data": [
+              {
+                "id": 401,
+                "question": "Mối phúc đầu tiên trong Tin Mừng Mát-thêu hứa ban phần thưởng nào cho \"những ai có tâm hồn nghèo khó\"?",
+                "options": [
+                  "Sẽ được thấy Thiên Chúa",
+                  "Nước Trời là của họ",
+                  "Sẽ được gọi là con Thiên Chúa",
+                  "Sẽ được Đất Hứa làm gia nghiệp"
+                ],
+                "correct_index": 1,
+                "explanation": "Mt 5:3 ghi rõ: \"Phúc thay ai có tâm hồn nghèo khó, vì Nước Trời là của họ\"."
+              },
+              {
+                "id": 402,
+                "question": "Tầng lớp \"Anawim\" trong Cựu Ước có đặc điểm gì?",
+                "options": [
+                  "Giàu có và bảo thủ",
+                  "Những người nghèo hèn chỉ biết cậy trông tuyệt đối vào Thiên Chúa",
+                  "Binh lính tham gia khởi nghĩa vũ trang",
+                  "Nhóm Biệt phái tuân giữ luật tỉ mỉ"
+                ],
+                "correct_index": 1,
+                "explanation": "Anawim là người nghèo của Đức Chúa, phó thác số phận cho một mình Thiên Chúa."
+              },
+              {
+                "id": 403,
+                "question": "Lệnh truyền \"Các con hãy nên hoàn thiện như Cha các con trên trời là Đấng hoàn thiện\" (Mt 5:48) được đặt ở cuối lời dạy nào của Chúa?",
+                "options": [
+                  "Lời dạy về cầu nguyện kín đáo",
+                  "Lời dạy về yêu thương kẻ thù và cầu nguyện cho kẻ ngược đãi",
+                  "Lời dạy về đóng thuế cho Caesar",
+                  "Lời dạy về việc bố thí"
+                ],
+                "correct_index": 1,
+                "explanation": "Đỉnh cao của sự hoàn thiện theo Mát-thêu là tình yêu vô điều kiện mở rộng đến cả kẻ thù, phản ánh sự tốt lành của Chúa Cha."
+              },
+              {
+                "id": 404,
+                "question": "Khi so sánh môn đệ với \"Muối đất\", Chúa Giêsu cảnh báo điều gì nếu muối bị \"nhạt đi\"?",
+                "options": [
+                  "Không còn dùng làm chi được nữa, chỉ còn quăng ra ngoài cho người ta chà đạp",
+                  "Phải đem rửa sạch bằng nước sông Gio-đan",
+                  "Phải trộn thêm với hương thơm Đền Thờ",
+                  "Sẽ biến thành bụi tro"
+                ],
+                "correct_index": 0,
+                "explanation": "Mt 5:13 cảnh báo muối mất chất mặn thì vô giá trị, người môn đệ mất đi tinh thần Tin Mừng thì không thể biến đổi trần gian."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Bài 5: Hiến Chương Nước Trời (Phần II) — Kinh Lạy Cha & Sự Công Chính (Mt 6–7)",
+        "slug": "bai-5-bai-giang-tren-nui-kinh-lay-cha",
+        "description": "Tìm hiểu ba việc đạo đức cốt lõi trong bí mật: Bố thí, Cầu nguyện, Ăn chay; giải nghĩa từng lời khẩn cầu trong Kinh Lạy Cha và dụ ngôn xây nhà trên đá.",
+        "order_index": 5,
+        "duration_minutes": 70,
+        "sections": [
+          {
+            "title": "5.1 Video: Ba Thực Hành Đạo Đức Kín Đáo & Cảnh Giác Với Thói Đạo Đức Giả",
+            "section_type": "video",
+            "order_index": 1,
+            "media_url": "https://www.youtube.com/watch?v=3c4d5e6f7g8",
+            "duration_minutes": 15,
+            "content_html": "<p>Phân tích lời dạy của Chúa Giêsu về việc tránh phô trương đạo đức trước mặt người đời.</p>"
+          },
+          {
+            "title": "5.2 Chú Giải Chuyên Khảo: Cấu Trúc Bảy Lời Khẩn Cầu Trong Kinh Lạy Cha",
+            "section_type": "text",
+            "order_index": 2,
+            "duration_minutes": 35,
+            "content_html": "<div class=\"lesson-text-content space-y-4\">\n<blockquote class=\"scripture-callout\">\n  <div class=\"scripture-icon\">✝</div>\n  <div class=\"scripture-body\">\n    <p class=\"scripture-quote\">\n      \"Lạy Cha chúng con ở trên trời, chúng con nguyện danh Cha cả sáng, Nước Cha trị đến, ý Cha thể hiện dưới đất cũng như trên trời...\"\n    </p>\n    <cite class=\"scripture-reference\">Tin Mừng theo Thánh Mát-thêu 6:9-10</cite>\n  </div>\n</blockquote>\n\n<h3 class=\"font-serif font-bold text-lg text-amber-600 dark:text-amber-400\">Bảy Lời Khẩn Cầu Cứu Độ</h3>\n<p class=\"leading-relaxed\">\n  Thánh Augustinô nhận định Kinh Lạy Cha (Pater Noster) chứa đựng trọn vẹn mọi khát vọng chính đáng của linh hồn. Lời kinh được chia thành hai phần cân đối:\n</p>\n<ul class=\"space-y-2 list-disc pl-6 text-sm text-[var(--text-muted)]\">\n  <li><strong>3 Lời nguyện hướng về Thiên Chúa:</strong> Danh Cha - Nước Cha - Ý Cha. Đặt Thiên Chúa vào vị trí tối thượng của cuộc đời.</li>\n  <li><strong>4 Lời cầu cho nhu cầu con người:</strong> Lương thực hằng ngày - Ơn tha thứ tội lỗi - Thoát khỏi cám dỗ - Cứu khỏi sự dữ.</li>\n</ul>\n</div>"
+          },
+          {
+            "title": "5.3 Trắc Nghiệm Nhận Thức Bài 5 (3 Câu)",
+            "section_type": "quiz",
+            "order_index": 3,
+            "duration_minutes": 10,
+            "quiz_data": [
+              {
+                "id": 501,
+                "question": "Trong Kinh Lạy Cha theo Mát-thêu, có tất cả bao nhiêu lời khẩn nguyện?",
+                "options": [
+                  "5 lời cầu",
+                  "7 lời cầu",
+                  "9 lời cầu",
+                  "12 lời cầu"
+                ],
+                "correct_index": 1,
+                "explanation": "Mát-thêu ghi lại 7 lời cầu (3 lời cầu hướng lên Thiên Chúa và 4 lời cầu cho nhu cầu nhân loại)."
+              },
+              {
+                "id": 502,
+                "question": "Chúa Giêsu dạy điều kiện tiên quyết để được Chúa Cha tha nợ tội là gì?",
+                "options": [
+                  "Phải ăn chay bốn mươi ngày",
+                  "Chúng ta cũng phải tha nợ cho những người có lỗi với chúng ta",
+                  "Phải dâng nhiều của lễ đền tạ",
+                  "Phải thuộc lòng sách Luật"
+                ],
+                "correct_index": 1,
+                "explanation": "Mt 6:14-15: \"Nếu anh em tha lỗi cho người ta, thì Cha anh em trên trời cũng sẽ tha thứ cho anh em\"."
+              },
+              {
+                "id": 503,
+                "question": "Người nghe Lời Chúa mà đem ra thực hành được ví như người thế nào?",
+                "options": [
+                  "Người khôn ngoan xây nhà trên đá tảng",
+                  "Người gieo giống trên đất phì nhiêu",
+                  "Người tìm được kho tàng chôn giấu",
+                  "Người mục tử nhân lành"
+                ],
+                "correct_index": 0,
+                "explanation": "Mt 7:24: Ai nghe Lời Thầy mà đem ra thực hành thì ví như người khôn ngoan xây nhà trên đá, mưa sa nước cuốn nhà vẫn đứng vững."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Bài 6: Thừa Tác Vụ Quyền Năng & Huấn Lệnh Sai Đi (Mt 8–10)",
+        "slug": "bai-6-thua-tac-vu-quyen-nang-va-sai-di",
+        "description": "Mười dấu lạ chữa lành quyền năng giải phóng con người khỏi bệnh tật, quỷ dữ và thiên nhiên; bài giảng thứ hai về Huấn lệnh truyền giáo cho Nhóm Mười Hai.",
+        "order_index": 6,
+        "duration_minutes": 60,
+        "sections": [
+          {
+            "title": "6.1 Video: Mười Phép Lạ Biểu Minh Đấng Mê-si-a (Mt 8–9)",
+            "section_type": "video",
+            "order_index": 1,
+            "media_url": "https://www.youtube.com/watch?v=4d5e6f7g8h9",
+            "duration_minutes": 15,
+            "content_html": "<p>Phân tích chuỗi 10 phép lạ chứng thực quyền năng Thiên Sai sau Bài Giảng Trên Núi.</p>"
+          },
+          {
+            "title": "6.2 Chuyên Khảo: Bài Giảng Truyền Giáo (Mt 10) — Như Chiên Đi Vào Giữa Bầy Sói",
+            "section_type": "text",
+            "order_index": 2,
+            "duration_minutes": 25,
+            "content_html": "<div class=\"lesson-text-content space-y-4\">\n<blockquote class=\"scripture-callout\">\n  <div class=\"scripture-icon\">✝</div>\n  <div class=\"scripture-body\">\n    <p class=\"scripture-quote\">\n      \"Này, Thầy sai anh em đi như chiên đi vào giữa bầy sói. Vậy anh em phải khôn khéo như rắn và đơn sơ như bồ câu.\"\n    </p>\n    <cite class=\"scripture-reference\">Tin Mừng theo Thánh Mát-thêu 10:16</cite>\n  </div>\n</blockquote>\n\n<h3 class=\"font-serif font-bold text-lg text-amber-600 dark:text-amber-400\">Các Nguyên Tắc Truyền Giáo Nòng Cốt</h3>\n<p class=\"leading-relaxed\">\n  Chúa Giêsu chuẩn bị cho các tông đồ tinh thần thanh thoát, không mang theo vàng bạc bị gậy, và sẵn sàng đối diện với sự thù ghét vì Danh Thầy. Người truyền giáo không cậy dựa vào quyền lực phàm trần nhưng phó thác cho sự chở che của Chúa Cha.\n</p>\n</div>"
+          },
+          {
+            "title": "6.3 Trắc Nghiệm Nhận Thức Bài 6 (3 Câu)",
+            "section_type": "quiz",
+            "order_index": 3,
+            "duration_minutes": 10,
+            "quiz_data": [
+              {
+                "id": 601,
+                "question": "Khi sai Nhóm Mười Hai đi truyền giáo lần đầu, Chúa Giêsu dặn họ đi đến với ai trước tiên?",
+                "options": [
+                  "Các con chiên lạc nhà Israel",
+                  "Dân ngoại thành Samaria",
+                  "Các thành phố Hy Lạp",
+                  "Các triều đình La Mã"
+                ],
+                "correct_index": 0,
+                "explanation": "Mt 10:5-6: \"Đừng đi về phía các dân ngoại... nhưng tốt hơn là hãy đến với các con chiên lạc của nhà Israel\"."
+              },
+              {
+                "id": 602,
+                "question": "Lời dạy \"khôn khéo như rắn và đơn sơ như bồ câu\" khuyên người môn đệ điều gì?",
+                "options": [
+                  "Biết kết hợp sự khôn ngoan sáng suốt với lòng trong sạch thanh khiết",
+                  "Tránh né mọi nguy hiểm bằng mánh khóe",
+                  "Tách biệt hoàn toàn khỏi thế giới",
+                  "Tìm kiếm sự an toàn vật chất"
+                ],
+                "correct_index": 0,
+                "explanation": "Người môn đệ cần có sự sắc bén trí tuệ để nhận diện sự dữ nhưng giữ tâm hồn tinh tuyền, không mưu mô ác độc."
+              },
+              {
+                "id": 603,
+                "question": "Chúa Giêsu khẳng định ai cho dù chỉ một chén nước lã vì danh nghĩa môn đệ Thầy thì sẽ thế nào?",
+                "options": [
+                  "Sẽ không mất phần thưởng",
+                  "Sẽ được làm thủ lãnh",
+                  "Sẽ được giàu có trần thế",
+                  "Sẽ không bao giờ khát nữa"
+                ],
+                "correct_index": 0,
+                "explanation": "Mt 10:42: \"Kẻ nào cho một trong những người bé mọn này uống một chén nước lã vì là môn đệ Thầy, Thầy bảo thật anh em, người đó sẽ không mất phần thưởng\"."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Bài 7: Mầu Nhiệm Nước Trời Qua Bảy Dụ Ngôn (Mt 13)",
+        "slug": "bai-7-mau-nhiem-nuoc-troi-qua-du-ngon",
+        "description": "Bài giảng thứ ba với 7 dụ ngôn hạt giống, cỏ lùng, hạt cải, men trong bột, kho báu, viên ngọc quý và mẻ lưới cá.",
+        "order_index": 7,
+        "duration_minutes": 65,
+        "sections": [
+          {
+            "title": "7.1 Video: Nghệ Thuật Dụ Ngôn (Mashal) Trong Kinh Thánh",
+            "section_type": "video",
+            "order_index": 1,
+            "media_url": "https://www.youtube.com/watch?v=5e6f7g8h9i0",
+            "duration_minutes": 15,
+            "content_html": "<p>Tìm hiểu phương pháp sư phạm dùng dụ ngôn thường nhật để mạc khải mầu nhiệm siêu nhiên của Chúa Giêsu.</p>"
+          },
+          {
+            "title": "7.2 Chuyên Khảo: Bảy Dụ Ngôn Về Nước Trời — Sự Nhẫn Nại Của Thiên Chúa",
+            "section_type": "text",
+            "order_index": 2,
+            "duration_minutes": 25,
+            "content_html": "<div class=\"lesson-text-content space-y-4\">\n<blockquote class=\"scripture-callout\">\n  <div class=\"scripture-icon\">✝</div>\n  <div class=\"scripture-body\">\n    <p class=\"scripture-quote\">\n      \"Nước Trời giống như chuyện kho báu chôn giấu trong ruộng. Có người tìm được thì giấu đi, rồi vui mừng bán tất cả những gì mình có mà mua thửa ruộng ấy.\"\n    </p>\n    <cite class=\"scripture-reference\">Tin Mừng theo Thánh Mát-thêu 13:44</cite>\n  </div>\n</blockquote>\n\n<h3 class=\"font-serif font-bold text-lg text-amber-600 dark:text-amber-400\">Ý Nghĩa Thần Học Bảy Dụ Ngôn</h3>\n<ul class=\"space-y-2 list-disc pl-6 text-sm text-[var(--text-muted)]\">\n  <li><strong>Người gieo giống:</strong> Đón nhận Lời Chúa với bốn loại mảnh đất tâm hồn.</li>\n  <li><strong>Lúa và cỏ lùng:</strong> Sự kiên nhẫn của Thiên Chúa chờ đợi người tội lỗi hoán cải cho đến ngày mùa phán xét.</li>\n  <li><strong>Hạt cải & Men trong bột:</strong> Sức sống biến đổi âm thầm nhưng mãnh liệt của Nước Trời.</li>\n  <li><strong>Kho báu & Viên ngọc quý:</strong> Giá trị vô song đòi hỏi sự dấn thân triệt để từ bỏ mọi sự.</li>\n  <li><strong>Mẻ lưới cá:</strong> Sự phán xét phân loại người lành và kẻ dữ trong ngày cánh chung.</li>\n</ul>\n</div>"
+          },
+          {
+            "title": "7.3 Trắc Nghiệm Nhận Thức Bài 7 (3 Câu)",
+            "section_type": "quiz",
+            "order_index": 3,
+            "duration_minutes": 10,
+            "quiz_data": [
+              {
+                "id": 701,
+                "question": "Trong dụ ngôn Cỏ lùng, chủ nhà đã ra lệnh cho thợ gặt làm gì khi thấy cỏ lùng mọc lẫn với lúa?",
+                "options": [
+                  "Nhổ ngay cỏ lùng lập tức",
+                  "Cứ để cả hai cùng lớn lên cho đến mùa gặt",
+                  "Đốt cháy cả ruộng",
+                  "Bỏ mặc thửa ruộng"
+                ],
+                "correct_index": 1,
+                "explanation": "Mt 13:30: \"Cứ để cả hai cùng lớn lên cho đến mùa gặt\", biểu trưng cho sự nhẫn nại của Thiên Chúa chờ đợi người tội lỗi hoán cải."
+              },
+              {
+                "id": 702,
+                "question": "Hình ảnh \"Hạt cải\" nhỏ bé trở thành cây to cho chim trời làm tổ biểu trưng cho điều gì?",
+                "options": [
+                  "Sự phát triển vượt bậc của Nước Trời từ khởi đầu khiêm tốn",
+                  "Sự giàu có trần thế",
+                  "Thời tiết thuận lợi",
+                  "Quyền lực chính trị"
+                ],
+                "correct_index": 0,
+                "explanation": "Nước Trời khởi đầu nhỏ bé nơi nhóm môn đệ nhưng sẽ lan tỏa bao trùm muôn dân muôn nước."
+              },
+              {
+                "id": 703,
+                "question": "Điểm chung giữa người tìm được \"Kho báu\" và người tìm được \"Viên ngọc quý\" là gì?",
+                "options": [
+                  "Họ đều đem giấu đi không cho ai biết",
+                  "Họ vui mừng bán tất cả những gì mình có để sở hữu điều quý giá ấy",
+                  "Họ bị trộm cướp lấy mất",
+                  "Họ dâng của cải vào Đền Thờ"
+                ],
+                "correct_index": 1,
+                "explanation": "Giá trị tuyệt đối của Nước Trời xứng đáng để người môn đệ sẵn sàng đánh đổi mọi của cải trần thế."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Bài 8: Giáo Hội Luận & Tuyên Tín Phêrô (Mt 16–18)",
+        "slug": "bai-8-giao-hoi-luan-va-tuyen-tin-phe-ro",
+        "description": "Lời tuyên xưng Cêsarêa Philipphê, trao Chìa khóa Nước Trời cho Thánh Phêrô, Biến Hình trên núi cao, và bài giảng thứ tư về kỷ luật cộng đoàn Giáo Hội.",
+        "order_index": 8,
+        "duration_minutes": 80,
+        "sections": [
+          {
+            "title": "8.1 Video: Biến Cố Cêsarêa Philipphê — \"Thầy Là Đấng Kitô\"",
+            "section_type": "video",
+            "order_index": 1,
+            "media_url": "https://www.youtube.com/watch?v=6f7g8h9i0j1",
+            "duration_minutes": 15,
+            "content_html": "<p>Khảo sát di tích Cêsarêa Philipphê dưới chân núi Hermon và bối cảnh trao quyền tối thượng cho Phêrô.</p>"
+          },
+          {
+            "title": "8.2 Chú Giải Tín Lý: Đá Tảng Phêrô, Chìa Khóa Nước Trời & Giáo Hội Luận",
+            "section_type": "text",
+            "order_index": 2,
+            "duration_minutes": 35,
+            "content_html": "<div class=\"lesson-text-content space-y-4\">\n<blockquote class=\"scripture-callout\">\n  <div class=\"scripture-icon\">✝</div>\n  <div class=\"scripture-body\">\n    <p class=\"scripture-quote\">\n      \"Thầy bảo cho anh biết: Anh là Phêrô, nghĩa là Tảng Đá, trên tảng đá này, Thầy sẽ xây Hội Thánh của Thầy, và quyền lực tử thần sẽ không thắng nổi.\"\n    </p>\n    <cite class=\"scripture-reference\">Tin Mừng theo Thánh Mát-thêu 16:18</cite>\n  </div>\n</blockquote>\n\n<div class=\"abstract-research\">\n  <div class=\"abstract-badge\">TÍN LÝ GIÁO HỘI (ECCLESIOLOGY)</div>\n  <p><strong>Điểm độc nhất:</strong> Từ \"Hội Thánh\" (<em>Ekklesia</em>) chỉ xuất hiện duy nhất trong Tin Mừng Mát-thêu (Mt 16:18 và Mt 18:17), không có trong Mác-cô, Luca hay Gioan. Mát-thêu đặt nền móng vững chắc cho phẩm trật và đời sống hiệp thông của Giáo Hội.</p>\n</div>\n\n<h3 class=\"font-serif font-bold text-lg text-amber-600 dark:text-amber-400\">Ý Nghĩa Của Quyền Cầm Buộc & Tháo Cởi</h3>\n<p class=\"leading-relaxed\">\n  Hình ảnh trao \"Chìa khóa Nước Trời\" và quyền \"cầm buộc và tháo cởi\" (<em>asar / sharah</em> trong truyền thống Do Thái) là sự ủy thác quyền bính tối cao về giảng dạy, kỷ luật đức tin và tha thứ tội lỗi cho Phêrô và các đấng kế vị ngài (Giáo hoàng).\n</p>\n</div>"
+          },
+          {
+            "title": "8.3 Trắc Nghiệm Nhận Thức Bài 8 (3 Câu)",
+            "section_type": "quiz",
+            "order_index": 3,
+            "duration_minutes": 10,
+            "quiz_data": [
+              {
+                "id": 801,
+                "question": "Từ ngữ \"Hội Thánh\" (Ekklesia) xuất hiện trong sách Tin Mừng nào trong bốn Tin Mừng?",
+                "options": [
+                  "Chỉ xuất hiện duy nhất trong Tin Mừng Mát-thêu",
+                  "Xuất hiện trong cả 4 Tin Mừng",
+                  "Chỉ có trong Luca và Gioan",
+                  "Chỉ có trong Mác-cô"
+                ],
+                "correct_index": 0,
+                "explanation": "Mát-thêu là sách Tin Mừng duy nhất dùng từ Ekklesia (Mt 16:18; 18:17)."
+              },
+              {
+                "id": 802,
+                "question": "Khi Phêrô hỏi có phải tha thứ cho anh em đến 7 lần không, Chúa Giêsu đã trả lời thế nào?",
+                "options": [
+                  "Chỉ cần 3 lần là đủ",
+                  "Thầy không bảo là đến bảy lần, nhưng là đến bảy mươi lần bảy",
+                  "Tha thứ một lần duy nhất",
+                  "Tùy theo mức độ lỗi phạm"
+                ],
+                "correct_index": 1,
+                "explanation": "Mt 18:22: \"Bảy mươi lần bảy\" biểu trưng cho sự tha thứ vô giới hạn như Thiên Chúa đã thứ tha cho chúng ta."
+              },
+              {
+                "id": 803,
+                "question": "Trên núi Biến Hình, hai nhân vật Cựu Ước nào đã hiện ra đàm đạo với Chúa Giêsu?",
+                "options": [
+                  "Áp-ra-ham và Đavít",
+                  "Môsê và Êlia",
+                  "Isaia và Giêrêmia",
+                  "Nôê và Đanien"
+                ],
+                "correct_index": 1,
+                "explanation": "Môsê đại diện cho Lề Luật (Torah) và Êlia đại diện cho các Ngôn Sứ (Neviim), làm chứng Đức Giêsu là Đấng hoàn tất Cựu Ước."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Bài 9: Lời Khiển Trách & Bài Giảng Cánh Chung (Mt 23–25)",
+        "slug": "bai-9-khung-hoang-va-bai-giang-canh-chung",
+        "description": "Bảy lời khốn khiển trách thói giả hình, bài giảng thứ năm về ngày tận thế, dụ ngôn Mười trinh nữ, nén bạc và Cuộc Phán Xét Tối Hậu của Vua Thần Tôn.",
+        "order_index": 9,
+        "duration_minutes": 75,
+        "sections": [
+          {
+            "title": "9.1 Video: Tuần Lễ Cuối Cùng Tại Giêrusalem & Cảnh Báo Phán Xét",
+            "section_type": "video",
+            "order_index": 1,
+            "media_url": "https://www.youtube.com/watch?v=7g8h9i0j1k2",
+            "duration_minutes": 15,
+            "content_html": "<p>Bối cảnh Chúa Giêsu vào thành thánh Giêrusalem, thanh tẩy Đền Thờ và những lời cảnh báo cánh chung.</p>"
+          },
+          {
+            "title": "9.2 Chuyên Khảo: Cuộc Phán Xét Chung (Mt 25:31-46) — Thước Đo Của Tình Yêu",
+            "section_type": "text",
+            "order_index": 2,
+            "duration_minutes": 30,
+            "content_html": "<div class=\"lesson-text-content space-y-4\">\n<blockquote class=\"scripture-callout\">\n  <div class=\"scripture-icon\">✝</div>\n  <div class=\"scripture-body\">\n    <p class=\"scripture-quote\">\n      \"Mỗi lần các ngươi làm như thế cho một trong những anh em bé nhỏ nhất của Ta đây, là các ngươi đã làm cho chính Ta vậy.\"\n    </p>\n    <cite class=\"scripture-reference\">Tin Mừng theo Thánh Mát-thêu 25:40</cite>\n  </div>\n</blockquote>\n\n<h3 class=\"font-serif font-bold text-lg text-amber-600 dark:text-amber-400\">Tiêu Chuẩn Duy Nhất Của Ngày Chung Thẩm</h3>\n<p class=\"leading-relaxed\">\n  Chúa Giêsu mạc khải rằng trong ngày phán xét cuối cùng, tiêu chuẩn để tách biệt \"chiên\" và \"dê\" không phải là học hàm, sự giàu có hay địa vị tôn giáo, mà là hành động bác ái cụ thể đối với những kẻ khốn cùng: cho kẻ đói ăn, cho kẻ khát uống, đón tiếp khách lạ, mặc cho kẻ trần truồng, viếng thăm người đau ốm tù đày.\n</p>\n</div>"
+          },
+          {
+            "title": "9.3 Trắc Nghiệm Nhận Thức Bài 9 (3 Câu)",
+            "section_type": "quiz",
+            "order_index": 3,
+            "duration_minutes": 10,
+            "quiz_data": [
+              {
+                "id": 901,
+                "question": "Trong dụ ngôn Mười Trinh Nữ, năm cô khờ dại đã thiếu sót điều gì?",
+                "options": [
+                  "Không có áo đẹp",
+                  "Mang đèn mà không mang dầu theo",
+                  "Đến muộn giờ đám cưới",
+                  "Không mang lễ vật"
+                ],
+                "correct_index": 1,
+                "explanation": "Đèn biểu trưng cho đức tin tuyên xưng bên ngoài, còn dầu biểu trưng cho những việc lành bác ái và ân sủng được gìn giữ kiên trì."
+              },
+              {
+                "id": 902,
+                "question": "Người đầy tớ lãnh một nén bạc bị chủ phạt vì lý do gì?",
+                "options": [
+                  "Làm mất nén bạc",
+                  "Đem chôn nén bạc dưới đất vì sợ hãi lười biếng mà không sinh lời",
+                  "Dùng tiền đánh bạc",
+                  "Cho kẻ thù vay"
+                ],
+                "correct_index": 1,
+                "explanation": "Thiên Chúa đòi hỏi người môn đệ phải chủ động sinh hoa trái từ những hồng ân đã lãnh nhận thay vì thụ động chôn vùi."
+              },
+              {
+                "id": 903,
+                "question": "Theo Mt 25, Vua Thần Tôn đồng hóa chính Mình với ai?",
+                "options": [
+                  "Các thiên thần trên trời",
+                  "Những anh em bé nhỏ nhất đang đói khát, trần truồng, bệnh tật, tù đày",
+                  "Các thượng tế quyền uy",
+                  "Những người chiến thắng vinh quang"
+                ],
+                "correct_index": 1,
+                "explanation": "Đức Kitô hiện diện huyền nhiệm nơi những người nghèo khổ và yếu thế nhất trong xã hội."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Bài 10: Khổ Nạn, Phục Sinh & Đại Mạng Lệnh Truyền Giáo (Mt 26–28)",
+        "slug": "bai-10-kho-nan-phuc-sinh-va-dai-mang-lenh",
+        "description": "Bữa Tiệc Ly lập Bí tích Thánh Thể, Khổ nạn trên đồi Golgotha, Biến cố Phục Sinh vinh hiển và Đại Mạng Lệnh rao giảng Tin Mừng cho muôn dân.",
+        "order_index": 10,
+        "duration_minutes": 90,
+        "sections": [
+          {
+            "title": "10.1 Video: Giao Ước Mới Bằng Máu & Cuộc Khổ Nạn Khảo Cứu",
+            "section_type": "video",
+            "order_index": 1,
+            "media_url": "https://www.youtube.com/watch?v=8h9i0j1k2l3",
+            "duration_minutes": 20,
+            "content_html": "<p>Tường thuật cuộc Thương Khó từ Vườn Cây Dầu Gethsêmani đến Thập Giá và sự run rẩy của tạo thành.</p>"
+          },
+          {
+            "title": "10.2 Chuyên Khảo: Mộ Trống & Lời Rao Giảng Của Đấng Phục Sinh",
+            "section_type": "text",
+            "order_index": 2,
+            "duration_minutes": 30,
+            "content_html": "<div class=\"lesson-text-content space-y-4\">\n<blockquote class=\"scripture-callout\">\n  <div class=\"scripture-icon\">✝</div>\n  <div class=\"scripture-body\">\n    <p class=\"scripture-quote\">\n      \"Vậy anh em hãy đi và làm cho muôn dân trở thành môn đệ, làm phép rửa cho họ nhân danh Chúa Cha, Chúa Con và Chúa Thánh Thần... Và đây, Thầy ở cùng anh em mọi ngày cho đến tận thế.\"\n    </p>\n    <cite class=\"scripture-reference\">Tin Mừng theo Thánh Mát-thêu 28:19-20 (Bản dịch Lm. Nguyễn Thế Thuấn)</cite>\n  </div>\n</blockquote>\n\n<h3 class=\"font-serif font-bold text-lg text-amber-600 dark:text-amber-400\">Vòng Tròn Thần Học Khép Kín Hoàn Hảo</h3>\n<p class=\"leading-relaxed\">\n  Tin Mừng Mát-thêu bắt đầu bằng danh xưng <strong>Emmanuel (\"Thiên Chúa ở cùng chúng ta\" - Mt 1:23)</strong> và kết thúc bằng lời hứa tối hậu của Đấng Phục Sinh: <strong>\"Thầy ở cùng anh em mọi ngày cho đến tận thế\" (Mt 28:20)</strong>. Đây là đỉnh cao của toàn bộ công trình Mạc khải Cứu độ: Thiên Chúa không bỏ rơi nhân loại, nhưng ở cùng Giáo Hội Người mãi mãi.\n</p>\n</div>"
+          },
+          {
+            "title": "10.3 Khảo Sát Tổng Kết & Tốt Nghiệp Khóa Học (5 Câu Tốt Nghiệp)",
+            "section_type": "quiz",
+            "order_index": 3,
+            "duration_minutes": 20,
+            "quiz_data": [
+              {
+                "id": 1001,
+                "question": "Trong Bữa Tiệc Ly, khi cầm chén rượu, Chúa Giêsu đã tuyên bố điều gì?",
+                "options": [
+                  "Đây là Máu Thầy, Máu Giao Ước, đổ ra cho muôn người được tha tội",
+                  "Đây là rượu nho ngon nhất xứ Galilê",
+                  "Hãy giữ lấy chén này làm kỷ vật",
+                  "Uống chén này để không bao giờ chết"
+                ],
+                "correct_index": 0,
+                "explanation": "Mt 26:28: Lời thiết lập Bí tích Thánh Thể và Giao Ước Mới vĩnh cửu."
+              },
+              {
+                "id": 1002,
+                "question": "Khi Chúa Giêsu trút hơi thở cuối cùng trên Thập Giá, dấu lạ nào đã xảy ra trong Đền Thờ?",
+                "options": [
+                  "Bức màn trướng trong Đền Thờ bị xé ra làm đôi từ trên xuống dưới",
+                  "Bàn thờ vàng bị sụp đổ",
+                  "Đèn bảy nhánh bị tắt ngấm",
+                  "Hòm bia biến mất"
+                ],
+                "correct_index": 0,
+                "explanation": "Mt 27:51: Bức màn ngăn cách Cực Thánh bị xé rách, biểu trưng lối vào sự sống Thiên Chúa nay đã mở toang cho muôn dân nhờ cái chết của Đức Kitô."
+              },
+              {
+                "id": 1003,
+                "question": "Ai là những người đầu tiên được sứ thần báo tin Chúa đã sống lại từ cõi chết?",
+                "options": [
+                  "Bà Maria Mác-đa-la và bà Maria khác",
+                  "Thánh Phêrô và Gioan",
+                  "Các lính canh La Mã",
+                  "Các môn đệ làng Emmau"
+                ],
+                "correct_index": 0,
+                "explanation": "Mt 28:1-8: Các phụ nữ đi viếng mộ từ sáng sớm là những chứng nhân đầu tiên của Tin Mừng Phục Sinh."
+              },
+              {
+                "id": 1004,
+                "question": "Đại Mạng Lệnh Truyền Giáo (Mt 28:19) truyền dạy làm phép rửa nhân danh ai?",
+                "options": [
+                  "Nhân danh Chúa Cha, Chúa Con và Chúa Thánh Thần",
+                  "Nhân danh Thánh Phêrô và Mười Hai Tông Đồ",
+                  "Nhân danh Vua Đavít và Môsê",
+                  "Nhân danh Hội Thánh Giêrusalem"
+                ],
+                "correct_index": 0,
+                "explanation": "Công thức Phép Rửa Chúa Ba Ngôi nền tảng của toàn bộ Giáo Hội Công Giáo."
+              },
+              {
+                "id": 1005,
+                "question": "Câu nói cuối cùng của Chúa Giêsu trong Tin Mừng Mát-thêu là gì?",
+                "options": [
+                  "Mọi sự đã hoàn tất",
+                  "Và đây, Thầy ở cùng anh em mọi ngày cho đến tận thế",
+                  "Lạy Cha, xin tha cho họ",
+                  "Hãy đi khắp thế gian"
+                ],
+                "correct_index": 1,
+                "explanation": "Mt 28:20 khẳng định sự hiện diện liên lỉ của Đấng Emmanuel với Giáo Hội lữ hành."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
