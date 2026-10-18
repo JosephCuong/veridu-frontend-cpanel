@@ -198,21 +198,31 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
     ? 'text-base sm:text-lg leading-relaxed sm:leading-loose'
     : 'text-sm sm:text-base leading-relaxed';
 
-  // Helper: Clean & Format Catechism HTML (strip duplicate <h5 class="catechism-title">, style footnotes as [1] superscript, format headings & quotes)
+  // Helper: Clean & Format Catechism HTML (strip duplicate <h5 class="catechism-title">Số X / TÓM LƯỢC, preserve Creed headings, style .catechism-supplement & .creed)
   const formatCatechismHtml = (rawHtml?: string, plainText?: string): string => {
     let html = (rawHtml || plainText || '').trim();
     if (!html) return '';
 
-    // 1. Remove duplicate <h5 class="catechism-title">Số XXX</h5>
-    html = html.replace(/<h5[^>]*class=["'][^"']*catechism-title[^"']*["'][^>]*>[\s\S]*?<\/h5>/gi, '');
+    // 1. Strip unclosed <div class="in-brief"> wrapper tags from multi-row CSV exports
+    html = html.replace(/<div[^>]*class=["'][^"']*in-brief[^"']*["'][^>]*>/gi, '');
 
-    // 2. Transform <span class="footnote-ref">N</span> into golden superscript [N]
+    // 2. Remove duplicate <h5 class="catechism-title">Số XXX</h5> or TÓM LƯỢC, while keeping Creed titles (Tín biểu...)
+    html = html.replace(
+      /<h5[^>]*class=["'][^"']*catechism-title[^"']*["'][^>]*>\s*(?:Số\s*\d+|TÓM\s*LƯỢC)\s*<\/h5>/gi,
+      ''
+    );
+    html = html.replace(
+      /<h5[^>]*class=["'][^"']*catechism-title[^"']*["'][^>]*>([\s\S]*?)<\/h5>/gi,
+      '<h5 class="font-serif font-black text-base sm:text-lg text-amber-700 dark:text-amber-300 uppercase tracking-wider mb-3">$1</h5>'
+    );
+
+    // 3. Transform <span class="footnote-ref">N</span> into golden superscript [N]
     html = html.replace(
       /<span[^>]*class=["'][^"']*footnote-ref[^"']*["'][^>]*>\s*([^<]+?)\s*<\/span>/gi,
       '<sup class="inline-flex items-center px-1 py-0.5 mx-0.5 text-[10px] font-mono font-bold text-amber-700 dark:text-amber-300 bg-amber-500/15 border border-amber-500/30 rounded align-super leading-none" title="Xem chú thích cuối đoạn">[$1]</sup>'
     );
 
-    // 3. Style embedded headings (<h2>, <h3>, <h4>) inside content_html
+    // 4. Style embedded headings (<h2>, <h3>, <h4>) inside content_html
     html = html.replace(
       /<h2([^>]*)>/gi,
       '<h2$1 class="font-serif font-black text-base sm:text-lg text-amber-700 dark:text-amber-400 uppercase tracking-wider border-b border-amber-500/30 pb-2 mb-3 mt-1">'
@@ -226,16 +236,24 @@ export default function CatechismReaderClient({ paragraphs, currentPartConfig }:
       '<h4$1 class="font-serif font-bold text-sm sm:text-base text-amber-600 dark:text-amber-300 italic mt-3 mb-2">'
     );
 
-    // 4. Style liturgical quote blocks
+    // 5. Style Creed blocks (<div class="creed ...">) and liturgical quote blocks
+    html = html.replace(
+      /<div[^>]*class=["'][^"']*creed[^"']*["'][^>]*>/gi,
+      '<div class="my-4 p-5 sm:p-6 rounded-2xl bg-amber-500/[0.06] border border-amber-500/30 shadow-inner space-y-2">'
+    );
     html = html.replace(
       /<div[^>]*class=["'][^"']*catechism-quote[^"']*["'][^>]*>/gi,
       '<div class="my-3 pl-4 border-l-2 border-amber-500/60 italic text-[var(--text-muted)] bg-amber-500/5 py-2.5 pr-3 rounded-r-xl">'
     );
 
-    // 5. Add spacing to paragraph blocks
+    // 6. Style paragraph blocks (.catechism-text and .catechism-supplement)
     html = html.replace(
       /<p[^>]*class=["'][^"']*catechism-text[^"']*["'][^>]*>/gi,
       '<p class="mb-3 last:mb-0 leading-relaxed">'
+    );
+    html = html.replace(
+      /<p[^>]*class=["'][^"']*catechism-supplement[^"']*["'][^>]*>/gi,
+      '<p class="mb-3 last:mb-0 leading-relaxed pl-3.5 border-l-2 border-stone-300 dark:border-slate-700 text-[0.95em] text-[var(--text-muted)]">'
     );
 
     return html;
