@@ -52,7 +52,8 @@ export default function Footer() {
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !email.includes('@')) {
+    const cleanedEmail = email.trim().toLowerCase();
+    if (!cleanedEmail || !cleanedEmail.includes('@')) {
       setStatus('error');
       setMessage('Vui lòng nhập địa chỉ email hợp lệ.');
       return;
@@ -62,19 +63,33 @@ export default function Footer() {
     setMessage('');
 
     try {
-      const { error } = await supabase
-        .from('newsletter_subscribers')
-        .insert([{ email: email.trim().toLowerCase() }]);
+      const savedListRaw = localStorage.getItem('veridu_newsletter_emails');
+      const savedList: string[] = savedListRaw ? JSON.parse(savedListRaw) : [];
+      if (savedList.includes(cleanedEmail)) {
+        setStatus('error');
+        setMessage('Email này đã được đăng ký nhận bản tin trước đó.');
+        return;
+      }
 
-      if (error) {
-        if (error.code === '23505') {
+      const res = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanedEmail })
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        if (res.status === 409 || data?.code === '23505') {
           setStatus('error');
           setMessage('Email này đã được đăng ký nhận bản tin trước đó.');
         } else {
           setStatus('error');
-          setMessage('Có lỗi xảy ra. Vui lòng thử lại sau.');
+          setMessage(data?.error || 'Có lỗi xảy ra. Vui lòng thử lại sau.');
         }
       } else {
+        try {
+          localStorage.setItem('veridu_newsletter_emails', JSON.stringify([...savedList, cleanedEmail]));
+        } catch (_) {}
         setStatus('success');
         setMessage('Đăng ký nhận bản tin Lời Chúa thành công!');
         setEmail('');

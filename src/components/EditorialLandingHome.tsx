@@ -72,17 +72,18 @@ export default function EditorialLandingHome({
 
         {/* ── TOP EDITORIAL MOTTO BAR (LEFT) ── */}
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-start justify-between gap-4 max-w-7xl mx-auto w-full">
-          <div className="space-y-1">
-            <div className="w-8 h-[2px] bg-amber-600 dark:bg-amber-400 mb-2"></div>
+          <h1 className="space-y-1 block">
+            <span className="sr-only">VERIDU — Nền Tảng Học Tập, Giáo Lý &amp; Kinh Thánh Công Giáo — </span>
+            <span className="block w-8 h-[2px] bg-amber-600 dark:bg-amber-400 mb-2"></span>
             {config.hero.subMottoLeft.map((motto, idx) => (
-              <p 
+              <span 
                 key={idx} 
-                className="text-[11px] sm:text-xs font-mono font-bold tracking-[0.18em] uppercase text-stone-700 dark:text-slate-300"
+                className="block text-[11px] sm:text-xs font-mono font-bold tracking-[0.18em] uppercase text-stone-700 dark:text-slate-300"
               >
                 {motto}
-              </p>
+              </span>
             ))}
-          </div>
+          </h1>
 
           <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-[11px] font-playfair font-bold uppercase tracking-widest backdrop-blur-md">
             <span className="text-amber-600 dark:text-amber-400">✝</span>

@@ -367,7 +367,7 @@ export function calculateReadingTime(content?: string | null): string {
 }
 
 // ─── Library Articles (Supabase Integration) ───────────────────
-export async function getLibraryArticles(): Promise<Article[]> {
+export async function getLibraryArticles(includeContent: boolean = false): Promise<Article[]> {
   try {
     const { data, error } = await supabase
       .from('posts')
@@ -380,40 +380,52 @@ export async function getLibraryArticles(): Promise<Article[]> {
       return [];
     }
 
-    return data.map((item: any) => ({
-      id: item.id,
-      title: item.title,
-      slug: item.slug,
-      excerpt: item.excerpt || '',
-      contentHtml: item.content || '',
-      interactiveHtml: item.content || '',
-      category: item.category || 'Các Thánh',
-      featured_image: item.featured_image || '',
-      thumbnail: item.featured_image || '',
-      article_type: determineArticleType(item.category, item.article_type, item.content),
-      scripture_quote: item.scripture_quote || '',
-      prayer_text: item.prayer_text || '',
-      scriptureQuote: item.scripture_quote || '',
-      prayerText: item.prayer_text || '',
-      tags: item.tags || [],
-      created_at: item.published_at || item.created_at,
-      published_at: item.published_at || item.created_at,
-      status: item.status,
-      author: item.author_name || 'Ban Biên Tập VERIDU',
-      author_name: item.author_name || 'Ban Biên Tập VERIDU',
-      author_id: item.author_id || '',
-      readingTime: item.reading_time || calculateReadingTime(item.content),
-      reading_time: item.reading_time || calculateReadingTime(item.content),
-      views: item.views || 0,
-      likes: item.likes || 0,
-      audio_url: item.audio_url || '',
-      video_url: item.video_url || '',
-      title_en: item.title_en || '',
-      excerpt_en: item.excerpt_en || '',
-      content_en: item.content_en || '',
-      contentHtml_en: item.content_en || '',
-      available_languages: item.available_languages || ['vi'],
-    }));
+    return data.map((item: any) => {
+      const cleanFallbackExcerpt = item.excerpt
+        ? item.excerpt
+        : (item.content || '')
+            .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+            .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 200);
+
+      return {
+        id: item.id,
+        title: item.title,
+        slug: item.slug,
+        excerpt: cleanFallbackExcerpt,
+        contentHtml: includeContent ? (item.content || '') : '',
+        interactiveHtml: includeContent ? (item.content || '') : '',
+        category: item.category || 'Các Thánh',
+        featured_image: item.featured_image || '',
+        thumbnail: item.featured_image || '',
+        article_type: determineArticleType(item.category, item.article_type, item.content),
+        scripture_quote: item.scripture_quote || '',
+        prayer_text: item.prayer_text || '',
+        scriptureQuote: item.scripture_quote || '',
+        prayerText: item.prayer_text || '',
+        tags: item.tags || [],
+        created_at: item.published_at || item.created_at,
+        published_at: item.published_at || item.created_at,
+        status: item.status,
+        author: item.author_name || 'Ban Biên Tập VERIDU',
+        author_name: item.author_name || 'Ban Biên Tập VERIDU',
+        author_id: item.author_id || '',
+        readingTime: item.reading_time || calculateReadingTime(item.content),
+        reading_time: item.reading_time || calculateReadingTime(item.content),
+        views: item.views || 0,
+        likes: item.likes || 0,
+        audio_url: item.audio_url || '',
+        video_url: item.video_url || '',
+        title_en: item.title_en || '',
+        excerpt_en: item.excerpt_en || '',
+        content_en: includeContent ? (item.content_en || '') : '',
+        contentHtml_en: includeContent ? (item.content_en || '') : '',
+        available_languages: item.available_languages || ['vi'],
+      };
+    });
   } catch (e) {
     console.error('getLibraryArticles error:', e);
     return [];

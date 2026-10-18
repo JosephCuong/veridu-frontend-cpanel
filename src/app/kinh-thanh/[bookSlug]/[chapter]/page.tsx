@@ -63,7 +63,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const title = `Sách ${book.nameVi} — Chương ${chapterNumber} | Kinh Thánh VERIDU`;
   const description = `Đọc, nghiên cứu và suy niệm Sách ${book.nameVi} Chương ${chapterNumber} trọn bộ 73 Sách Cựu Ước & Tân Ước với bản dịch chuẩn xác, hệ thống chú giải phụng vụ và đối chiếu Lời Chúa trên VERIDU.`;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
-  const pageUrl = `${siteUrl}/kinh-thanh/${canonicalBookSlug}/${chapterNumber}?t=ntt`;
+  const pageUrl = `${siteUrl}/kinh-thanh/${canonicalBookSlug}/${chapterNumber}`;
 
   return {
     title,
@@ -104,10 +104,10 @@ export default async function KinhThanhPage({ params, searchParams }: PageProps)
   const chapterNumber = parseInt(chapterStr, 10) || 1;
   const translationSlug = (resolvedSearchParams.t as string) || 'ntt';
 
-  // If the book slug is an abbreviation/alias (e.g. 1-sm, sm, st) or translation query ?t= is missing,
-  // 301 redirect to canonical slug with ?t=ntt
-  if (canonicalBookSlug !== rawBookSlug || !resolvedSearchParams.t) {
-    redirect(`/kinh-thanh/${canonicalBookSlug}/${chapterNumber}?t=${translationSlug}`);
+  // Only redirect if the book slug is an abbreviation/alias (e.g. 1-sm, sm, st)
+  // Do NOT redirect when ?t= is omitted so canonical URLs (/kinh-thanh/sang-the/1) return 200 OK for Googlebot
+  if (canonicalBookSlug !== rawBookSlug) {
+    redirect(`/kinh-thanh/${canonicalBookSlug}/${chapterNumber}${resolvedSearchParams.t ? `?t=${translationSlug}` : ''}`);
   }
 
   const [metadata, data] = await Promise.all([
@@ -118,7 +118,7 @@ export default async function KinhThanhPage({ params, searchParams }: PageProps)
   const currentBook = metadata.books.find(b => b.slug.toLowerCase() === canonicalBookSlug.toLowerCase());
   const bookNameVi = currentBook ? currentBook.nameVi : 'Kinh Thánh';
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
-  const pageUrl = `${siteUrl}/kinh-thanh/${canonicalBookSlug}/${chapterNumber}?t=${translationSlug}`;
+  const pageUrl = `${siteUrl}/kinh-thanh/${canonicalBookSlug}/${chapterNumber}`;
 
   // Structured Data (JSON-LD) for Bible Breadcrumb & Book
   const bibleJsonLd = {

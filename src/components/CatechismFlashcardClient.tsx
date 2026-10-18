@@ -48,11 +48,11 @@ export default function CatechismFlashcardClient({ allParagraphs }: CatechismFla
     } catch (e) {}
   }, []);
 
-  // Filter cards: In Brief or representative paragraphs
+  // Filter cards by selected pillar (already pre-filtered on the server for valid text)
   const deck = useMemo(() => {
     return allParagraphs.filter(p => {
       if (selectedPart >= 0 && p.part_number !== selectedPart) return false;
-      return p.is_in_brief || (p.paragraph_number && p.paragraph_number % 5 === 0) || p.part_number === 0;
+      return true;
     });
   }, [allParagraphs, selectedPart]);
 
@@ -143,11 +143,11 @@ export default function CatechismFlashcardClient({ allParagraphs }: CatechismFla
             {/* Card Header */}
             <div className="flex items-center justify-between border-b border-[var(--border-card)] pb-3">
               <span className="px-3.5 py-1 rounded-full bg-amber-500 text-slate-950 font-serif font-black text-xs shadow-sm">
-                {currentCard.title}
+                {currentCard.paragraph_number ? `GLHTCG Số ${currentCard.paragraph_number}` : currentCard.title}
               </span>
               <span className="text-xs font-serif text-[var(--text-muted)] flex items-center gap-1.5 font-bold">
                 <RotateCw className="w-3.5 h-3.5 text-amber-500" />
-                <span>{isFlipped ? 'Mặt Sau (Lời Giải)' : 'Mặt Trước (Vấn Nạn)'}</span>
+                <span>{isFlipped ? 'Mặt Sau (Lời Giải)' : 'Mặt Trước (Đề Mục)'}</span>
               </span>
             </div>
 
@@ -155,13 +155,18 @@ export default function CatechismFlashcardClient({ allParagraphs }: CatechismFla
             {!isFlipped ? (
               <div className="space-y-4 py-8 text-center sm:text-left">
                 <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest block">
-                  Đề Mục / Vấn Nạn Tín Lý:
+                  {currentCard.is_in_brief ? '✦ Toát Yếu Tín Lý • Đề Mục Ghi Nhớ:' : 'Đề Mục / Mạch Giáo Huấn:'}
                 </span>
                 <h3 className="font-serif font-bold text-xl sm:text-2xl text-[var(--text-main)] leading-relaxed">
-                  {currentCard.full_path}
+                  {currentCard.full_path || currentCard.article_title || currentCard.chapter_title || currentCard.part_title}
                 </h3>
+                {currentCard.plain_text && (
+                  <p className="text-sm font-serif text-[var(--text-muted)] line-clamp-2 pt-1">
+                    “{currentCard.plain_text.replace(/^Số\s*\d+\s*/i, '').slice(0, 110)}...”
+                  </p>
+                )}
                 <p className="text-xs font-serif italic text-stone-400 pt-4">
-                  (Nhấp chuột vào bất cứ đâu trên thẻ để lật xem lời giải tín lý)
+                  (Nhấp chuột vào bất cứ đâu trên thẻ để lật xem toàn văn giáo huấn)
                 </p>
               </div>
             ) : (
@@ -171,7 +176,11 @@ export default function CatechismFlashcardClient({ allParagraphs }: CatechismFla
                 </span>
                 <div 
                   className="prose dark:prose-invert max-w-none font-serif text-sm sm:text-base leading-relaxed text-[var(--text-main)]"
-                  dangerouslySetInnerHTML={{ __html: currentCard.content_html }}
+                  dangerouslySetInnerHTML={{
+                    __html: (currentCard.content_html || '')
+                      .replace(/<h5[^>]*class=["'][^"']*catechism-title[^"']*["'][^>]*>[\s\S]*?<\/h5>/gi, '')
+                      .replace(/<span\s+class=["']footnote-ref["'][^>]*>\s*(\d+)\s*<\/span>/gi, '<sup class="text-amber-500 font-bold text-xs ml-0.5">[$1]</sup>')
+                  }}
                 />
               </div>
             )}

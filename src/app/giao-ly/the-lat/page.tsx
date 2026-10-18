@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { fetchCatechismParagraphs } from '@/lib/api';
+import { fetchCatechismParagraphs, fetchCatechismEntries, CatechismParagraph } from '@/lib/api';
 import CatechismFlashcardClient from '@/components/CatechismFlashcardClient';
 import { ChevronLeft, Scroll, BookOpen, Trophy, Award, RotateCw } from 'lucide-react';
 
@@ -12,8 +12,55 @@ export const metadata = {
 };
 
 export default async function CatechismFlashcardsPage() {
-  // Fetch all in-brief and representative paragraphs for flashcard decks
-  const { data: allParagraphs } = await fetchCatechismParagraphs(undefined, undefined, undefined, 1000, 0);
+  // Fetch full paragraph range across all 5 parts + curated Catechism entries
+  const [{ data: rawParagraphs }, entries] = await Promise.all([
+    fetchCatechismParagraphs(undefined, undefined, undefined, 3000, 0),
+    fetchCatechismEntries()
+  ]);
+
+  // Filter to paragraphs with substantive content (In-Brief, Prologue, or every 8th paragraph)
+  const validParagraphCards: CatechismParagraph[] = (rawParagraphs || [])
+    .filter(p => {
+      const hasBody = Boolean(p.plain_text && p.plain_text.trim().length > 15);
+      if (!hasBody) return false;
+      return p.is_in_brief || p.part_number === 0 || (p.paragraph_number && p.paragraph_number % 8 === 0);
+    })
+    .map(p => ({
+      id: p.id,
+      section_identifier: p.section_identifier,
+      paragraph_number: p.paragraph_number,
+      paragraph_str: p.paragraph_str,
+      title: p.title || `Số ${p.paragraph_number}`,
+      part_number: p.part_number,
+      part_title: p.part_title,
+      section_title: p.section_title,
+      chapter_title: p.chapter_title,
+      article_title: p.article_title,
+      full_path: p.full_path,
+      is_in_brief: p.is_in_brief,
+      content_html: p.content_html,
+      plain_text: (p.plain_text || '').slice(0, 220)
+    }));
+
+  // Supplement with curated Catechism Entries (especially for Part I where full paragraphs are pending)
+  const entryCards: CatechismParagraph[] = (entries || []).map((e, idx) => ({
+    id: 90000 + (e.id || idx),
+    section_identifier: e.ccc_number_range || `CCC ${e.paragraph_start}-${e.paragraph_end}`,
+    paragraph_number: e.paragraph_start,
+    paragraph_str: e.ccc_number_range || `${e.paragraph_start}-${e.paragraph_end}`,
+    title: e.ccc_number_range || `CCC ${e.paragraph_start}`,
+    part_number: e.part_number,
+    part_title: e.part_title,
+    section_title: e.section_title,
+    chapter_title: e.chapter_title,
+    article_title: e.title,
+    full_path: e.question ? `${e.title} — ${e.question}` : `${e.part_title} › ${e.title}`,
+    is_in_brief: true,
+    content_html: e.content_html || `<p>${e.summary || ''}</p>`,
+    plain_text: e.summary || e.title
+  }));
+
+  const allParagraphs = [...entryCards, ...validParagraphCards];
 
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col font-sans transition-colors duration-300 pb-24 pt-16 md:pt-20">

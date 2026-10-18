@@ -27,7 +27,18 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const cleanPath = pathname.replace(/\/$/, '') || '/';
 
-  // 0. Redirect /admin/soan-bai -> /soan-bai (protected by AUTH_REQUIRED_ROUTES)
+  // 0a. Block legacy WordPress / scanner probes (.php, .asp, .env, wp-login, xmlrpc) before hitting /[slug]
+  if (
+    /\.(php|asp|aspx|env|git|sql|bak|ini|sh)$/i.test(cleanPath) ||
+    cleanPath.startsWith('/wp-login') ||
+    cleanPath.startsWith('/wp-includes') ||
+    cleanPath.startsWith('/wp-content') ||
+    cleanPath.startsWith('/xmlrpc')
+  ) {
+    return new NextResponse('Not Found', { status: 404 });
+  }
+
+  // 0b. Redirect /admin/soan-bai -> /soan-bai (protected by AUTH_REQUIRED_ROUTES)
   if (cleanPath === '/admin/soan-bai' || cleanPath.startsWith('/admin/soan-bai/')) {
     const search = request.nextUrl.search;
     const subPath = cleanPath.replace(/^\/admin\/soan-bai/, '');
@@ -120,9 +131,10 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginRedirectUrl);
     }
 
-    // Role check from user cookie
+    // Role check from user cookie + JWT structure validation
     let isAuthorized = false;
-    if (userCookie) {
+    const isWellFormedJwt = Boolean(tokenCookie && tokenCookie.split('.').length === 3);
+    if (userCookie && isWellFormedJwt) {
       try {
         const decoded = userCookie.includes('%') ? decodeURIComponent(userCookie) : userCookie;
         const parsed = JSON.parse(decoded);

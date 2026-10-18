@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { supabase } from '@/lib/supabaseClient';
+import { getCanonicalBookSlug } from '@/lib/bibleData';
 
 export const dynamic = 'force-dynamic';
 
@@ -141,6 +142,36 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     },
     {
+      url: `${baseUrl}/dong-gop`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/noi-dung-can-thiet`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.65,
+    },
+    {
+      url: `${baseUrl}/huong-dan-viet-bai`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/dieu-khoan-tac-gia`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.4,
+    },
+    {
+      url: `${baseUrl}/en`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.85,
+    },
+    {
       url: `${baseUrl}/dieu-khoan-su-dung`,
       lastModified: new Date(),
       changeFrequency: 'yearly',
@@ -231,7 +262,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     if (libraryItems) {
       libraryItems.forEach((item) => {
-        const pathPrefix = item.item_type === 'sach' ? 'sach' : 'tai-lieu';
+        const pathPrefix = (item.item_type === 'book' || item.item_type === 'sach') ? 'sach' : 'tai-lieu';
         dynamicRoutes.push({
           url: `${baseUrl}/thu-vien/${pathPrefix}/${item.slug}`,
           lastModified: new Date(item.updated_at || item.created_at || Date.now()),
@@ -248,14 +279,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .order('order_index', { ascending: true });
 
     if (bibleBooks) {
+      const seenBookSlugs = new Set<string>();
       bibleBooks.forEach((b) => {
-        const bookSlug = b.code.toLowerCase();
-        dynamicRoutes.push({
-          url: `${baseUrl}/kinh-thanh/${bookSlug}/1`,
-          lastModified: new Date(),
-          changeFrequency: 'monthly',
-          priority: 0.85,
-        });
+        const rawCode = (b.code || '').toLowerCase();
+        const bookSlug = getCanonicalBookSlug(rawCode) || rawCode;
+        if (bookSlug && !seenBookSlugs.has(bookSlug)) {
+          seenBookSlugs.add(bookSlug);
+          dynamicRoutes.push({
+            url: `${baseUrl}/kinh-thanh/${bookSlug}/1`,
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.85,
+          });
+        }
       });
     }
 
