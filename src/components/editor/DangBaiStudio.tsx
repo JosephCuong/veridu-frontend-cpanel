@@ -80,6 +80,11 @@ import VisualBlockToolbarOverlay from '@/components/editor/VisualBlockToolbarOve
 import VeriduLayersInspector from '@/components/editor/VeriduLayersInspector';
 import { parseVideoUrl, generateVideoBlockHtml } from '@/lib/videoHelper';
 import ResourceSubmissionModal from '@/components/ResourceSubmissionModal';
+import { 
+  silentSyncMediaViToEn, 
+  weaveMediaIntoEnglishHtml, 
+  checkBase64Bloat 
+} from '@/lib/bilingualMediaSync';
 
 export function getFullAuthorName(u: UserProfile | null): string {
   if (!u) return 'Ban Biên Tập VERIDU';
@@ -199,27 +204,80 @@ function DangBaiContent() {
     setActiveTab(newTab);
   };
 
-  // Switch Active Editing Language between Vietnamese and English
+  // Switch Active Editing Language between Vietnamese and English (with Silent Media Auto-Sync)
   const switchEditingLang = (newLang: 'vi' | 'en') => {
     if (newLang === editingLang) return;
 
-    // Save current active DOM content before switching
+    let updatedVi = contentHtml;
+    let updatedEn = contentEn;
+
+    // 1. Save current active DOM content before switching
     if (activeTab === 'visual' && visualCanvasRef.current) {
       const currentHtml = visualCanvasRef.current.innerHTML;
       if (editingLang === 'vi') {
+        updatedVi = currentHtml;
         setContentHtml(currentHtml);
       } else {
+        updatedEn = currentHtml;
         setContentEn(currentHtml);
+      }
+    }
+
+    // 2. If switching VI -> EN: Auto-sync high-res Google Drive CDN media silently
+    if (editingLang === 'vi' && newLang === 'en') {
+      if (updatedEn.trim()) {
+        const syncedEn = silentSyncMediaViToEn(updatedVi, updatedEn);
+        updatedEn = syncedEn;
+        setContentEn(syncedEn);
+      } else if (updatedVi.trim()) {
+        // If English is completely empty, initialize English with Vietnamese structure & images
+        updatedEn = updatedVi;
+        setContentEn(updatedVi);
+        if (!titleEn.trim() && title.trim()) setTitleEn(title);
+        if (!excerptEn.trim() && excerpt.trim()) setExcerptEn(excerpt);
+        setMessage({
+          type: 'success',
+          text: '✨ Đã tự động kế thừa cấu trúc & toàn bộ hình ảnh chuẩn từ bản Tiếng Việt sang bản Tiếng Anh!'
+        });
+        setTimeout(() => setMessage(null), 4000);
       }
     }
 
     setEditingLang(newLang);
 
-    // Load target language into visual canvas if mounted
+    // 3. Load target language into visual canvas if mounted
     if (visualCanvasRef.current) {
-      const targetHtml = newLang === 'en' ? contentEn : contentHtml;
+      const targetHtml = newLang === 'en' ? updatedEn : updatedVi;
       visualCanvasRef.current.innerHTML = targetHtml || '';
     }
+  };
+
+  // Manual 1-Click Force Media Sync from Vietnamese to English
+  const handleForceMediaSyncViToEn = () => {
+    const currentVi = visualCanvasRef.current && editingLang === 'vi' 
+      ? visualCanvasRef.current.innerHTML 
+      : contentHtml;
+    if (!currentVi.trim()) {
+      setMessage({ type: 'error', text: 'Chưa có nội dung tiếng Việt để đồng bộ media!' });
+      return;
+    }
+    const currentEn = visualCanvasRef.current && editingLang === 'en'
+      ? visualCanvasRef.current.innerHTML
+      : contentEn;
+    
+    const syncedEn = currentEn.trim() 
+      ? silentSyncMediaViToEn(currentVi, currentEn)
+      : currentVi;
+    
+    setContentEn(syncedEn);
+    if (editingLang === 'en' && visualCanvasRef.current) {
+      visualCanvasRef.current.innerHTML = syncedEn;
+    }
+    setMessage({ 
+      type: 'success', 
+      text: '✓ Đã đồng bộ toàn bộ hình ảnh và media từ bản Tiếng Việt sang bản Tiếng Anh thành công!' 
+    });
+    setTimeout(() => setMessage(null), 3500);
   };
 
   // Studio 3-Column Panels State
@@ -441,6 +499,43 @@ function DangBaiContent() {
       }, 50);
     }
   }, [editingLang]);
+
+  // Base64 Bloat & Direct Image File Paste Interceptor
+  const handleCanvasPaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    // 1. Direct image binary/file paste check
+    const items = e.clipboardData?.items;
+    if (items) {
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          e.preventDefault();
+          setMessage({
+            type: 'error',
+            text: '🛡️ Chống tràn dữ liệu: Vui lòng không dán trực tiếp file ảnh vào nội dung (làm phình mã Base64 gây chậm web). Hãy dùng nút "Chèn Khối Hình Ảnh" và dán link Google Drive để tự động kích hoạt CDN siêu tốc!'
+          });
+          setTimeout(() => setMessage(null), 5000);
+          return;
+        }
+      }
+    }
+
+    // 2. Large base64 string in pasted HTML check
+    const pastedHtml = e.clipboardData?.getData('text/html');
+    if (pastedHtml) {
+      const bloatCheck = checkBase64Bloat(pastedHtml, 20000);
+      if (bloatCheck.hasBloat) {
+        e.preventDefault();
+        const cleanedHtml = pastedHtml.replace(/<img[^>]+src=["']data:image\/[^"']{10000,}["'][^>]*>/gi, '');
+        document.execCommand('insertHTML', false, cleanedHtml);
+        setMessage({
+          type: 'error',
+          text: `🛡️ Đã tự động loại bỏ ${bloatCheck.bloatCount} ảnh Base64 (${bloatCheck.totalBloatSizeKb} KB) để bảo vệ database! Vui lòng dùng link ảnh Google Drive.`
+        });
+        setTimeout(() => setMessage(null), 5000);
+        handleCanvasInput();
+        return;
+      }
+    }
+  };
 
   const handleTitleChange = (val: string) => {
     setTitle(val);
@@ -1015,6 +1110,17 @@ function DangBaiContent() {
     } else {
       handleInsertCatholicBlock(htmlSnippet);
     }
+
+    // Silent Auto-Sync media changes to English translation in memory
+    if (editingLang === 'vi' && contentEn.trim()) {
+      setTimeout(() => {
+        if (visualCanvasRef.current) {
+          const currentVi = visualCanvasRef.current.innerHTML;
+          const updatedEn = silentSyncMediaViToEn(currentVi, contentEn);
+          setContentEn(updatedEn);
+        }
+      }, 100);
+    }
   };
 
   // Handle Edit Block from Visual Overlay (Toolbar button ⚙️)
@@ -1046,6 +1152,17 @@ function DangBaiContent() {
     // Remove element from DOM immediately
     targetEl.remove();
     handleCanvasInput();
+
+    // Silent Auto-Sync media deletion to English translation in memory
+    if (editingLang === 'vi' && contentEn.trim()) {
+      setTimeout(() => {
+        if (visualCanvasRef.current) {
+          const currentVi = visualCanvasRef.current.innerHTML;
+          const updatedEn = silentSyncMediaViToEn(currentVi, contentEn);
+          setContentEn(updatedEn);
+        }
+      }, 100);
+    }
   };
 
   // Handle Duplicate Block from Visual Overlay (Toolbar button 📋)
@@ -1056,6 +1173,17 @@ function DangBaiContent() {
     handleCanvasInput();
     setMessage({ type: 'success', text: `Đã nhân bản ${label} thành công!` });
     setTimeout(() => setMessage(null), 3000);
+
+    // Silent Auto-Sync media duplication to English translation in memory
+    if (editingLang === 'vi' && contentEn.trim()) {
+      setTimeout(() => {
+        if (visualCanvasRef.current) {
+          const currentVi = visualCanvasRef.current.innerHTML;
+          const updatedEn = silentSyncMediaViToEn(currentVi, contentEn);
+          setContentEn(updatedEn);
+        }
+      }, 100);
+    }
   };
 
   // Handle 1-Click Undo Delete Block
@@ -1364,17 +1492,25 @@ function DangBaiContent() {
         setExcerptEn(extractedDesc);
       }
 
-      // 3. Clean HTML & Load into contentEn
+      // 3. Clean HTML & Load into contentEn with SMART ASSET WEAVING from Vietnamese article
       const cleanHtml = normalizeAndSyncHtml(rawText);
-      setContentEn(cleanHtml);
+      const currentViHtml = (activeTab === 'visual' && visualCanvasRef.current && editingLang === 'vi')
+        ? visualCanvasRef.current.innerHTML
+        : contentHtml;
+
+      const finalEnHtml = currentViHtml.trim()
+        ? weaveMediaIntoEnglishHtml(cleanHtml, currentViHtml)
+        : cleanHtml;
+
+      setContentEn(finalEnHtml);
 
       if (editingLang === 'en' && visualCanvasRef.current) {
-        visualCanvasRef.current.innerHTML = cleanHtml;
+        visualCanvasRef.current.innerHTML = finalEnHtml;
       }
 
       setMessage({ 
         type: 'success', 
-        text: `Đã nạp thành công bản dịch Tiếng Anh: "${file.name}" (${(file.size / 1024).toFixed(1)} KB)!` 
+        text: `Đã nạp bản dịch Tiếng Anh: "${file.name}" và tự động dệt media chuẩn từ bản Tiếng Việt!` 
       });
       setTimeout(() => setMessage(null), 4000);
     };
@@ -1534,6 +1670,24 @@ function DangBaiContent() {
     if (!finalViHtml.trim()) {
       setMessage({ type: 'error', text: 'Nội dung bài viết tiếng Việt không được để trống!' });
       return;
+    }
+
+    // Silent Auto-Sync media to English before saving
+    if (finalViHtml.trim() && finalEnHtml.trim()) {
+      finalEnHtml = silentSyncMediaViToEn(finalViHtml, finalEnHtml);
+      setContentEn(finalEnHtml);
+    }
+
+    // Base64 Database Overflow Safety Check
+    const viBloat = checkBase64Bloat(finalViHtml);
+    const enBloat = checkBase64Bloat(finalEnHtml);
+    if (viBloat.hasBloat || enBloat.hasBloat) {
+      const bloatCount = viBloat.bloatCount + enBloat.bloatCount;
+      const totalKb = viBloat.totalBloatSizeKb + enBloat.totalBloatSizeKb;
+      const proceed = window.confirm(
+        `Cảnh báo an toàn dữ liệu: Phát hiện ${bloatCount} ảnh nhúng dạng Base64 (~${totalKb} KB) trong bài viết! Việc này có thể làm phình cơ sở dữ liệu. Bạn có muốn tiếp tục lưu không?\n\n(Khuyên dùng: Bấm Cancel và thay bằng link ảnh Google Drive)`
+      );
+      if (!proceed) return;
     }
 
     // Embed Geo & Timeline inline backup into HTML content
@@ -2772,7 +2926,7 @@ function DangBaiContent() {
             </button>
           </div>
 
-          {/* Bilingual Language Switcher Pill [ 🇻🇳 Tiếng Việt | 🇬🇧 English ] */}
+          {/* Bilingual Language Switcher Pill [ 🇻🇳 Tiếng Việt | 🇬🇧 English ] with Media Sync Indicator */}
           <div className="flex items-center gap-1 bg-[var(--bg-main)] p-1 rounded-2xl border border-[var(--border-card)]">
             <button
               type="button"
@@ -2800,9 +2954,27 @@ function DangBaiContent() {
             >
               <span>🇬🇧</span>
               <span className="hidden sm:inline">English</span>
-              {titleEn.trim() && (
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" title="Đã có nội dung tiếng Anh" />
+              {editingLang === 'en' ? (
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-0.5 font-bold">
+                  <Check className="w-2.5 h-2.5 text-emerald-400" />
+                  <span className="hidden md:inline">Đồng Bộ</span>
+                </span>
+              ) : (
+                titleEn.trim() && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" title="Đã có nội dung tiếng Anh" />
+                )
               )}
+            </button>
+
+            {/* Quick 1-Click Force Media Sync Button */}
+            <button
+              type="button"
+              onClick={handleForceMediaSyncViToEn}
+              className="p-1 sm:px-2 py-1 rounded-xl text-[11px] font-bold text-amber-500 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/30 flex items-center gap-1 cursor-pointer transition"
+              title="Đồng bộ toàn bộ Media (ảnh Google Drive, video) từ bản Tiếng Việt sang bản Tiếng Anh ngay lập tức"
+            >
+              <RefreshCw className="w-3 h-3 text-amber-500" />
+              <span className="hidden xl:inline text-[10px]">Đồng Bộ Media</span>
             </button>
           </div>
 
@@ -3120,6 +3292,7 @@ function DangBaiContent() {
                     contentEditable
                     suppressContentEditableWarning
                     onInput={handleCanvasInput}
+                    onPaste={handleCanvasPaste}
                     className="prose dark:prose-invert prose-amber max-w-none font-serif text-base sm:text-lg leading-relaxed text-[var(--text-main)] outline-none min-h-[500px] focus:ring-0 selection:bg-amber-500/30 cursor-text space-y-4"
                   />
 

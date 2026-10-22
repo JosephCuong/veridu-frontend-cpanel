@@ -66,8 +66,11 @@ export const LICENSE_PRESETS = [
 function convertGoogleDriveImgUrl(url: string): string {
   if (!url) return '';
   const trimmed = url.trim();
-  const match = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || trimmed.match(/id=([a-zA-Z0-9_-]+)/);
-  if (match && match[1] && /drive\.google\.com/.test(trimmed)) {
+  const match = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) 
+    || trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/)
+    || trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/)
+    || trimmed.match(/googleusercontent\.com\/d\/([a-zA-Z0-9_-]+)/);
+  if (match && match[1] && (trimmed.includes('drive.google.com') || trimmed.includes('docs.google.com') || trimmed.includes('googleusercontent.com'))) {
     return `https://lh3.googleusercontent.com/d/${match[1]}`;
   }
   return trimmed;
@@ -94,6 +97,7 @@ export default function CatholicBlockConfigModal({
   // ─── 2. IMAGE STATE ──────────────────────────────────────────────────────────
   const [imageUrl, setImageUrl] = useState('');
   const [imageCaption, setImageCaption] = useState('');
+  const [imageCaptionEn, setImageCaptionEn] = useState('');
   const [imageAlign, setImageAlign] = useState<'center' | 'left' | 'right'>('center');
   const [imageLightbox, setImageLightbox] = useState(true);
   const [imageAuthor, setImageAuthor] = useState('');
@@ -158,6 +162,7 @@ export default function CatholicBlockConfigModal({
     } else if (blockType === 'image') {
       setImageUrl(initialData?.imageUrl || initialData?.url || 'https://images.unsplash.com/photo-1548625361-1959728b4e87?auto=format&fit=crop&w=1200&q=80');
       setImageCaption(initialData?.caption || 'Bích họa Nghệ Thuật Thánh Đường Công Giáo — Kiệt tác nghệ thuật phụng vụ.');
+      setImageCaptionEn(initialData?.captionEn || initialData?.caption_en || '');
       setImageAlign(initialData?.align || 'center');
       setImageLightbox(initialData?.lightbox !== false);
       setImageAuthor(initialData?.author || '');
@@ -247,7 +252,7 @@ export default function CatholicBlockConfigModal({
 </figcaption>`;
         }
 
-        return `<figure class="veridu-image-block my-8 ${alignClass} not-prose" data-veridu-block="image" data-image-url="${encodeURIComponent(imageUrl)}" data-align="${imageAlign}" data-caption="${encodeURIComponent(imageCaption)}"${imageAuthor.trim() ? ` data-author="${encodeURIComponent(imageAuthor.trim())}"` : ''}${imageSourceUrl.trim() ? ` data-source-url="${encodeURIComponent(imageSourceUrl.trim())}"` : ''}${imageLicense.trim() ? ` data-license="${encodeURIComponent(imageLicense.trim())}"` : ''}${imageLicenseUrl.trim() ? ` data-license-url="${encodeURIComponent(imageLicenseUrl.trim())}"` : ''}>
+        return `<figure class="veridu-image-block my-8 ${alignClass} not-prose" data-veridu-block="image" data-image-url="${encodeURIComponent(imageUrl)}" data-align="${imageAlign}" data-caption="${encodeURIComponent(imageCaption)}"${imageCaptionEn.trim() ? ` data-caption-en="${encodeURIComponent(imageCaptionEn.trim())}"` : ''}${imageAuthor.trim() ? ` data-author="${encodeURIComponent(imageAuthor.trim())}"` : ''}${imageSourceUrl.trim() ? ` data-source-url="${encodeURIComponent(imageSourceUrl.trim())}"` : ''}${imageLicense.trim() ? ` data-license="${encodeURIComponent(imageLicense.trim())}"` : ''}${imageLicenseUrl.trim() ? ` data-license-url="${encodeURIComponent(imageLicenseUrl.trim())}"` : ''}>
   <img src="${finalUrl}" alt="${imageCaption.trim() || 'Nghệ Thuật Thánh Đường'}" ${imageLightbox ? 'data-lightbox="true"' : ''} referrerpolicy="no-referrer" class="max-w-full h-auto rounded-3xl shadow-2xl mx-auto block cursor-zoom-in hover:scale-[1.01] transition-transform duration-300 border border-[var(--border-card)]" />
   ${captionHtml}
 </figure>`;
@@ -764,20 +769,44 @@ export default function CatholicBlockConfigModal({
                   placeholder="https://drive.google.com/file/d/... hoặc link ảnh bất kỳ"
                   className="w-full p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] font-mono text-xs outline-none focus:border-emerald-500 text-[var(--text-main)]"
                 />
-                <p className="text-[10px] text-[var(--text-muted)] mt-1.5">
-                  Link Google Drive sẽ tự động được hệ thống chuyển đổi thành link ảnh tốc độ cao <code className="text-emerald-500 font-mono">lh3.googleusercontent.com</code>.
-                </p>
+                {resolvedImageUrl.includes('lh3.googleusercontent.com') ? (
+                  <div className="flex items-center gap-1.5 text-[11px] text-emerald-500 font-semibold mt-1.5 bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1 rounded-xl">
+                    <Check className="w-3.5 h-3.5 shrink-0 text-emerald-500" />
+                    <span>✓ Google Drive CDN Tốc Độ Cao (Zero Storage Cost &amp; Tự Động Đồng Bộ)</span>
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-[var(--text-muted)] mt-1.5">
+                    Link Google Drive sẽ tự động được hệ thống chuyển đổi thành link ảnh tốc độ cao <code className="text-emerald-500 font-mono">lh3.googleusercontent.com</code>.
+                  </p>
+                )}
               </div>
 
               <div>
                 <label className="font-bold text-[var(--text-muted)] block mb-1">
-                  Chú Thích Chân Ảnh (Caption)
+                  Chú Thích Chân Ảnh (Caption Tiếng Việt)
                 </label>
                 <input
                   type="text"
                   value={imageCaption}
                   onChange={(e) => setImageCaption(e.target.value)}
                   placeholder="Ví dụ: Bích họa Thánh Gioan Tẩy Giả trong sa mạc..."
+                  className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-[var(--text-muted)] block mb-1 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Chú Thích Chân Ảnh Tiếng Anh (English Caption - Tùy chọn)</span>
+                  </span>
+                  <span className="text-[10px] text-amber-500/80 font-mono">Bản dịch /en</span>
+                </label>
+                <input
+                  type="text"
+                  value={imageCaptionEn}
+                  onChange={(e) => setImageCaptionEn(e.target.value)}
+                  placeholder="e.g. Fresco of St. John the Baptist preaching in the desert..."
                   className="w-full p-2.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-card)] text-xs outline-none focus:border-emerald-500"
                 />
               </div>
