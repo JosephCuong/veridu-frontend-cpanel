@@ -2,7 +2,8 @@
 import { supabase } from './supabaseClient';
 import { formatImageUrl } from './htmlProcessor';
 import { getCanonicalBookSlug } from './bibleData';
-export { supabase };
+import { slugify, getArticleEnSlug } from './slugHelper';
+export { supabase, slugify, getArticleEnSlug };
 
 // In-Memory Cache Layer with TTL and Safe Execution to prevent timeout bottlenecks
 interface CacheEntry<T> {
@@ -455,6 +456,31 @@ export async function getLibraryArticleBySlug(slug: string): Promise<Article | n
           .maybeSingle();
         if (fallbackData) {
           data = fallbackData;
+        }
+      }
+    }
+
+    // 3. Dual-Slug Resolution: If not found by primary slug, search by English title slug
+    if (!data) {
+      const { data: enArticles } = await supabase
+        .from('posts')
+        .select('*')
+        .not('title_en', 'is', null)
+        .eq('status', 'published')
+        .limit(200);
+
+      if (enArticles && enArticles.length > 0) {
+        const cleanTargetSlug = slug.toLowerCase().trim();
+        const baseTargetSlug = cleanTargetSlug.replace(/-\d+$/, '');
+
+        const matched = enArticles.find((p) => {
+          if (!p.title_en) return false;
+          const enSlug = slugify(p.title_en);
+          return enSlug === cleanTargetSlug || enSlug === baseTargetSlug;
+        });
+
+        if (matched) {
+          data = matched;
         }
       }
     }

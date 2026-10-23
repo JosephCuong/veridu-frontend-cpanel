@@ -26,6 +26,7 @@ import ArticleCitationAndLicense from '@/components/ArticleCitationAndLicense';
 import ArticleLanguageBanner from '@/components/ArticleLanguageBanner';
 import { useTranslation } from '@/context/LanguageContext';
 import { useToast } from '@/components/Toast';
+import { getArticleEnSlug } from '@/lib/slugHelper';
 
 export interface ArticleReaderClientProps {
   initialLocale: 'vi' | 'en';
@@ -199,7 +200,8 @@ export default function ArticleReaderClient({
       setLocale(targetLang);
 
       // Smooth URL pushState without page reload
-      const newUrl = targetLang === 'en' ? `/en/${article.slug}` : `/${article.slug}`;
+      const enSlug = getArticleEnSlug(article);
+      const newUrl = targetLang === 'en' ? `/en/${enSlug}` : `/${article.slug}`;
       if (typeof window !== 'undefined' && window.location.pathname !== newUrl) {
         window.history.pushState({ lang: targetLang }, '', newUrl);
       }

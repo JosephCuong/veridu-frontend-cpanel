@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import { supabase } from '@/lib/supabaseClient';
 import { getCanonicalBookSlug } from '@/lib/bibleData';
+import { slugify } from '@/lib/slugHelper';
 
 export const dynamic = 'force-dynamic';
 
@@ -191,17 +192,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // 2. Dynamic Articles (Short SEO URLs)
     const { data: posts } = await supabase
       .from('posts')
-      .select('slug, updated_at, created_at')
+      .select('slug, title_en, updated_at, created_at')
       .eq('status', 'published');
 
     if (posts) {
       posts.forEach((post) => {
-        dynamicRoutes.push({
+                dynamicRoutes.push({
           url: `${baseUrl}/${post.slug}`,
           lastModified: new Date(post.updated_at || post.created_at || Date.now()),
           changeFrequency: 'weekly',
           priority: 0.8,
         });
+
+        // Dual-Slug SEO: Add English canonical URL to sitemap if title_en exists
+        if (post.title_en && typeof post.title_en === 'string' && post.title_en.trim()) {
+          const enSlug = slugify(post.title_en);
+          if (enSlug) {
+            dynamicRoutes.push({
+              url: `${baseUrl}/en/${enSlug}`,
+              lastModified: new Date(post.updated_at || post.created_at || Date.now()),
+              changeFrequency: 'weekly',
+              priority: 0.85,
+            });
+          }
+        }
       });
     }
 

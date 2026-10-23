@@ -1,9 +1,10 @@
 import React from 'react';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { getLibraryArticleBySlug } from '@/lib/api';
+import { getArticleEnSlug } from '@/lib/slugHelper';
 import { prepareArticlePageData } from '@/lib/articlePageHelper';
 import ArticleReaderClient from '@/components/article/ArticleReaderClient';
 
@@ -26,8 +27,9 @@ export async function generateMetadata({
 
   const title = (article.title_en || article.title || 'Scholarly Treatise').replace(/<[^>]+>/g, '');
   const description = (article.excerpt_en || article.excerpt || 'Catholic theological treatise on CRUX VERITATIS.').replace(/<[^>]+>/g, '').substring(0, 160);
-  const articleUrl = `${SITE_URL}/en/${resolvedParams.slug}`;
-  const viUrl = `${SITE_URL}/${resolvedParams.slug}`;
+  const enSlug = getArticleEnSlug(article);
+  const articleUrl = `${SITE_URL}/en/${enSlug}`;
+  const viUrl = `${SITE_URL}/${article.slug}`;
 
   return {
     title: `${title} | CRUX VERITATIS`,
@@ -62,6 +64,15 @@ export default async function EnglishArticlePage({
   }
 
   const { article, articleJsonLd, cleanTitleEn } = pageData;
+  const enSlug = getArticleEnSlug(article);
+
+  // SEO Dual-Slug Canonical Redirect:
+  // If requested via Vietnamese slug (/en/hom-bia-giao-uoc...) and official English slug exists,
+  // permanently redirect to the English SEO URL (/en/the-ark-of-the-covenant...)
+  if (enSlug && resolvedParams.slug !== enSlug && resolvedParams.slug === article.slug) {
+    redirect(`/en/${enSlug}`);
+  }
+
   const articleType = article.article_type || 'standard';
 
   // 1. Fullscreen interactive sandbox (if applicable)

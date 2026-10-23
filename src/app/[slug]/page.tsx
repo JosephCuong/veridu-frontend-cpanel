@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Metadata } from 'next';
 import { ArrowLeft } from 'lucide-react';
 import { getLibraryArticleBySlug } from '@/lib/api';
+import { getArticleEnSlug } from '@/lib/slugHelper';
 import { supabase } from '@/lib/supabaseClient';
 import { prepareArticlePageData } from '@/lib/articlePageHelper';
 import ArticleReaderClient from '@/components/article/ArticleReaderClient';
@@ -63,7 +64,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       canonical: `${siteUrl}/${resolvedParams.slug}`,
       languages: {
         'vi-VN': `${siteUrl}/${resolvedParams.slug}`,
-        'en-US': `${siteUrl}/en/${resolvedParams.slug}`,
+        'en-US': `${siteUrl}/en/${getArticleEnSlug(article)}`,
       },
     },
     openGraph: {
