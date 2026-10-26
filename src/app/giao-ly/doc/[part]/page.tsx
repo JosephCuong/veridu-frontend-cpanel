@@ -6,7 +6,7 @@ import { fetchCatechismParagraphs } from '@/lib/api';
 import CatechismReaderClient from '@/components/CatechismReaderClient';
 import { BookOpen, Scroll, Award } from 'lucide-react';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 86400;
 
 interface PartConfig {
   partNumber: number;

@@ -1,3 +1,4 @@
+import { cache } from 'react';
 // Updated api.ts with status = 'published' filter for public endpoints
 import { supabase } from './supabaseClient';
 import { formatImageUrl } from './htmlProcessor';
@@ -370,9 +371,13 @@ export function calculateReadingTime(content?: string | null): string {
 // ─── Library Articles (Supabase Integration) ───────────────────
 export async function getLibraryArticles(includeContent: boolean = false): Promise<Article[]> {
   try {
+    const selectQuery = includeContent
+      ? '*'
+      : 'id, title, slug, excerpt, category, featured_image, article_type, scripture_quote, prayer_text, tags, created_at, published_at, updated_at, reading_time, author_name, author_id, status, views, likes, audio_url, video_url, title_en, excerpt_en, available_languages';
+
     const { data, error } = await supabase
       .from('posts')
-      .select('*')
+      .select(selectQuery)
       .eq('status', 'published')
       .order('created_at', { ascending: false });
 
@@ -433,7 +438,7 @@ export async function getLibraryArticles(includeContent: boolean = false): Promi
   }
 }
 
-export async function getLibraryArticleBySlug(slug: string): Promise<Article | null> {
+export const getLibraryArticleBySlug = cache(async (slug: string): Promise<Article | null> => {
   try {
     let { data, error } = await supabase
       .from('posts')
@@ -460,11 +465,11 @@ export async function getLibraryArticleBySlug(slug: string): Promise<Article | n
       }
     }
 
-    // 3. Dual-Slug Resolution: If not found by primary slug, search by English title slug
+    // 3. Dual-Slug Resolution: If not found by primary slug, search by English title slug (lightweight projection)
     if (!data) {
       const { data: enArticles } = await supabase
         .from('posts')
-        .select('*')
+        .select('id, slug, title_en')
         .not('title_en', 'is', null)
         .eq('status', 'published')
         .limit(200);
@@ -480,7 +485,14 @@ export async function getLibraryArticleBySlug(slug: string): Promise<Article | n
         });
 
         if (matched) {
-          data = matched;
+          const { data: singleArticle } = await supabase
+            .from('posts')
+            .select('*')
+            .eq('id', matched.id)
+            .maybeSingle();
+          if (singleArticle) {
+            data = singleArticle;
+          }
         }
       }
     }
@@ -528,7 +540,7 @@ export async function getLibraryArticleBySlug(slug: string): Promise<Article | n
     console.error('getLibraryArticleBySlug error:', e);
     return null;
   }
-}
+});
 
 // ─── Article Author Profile Fetcher ────────────────────────────
 export async function fetchArticleAuthorProfile(authorId?: string, authorName?: string): Promise<AuthorProfile> {
@@ -712,7 +724,7 @@ export async function fetchCourses(): Promise<Course[]> {
   try {
     const { data, error } = await supabase
       .from('courses')
-      .select('*, lessons(*)')
+      .select('id, slug, title, description, thumbnail, category, level, instructor_name, instructor_title, instructor_avatar, total_duration, duration, certificate_enabled, created_at, lessons(id, duration)')
       .order('created_at', { ascending: false });
 
     if (error || !data) return [];

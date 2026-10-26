@@ -207,6 +207,51 @@ const nextConfig = {
         destination: '/soan-bai',
         permanent: true,
       },
+      {
+        source: '/soan-thao',
+        destination: '/soan-bai',
+        permanent: true,
+      },
+      {
+        source: '/soan-thao/:path*',
+        destination: '/soan-bai/:path*',
+        permanent: true,
+      },
+      {
+        source: '/tro-choi',
+        destination: '/game',
+        permanent: true,
+      },
+      {
+        source: '/tro-choi/:path*',
+        destination: '/game/:path*',
+        permanent: true,
+      },
+      {
+        source: '/gioi-thieu',
+        destination: '/dong-gop',
+        permanent: true,
+      },
+      {
+        source: '/game/lat-hinh-thanh-kinh',
+        destination: '/game',
+        permanent: true,
+      },
+      {
+        source: '/game/cau-do-loi-chua',
+        destination: '/game',
+        permanent: true,
+      },
+      {
+        source: '/health',
+        destination: '/api/health',
+        permanent: false,
+      },
+      {
+        source: '/ping',
+        destination: '/api/ping',
+        permanent: false,
+      }
     ];
   },
 };

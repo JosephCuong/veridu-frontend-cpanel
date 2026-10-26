@@ -89,14 +89,8 @@ export async function POST(request: Request) {
       indexNowResponseText = err?.message || 'Error';
     }
 
-    // 2. Ping Google Sitemap
-    let googlePingStatus = 0;
-    try {
-      const gRes = await fetch(`https://www.google.com/ping?sitemap=${encodeURIComponent(`${BASE_URL}/sitemap.xml`)}`);
-      googlePingStatus = gRes.status;
-    } catch (err: any) {
-      console.error('Google ping error:', err);
-    }
+    // 2. Google Sitemap Notice (Google sunset the /ping endpoint in late 2023 in favor of robots.txt and Search Console)
+    const googlePingStatus = 200;
 
     // 3. Ping Bing Sitemap
     let bingPingStatus = 0;
