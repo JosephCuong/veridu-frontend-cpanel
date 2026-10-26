@@ -373,7 +373,7 @@ export async function getLibraryArticles(includeContent: boolean = false): Promi
   try {
     const selectQuery = includeContent
       ? '*'
-      : 'id, title, slug, excerpt, category, featured_image, article_type, scripture_quote, prayer_text, tags, created_at, published_at, updated_at, reading_time, author_name, author_id, status, views, likes, audio_url, video_url, title_en, excerpt_en, available_languages';
+      : 'id, slug, title, excerpt, category, featured_image, author_id, status, views, created_at, updated_at, article_type, author_name, reading_time, published_at, audio_url, video_url, title_en, excerpt_en, available_languages';
 
     const { data, error } = await supabase
       .from('posts')
