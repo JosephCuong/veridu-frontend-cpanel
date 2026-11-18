@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import HomeClientSections from '@/components/HomeClientSections';
 import { fetchCourses, fetchHomepageData } from '@/lib/api';
 
-export const revalidate = 60;
+export const revalidate = 3600; // ISR 1h cache + on-demand revalidatePath on publish/edit
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
 

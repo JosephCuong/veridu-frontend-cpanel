@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { prepareArticlePageData } from '@/lib/articlePageHelper';
 import ArticleReaderClient from '@/components/article/ArticleReaderClient';
 
-export const revalidate = 3600; // 1-hour Edge CDN caching with on-demand ISR revalidation
+export const revalidate = 86400; // 24-hour Edge CDN caching with on-demand ISR revalidation on publish/edit
 export const dynamicParams = true; // Allow new articles published after build time
 
 export async function generateStaticParams() {

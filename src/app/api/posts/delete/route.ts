@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
+import { revalidatePostPaths } from '@/lib/revalidateHelper';
 
 export async function DELETE(request: Request) {
   try {
@@ -19,6 +20,8 @@ export async function DELETE(request: Request) {
       console.error('Supabase delete post error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    revalidatePostPaths();
 
     return NextResponse.json({ success: true, message: 'Đã xóa bài viết thành công' });
   } catch (err: any) {

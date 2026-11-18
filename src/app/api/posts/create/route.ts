@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
 import { supabase } from '@/lib/supabaseClient';
 import { formatImageUrl, convertGoogleDriveImagesInHtml } from '@/lib/htmlProcessor';
-
 import { calculateReadingTime } from '@/lib/api';
+import { revalidatePostPaths } from '@/lib/revalidateHelper';
 
 export const dynamic = 'force-dynamic';
 
@@ -118,19 +117,11 @@ export async function POST(request: Request) {
 
     const createdPost = (data && data.length > 0) ? data[0] : null;
 
-    // Flush ISR Cache immediately on post creation
-    try {
-      revalidatePath('/', 'layout');
-      revalidatePath('/thu-vien');
-      revalidatePath('/en');
-      if (finalSlug) {
-        revalidatePath(`/${finalSlug}`);
-        revalidatePath(`/en/${finalSlug}`);
-        revalidatePath(`/thu-vien/${finalSlug}`);
-      }
-    } catch (e) {
-      console.warn('Cache revalidation warning on create:', e);
-    }
+    // Flush targeted ISR Cache immediately on post creation
+    revalidatePostPaths({
+      slug: finalSlug,
+      titleEn: createdPost?.title_en || title_en,
+    });
 
     return NextResponse.json({ success: true, post: createdPost, slug: finalSlug });
   } catch (err: any) {

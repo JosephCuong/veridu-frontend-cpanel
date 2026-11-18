@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
 
 export const dynamic = 'force-dynamic';
@@ -179,6 +180,15 @@ export async function POST(req: NextRequest) {
           }
         }
       }
+    }
+
+    try {
+      revalidatePath('/');
+      revalidatePath('/en');
+      revalidatePath('/khoa-hoc');
+      if (slug) revalidatePath(`/khoa-hoc/${slug}`);
+    } catch (e) {
+      console.warn('Course cache revalidation warning:', e);
     }
 
     return NextResponse.json({

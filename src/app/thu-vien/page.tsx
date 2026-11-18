@@ -2,7 +2,7 @@ import React from 'react';
 import { getLibraryArticles } from '@/lib/api';
 import LibraryClient from '@/components/LibraryClient';
 
-export const revalidate = 30; // Revalidate every 30s
+export const revalidate = 3600; // ISR 1h cache + on-demand revalidatePath on publish/edit/delete
 
 export const metadata = {
   title: "Thư Viện Bài Viết & Suy Niệm Công Giáo | VERIDU",

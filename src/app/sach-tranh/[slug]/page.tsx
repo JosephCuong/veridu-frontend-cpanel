@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { DEFAULT_STORYBOOKS } from '@/lib/storybooksData';
 import StorybookReaderClient from '@/components/StorybookReaderClient';
 
-export const revalidate = 60;
+export const revalidate = 3600; // ISR 1h cache + on-demand revalidatePath on storybook save/delete
 
 export async function generateStaticParams() {
   return DEFAULT_STORYBOOKS.map(book => ({

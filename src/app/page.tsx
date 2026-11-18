@@ -2,7 +2,7 @@ import React from 'react';
 import EditorialLandingHome from '@/components/EditorialLandingHome';
 import { fetchCourses, fetchHomepageData } from '@/lib/api';
 
-export const revalidate = 60; // ISR 60s cache for blazing-fast TTFB < 50ms and 100/100 Uptime
+export const revalidate = 3600; // ISR 1h cache + on-demand revalidatePath on publish/edit to save server CPU
 
 export default async function Home() {
   // Fetch live courses & homepage data from Supabase

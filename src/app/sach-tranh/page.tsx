@@ -13,7 +13,7 @@ import {
   Tv
 } from 'lucide-react';
 
-export const revalidate = 60;
+export const revalidate = 3600; // ISR 1h cache + on-demand revalidatePath on storybook save/delete
 
 export const metadata = {
   title: 'Sách Tranh Kinh Thánh Thiếu Nhi & Gia Đình | VERIDU',

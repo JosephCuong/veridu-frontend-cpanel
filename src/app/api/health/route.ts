@@ -61,7 +61,7 @@ export async function GET() {
     {
       status: 200, // Always return 200 so Uptime monitors don't trigger false alerts during minor latency spikes
       headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Cache-Control': 'public, max-age=10, s-maxage=30, stale-while-revalidate=60',
         'X-Response-Time': `${totalDurationMs}ms`,
       },
     }
@@ -72,7 +72,7 @@ export async function HEAD() {
   return new Response(null, {
     status: 200,
     headers: {
-      'Cache-Control': 'no-store, no-cache, must-revalidate',
+      'Cache-Control': 'public, max-age=15, s-maxage=60, stale-while-revalidate=120',
     },
   });
 }

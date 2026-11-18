@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { supabase } from '@/lib/supabaseClient';
 
 export async function POST(req: NextRequest) {
@@ -16,6 +17,13 @@ export async function POST(req: NextRequest) {
     const { error } = await query;
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+
+    try {
+      revalidatePath('/sach-tranh');
+      if (slug) revalidatePath(`/sach-tranh/${slug}`);
+    } catch (e) {
+      console.warn('Storybook delete cache revalidation warning:', e);
     }
 
     return NextResponse.json({ success: true });

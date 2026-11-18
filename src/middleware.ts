@@ -209,5 +209,11 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    /*
+     * Skip static asset directories, media files, SEO files, and lightweight telemetry/proxy endpoints
+     * to avoid unnecessary Middleware CPU execution on every asset or bot request.
+     */
+    '/((?!_next/static|_next/image|favicon\\.ico|images/|models/|storybooks/|vendor/|audio/|api/ping|api/health|api/og|api/proxy-image|robots\\.txt|sitemap\\.xml|ads\\.txt|.*\\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico|woff|woff2|ttf|eot|mp3|mp4|webm|glb|gltf|css|js|map|txt)$).*)',
+  ],
 };

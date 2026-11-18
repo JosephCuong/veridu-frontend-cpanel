@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
 import { supabase, getAuthenticatedSupabaseClient } from '@/lib/supabaseClient';
 import { formatImageUrl, convertGoogleDriveImagesInHtml } from '@/lib/htmlProcessor';
 import { calculateReadingTime } from '@/lib/api';
+import { revalidatePostPaths } from '@/lib/revalidateHelper';
 
 export const dynamic = 'force-dynamic';
 
@@ -190,23 +190,13 @@ export async function POST(request: Request) {
       }, { status: 500 });
     }
 
-    // 5. Complete ISR Cache Invalidation for all related paths including International Portal
-    try {
-      revalidatePath('/', 'layout');
-      revalidatePath('/thu-vien');
-      revalidatePath('/en');
-      revalidatePath(`/${finalSlug}`);
-      revalidatePath(`/en/${finalSlug}`);
-      revalidatePath(`/thu-vien/${finalSlug}`);
-
-      if (existingPost.slug && existingPost.slug !== finalSlug) {
-        revalidatePath(`/${existingPost.slug}`);
-        revalidatePath(`/en/${existingPost.slug}`);
-        revalidatePath(`/thu-vien/${existingPost.slug}`);
-      }
-    } catch (e) {
-      console.warn('Cache revalidation warning:', e);
-    }
+    // 5. Targeted ISR Cache Invalidation (avoids purging unrelated Bible/Catechism pages)
+    revalidatePostPaths({
+      slug: finalSlug,
+      previousSlug: existingPost.slug,
+      titleEn: updatedPost?.title_en || title_en,
+      previousTitleEn: existingPost.title_en,
+    });
 
     return NextResponse.json({ success: true, post: updatedPost, slug: finalSlug });
   } catch (err: any) {

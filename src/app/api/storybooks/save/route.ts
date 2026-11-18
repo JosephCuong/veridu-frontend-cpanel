@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { supabase } from '@/lib/supabaseClient';
 import { extractYouTubeVideoId } from '@/lib/driveHelper';
 
@@ -93,6 +94,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: insertError.message }, { status: 500 });
       }
       savedBook = insertedData?.[0] || payload;
+    }
+
+    try {
+      revalidatePath('/sach-tranh');
+      if (savedBook?.slug) revalidatePath(`/sach-tranh/${savedBook.slug}`);
+    } catch (e) {
+      console.warn('Storybook cache revalidation warning:', e);
     }
 
     return NextResponse.json({ success: true, book: savedBook });

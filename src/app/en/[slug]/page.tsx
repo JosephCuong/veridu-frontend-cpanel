@@ -8,7 +8,7 @@ import { getArticleEnSlug } from '@/lib/slugHelper';
 import { prepareArticlePageData } from '@/lib/articlePageHelper';
 import ArticleReaderClient from '@/components/article/ArticleReaderClient';
 
-export const revalidate = 3600;
+export const revalidate = 86400; // 24-hour Edge CDN caching with on-demand ISR revalidation on publish/edit
 export const dynamicParams = true;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';

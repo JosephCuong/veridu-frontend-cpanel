@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { supabase } from '@/lib/supabaseClient';
+import { revalidatePostPaths } from '@/lib/revalidateHelper';
 import { sendAuthorApprovalNotice } from '@/lib/emailService';
 
 export async function GET(request: NextRequest) {
@@ -55,15 +57,31 @@ export async function POST(request: NextRequest) {
     const newStatus = action === 'approve' ? 'published' : 'rejected';
 
     if (target_type === 'post') {
-      await supabase.from('posts').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', target_id);
+      const { data: modPost } = await supabase
+        .from('posts')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', target_id)
+        .select('slug, title_en')
+        .maybeSingle();
+      revalidatePostPaths({ slug: modPost?.slug, titleEn: modPost?.title_en });
     } else if (target_type === 'resource') {
       await supabase.from('library_items').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', target_id);
+      revalidatePath('/thu-vien');
     } else if (target_type === 'course') {
       const courseStatus = action === 'approve' ? 'published' : 'draft';
-      await supabase.from('courses').update({ 
-        status: courseStatus, 
-        published: action === 'approve' 
-      }).eq('id', target_id);
+      const { data: modCourse } = await supabase
+        .from('courses')
+        .update({
+          status: courseStatus,
+          published: action === 'approve'
+        })
+        .eq('id', target_id)
+        .select('slug')
+        .maybeSingle();
+      revalidatePath('/');
+      revalidatePath('/en');
+      revalidatePath('/khoa-hoc');
+      if (modCourse?.slug) revalidatePath(`/khoa-hoc/${modCourse.slug}`);
     } else if (target_type === 'application') {
       const appStatus = action === 'approve' ? 'approved' : 'rejected';
       const { data: app } = await supabase.from('author_applications').update({ 
