@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "main": ".open-next/worker.js",
-  "name": "veridu-cruxveritatis",
+  "name": "veridu-frontend-cpanel",
   "compatibility_date": "2025-03-01",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
@@ -11,7 +11,7 @@
   "services": [
     {
       "binding": "WORKER_SELF_REFERENCE",
-      "service": "veridu-cruxveritatis"
+      "service": "veridu-frontend-cpanel"
     }
   ]
 }
