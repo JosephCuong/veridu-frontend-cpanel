@@ -5,9 +5,9 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: Request, 
-  { params }: { params: { slug: string } | Promise<{ slug: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
-  const resolvedParams = await Promise.resolve(params);
+  const resolvedParams = await params;
   const article = await getLibraryArticleBySlug(resolvedParams.slug);
 
   if (!article) {

@@ -4,10 +4,11 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { fileId: string } }
+  { params }: { params: Promise<{ fileId: string }> }
 ) {
   try {
-    const fileId = params.fileId;
+    const resolved = await params;
+    const fileId = resolved.fileId;
     if (!fileId) {
       return NextResponse.json({ error: 'Thiếu Google Drive fileId' }, { status: 400 });
     }

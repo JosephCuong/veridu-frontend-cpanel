@@ -1,4 +1,5 @@
 import React from 'react';
+import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { DEFAULT_STORYBOOKS } from '@/lib/storybooksData';
@@ -12,14 +13,15 @@ export async function generateStaticParams() {
   }));
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const fallback = DEFAULT_STORYBOOKS.find(b => b.slug === params.slug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const fallback = DEFAULT_STORYBOOKS.find(b => b.slug === slug);
 
   try {
     const { data: dbBook } = await supabase
       .from('storybooks')
       .select('title, subtitle, description')
-      .eq('slug', params.slug)
+      .eq('slug', slug)
       .single();
 
     const book = dbBook || fallback;
@@ -38,8 +40,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default async function StorybookReaderPage({ params }: { params: { slug: string } }) {
-  const fallback = DEFAULT_STORYBOOKS.find(b => b.slug === params.slug);
+export default async function StorybookReaderPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const fallback = DEFAULT_STORYBOOKS.find(b => b.slug === slug);
 
   let book = fallback;
 
@@ -47,7 +50,7 @@ export default async function StorybookReaderPage({ params }: { params: { slug: 
     const { data: dbBook } = await supabase
       .from('storybooks')
       .select('*')
-      .eq('slug', params.slug)
+      .eq('slug', slug)
       .single();
 
     if (dbBook) {
@@ -60,7 +63,7 @@ export default async function StorybookReaderPage({ params }: { params: { slug: 
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
-  const pageUrl = `${siteUrl}/sach-tranh/${params.slug}`;
+  const pageUrl = `${siteUrl}/sach-tranh/${slug}`;
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col font-sans select-none">

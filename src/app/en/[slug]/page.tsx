@@ -16,9 +16,9 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string } | Promise<{ slug: string }>;
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const resolvedParams = await Promise.resolve(params);
+  const resolvedParams = await params;
   const article = await getLibraryArticleBySlug(resolvedParams.slug);
 
   if (!article) {
@@ -54,9 +54,9 @@ export async function generateMetadata({
 export default async function EnglishArticlePage({
   params,
 }: {
-  params: { slug: string } | Promise<{ slug: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const resolvedParams = await Promise.resolve(params);
+  const resolvedParams = await params;
   const pageData = await prepareArticlePageData(resolvedParams.slug);
 
   if (!pageData) {
