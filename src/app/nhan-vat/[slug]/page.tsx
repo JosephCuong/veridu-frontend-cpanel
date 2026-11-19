@@ -27,8 +27,8 @@ import {
 export const revalidate = 3600; // Cache for 1 hour
 
 // Generate dynamic metadata for SEO
-export async function generateMetadata({ params }: { params: { slug: string } | Promise<{ slug: string }> }): Promise<Metadata> {
-  const resolvedParams = await Promise.resolve(params);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const resolvedParams = await params;
   const character = await fetchCharacterBySlug(resolvedParams.slug);
 
   if (!character) {
@@ -57,8 +57,8 @@ export async function generateStaticParams() {
   return characters.map(c => ({ slug: c.slug }));
 }
 
-export default async function CharacterDetailPage({ params }: { params: { slug: string } | Promise<{ slug: string }> }) {
-  const resolvedParams = await Promise.resolve(params);
+export default async function CharacterDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = await params;
   const character = await fetchCharacterBySlug(resolvedParams.slug);
 
   if (!character) {

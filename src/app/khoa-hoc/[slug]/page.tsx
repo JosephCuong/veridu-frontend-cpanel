@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useParams } from 'next/navigation';
 import { 
   Play, CheckCircle, Circle, BookOpen, Clock, 
   Video, Headphones, ChevronLeft, ChevronRight, Award, Loader2, Book,
@@ -85,7 +86,9 @@ function resolveMediaEmbedUrl(url?: string): {
   return { type: 'direct', embedUrl: clean, originalUrl: clean };
 }
 
-export default function CoursePlayerPage({ params }: { params: { slug: string } }) {
+export default function CoursePlayerPage() {
+  const params = useParams<{ slug: string }>();
+  const slug = Array.isArray(params?.slug) ? params.slug[0] : (params?.slug || '');
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -127,7 +130,7 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
     async function loadData() {
       try {
         setLoading(true);
-        const data = await fetchCourseBySlug(params.slug);
+        const data = await fetchCourseBySlug(slug);
         if (!data) {
           setError('Không tìm thấy khóa học.');
           return;
@@ -147,8 +150,8 @@ export default function CoursePlayerPage({ params }: { params: { slug: string } 
       }
     }
 
-    loadData();
-  }, [params.slug]);
+    if (slug) loadData();
+  }, [slug]);
 
   // ─── DERIVED CURRENT SECTION & STATS ───────────────────────────────────────
   const currentLessons = course?.lessons || [];
