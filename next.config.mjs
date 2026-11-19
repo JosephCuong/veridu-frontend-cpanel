@@ -13,6 +13,16 @@ const nextConfig = {
         pathname: '/**',
       },
       {
+        protocol: 'https',
+        hostname: 'cdn.thapgia.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'data.thapgia.com',
+        pathname: '/**',
+      },
+      {
         protocol: 'http',
         hostname: 'media.thapgia.com',
         pathname: '/**',

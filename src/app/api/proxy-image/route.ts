@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export const runtime = 'nodejs';
-
-// 1x1 Transparent PNG for clean, silent fallback without ever returning HTML
-const TRANSPARENT_PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-  'base64'
+// Use portable Web/Edge-compatible binary fallback so this route works smoothly on Cloudflare Workers & Node
+const TRANSPARENT_PNG = Uint8Array.from(
+  atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='),
+  c => c.charCodeAt(0)
 );
 
 // Strict Allowlist of trusted image hosts to prevent SSRF and proxy abuse
