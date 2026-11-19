@@ -82,8 +82,9 @@ export async function generateStaticParams() {
   ];
 }
 
-export async function generateMetadata({ params }: { params: { part: string } }): Promise<Metadata> {
-  const partInfo = PARTS_MAP[params.part];
+export async function generateMetadata({ params }: { params: Promise<{ part: string }> }): Promise<Metadata> {
+  const { part } = await params;
+  const partInfo = PARTS_MAP[part];
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.cruxveritatis.org';
   if (!partInfo) return { title: 'Trình Đọc Giáo Lý | VERIDU' };
 
@@ -137,8 +138,9 @@ export async function generateMetadata({ params }: { params: { part: string } })
   };
 }
 
-export default async function CatechismPartPage({ params }: { params: { part: string } }) {
-  const currentPart = PARTS_MAP[params.part];
+export default async function CatechismPartPage({ params }: { params: Promise<{ part: string }> }) {
+  const { part } = await params;
+  const currentPart = PARTS_MAP[part];
   if (!currentPart) {
     notFound();
   }

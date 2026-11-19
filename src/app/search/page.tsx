@@ -7,10 +7,11 @@ import { Search, BookOpen, Book, FileText, PlayCircle, Calendar } from 'lucide-r
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: { q?: string; tab?: string };
+  searchParams: Promise<{ q?: string; tab?: string }>;
 }) {
-  const query = searchParams.q || '';
-  const activeTab = searchParams.tab || 'courses';
+  const sp = await searchParams;
+  const query = sp.q || '';
+  const activeTab = sp.tab || 'courses';
 
   let courses: Course[] = [];
   let articles: Article[] = [];

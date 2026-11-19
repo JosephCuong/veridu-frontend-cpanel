@@ -19,11 +19,12 @@ import {
 
 export const revalidate = 3600;
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const { data: profile } = await supabase
     .from('profiles')
     .select('full_name, christian_name, role, specialty, bio')
-    .eq('id', params.id)
+    .eq('id', id)
     .maybeSingle();
 
   if (!profile) return { title: 'Tác Giả VERIDU' };
@@ -34,12 +35,13 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
   };
 }
 
-export default async function AuthorProfilePage({ params }: { params: { id: string } }) {
+export default async function AuthorProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   // Fetch author profile
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .maybeSingle();
 
   if (!profile) {
@@ -50,7 +52,7 @@ export default async function AuthorProfilePage({ params }: { params: { id: stri
   const { data: posts } = await supabase
     .from('posts')
     .select('id, slug, title, excerpt, category, created_at, views')
-    .eq('author_id', params.id)
+    .eq('author_id', id)
     .eq('status', 'published')
     .order('created_at', { ascending: false });
 
@@ -58,7 +60,7 @@ export default async function AuthorProfilePage({ params }: { params: { id: stri
   const { data: courses } = await supabase
     .from('courses')
     .select('id, slug, title, thumbnail, category, total_duration, level')
-    .eq('author_id', params.id)
+    .eq('author_id', id)
     .eq('published', true)
     .order('created_at', { ascending: false });
 
@@ -66,7 +68,7 @@ export default async function AuthorProfilePage({ params }: { params: { id: stri
   const { data: resources } = await supabase
     .from('library_items')
     .select('id, slug, title, category, item_type, format, view_count, download_count, created_at')
-    .eq('author_id', params.id)
+    .eq('author_id', id)
     .eq('status', 'published')
     .order('created_at', { ascending: false });
 

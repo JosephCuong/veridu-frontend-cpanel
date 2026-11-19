@@ -30,11 +30,12 @@ export const metadata = {
 export default async function CoursesPage({
   searchParams,
 }: {
-  searchParams: { category?: string; s?: string; sort?: string };
+  searchParams: Promise<{ category?: string; s?: string; sort?: string }>;
 }) {
-  const activeCategory = searchParams.category || 'all';
-  const searchQuery = searchParams.s?.toLowerCase() || '';
-  const sortOrder = searchParams.sort || 'newest';
+  const sp = await searchParams;
+  const activeCategory = sp.category || 'all';
+  const searchQuery = sp.s?.toLowerCase() || '';
+  const sortOrder = sp.sort || 'newest';
 
   // Fetch all raw courses
   const allCourses = await fetchCourses();
