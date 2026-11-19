@@ -1,5 +1,3 @@
-import nodemailer from 'nodemailer';
-
 export interface AuthorApplicationEmailData {
   id?: number | string;
   full_name: string;
@@ -14,24 +12,52 @@ export interface AuthorApplicationEmailData {
   sample_work_url?: string | null;
 }
 
-function getTransporter() {
-  const user = process.env.GMAIL_USER || 'veridu.net@gmail.com';
-  const pass = process.env.GMAIL_APP_PASSWORD;
-
-  if (!pass) {
-    console.warn('[EmailService] GMAIL_APP_PASSWORD chưa được thiết lập. Email sẽ không được gửi.');
-    return null;
+async function dispatchEmail(opts: { from: string; to: string; subject: string; html: string }) {
+  // 1. Prefer Web-standard HTTP Email API (Resend) for Cloudflare Workers / Edge compatibility
+  const resendKey = process.env.RESEND_API_KEY?.trim();
+  if (resendKey) {
+    const resp = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${resendKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: process.env.RESEND_FROM || opts.from,
+        to: [opts.to],
+        subject: opts.subject,
+        html: opts.html,
+      }),
+    });
+    if (!resp.ok) {
+      const errText = await resp.text();
+      throw new Error(`Resend HTTP ${resp.status}: ${errText}`);
+    }
+    const json = (await resp.json()) as { id?: string };
+    return { success: true, messageId: json.id || 'resend' };
   }
 
-  return nodemailer.createTransport({
+  // 2. Fallback to SMTP via dynamic nodemailer import when running in Node.js environment
+  const user = process.env.GMAIL_USER || 'veridu.net@gmail.com';
+  const pass = process.env.GMAIL_APP_PASSWORD;
+  if (!pass) {
+    console.warn('[EmailService] RESEND_API_KEY / GMAIL_APP_PASSWORD chưa được thiết lập. Bỏ qua gửi email.');
+    return { success: false, reason: 'EMAIL_CREDENTIALS_MISSING' };
+  }
+
+  const nodemailerMod = await import('nodemailer');
+  const nodemailer = nodemailerMod.default || nodemailerMod;
+  const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
-    secure: true, // SSL
+    secure: true,
     auth: {
       user: user.trim(),
-      pass: pass.trim()
-    }
+      pass: pass.trim(),
+    },
   });
+  const info = await transporter.sendMail(opts);
+  return { success: true, messageId: info.messageId };
 }
 
 function formatRoleName(role?: string | null): string {
@@ -48,13 +74,7 @@ function formatRoleName(role?: string | null): string {
  */
 export async function sendAdminNewApplicationAlert(app: AuthorApplicationEmailData) {
   try {
-    const transporter = getTransporter();
     const adminEmail = process.env.GMAIL_USER || 'veridu.net@gmail.com';
-
-    if (!transporter) {
-      console.log(`[EmailService - MOCK] Đã có đơn nộp mới từ: ${app.full_name} (${app.email}) - Chưa có GMAIL_APP_PASSWORD để gửi thực tế.`);
-      return { success: false, reason: 'GMAIL_APP_PASSWORD_MISSING' };
-    }
 
     const roleName = formatRoleName(app.role_applied);
     const candidateName = [app.christian_name, app.full_name].filter(Boolean).join(' ');
@@ -154,15 +174,15 @@ export async function sendAdminNewApplicationAlert(app: AuthorApplicationEmailDa
     </html>
     `;
 
-    const info = await transporter.sendMail({
+    const info = await dispatchEmail({
       from: `"VERIDU Quản Trị" <${adminEmail}>`,
       to: adminEmail,
       subject: `[VERIDU] 🛡️ Đơn Đăng Ký Mới: ${candidateName} (${roleName})`,
       html: htmlContent
     });
 
-    console.log('[EmailService] Đã gửi thông báo cho Admin thành công:', info.messageId);
-    return { success: true, messageId: info.messageId };
+    console.log('[EmailService] Đã gửi thông báo cho Admin:', info);
+    return info;
   } catch (error: any) {
     console.error('[EmailService] Lỗi khi gửi email cho Admin:', error);
     return { success: false, error: error.message };
@@ -174,13 +194,7 @@ export async function sendAdminNewApplicationAlert(app: AuthorApplicationEmailDa
  */
 export async function sendAuthorApprovalNotice(app: AuthorApplicationEmailData) {
   try {
-    const transporter = getTransporter();
     const adminEmail = process.env.GMAIL_USER || 'veridu.net@gmail.com';
-
-    if (!transporter) {
-      console.log(`[EmailService - MOCK] Phê duyệt đơn cho: ${app.full_name} (${app.email}) - Chưa có GMAIL_APP_PASSWORD để gửi thực tế.`);
-      return { success: false, reason: 'GMAIL_APP_PASSWORD_MISSING' };
-    }
 
     const roleName = formatRoleName(app.role_applied);
     const candidateName = [app.christian_name, app.full_name].filter(Boolean).join(' ');
@@ -269,15 +283,15 @@ export async function sendAuthorApprovalNotice(app: AuthorApplicationEmailData) 
     </html>
     `;
 
-    const info = await transporter.sendMail({
+    const info = await dispatchEmail({
       from: `"Ban Quản Trị VERIDU" <${adminEmail}>`,
       to: app.email,
       subject: `[VERIDU] ✝️ Chúc Mừng! Đơn Ứng Tuyển Của Bạn Đã Được Phê Duyệt`,
       html: htmlContent
     });
 
-    console.log(`[EmailService] Đã gửi thông báo phê duyệt tới ${app.email}:`, info.messageId);
-    return { success: true, messageId: info.messageId };
+    console.log(`[EmailService] Đã gửi thông báo phê duyệt tới ${app.email}:`, info);
+    return info;
   } catch (error: any) {
     console.error(`[EmailService] Lỗi khi gửi thông báo tới ${app.email}:`, error);
     return { success: false, error: error.message };
@@ -300,13 +314,7 @@ export interface TranslationSubmissionEmailData {
  */
 export async function sendAdminNewTranslationAlert(sub: TranslationSubmissionEmailData) {
   try {
-    const transporter = getTransporter();
     const adminEmail = process.env.GMAIL_USER || 'veridu.net@gmail.com';
-
-    if (!transporter) {
-      console.log(`[EmailService - MOCK] Đã có bản dịch mới từ: ${sub.contributorName} (${sub.contributorEmail}) cho bài: ${sub.articleTitleVi}`);
-      return { success: false, reason: 'GMAIL_APP_PASSWORD_MISSING' };
-    }
 
     const htmlContent = `
     <!DOCTYPE html>
@@ -341,18 +349,17 @@ export async function sendAdminNewTranslationAlert(sub: TranslationSubmissionEma
     </html>
     `;
 
-    const info = await transporter.sendMail({
+    const info = await dispatchEmail({
       from: `"Cổng Học Vụ VERIDU" <${adminEmail}>`,
       to: adminEmail,
       subject: `[VERIDU - DỊCH THUẬT] 📜 Đề xuất bản dịch: ${sub.titleEn}`,
       html: htmlContent
     });
 
-    console.log(`[EmailService] Đã gửi thông báo bản dịch mới tới ${adminEmail}:`, info.messageId);
-    return { success: true, messageId: info.messageId };
+    console.log(`[EmailService] Đã gửi thông báo bản dịch mới tới ${adminEmail}:`, info);
+    return info;
   } catch (error: any) {
     console.error(`[EmailService] Lỗi khi gửi thông báo bản dịch mới:`, error);
     return { success: false, error: error.message };
   }
 }
-

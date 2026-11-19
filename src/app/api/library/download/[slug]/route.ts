@@ -4,10 +4,11 @@ import { checkUserDownloadQuota, recordDownloadItem } from '@/lib/api';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const slug = params.slug;
+    const resolved = await params;
+    const slug = resolved.slug;
     const searchParams = request.nextUrl.searchParams;
     const userId = searchParams.get('userId');
     const userRole = searchParams.get('userRole') || 'Học Viên';

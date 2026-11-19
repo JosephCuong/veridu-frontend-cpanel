@@ -5,10 +5,11 @@ import { supabase } from '@/lib/supabaseClient';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { number: string } }
+  { params }: { params: Promise<{ number: string }> }
 ) {
   try {
-    const num = parseInt(params.number);
+    const resolved = await params;
+    const num = parseInt(resolved.number);
     if (isNaN(num)) {
       return NextResponse.json({ error: 'Invalid number' }, { status: 400 });
     }
