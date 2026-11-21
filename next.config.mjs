@@ -130,6 +130,15 @@ const nextConfig = {
         ],
       },
       {
+        source: '/((?!api/desktop/embed-video).*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+        ],
+      },
+      {
         source: '/:path*',
         headers: [
           {
@@ -139,10 +148,6 @@ const nextConfig = {
           {
             key: 'X-XSS-Protection',
             value: '1; mode=block',
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN',
           },
           {
             key: 'X-Content-Type-Options',
