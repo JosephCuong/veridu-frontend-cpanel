@@ -27,14 +27,11 @@ export async function GET(request: Request) {
   if (startSec > 0) params.set('start', String(startSec));
 
   let embedSrc = '';
-  let watchHref = 'https://www.youtube.com/@veridu.net-gmail';
   if (validV) {
     embedSrc = `https://www.youtube.com/embed/${validV}?${params.toString()}`;
-    watchHref = `https://www.youtube.com/watch?v=${validV}`;
   } else {
     params.set('list', validList);
     embedSrc = `https://www.youtube.com/embed/videoseries?${params.toString()}`;
-    watchHref = `https://www.youtube.com/playlist?list=${validList}`;
   }
 
   const html = `<!DOCTYPE html>
@@ -48,16 +45,6 @@ export async function GET(request: Request) {
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; height: 100%; overflow: hidden; background: #0B0A0A; }
     iframe { width: 100%; height: 100%; border: 0; display: block; }
-    .fallback-bar {
-      position: fixed; right: 10px; bottom: 10px; z-index: 10;
-      opacity: 0; transition: opacity 0.2s;
-    }
-    body:hover .fallback-bar { opacity: 0.85; }
-    .fallback-bar a {
-      background: rgba(20,18,19,0.85); color: #F5EEDC; text-decoration: none;
-      font: 500 12px 'Segoe UI', sans-serif; padding: 5px 10px; border-radius: 6px;
-      border: 1px solid rgba(212,168,79,0.5);
-    }
   </style>
 </head>
 <body>
@@ -68,7 +55,6 @@ export async function GET(request: Request) {
     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
     allowfullscreen
   ></iframe>
-  <div class="fallback-bar"><a href="${watchHref}" target="_blank" rel="noopener">Mở trên YouTube</a></div>
 </body>
 </html>`;
 

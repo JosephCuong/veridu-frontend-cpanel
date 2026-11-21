@@ -31,7 +31,19 @@ function decodeXmlEntities(input: string): string {
     .trim();
 }
 
-async function fetchYoutubeChannelVideos(limit = 15) {
+interface FeedVideoItem {
+  video_id: string;
+  title: string;
+  category: string;
+  is_short: boolean;
+  subtitle: string;
+  published: string;
+  youtube_url: string;
+  thumbnail_url: string;
+  external_url: string;
+}
+
+async function fetchYoutubeChannelVideos(limit = 15): Promise<FeedVideoItem[]> {
   try {
     const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${YOUTUBE_CHANNEL_ID}`;
     const resp = await fetch(rssUrl, {
@@ -41,17 +53,7 @@ async function fetchYoutubeChannelVideos(limit = 15) {
     if (!resp.ok) return [];
     const xml = await resp.text();
     const entryRegex = /<entry>([\s\S]*?)<\/entry>/g;
-    const items: Array<{
-      video_id: string;
-      title: string;
-      category: string;
-      is_short: boolean;
-      subtitle: string;
-      published: string;
-      youtube_url: string;
-      thumbnail_url: string;
-      external_url: string;
-    }> = [];
+    const items: FeedVideoItem[] = [];
 
     let match: RegExpExecArray | null;
     while ((match = entryRegex.exec(xml)) !== null && items.length < limit) {
@@ -116,25 +118,30 @@ export async function GET() {
       url: `${siteUrl}/${p.slug}`,
     }));
 
-    const storybookVideos = books
+    const storybookVideos: FeedVideoItem[] = books
       .filter((b: any) => b.youtube_url)
       .map((b: any) => ({
+        video_id: '',
         title: b.title || 'Video VERIDU',
         category: 'Video Kinh Thánh',
         is_short: false,
         subtitle: b.subtitle || '',
+        published: b.created_at ? String(b.created_at).slice(0, 10) : '',
         youtube_url: b.youtube_url,
         thumbnail_url: toAbsoluteUrl(b.cover_image, siteUrl),
         external_url: `${siteUrl}/sach-tranh/${b.slug}`,
       }));
 
-    const featuredMedia = [...ytVideos, ...storybookVideos].slice(0, 15);
+    const featuredMedia: FeedVideoItem[] = [...ytVideos, ...storybookVideos].slice(0, 15);
 
     if (featuredMedia.length === 0) {
       featuredMedia.push({
+        video_id: '',
         title: 'Kênh YouTube VERIDU',
         category: 'YouTube',
+        is_short: false,
         subtitle: 'Các video Kinh Thánh, Thánh vịnh đáp ca và suy niệm mới nhất.',
+        published: '',
         youtube_url: '',
         thumbnail_url: '',
         external_url: YOUTUBE_CHANNEL_URL,
