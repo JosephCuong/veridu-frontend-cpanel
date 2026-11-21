@@ -214,6 +214,6 @@ export const config = {
      * Skip static asset directories, media files, SEO files, and lightweight telemetry/proxy endpoints
      * to avoid unnecessary Middleware CPU execution on every asset or bot request.
      */
-    '/((?!_next/static|_next/image|favicon\\.ico|images/|models/|storybooks/|vendor/|audio/|api/ping|api/health|api/og|api/proxy-image|api/veridu-feed\\.json|robots\\.txt|sitemap\\.xml|ads\\.txt|.*\\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico|woff|woff2|ttf|eot|mp3|mp4|webm|glb|gltf|css|js|map|txt)$).*)',
+    '/((?!_next/static|_next/image|favicon\\.ico|images/|models/|storybooks/|vendor/|audio/|api/ping|api/health|api/og|api/proxy-image|api/veridu-feed\\.json|api/desktop/embed-video|robots\\.txt|sitemap\\.xml|ads\\.txt|.*\\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico|woff|woff2|ttf|eot|mp3|mp4|webm|glb|gltf|css|js|map|txt)$).*)',
   ],
 };

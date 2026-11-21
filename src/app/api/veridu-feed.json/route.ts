@@ -31,7 +31,7 @@ function decodeXmlEntities(input: string): string {
     .trim();
 }
 
-async function fetchYoutubeChannelVideos(limit = 6) {
+async function fetchYoutubeChannelVideos(limit = 15) {
   try {
     const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${YOUTUBE_CHANNEL_ID}`;
     const resp = await fetch(rssUrl, {
@@ -42,8 +42,10 @@ async function fetchYoutubeChannelVideos(limit = 6) {
     const xml = await resp.text();
     const entryRegex = /<entry>([\s\S]*?)<\/entry>/g;
     const items: Array<{
+      video_id: string;
       title: string;
       category: string;
+      is_short: boolean;
       subtitle: string;
       published: string;
       youtube_url: string;
@@ -62,10 +64,14 @@ async function fetchYoutubeChannelVideos(limit = 6) {
       const title = decodeXmlEntities(titleMatch[1]);
       const pubDate = pubMatch ? pubMatch[1].trim().slice(0, 10) : '';
       const isShort = /#shorts/i.test(title);
+      const isPsalm = /đáp ca|thánh vịnh|karaoke/i.test(title);
+      const category = isShort ? 'Shorts' : (isPsalm ? 'Đáp Ca & Thánh Vịnh' : 'Video Kinh Thánh');
       items.push({
+        video_id: vid,
         title,
-        category: isShort ? 'YouTube Shorts' : 'YouTube VERIDU',
-        subtitle: pubDate ? `Phát hành ${pubDate} • Kênh YouTube VERIDU` : 'Kênh YouTube chính thức VERIDU',
+        category,
+        is_short: isShort,
+        subtitle: pubDate ? `${pubDate} • ${category}` : category,
         published: pubDate,
         youtube_url: `https://www.youtube.com/watch?v=${vid}`,
         thumbnail_url: `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`,
@@ -95,7 +101,7 @@ export async function GET() {
         .select('id, title, slug, subtitle, cover_image, youtube_url, created_at')
         .order('created_at', { ascending: false })
         .limit(4),
-      fetchYoutubeChannelVideos(6),
+      fetchYoutubeChannelVideos(15),
     ]);
 
     const posts = Array.isArray(postsRes.data) ? postsRes.data : [];
@@ -114,14 +120,15 @@ export async function GET() {
       .filter((b: any) => b.youtube_url)
       .map((b: any) => ({
         title: b.title || 'Video VERIDU',
-        category: 'YouTube VERIDU',
+        category: 'Video Kinh Thánh',
+        is_short: false,
         subtitle: b.subtitle || '',
         youtube_url: b.youtube_url,
         thumbnail_url: toAbsoluteUrl(b.cover_image, siteUrl),
         external_url: `${siteUrl}/sach-tranh/${b.slug}`,
       }));
 
-    const featuredMedia = [...ytVideos, ...storybookVideos].slice(0, 6);
+    const featuredMedia = [...ytVideos, ...storybookVideos].slice(0, 15);
 
     if (featuredMedia.length === 0) {
       featuredMedia.push({
@@ -149,7 +156,7 @@ export async function GET() {
       : null;
 
     const payload = {
-      version: '2.3.0',
+      version: '2.3.1',
       generated_at: new Date().toISOString(),
       ecosystem: {
         website_url: `${siteUrl}/`,
@@ -183,7 +190,7 @@ export async function GET() {
   } catch (err: any) {
     return NextResponse.json(
       {
-        version: '2.3.0',
+        version: '2.3.1',
         generated_at: new Date().toISOString(),
         ecosystem: {
           website_url: `${siteUrl}/`,
