@@ -16,6 +16,18 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 
+async function parseJsonSafe(res: Response): Promise<any> {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {
+      success: false,
+      error: `Máy chủ tạm thời quá tải hoặc trả về phản hồi không phải JSON (HTTP ${res.status}). Vui lòng thử lại sau vài giây.`,
+    };
+  }
+}
+
 export default function AdminDesktopTab() {
   const [loading, setLoading] = useState(true);
   const [releases, setReleases] = useState<any[]>([]);
@@ -44,7 +56,7 @@ export default function AdminDesktopTab() {
     setLoading(true);
     try {
       const res = await fetch('/api/admin/desktop', { credentials: 'include' });
-      const data = await res.json();
+      const data = await parseJsonSafe(res);
       if (!res.ok || !data.success) {
         setFeedback({ type: 'error', text: data?.error || 'Không thể tải dữ liệu App VERIDU.' });
       } else {
@@ -64,11 +76,11 @@ export default function AdminDesktopTab() {
           setRelIsLatest(Boolean(latest.is_latest));
         }
 
-        if ((data.resources || []).length > 0 && !grantPackId) {
-          setGrantPackId(data.resources[0].pack_id);
+        if ((data.resources || []).length > 0) {
+          setGrantPackId((prev) => prev || data.resources[0].pack_id);
         }
-        if ((data.users || []).length > 0 && !grantUserId) {
-          setGrantUserId(data.users[0].id);
+        if ((data.users || []).length > 0) {
+          setGrantUserId((prev) => prev || data.users[0].id);
         }
       }
     } catch (err: any) {
@@ -76,7 +88,7 @@ export default function AdminDesktopTab() {
     } finally {
       setLoading(false);
     }
-  }, [grantPackId, grantUserId]);
+  }, []);
 
   useEffect(() => {
     loadDesktopData();
@@ -101,12 +113,24 @@ export default function AdminDesktopTab() {
           is_latest: relIsLatest,
         }),
       });
-      const data = await res.json();
+      const data = await parseJsonSafe(res);
       if (!res.ok || !data.success) {
         setFeedback({ type: 'error', text: data?.error || 'Không thể lưu phiên bản.' });
       } else {
         setFeedback({ type: 'success', text: data.message || 'Đã cập nhật liên kết tải thành công!' });
-        await loadDesktopData();
+        if (data.release) {
+          setReleases((prev) => {
+            const exists = prev.some((r) => r.version === data.release.version);
+            const updated = prev.map((r) =>
+              r.version === data.release.version
+                ? data.release
+                : data.release.is_latest
+                  ? { ...r, is_latest: false }
+                  : r
+            );
+            return exists ? updated : [data.release, ...updated];
+          });
+        }
       }
     } catch (err: any) {
       setFeedback({ type: 'error', text: err?.message || 'Lỗi kết nối máy chủ.' });
@@ -125,12 +149,12 @@ export default function AdminDesktopTab() {
         credentials: 'include',
         body: JSON.stringify({ action: 'revoke_device', device_id: deviceId }),
       });
-      const data = await res.json();
+      const data = await parseJsonSafe(res);
       if (!res.ok || !data.success) {
         setFeedback({ type: 'error', text: data?.error || 'Không thể gỡ thiết bị.' });
       } else {
         setFeedback({ type: 'success', text: data.message });
-        await loadDesktopData();
+        setDevices((prev) => prev.map((d) => (d.id === deviceId ? { ...d, revoked: true } : d)));
       }
     } catch (err: any) {
       setFeedback({ type: 'error', text: err?.message || 'Lỗi kết nối máy chủ.' });
@@ -156,7 +180,7 @@ export default function AdminDesktopTab() {
           source: grantSource,
         }),
       });
-      const data = await res.json();
+      const data = await parseJsonSafe(res);
       if (!res.ok || !data.success) {
         setFeedback({ type: 'error', text: data?.error || 'Không thể cấp quyền gói.' });
       } else {
@@ -180,12 +204,12 @@ export default function AdminDesktopTab() {
         credentials: 'include',
         body: JSON.stringify({ action: 'revoke_entitlement', entitlement_id: entitlementId }),
       });
-      const data = await res.json();
+      const data = await parseJsonSafe(res);
       if (!res.ok || !data.success) {
         setFeedback({ type: 'error', text: data?.error || 'Không thể thu hồi gói.' });
       } else {
         setFeedback({ type: 'success', text: data.message });
-        await loadDesktopData();
+        setEntitlements((prev) => prev.map((e) => (e.id === entitlementId ? { ...e, revoked: true } : e)));
       }
     } catch (err: any) {
       setFeedback({ type: 'error', text: err?.message || 'Lỗi kết nối máy chủ.' });

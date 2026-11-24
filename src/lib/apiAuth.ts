@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { supabaseUrl, supabaseAnonKey } from '@/lib/supabaseClient';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
 
@@ -94,17 +93,17 @@ export async function verifyApiAuth(
       };
     }
 
-    // 3. Verify JWT using a stateless Supabase Auth client
-    const statelessAnon = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
+    // 3. Verify JWT via lightweight direct REST call (avoids heavy SDK construction on Workers CPU budget)
+    const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      method: 'GET',
+      headers: {
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${token}`,
       },
+      cache: 'no-store',
     });
 
-    const { data: authData, error: authError } = await statelessAnon.auth.getUser(token);
-
-    if (authError || !authData?.user) {
+    if (!userRes.ok) {
       return {
         authenticated: false,
         error: 'Phiên đăng nhập đã hết hạn hoặc không hợp lệ.',
@@ -115,8 +114,20 @@ export async function verifyApiAuth(
       };
     }
 
-    const userId = authData.user.id;
-    const userEmail = authData.user.email || '';
+    const authUser: any = await userRes.json();
+    if (!authUser?.id) {
+      return {
+        authenticated: false,
+        error: 'Phiên đăng nhập đã hết hạn hoặc không hợp lệ.',
+        response: NextResponse.json(
+          { success: false, error: 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn.' },
+          { status: 401 }
+        ),
+      };
+    }
+
+    const userId = String(authUser.id);
+    const userEmail = String(authUser.email || '');
 
     // 4. Query verified role & permissions strictly from Supabase DB (never trust user_metadata.role)
     const adminDb = getSupabaseServerClient();
@@ -188,7 +199,7 @@ export async function verifyApiAuth(
         id: userId,
         email: userEmail,
         role: isAdmin ? 'Quản Trị Viên' : dbRole,
-        displayName: profile?.full_name || authData.user.user_metadata?.full_name || userEmail,
+        displayName: profile?.full_name || authUser.user_metadata?.full_name || userEmail,
         isAdmin,
         isAuthor,
       },

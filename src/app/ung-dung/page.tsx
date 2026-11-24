@@ -17,10 +17,10 @@ import {
   HelpCircle,
   Lock,
 } from 'lucide-react';
-import { getSupabaseServerClient } from '@/lib/supabaseServer';
+import { supabaseUrl, supabaseAnonKey } from '@/lib/supabaseClient';
 import AppShowcaseGallery from '@/components/AppShowcaseGallery';
 
-export const revalidate = 300;
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'Tải Ứng Dụng VERIDU cho Windows | Nghiên Cứu Kinh Thánh Đa Khung',
@@ -55,21 +55,28 @@ export default async function DesktopAppDownloadPage() {
   let publishedResources: any[] = [];
 
   try {
-    const supabase = getSupabaseServerClient();
-    const [{ data: rel }, { data: resList }] = await Promise.all([
-      supabase
-        .from('desktop_releases')
-        .select('version, release_notes, setup_url, portable_url, sha256, published_at')
-        .eq('is_latest', true)
-        .maybeSingle(),
-      supabase
-        .from('desktop_resources')
-        .select('pack_id, title, subtitle, version, item_count, file_size_bytes, access_tier')
-        .eq('is_published', true)
-        .order('created_at', { ascending: false }),
+    const headers = {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${supabaseAnonKey}`,
+    };
+    const [relRes, resListRes] = await Promise.all([
+      fetch(
+        `${supabaseUrl}/rest/v1/desktop_releases?is_latest=eq.true&select=version,release_notes,setup_url,portable_url,sha256,published_at&order=published_at.desc&limit=1`,
+        { headers, next: { revalidate: 60 } }
+      ),
+      fetch(
+        `${supabaseUrl}/rest/v1/desktop_resources?is_published=eq.true&select=pack_id,title,subtitle,version,item_count,file_size_bytes,access_tier&order=created_at.desc`,
+        { headers, next: { revalidate: 60 } }
+      ),
     ]);
-    latestRelease = rel;
-    publishedResources = resList || [];
+    if (relRes.ok) {
+      const rows = await relRes.json();
+      if (Array.isArray(rows) && rows.length > 0) latestRelease = rows[0];
+    }
+    if (resListRes.ok) {
+      const rows = await resListRes.json();
+      if (Array.isArray(rows)) publishedResources = rows;
+    }
   } catch (e) {
     console.warn('Could not fetch desktop_releases:', e);
   }

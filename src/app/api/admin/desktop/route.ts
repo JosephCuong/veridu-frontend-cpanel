@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
 import { verifyApiAuth } from '@/lib/apiAuth';
 
@@ -128,15 +127,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
       }
 
-      try {
-        revalidatePath('/ung-dung');
-        revalidatePath('/');
-      } catch (e) {}
-
       return NextResponse.json({
         success: true,
         release: data,
-        message: `Đã cập nhật liên kết tải cho VERIDU v${version.trim()}!`,
+        message: `Đã lưu liên kết tải cho VERIDU v${version.trim()}! Trang /ung-dung sẽ tự động hiển thị phiên bản mới.`,
       });
     }
 
