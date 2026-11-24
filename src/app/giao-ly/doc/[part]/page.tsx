@@ -36,7 +36,7 @@ const PARTS_MAP: Record<string, PartConfig> = {
     roman: 'I',
     title: 'Phần I: Tuyên Xưng Đức Tin',
     subtitle: 'Kinh Tin Kính Của Các Tông Đồ',
-    range: 'CCC 1 – 1065',
+    range: 'CCC 26 – 1065',
     color: '#f59e0b',
     desc: 'Mầu nhiệm Thiên Chúa Ba Ngôi, Sáng Tạo, Nhập Thể, Cứu Chuộc & Hội Thánh.'
   },
