@@ -114,7 +114,14 @@ export function getStoredUser(): UserProfile | null {
   const data = Cookies.get('veridu_user');
   if (data) {
     try {
-      const decoded = data.includes('%') ? decodeURIComponent(data) : data;
+      let decoded = data;
+      for (let i = 0; i < 2 && decoded.includes('%'); i++) {
+        try {
+          decoded = decodeURIComponent(decoded);
+        } catch {
+          break;
+        }
+      }
       const parsed: UserProfile = JSON.parse(decoded);
       
       if (parsed.diocese && parsed.diocese.includes('?')) parsed.diocese = '';

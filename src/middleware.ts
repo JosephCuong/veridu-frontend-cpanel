@@ -110,9 +110,18 @@ export async function middleware(request: NextRequest) {
   // ══════════════════════════════════════════════════════════════════════════
   // 3. SERVER-SIDE ROUTE GUARD (AUTHENTICATION & AUTHORIZATION ENFORCEMENT)
   // ══════════════════════════════════════════════════════════════════════════
-  const tokenCookie = request.cookies.get('veridu_token')?.value;
+  const tokenCookie =
+    request.cookies.get('veridu_auth_token')?.value ||
+    request.cookies.get('veridu_token')?.value;
   const userCookie = request.cookies.get('veridu_user')?.value;
-  const hasValidAuthToken = Boolean(tokenCookie && tokenCookie !== 'guest_token');
+  const isWellFormedJwt = Boolean(tokenCookie && tokenCookie.split('.').length === 3);
+  const hasValidAuthToken = Boolean(
+    tokenCookie &&
+    tokenCookie !== 'guest_token' &&
+    tokenCookie !== 'sb_session_active' &&
+    tokenCookie !== 'veridu_active_session' &&
+    isWellFormedJwt
+  );
 
   // Check if route requires login
   const isAuthRequired = AUTH_REQUIRED_ROUTES.some(route => cleanPath === route || cleanPath.startsWith(`${route}/`));
@@ -131,12 +140,18 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginRedirectUrl);
     }
 
-    // Role check from user cookie + JWT structure validation
+    // Role check from user cookie + JWT structure validation (API routes independently verify DB role)
     let isAuthorized = false;
-    const isWellFormedJwt = Boolean(tokenCookie && tokenCookie.split('.').length === 3);
     if (userCookie && isWellFormedJwt) {
       try {
-        const decoded = userCookie.includes('%') ? decodeURIComponent(userCookie) : userCookie;
+        let decoded = userCookie;
+        for (let i = 0; i < 2 && decoded.includes('%'); i++) {
+          try {
+            decoded = decodeURIComponent(decoded);
+          } catch {
+            break;
+          }
+        }
         const parsed = JSON.parse(decoded);
         const userRole = (parsed?.role || '').toLowerCase();
         const isAdmin = userRole.includes('quản trị') || userRole === 'admin';
@@ -214,6 +229,6 @@ export const config = {
      * Skip static asset directories, media files, SEO files, and lightweight telemetry/proxy endpoints
      * to avoid unnecessary Middleware CPU execution on every asset or bot request.
      */
-    '/((?!_next/static|_next/image|favicon\\.ico|images/|models/|storybooks/|vendor/|audio/|api/ping|api/health|api/og|api/proxy-image|api/veridu-feed\\.json|api/desktop/embed-video|robots\\.txt|sitemap\\.xml|ads\\.txt|.*\\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico|woff|woff2|ttf|eot|mp3|mp4|webm|glb|gltf|css|js|map|txt)$).*)',
+    '/((?!_next/static|_next/image|favicon\\.ico|images/|docs/|models/|storybooks/|vendor/|audio/|api/ping|api/health|api/og|api/proxy-image|api/veridu-feed\\.json|api/desktop/embed-video|robots\\.txt|sitemap\\.xml|ads\\.txt|.*\\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico|woff|woff2|ttf|eot|mp3|mp4|webm|glb|gltf|css|js|map|txt|pdf)$).*)',
   ],
 };
