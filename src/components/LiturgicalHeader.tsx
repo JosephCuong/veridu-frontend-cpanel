@@ -83,9 +83,10 @@ export default function LiturgicalHeader() {
   // Fetch Admin moderation badge count if admin
   useEffect(() => {
     if (isAdmin) {
-      fetch('/api/admin/moderation')
-        .then(res => res.json())
+      fetch('/api/admin/moderation', { credentials: 'include' })
+        .then(res => (res.ok ? res.json() : null))
         .then(data => {
+          if (!data) return;
           const count = 
             (data.applications?.length || 0) + 
             (data.posts?.length || 0) + 
@@ -290,6 +291,16 @@ export default function LiturgicalHeader() {
         { label: isEn ? 'Bookshelf' : 'Tủ Sách', href: '/thu-vien/sach' },
         { label: isEn ? 'Storybooks' : 'Sách Tranh', href: '/sach-tranh' },
         { label: isEn ? 'Documents' : 'Tài Liệu', href: '/thu-vien/tai-lieu' },
+      ],
+    },
+    {
+      id: 'apps',
+      title: isEn ? 'APP' : 'ỨNG DỤNG',
+      matchPrefixes: ['/ung-dung'],
+      items: [
+        { label: isEn ? 'Windows App' : 'VERIDU Windows', href: '/ung-dung' },
+        { label: isEn ? 'My Devices' : 'Thiết Bị', href: '/ho-so?tab=desktop' },
+        { label: isEn ? 'User Guide' : 'Hướng Dẫn PDF', href: '/docs/HUONG_DAN_SU_DUNG_VERIDU_v1.1.pdf' },
       ],
     },
     {

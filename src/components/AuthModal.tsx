@@ -33,54 +33,27 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
       const email = username.includes('@') ? username : `${username}@veridu.com`;
 
       if (mode === 'login') {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ email, password, rememberMe }),
         });
-        
-        if (error) {
-          setErrorMsg('Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản hoặc mật khẩu.');
-        } else if (data.session) {
-          // Xây dựng UserProfile từ metadata & Supabase profiles table
-          const meta = data.user?.user_metadata || {};
-          let userRole = meta.role || 'Người Hành Hương';
-          const userEmail = (data.user?.email || '').toLowerCase();
+        const result = await res.json();
 
-          if (userRole === 'admin') {
-            userRole = 'Quản Trị Viên';
-          } else if (data.user?.id) {
+        if (!res.ok || !result?.success || !result?.user) {
+          setErrorMsg(result?.error || 'Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản hoặc mật khẩu.');
+        } else {
+          if (result.session?.access_token && result.session?.refresh_token) {
             try {
-              const { data: dbProfile } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', data.user.id)
-                .maybeSingle();
-
-              if (dbProfile?.role) {
-                userRole = dbProfile.role;
-              }
-            } catch (e) {
-              console.warn('AuthModal role fetch warning:', e);
-            }
+              await supabase.auth.setSession({
+                access_token: result.session.access_token,
+                refresh_token: result.session.refresh_token,
+              });
+            } catch (e) {}
           }
-
-          const userObj: UserProfile = {
-            id: data.user?.id || '',
-            username: username,
-            email: data.user?.email || '',
-            christianName: meta.christianName || null,
-            displayName: meta.displayName || null,
-            role: userRole,
-            avatar: meta.avatar || null,
-            parish: meta.parish || null,
-            diocese: meta.diocese || null,
-            streak: meta.streak || 0,
-            points: meta.points || 0,
-            badges: meta.badges || [],
-            createdAt: data.user?.created_at || new Date().toISOString()
-          };
-          
-          saveAuthSession(data.session.access_token, userObj, rememberMe);
+          const userObj: UserProfile = result.user;
+          saveAuthSession('veridu_active_session', userObj, rememberMe);
           onSuccess(userObj);
           onClose();
         }
@@ -94,7 +67,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
               displayName,
               christianName,
               parish,
-              diocese: 'Giáo Phận Sài Gòn',
+              diocese: '',
               role: 'Học Viên'
             }
           }
@@ -103,6 +76,16 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
         if (error) {
           setErrorMsg(error.message || 'Đăng ký thất bại. Tên đăng nhập này có thể đã tồn tại.');
         } else if (data.session) {
+          // Establish HttpOnly auth cookie on server
+          try {
+            await fetch('/api/auth/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ access_token: data.session.access_token, rememberMe }),
+            });
+          } catch (e) {}
+
           const userObj: UserProfile = {
             id: data.user?.id || '',
             username: username,
@@ -112,13 +95,14 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             role: 'Học Viên',
             avatar: '',
             parish: parish,
-            diocese: 'Giáo Phận Sài Gòn',
-            streak: 0,
-            points: 0,
-            badges: [],
+            diocese: '',
+            streak: 1,
+            points: 100,
+            manna: 100,
+            badges: ['tan_tong'],
             createdAt: data.user?.created_at || new Date().toISOString()
           };
-          saveAuthSession(data.session.access_token, userObj, rememberMe);
+          saveAuthSession('veridu_active_session', userObj, rememberMe);
           onSuccess(userObj);
           onClose();
         } else {

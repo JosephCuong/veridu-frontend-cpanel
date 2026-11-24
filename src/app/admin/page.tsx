@@ -23,9 +23,13 @@ import {
   BookOpen,
   Award,
   Layers,
-  ChevronRight
+  ChevronRight,
+  Laptop,
+  UserCog
 } from 'lucide-react';
 import { getStoredUser, UserProfile } from '@/lib/auth';
+import AdminUsersTab from '@/components/admin/AdminUsersTab';
+import AdminDesktopTab from '@/components/admin/AdminDesktopTab';
 
 interface ModerationState {
   posts: any[];
@@ -38,7 +42,7 @@ export default function AdminHubPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'applications' | 'posts' | 'resources' | 'courses'>('applications');
+  const [activeTab, setActiveTab] = useState<'applications' | 'posts' | 'resources' | 'courses' | 'users' | 'desktop'>('applications');
   const [moderationData, setModerationData] = useState<ModerationState>({
     posts: [],
     resources: [],
@@ -61,7 +65,7 @@ export default function AdminHubPage() {
   const loadModerationQueue = async () => {
     try {
       setRefreshing(true);
-      const res = await fetch('/api/admin/moderation');
+      const res = await fetch('/api/admin/moderation', { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setModerationData({
@@ -69,6 +73,11 @@ export default function AdminHubPage() {
           resources: data.resources || [],
           applications: data.applications || [],
           courses: data.courses || []
+        });
+      } else if (res.status === 401 || res.status === 403) {
+        setActionMessage({
+          type: 'error',
+          text: 'Phiên xác thực quản trị đã hết hạn hoặc cần làm mới cookie bảo mật. Vui lòng đăng xuất và đăng nhập lại.'
         });
       }
     } catch (err) {
@@ -90,11 +99,11 @@ export default function AdminHubPage() {
       const res = await fetch('/api/admin/moderation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           target_type: targetType,
           target_id: targetId,
-          action,
-          admin_id: user?.id
+          action
         })
       });
 
@@ -392,6 +401,32 @@ export default function AdminHubPage() {
                     {moderationData.courses.length}
                   </span>
                 )}
+              </button>
+
+              {/* Tab 5: Người Dùng & Phân Quyền */}
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`px-4 py-2 rounded-xl text-xs font-serif font-bold flex items-center gap-2 transition cursor-pointer whitespace-nowrap ${
+                  activeTab === 'users'
+                    ? 'bg-amber-500 text-slate-950 shadow-md'
+                    : 'bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-amber-500'
+                }`}
+              >
+                <UserCog className="w-3.5 h-3.5" />
+                <span>Người Dùng</span>
+              </button>
+
+              {/* Tab 6: App VERIDU & Thiết Bị */}
+              <button
+                onClick={() => setActiveTab('desktop')}
+                className={`px-4 py-2 rounded-xl text-xs font-serif font-bold flex items-center gap-2 transition cursor-pointer whitespace-nowrap ${
+                  activeTab === 'desktop'
+                    ? 'bg-amber-500 text-slate-950 shadow-md'
+                    : 'bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-amber-500'
+                }`}
+              >
+                <Laptop className="w-3.5 h-3.5" />
+                <span>App VERIDU</span>
               </button>
             </div>
           </div>
@@ -699,6 +734,16 @@ export default function AdminHubPage() {
                 </div>
               )}
             </div>
+          )}
+
+          {/* ── TAB CONTENT 5: USERS & ROLES ── */}
+          {activeTab === 'users' && (
+            <AdminUsersTab currentUserId={typeof user.id === 'string' ? user.id : undefined} />
+          )}
+
+          {/* ── TAB CONTENT 6: VERIDU DESKTOP APP ── */}
+          {activeTab === 'desktop' && (
+            <AdminDesktopTab />
           )}
 
         </div>

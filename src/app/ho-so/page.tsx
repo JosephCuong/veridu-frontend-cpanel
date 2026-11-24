@@ -5,12 +5,13 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { 
-  getStoredUser, logout, saveAuthSession, getAuthToken, UserProfile, 
+  getStoredUser, logout, saveAuthSession, UserProfile, 
   getStoredQuizHistory, clearQuizHistory, QuizAttempt 
 } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
 import { calculateLevelInfo, ALL_TITLES_CATALOG, TitleDefinition } from '@/lib/gamification';
 import UserAvatarFrame from '@/components/UserAvatarFrame';
+import ProfileDesktopTab from '@/components/profile/ProfileDesktopTab';
 import dynamic from 'next/dynamic';
 import type { CertificateData } from '@/components/CourseCertificateModal';
 
@@ -23,7 +24,7 @@ import {
   Settings, BookOpen, CheckCircle, Clock, Save, Phone, Image as ImageIcon,
   Heart, Calendar, Loader2, Trophy, Trash2, ArrowRight, PlayCircle, BarChart3, 
   AlertTriangle, Check, Plus, Eye, Cross, FileText, Zap, Droplets, Scroll,
-  GraduationCap, ExternalLink, ShieldCheck, PenTool
+  GraduationCap, ExternalLink, ShieldCheck, PenTool, Laptop
 } from 'lucide-react';
 
 import { 
@@ -31,8 +32,8 @@ import {
   fetchUserCourseProgressFromSupabase, fetchCharacters, Character 
 } from '@/lib/api';
 
-type ProfileTab = 'dashboard' | 'courses' | 'certificates' | 'titles' | 'mana' | 'quiz' | 'posts' | 'authored-courses' | 'settings';
-const VALID_TABS: ProfileTab[] = ['dashboard', 'courses', 'certificates', 'titles', 'mana', 'quiz', 'posts', 'authored-courses', 'settings'];
+type ProfileTab = 'dashboard' | 'desktop' | 'courses' | 'certificates' | 'titles' | 'mana' | 'quiz' | 'posts' | 'authored-courses' | 'settings';
+const VALID_TABS: ProfileTab[] = ['dashboard', 'desktop', 'courses', 'certificates', 'titles', 'mana', 'quiz', 'posts', 'authored-courses', 'settings'];
 
 function ProfileDashboardContent() {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -86,7 +87,7 @@ function ProfileDashboardContent() {
     phone: '',
     parish: '',
     diocese: '',
-    feastDay: '19/03 (Thánh Giuse)',
+    feastDay: '',
     bio: '',
     avatar: ''
   });
@@ -101,14 +102,14 @@ function ProfileDashboardContent() {
       setUser(current);
       setSelectedTitle((current as any)?.selected_title || (current as any)?.current_title || 'NGƯỜI TÌM HIỂU');
       setFormData({
-        christianName: current.christianName || 'Giuse',
+        christianName: current.christianName || '',
         displayName: current.displayName || '',
         email: current.email || '',
         phone: current.phone || '',
-        parish: current.parish || 'Tân Định',
-        diocese: current.diocese || 'Giáo Phận Sài Gòn',
-        feastDay: '19/03 (Thánh Giuse)',
-        bio: 'Nguyện xin Lời Chúa là ngọn đèn soi cho con bước.',
+        parish: current.parish || '',
+        diocese: current.diocese || '',
+        feastDay: '',
+        bio: '',
         avatar: current.avatar || ''
       });
 
@@ -303,7 +304,7 @@ function ProfileDashboardContent() {
       await supabase
         .from('profiles')
         .update({
-          selected_title: titleName,
+          current_title: titleName,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -442,11 +443,11 @@ function ProfileDashboardContent() {
             <div className="space-y-2.5 text-xs font-serif border-t border-[var(--border-card)] pt-4">
               <div className="flex justify-between">
                 <span className="text-[var(--text-muted)]">Giáo Xứ:</span>
-                <span className="font-bold text-[var(--text-main)]">{user.parish || 'Tân Định'}</span>
+                <span className="font-bold text-[var(--text-main)]">{user.parish || 'Chưa cập nhật'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[var(--text-muted)]">Giáo Phận:</span>
-                <span className="font-bold text-[var(--text-main)]">{user.diocese || 'Giáo Phận Sài Gòn'}</span>
+                <span className="font-bold text-[var(--text-main)]">{user.diocese || 'Chưa cập nhật'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[var(--text-muted)]">Vai Trò:</span>
@@ -454,102 +455,128 @@ function ProfileDashboardContent() {
               </div>
             </div>
 
-            {/* Quick Navigation Tabs */}
-            <div className="space-y-1.5 pt-2 border-t border-[var(--border-card)]">
-              <button
-                onClick={() => setActiveTab('dashboard')}
-                className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
-                  activeTab === 'dashboard' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
-                }`}
-              >
-                <User className="w-4 h-4" /> Tổng Quan Hồ Sơ
-              </button>
-
-              <button
-                onClick={() => setActiveTab('titles')}
-                className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
-                  activeTab === 'titles' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
-                }`}
-              >
-                <Award className="w-4 h-4" /> Danh Hiệu &amp; Cấp Bậc
-              </button>
-
-              <button
-                onClick={() => setActiveTab('certificates')}
-                className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
-                  activeTab === 'certificates' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
-                }`}
-              >
-                <Scroll className="w-4 h-4" /> Chứng Chỉ Khóa Học
-              </button>
-
-              <button
-                onClick={() => setActiveTab('mana')}
-                className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
-                  activeTab === 'mana' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
-                }`}
-              >
-                <Droplets className="w-4 h-4" /> Năng Lượng Mana
-              </button>
-
-              <button
-                onClick={() => setActiveTab('courses')}
-                className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
-                  activeTab === 'courses' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
-                }`}
-              >
-                <BookOpen className="w-4 h-4" /> Khóa Học Đang Học
-              </button>
-
-              <button
-                onClick={() => setActiveTab('quiz')}
-                className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
-                  activeTab === 'quiz' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
-                }`}
-              >
-                <Trophy className="w-4 h-4" /> Lịch Sử Đấu Trường
-              </button>
-
-              {isAuthor && (
+            {/* Quick Navigation Tabs (Grouped cleanly) */}
+            <div className="space-y-3 pt-2 border-t border-[var(--border-card)]">
+              <div className="space-y-1">
+                <div className="px-3 text-[10px] font-serif font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  Tài Khoản &amp; Ứng Dụng
+                </div>
                 <button
-                  onClick={() => setActiveTab('posts')}
-                  className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center justify-between cursor-pointer ${
-                    activeTab === 'posts' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-amber-700 dark:text-amber-400'
+                  onClick={() => setActiveTab('dashboard')}
+                  className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
+                    activeTab === 'dashboard' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
                   }`}
                 >
-                  <span className="flex items-center gap-2.5">
-                    <FileText className="w-4 h-4" /> Quản Lý Bài Viết
-                  </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/30">
-                    {userPosts.length}
-                  </span>
+                  <User className="w-4 h-4" /> Tổng Quan Hồ Sơ
                 </button>
-              )}
 
-              {isInstructor && (
                 <button
-                  onClick={() => setActiveTab('authored-courses')}
-                  className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center justify-between cursor-pointer ${
-                    activeTab === 'authored-courses' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-emerald-700 dark:text-emerald-400'
+                  onClick={() => setActiveTab('desktop')}
+                  className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
+                    activeTab === 'desktop' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
                   }`}
                 >
-                  <span className="flex items-center gap-2.5">
-                    <GraduationCap className="w-4 h-4" /> Khóa Học Đã Soạn
-                  </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/30">
-                    {authoredCourses.length}
-                  </span>
+                  <Laptop className="w-4 h-4" /> App VERIDU &amp; Thiết Bị
                 </button>
-              )}
 
-              <button
-                onClick={() => setActiveTab('settings')}
-                className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
-                  activeTab === 'settings' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
-                }`}
-              >
-                <Settings className="w-4 h-4" /> Cài Đặt Hồ Sơ
-              </button>
+                <button
+                  onClick={() => setActiveTab('settings')}
+                  className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
+                    activeTab === 'settings' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
+                  }`}
+                >
+                  <Settings className="w-4 h-4" /> Cài Đặt Hồ Sơ
+                </button>
+              </div>
+
+              <div className="space-y-1 pt-2 border-t border-[var(--border-card)]/60">
+                <div className="px-3 text-[10px] font-serif font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  Học Tập &amp; Thành Tích
+                </div>
+                <button
+                  onClick={() => setActiveTab('courses')}
+                  className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
+                    activeTab === 'courses' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
+                  }`}
+                >
+                  <BookOpen className="w-4 h-4" /> Khóa Học Đang Học
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('certificates')}
+                  className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
+                    activeTab === 'certificates' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
+                  }`}
+                >
+                  <Scroll className="w-4 h-4" /> Chứng Chỉ Khóa Học
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('titles')}
+                  className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
+                    activeTab === 'titles' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
+                  }`}
+                >
+                  <Award className="w-4 h-4" /> Danh Hiệu &amp; Cấp Bậc
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('mana')}
+                  className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
+                    activeTab === 'mana' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
+                  }`}
+                >
+                  <Droplets className="w-4 h-4" /> Năng Lượng Mana
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('quiz')}
+                  className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
+                    activeTab === 'quiz' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
+                  }`}
+                >
+                  <Trophy className="w-4 h-4" /> Lịch Sử Đấu Trường
+                </button>
+              </div>
+
+              {(isAuthor || isInstructor) && (
+                <div className="space-y-1 pt-2 border-t border-[var(--border-card)]/60">
+                  <div className="px-3 text-[10px] font-serif font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                    Tác Giả &amp; Giảng Dạy
+                  </div>
+                  {isAuthor && (
+                    <button
+                      onClick={() => setActiveTab('posts')}
+                      className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center justify-between cursor-pointer ${
+                        activeTab === 'posts' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-amber-700 dark:text-amber-400'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <FileText className="w-4 h-4" /> Quản Lý Bài Viết
+                      </span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/30">
+                        {userPosts.length}
+                      </span>
+                    </button>
+                  )}
+
+                  {isInstructor && (
+                    <button
+                      onClick={() => setActiveTab('authored-courses')}
+                      className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center justify-between cursor-pointer ${
+                        activeTab === 'authored-courses' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-emerald-700 dark:text-emerald-400'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <GraduationCap className="w-4 h-4" /> Khóa Học Đã Soạn
+                      </span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/30">
+                        {authoredCourses.length}
+                      </span>
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Logout Button */}
@@ -1046,6 +1073,11 @@ function ProfileDashboardContent() {
                   </div>
                 )}
               </div>
+            )}
+
+            {/* ── TAB: APP VERIDU & DEVICES ── */}
+            {activeTab === 'desktop' && (
+              <ProfileDesktopTab />
             )}
 
             {/* ── TAB 8: SETTINGS ── */}

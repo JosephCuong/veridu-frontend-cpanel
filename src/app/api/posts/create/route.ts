@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { getSupabaseServerClient } from '@/lib/supabaseServer';
+import { verifyApiAuth } from '@/lib/apiAuth';
 import { formatImageUrl, convertGoogleDriveImagesInHtml } from '@/lib/htmlProcessor';
 import { calculateReadingTime } from '@/lib/api';
 import { revalidatePostPaths } from '@/lib/revalidateHelper';
@@ -7,10 +8,15 @@ import { revalidatePostPaths } from '@/lib/revalidateHelper';
 export const dynamic = 'force-dynamic';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const DEFAULT_AUTHOR_ID = 'eef94645-01fb-471f-9b10-cdd3fea35143';
 
 export async function POST(request: Request) {
   try {
+    const auth = await verifyApiAuth(request, 'any');
+    if (!auth.authenticated || !auth.user) {
+      return auth.response!;
+    }
+
+    const supabase = getSupabaseServerClient();
     const body = await request.json();
     const { 
       title, 
@@ -62,9 +68,12 @@ export async function POST(request: Request) {
       finalSlug = `${finalSlug}-${Date.now().toString().slice(-4)}`;
     }
 
-    const validAuthorId = (author_id && typeof author_id === 'string' && UUID_REGEX.test(author_id))
+    const validAuthorId = (auth.user.isAdmin && author_id && typeof author_id === 'string' && UUID_REGEX.test(author_id))
       ? author_id
-      : DEFAULT_AUTHOR_ID;
+      : auth.user.id;
+    const effectiveStatus = (auth.user.isAdmin || auth.user.isAuthor)
+      ? (status || 'published')
+      : 'pending';
 
     const normalizedArticleType = (article_type === 'interactive') ? 'interactive' : 'standard';
     const cleanContent = convertGoogleDriveImagesInHtml(content);
@@ -95,7 +104,7 @@ export async function POST(request: Request) {
           article_type: normalizedArticleType,
           featured_image: formatImageUrl(featured_image),
           content: cleanContent,
-          status: status || 'published',
+          status: effectiveStatus,
           author_id: validAuthorId,
           author_name: finalAuthorName,
           reading_time: finalReadingTime,

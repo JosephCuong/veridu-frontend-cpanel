@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { supabase, getAuthenticatedSupabaseClient } from '@/lib/supabaseClient';
+import { getSupabaseServerClient } from '@/lib/supabaseServer';
+import { verifyApiAuth } from '@/lib/apiAuth';
 import { formatImageUrl, convertGoogleDriveImagesInHtml } from '@/lib/htmlProcessor';
 import { calculateReadingTime } from '@/lib/api';
 import { revalidatePostPaths } from '@/lib/revalidateHelper';
@@ -20,13 +21,12 @@ function slugifyVietnamese(str: string): string {
 
 export async function POST(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
-    const token = (authHeader && authHeader.startsWith('Bearer ')) 
-      ? authHeader.substring(7).trim() 
-      : null;
+    const auth = await verifyApiAuth(request, 'any');
+    if (!auth.authenticated || !auth.user) {
+      return auth.response!;
+    }
 
-    // Safely get authenticated client or fallback to default client
-    const dbClient = getAuthenticatedSupabaseClient(token);
+    const dbClient = getSupabaseServerClient();
 
     const body = await request.json();
     const { 
@@ -65,6 +65,10 @@ export async function POST(request: Request) {
 
     if (fetchError || !existingPost) {
       return NextResponse.json({ error: 'Không tìm thấy bài viết trong CSDL Supabase.' }, { status: 404 });
+    }
+
+    if (!auth.user.isAdmin && existingPost.author_id !== auth.user.id) {
+      return NextResponse.json({ error: 'Bạn không có quyền chỉnh sửa bài viết này.' }, { status: 403 });
     }
 
     const cleanTitle = (title && typeof title === 'string' && title.trim())
@@ -168,19 +172,6 @@ export async function POST(request: Request) {
 
     if (updateData && updateData.length > 0) {
       updatedPost = updateData[0];
-    }
-
-    // Fallback: If 0 rows returned by auth client, try direct supabase client
-    if (!updatedPost) {
-      const { data: fallbackData, error: fallbackError } = await supabase
-        .from('posts')
-        .update(updatePayload)
-        .eq('id', numericId)
-        .select();
-
-      if (!fallbackError && fallbackData && fallbackData.length > 0) {
-        updatedPost = fallbackData[0];
-      }
     }
 
     if (!updatedPost) {

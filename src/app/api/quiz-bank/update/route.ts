@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { getSupabaseServerClient } from '@/lib/supabaseServer';
+import { verifyApiAuth } from '@/lib/apiAuth';
 
 export async function PUT(req: NextRequest) {
   try {
+    const auth = await verifyApiAuth(req, 'author');
+    if (!auth.authenticated) {
+      return auth.response!;
+    }
+    const supabase = getSupabaseServerClient();
     const body = await req.json();
     const { id, ...updates } = body;
 

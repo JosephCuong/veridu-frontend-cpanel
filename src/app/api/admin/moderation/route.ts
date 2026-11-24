@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { supabase } from '@/lib/supabaseClient';
+import { getSupabaseServerClient } from '@/lib/supabaseServer';
+import { verifyApiAuth } from '@/lib/apiAuth';
 import { revalidatePostPaths } from '@/lib/revalidateHelper';
 import { sendAuthorApprovalNotice } from '@/lib/emailService';
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await verifyApiAuth(request, 'admin');
+    if (!auth.authenticated) {
+      return auth.response!;
+    }
+    const supabase = getSupabaseServerClient();
     // 1. Pending Posts
     const { data: pendingPosts } = await supabase
       .from('posts')
@@ -47,8 +53,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyApiAuth(request, 'admin');
+    if (!auth.authenticated || !auth.user) {
+      return auth.response!;
+    }
+    const supabase = getSupabaseServerClient();
+    const adminId = auth.user.id;
+
     const body = await request.json();
-    const { target_type, target_id, action, admin_id } = body; // action: 'approve' | 'reject'
+    const { target_type, target_id, action } = body; // action: 'approve' | 'reject'
 
     if (!target_type || !target_id || !action) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
@@ -86,7 +99,7 @@ export async function POST(request: NextRequest) {
       const appStatus = action === 'approve' ? 'approved' : 'rejected';
       const { data: app } = await supabase.from('author_applications').update({ 
         status: appStatus, 
-        reviewed_by: admin_id || null, 
+        reviewed_by: adminId, 
         updated_at: new Date().toISOString() 
       }).eq('id', target_id).select().single();
 
@@ -118,7 +131,7 @@ export async function POST(request: NextRequest) {
           role_id: roleId,
           is_primary: true,
           granted_at: new Date().toISOString(),
-          granted_by: admin_id || null
+          granted_by: adminId
         }, { onConflict: 'user_id,role_id' });
       }
 

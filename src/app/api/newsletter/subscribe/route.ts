@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthenticatedSupabaseClient } from '@/lib/supabaseClient';
+import { getSupabaseServerClient } from '@/lib/supabaseServer';
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     }
 
     const email = rawEmail.trim().toLowerCase();
-    const client = getAuthenticatedSupabaseClient();
+    const client = getSupabaseServerClient();
 
     // 1. Try inserting into dedicated newsletter_subscribers table if it exists
     const { error: subError } = await client

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { getSupabaseServerClient } from '@/lib/supabaseServer';
+import { verifyApiAuth } from '@/lib/apiAuth';
 
 function slugify(str: string): string {
   return str
@@ -15,11 +16,16 @@ function slugify(str: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyApiAuth(request, 'any');
+    if (!auth.authenticated || !auth.user) {
+      return auth.response!;
+    }
+
+    const supabase = getSupabaseServerClient();
     const body = await request.json();
     const {
       title,
       author,
-      author_id,
       category,
       item_type,
       format,
@@ -30,8 +36,7 @@ export async function POST(request: NextRequest) {
       cover_image_url,
       description,
       full_summary_html,
-      allow_read_online,
-      user_role
+      allow_read_online
     } = body;
 
     if (!title || !category) {
@@ -40,8 +45,8 @@ export async function POST(request: NextRequest) {
 
     const slug = slugify(title) + '-' + Math.floor(1000 + Math.random() * 9000);
     
-    // Auto-status based on role
-    const isPrivileged = user_role === 'admin' || user_role === 'scholar' || user_role === 'Quản Trị Viên' || user_role === 'Học Giả VERIDU';
+    // Auto-status strictly based on DB-verified role (never trust client body.user_role)
+    const isPrivileged = auth.user.isAdmin || auth.user.isAuthor;
     const status = isPrivileged ? 'published' : 'pending';
 
     const { data, error } = await supabase
@@ -49,8 +54,8 @@ export async function POST(request: NextRequest) {
       .insert([{
         title: title.trim(),
         slug,
-        author: author?.trim() || 'VERIDU Contributor',
-        author_id: author_id || null,
+        author: author?.trim() || auth.user.displayName || 'VERIDU Contributor',
+        author_id: auth.user.id,
         category,
         item_type: item_type || 'tai-lieu',
         format: format || 'PDF',

@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { supabase } from '@/lib/supabaseClient';
+import { getSupabaseServerClient } from '@/lib/supabaseServer';
+import { verifyApiAuth } from '@/lib/apiAuth';
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await verifyApiAuth(req, 'admin');
+    if (!auth.authenticated) {
+      return auth.response!;
+    }
+    const supabase = getSupabaseServerClient();
     const { id, slug } = await req.json();
 
     if (!id && !slug) {

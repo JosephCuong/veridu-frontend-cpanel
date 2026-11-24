@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { getSupabaseServerClient } from '@/lib/supabaseServer';
+import { verifyApiAuth } from '@/lib/apiAuth';
 
 export async function DELETE(req: NextRequest) {
   try {
+    const auth = await verifyApiAuth(req, 'admin');
+    if (!auth.authenticated) {
+      return auth.response!;
+    }
+    const supabase = getSupabaseServerClient();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 

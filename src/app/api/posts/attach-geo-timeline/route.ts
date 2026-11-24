@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
+import { verifyApiAuth } from '@/lib/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,6 +78,11 @@ function determineEraAndCategory(year: number): { era_id: string; era_name: stri
 
 export async function POST(request: Request) {
   try {
+    const auth = await verifyApiAuth(request, 'author');
+    if (!auth.authenticated || !auth.user) {
+      return auth.response!;
+    }
+
     const supabase = getSupabaseServerClient();
     const body = await request.json();
     const { article_slug, locations = [], timeline_events = [] } = body;

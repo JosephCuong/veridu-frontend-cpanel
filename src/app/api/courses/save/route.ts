@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
+import { verifyApiAuth } from '@/lib/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await verifyApiAuth(req, 'author');
+    if (!auth.authenticated || !auth.user) {
+      return auth.response!;
+    }
+
     const supabase = getSupabaseServerClient();
     const body = await req.json();
     const { course } = body;
@@ -15,6 +21,23 @@ export async function POST(req: NextRequest) {
     }
 
     let courseId = course.id ? Number(course.id) : null;
+
+    // Ownership verification when editing an existing course
+    if (courseId && courseId > 0 && !auth.user.isAdmin) {
+      const { data: existingCourse } = await supabase
+        .from('courses')
+        .select('author_id')
+        .eq('id', courseId)
+        .maybeSingle();
+
+      if (existingCourse && existingCourse.author_id && existingCourse.author_id !== auth.user.id) {
+        return NextResponse.json(
+          { success: false, error: 'Bạn không có quyền chỉnh sửa khóa học của tác giả khác.' },
+          { status: 403 }
+        );
+      }
+    }
+
     const slug = course.slug || course.title
       .toLowerCase()
       .normalize('NFD')
@@ -25,7 +48,10 @@ export async function POST(req: NextRequest) {
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-');
 
-    const status = course.status || (course.published ? 'published' : 'draft');
+    const requestedStatus = course.status || (course.published ? 'published' : 'draft');
+    const status = auth.user.isAdmin
+      ? requestedStatus
+      : (requestedStatus === 'published' ? 'pending' : requestedStatus);
 
     const courseData: any = {
       title: course.title,
@@ -36,16 +62,13 @@ export async function POST(req: NextRequest) {
       level: course.level || 'Cơ Bản',
       published: status === 'published',
       status: status,
-      instructor_name: course.instructor_name || 'VERIDU Team',
+      instructor_name: course.instructor_name || auth.user.displayName || 'VERIDU Team',
       instructor_title: course.instructor_title || 'Hội Đồng Khảo Cứu Thần Học',
       instructor_avatar: course.instructor_avatar || 'https://lh3.googleusercontent.com/d/1iRz6nIRhfEoV_fbxVTCwW0ApQ87IqHK5',
       total_duration: course.total_duration || `${course.lessons?.length || 0} Bài Học`,
       certificate_enabled: course.certificate_enabled !== undefined ? Boolean(course.certificate_enabled) : true,
+      author_id: auth.user.isAdmin && course.author_id ? course.author_id : auth.user.id,
     };
-
-    if (course.author_id) {
-      courseData.author_id = course.author_id;
-    }
 
     if (courseId && courseId > 0) {
       const { error: updateError } = await supabase

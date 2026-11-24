@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation';
 import { fetchBibleMetadata } from '@/lib/api';
 
+export const revalidate = 3600;
+
 export default async function KinhThanhIndexPage() {
   const metadata = await fetchBibleMetadata();
   const firstBook = metadata.books && metadata.books.length > 0 ? metadata.books[0].slug : 'sang-the';

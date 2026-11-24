@@ -4,8 +4,12 @@ import { verifyApiAuth } from '@/lib/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const authResult = await verifyApiAuth(req, 'admin');
+    if (!authResult.authenticated) {
+      return authResult.response!;
+    }
     const supabase = getSupabaseServerClient();
 
     // Query paragraph counts and ranges per part
@@ -80,17 +84,15 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Verify admin permissions or internal admin token
+    // 1. Verify admin permissions (optional env-configured seed key only if explicitly set)
+    const configuredSeedKey = process.env.ADMIN_SEED_KEY;
     const adminKey = req.headers.get('x-admin-key');
-    const isValidAdminKey = adminKey === 'veridu-catechism-secure-seed-2026';
+    const isValidAdminKey = Boolean(configuredSeedKey && configuredSeedKey.length >= 16 && adminKey === configuredSeedKey);
 
     if (!isValidAdminKey) {
       const authResult = await verifyApiAuth(req, 'admin');
       if (!authResult.authenticated) {
-        return NextResponse.json({ 
-          success: false, 
-          error: 'Chưa được cấp quyền truy cập tính năng nạp cơ sở dữ liệu.' 
-        }, { status: 401 });
+        return authResult.response!;
       }
     }
 

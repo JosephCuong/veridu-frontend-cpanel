@@ -52,7 +52,7 @@ export default function EditorialLandingHome({
       {/* ══════════════════════════════════════════════════════════════════════════
           1. SECTION 1: EDITORIAL BRUTALIST HERO (GIANT TYPOGRAPHY BEHIND CUTOUT)
          ══════════════════════════════════════════════════════════════════════════ */}
-      <section className="relative min-h-[85vh] sm:min-h-[92vh] w-full flex flex-col justify-between pt-24 sm:pt-28 md:pt-32 pb-8 sm:pb-12 px-4 sm:px-8 lg:px-16 overflow-hidden bg-[#FAF7F2] dark:bg-[#0B0D12] transition-colors duration-500 border-b border-stone-200 dark:border-white/10">
+      <section className="relative min-h-[72vh] sm:min-h-[78vh] w-full flex flex-col justify-between pt-24 sm:pt-28 md:pt-30 pb-6 sm:pb-10 px-4 sm:px-8 lg:px-16 overflow-hidden bg-[#FAF7F2] dark:bg-[#0B0D12] transition-colors duration-500 border-b border-stone-200 dark:border-white/10">
         
         {/* Ambient Subtle Cathedral Texture Glow */}
         <div 
@@ -97,7 +97,7 @@ export default function EditorialLandingHome({
           <div className="absolute w-72 sm:w-96 lg:w-[480px] h-72 sm:h-96 lg:h-[480px] rounded-full bg-amber-500/20 dark:bg-amber-400/15 blur-3xl pointer-events-none" />
 
           {/* Majestic Arch Frame Cutout */}
-          <div className="relative w-64 sm:w-80 md:w-96 lg:w-[420px] h-[360px] sm:h-[420px] md:h-[480px] rounded-t-[190px] sm:rounded-t-[220px] rounded-b-2xl overflow-hidden shadow-2xl border-2 border-[#C5A059] dark:border-amber-400/50 group transition-transform duration-500 hover:scale-[1.02]">
+          <div className="relative w-60 sm:w-72 md:w-80 lg:w-[360px] h-[320px] sm:h-[370px] md:h-[410px] rounded-t-[170px] sm:rounded-t-[190px] rounded-b-2xl overflow-hidden shadow-2xl border-2 border-[#C5A059] dark:border-amber-400/50 group transition-transform duration-500 hover:scale-[1.02]">
             <Image
               src={getGoogleDriveImageUrl(config.hero.foregroundCutoutUrl, 1600)}
               alt="Đức Kitô — Ánh Sáng Thế Gian"
@@ -433,6 +433,53 @@ export default function EditorialLandingHome({
           ))}
         </div>
 
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════════
+          5.5. SECTION: VERIDU DESKTOP STUDIO FOR WINDOWS v1.1.0
+         ══════════════════════════════════════════════════════════════════════════ */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-16 w-full">
+        <div className="rounded-3xl overflow-hidden border border-amber-500/30 bg-gradient-to-br from-[#0F121A] via-[#151924] to-[#0B0D12] text-white shadow-2xl grid grid-cols-1 lg:grid-cols-12 items-center">
+          <div className="lg:col-span-5 p-7 sm:p-10 space-y-5">
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-400/30 text-amber-300 text-[11px] font-mono font-bold uppercase tracking-wider">
+              VERIDU DESKTOP · WINDOWS 64-BIT
+            </span>
+            <h2 className="font-playfair font-black text-2xl sm:text-3xl leading-tight">
+              Phần Mềm Nghiên Cứu Kinh Thánh Đa Khung Ngoại Tuyến
+            </h2>
+            <p className="text-xs sm:text-sm font-serif text-stone-300 leading-relaxed">
+              Trọn bộ 73 sách Kinh Thánh 2 bản dịch (CGKPV &amp; Lm. Nguyễn Thế Thuấn), Lịch Phụng Vụ trọn văn Offline, 3 chế độ nền Sáng / Giấy Ngà / Tối và Kho Giáo Lý Hội Thánh Công Giáo đồng bộ cùng tài khoản VERIDU.
+            </p>
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <Link
+                href="/ung-dung"
+                className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-playfair font-black text-xs tracking-wider uppercase flex items-center gap-2 shadow-lg transition hover:scale-[1.02]"
+              >
+                <span>Khám Phá &amp; Tải v1.1.0</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <a
+                href="/docs/HUONG_DAN_SU_DUNG_VERIDU_v1.1.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-3 rounded-xl border border-white/20 hover:border-amber-400/60 text-stone-200 hover:text-amber-300 font-serif font-bold text-xs transition"
+              >
+                Sổ Tay PDF
+              </a>
+            </div>
+          </div>
+
+          <div className="lg:col-span-7 p-4 sm:p-6 lg:pr-8">
+            <Link href="/ung-dung" className="block rounded-2xl overflow-hidden border border-white/15 shadow-2xl group">
+              <img
+                src="/images/app-v1/banner.webp"
+                alt="VERIDU v1.1.0 — Phần mềm nghiên cứu Kinh Thánh Công Giáo trên Windows"
+                className="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                loading="lazy"
+              />
+            </Link>
+          </div>
+        </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════════

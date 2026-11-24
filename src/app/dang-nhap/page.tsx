@@ -27,62 +27,40 @@ function LoginFormContent() {
     try {
       const email = username.includes('@') ? username.trim() : `${username.trim()}@veridu.com`;
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password, rememberMe }),
       });
 
-      if (error) {
-        setErrorMsg('Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại.');
+      const result = await res.json();
+
+      if (!res.ok || !result?.success || !result?.user) {
+        setErrorMsg(result?.error || 'Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại.');
       } else {
         setSuccessMsg('Đăng nhập thành công! Đang chuyển hướng...');
 
-        // Query full verified profile from Supabase profiles table
-        let dbProfile: any = null;
-        if (data.user?.id) {
+        // Sync browser Supabase client session for direct RLS queries if provided
+        if (result.session?.access_token && result.session?.refresh_token) {
           try {
-            const { data: profileData } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', data.user.id)
-              .maybeSingle();
-
-            if (profileData) {
-              dbProfile = profileData;
-            }
+            await supabase.auth.setSession({
+              access_token: result.session.access_token,
+              refresh_token: result.session.refresh_token,
+            });
           } catch (e) {
-            console.warn('Profile fetch error:', e);
+            console.warn('Supabase client session sync warning:', e);
           }
         }
 
-        const roleName = (dbProfile?.role === 'admin' || data.user?.user_metadata?.role === 'admin')
-          ? 'Quản Trị Viên'
-          : (dbProfile?.role || 'Học Viên');
-
-        const userProfile: UserProfile = {
-          id: data.user?.id || '1',
-          username: dbProfile?.email?.split('@')[0] || data.user?.email?.split('@')[0] || username,
-          email: data.user?.email || email,
-          displayName: dbProfile?.full_name || data.user?.user_metadata?.full_name || 'Thành Viên VERIDU',
-          fullName: dbProfile?.full_name || data.user?.user_metadata?.full_name || 'Thành Viên VERIDU',
-          christianName: dbProfile?.christian_name || data.user?.user_metadata?.christian_name || 'Giuse',
-          parish: dbProfile?.parish || data.user?.user_metadata?.parish || 'Tân Định',
-          diocese: dbProfile?.diocese || data.user?.user_metadata?.diocese || 'Giáo Phận Sài Gòn',
-          role: roleName,
-          streak: dbProfile?.streak || 1,
-          points: dbProfile?.points !== undefined && dbProfile?.points !== null ? dbProfile.points : 100,
-          manna: dbProfile?.manna !== undefined && dbProfile?.manna !== null ? dbProfile.manna : 100,
-          avatar: dbProfile?.avatar_url || '',
-          selected_title: dbProfile?.current_title || 'NGƯỜI TÌM HIỂU',
-          badges: dbProfile?.badges || ['tan_tong']
-        };
-
-        saveAuthSession(data.session?.access_token || 'sb_session_active', userProfile, rememberMe);
+        const userProfile: UserProfile = result.user;
+        saveAuthSession('veridu_active_session', userProfile, rememberMe);
 
         // Redirect smoothly to target route or profile
-        setTimeout(() => { 
-          window.location.href = redirectTarget; 
-        }, 600);
+        const safeTarget = redirectTarget.startsWith('/') && !redirectTarget.startsWith('//') ? redirectTarget : '/ho-so';
+        setTimeout(() => {
+          window.location.href = safeTarget;
+        }, 500);
       }
     } catch (err: any) {
       console.error('Login error:', err);

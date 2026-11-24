@@ -117,8 +117,8 @@ export function getStoredUser(): UserProfile | null {
       const decoded = data.includes('%') ? decodeURIComponent(data) : data;
       const parsed: UserProfile = JSON.parse(decoded);
       
-      if (parsed.diocese && parsed.diocese.includes('?')) parsed.diocese = 'Giáo Phận Sài Gòn';
-      if (parsed.parish && parsed.parish.includes('?')) parsed.parish = 'Tân Định';
+      if (parsed.diocese && parsed.diocese.includes('?')) parsed.diocese = '';
+      if (parsed.parish && parsed.parish.includes('?')) parsed.parish = '';
 
       // Migration safeguard: if cookie exists with remember-me in localStorage but missing expiry key, cap it at 72h
       if (localStorage.getItem('veridu_user_profile') && !expiresAtStr) {
@@ -227,14 +227,15 @@ export function saveAuthSession(
       expires: MAX_REMEMBER_DAYS, // 3 days in js-cookie
     };
 
-    Cookies.set('veridu_token', token, cookieOptions);
+    // Only store non-sensitive UI profile in client cookie; JWT lives in HttpOnly veridu_auth_token cookie
+    Cookies.remove('veridu_token', { path: '/' });
     Cookies.set('veridu_user', encodedUser, cookieOptions);
 
-    localStorage.setItem('veridu_token', token);
+    localStorage.removeItem('veridu_token');
     localStorage.setItem('veridu_user_profile', jsonString);
     localStorage.setItem(AUTH_EXPIRY_KEY, expiresAt.toString());
 
-    sessionStorage.setItem('veridu_token', token);
+    sessionStorage.removeItem('veridu_token');
     sessionStorage.setItem('veridu_user_profile', jsonString);
   } else {
     // Session-only: No 'expires' option creates a browser session cookie (cleared on browser exit)
@@ -244,11 +245,11 @@ export function saveAuthSession(
       secure: isHttps,
     };
 
-    Cookies.set('veridu_token', token, sessionCookieOptions);
+    Cookies.remove('veridu_token', { path: '/' });
     Cookies.set('veridu_user', encodedUser, sessionCookieOptions);
 
     // Save in sessionStorage for the active tab/window
-    sessionStorage.setItem('veridu_token', token);
+    sessionStorage.removeItem('veridu_token');
     sessionStorage.setItem('veridu_user_profile', jsonString);
 
     // Clear persistent storage keys so session never revives after browser closure
@@ -262,11 +263,10 @@ export function logout() {
   if (typeof window !== 'undefined') {
     clearAuthData();
 
-    import('./supabaseClient').then(async ({ supabase }) => {
-      try {
-        await supabase.auth.signOut();
-      } catch (err) {}
-    }).finally(() => {
+    Promise.allSettled([
+      fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }),
+      import('./supabaseClient').then(({ supabase }) => supabase.auth.signOut()),
+    ]).finally(() => {
       window.location.href = '/dang-nhap';
     });
   }
