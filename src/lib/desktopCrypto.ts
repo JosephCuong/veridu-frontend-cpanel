@@ -1,4 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
 import { supabaseUrl, supabaseAnonKey } from './supabaseClient';
 import { getSupabaseServerClient } from './supabaseServer';
 
@@ -94,12 +93,21 @@ export async function authenticateDesktopRequest(request: Request) {
     return { user: null, profile: null, error: 'Thiếu mã xác thực phiên đăng nhập.' };
   }
 
-  const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
+  const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
+    method: 'GET',
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${token}`,
+    },
+    cache: 'no-store',
   });
 
-  const { data, error } = await authClient.auth.getUser(token);
-  if (error || !data?.user) {
+  if (!userRes.ok) {
+    return { user: null, profile: null, error: 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn.' };
+  }
+
+  const userData: any = await userRes.json();
+  if (!userData?.id) {
     return { user: null, profile: null, error: 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn.' };
   }
 
@@ -107,15 +115,15 @@ export async function authenticateDesktopRequest(request: Request) {
   const { data: profile } = await admin
     .from('profiles')
     .select('id, email, full_name, christian_name, role')
-    .eq('id', data.user.id)
+    .eq('id', userData.id)
     .maybeSingle();
 
   return {
-    user: data.user,
+    user: userData,
     profile: profile || {
-      id: data.user.id,
-      email: data.user.email || '',
-      full_name: data.user.user_metadata?.full_name || data.user.email || 'Thành Viên VERIDU',
+      id: userData.id,
+      email: userData.email || '',
+      full_name: userData.user_metadata?.full_name || userData.email || 'Thành Viên VERIDU',
       role: 'user',
     },
     error: null,

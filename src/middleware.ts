@@ -24,8 +24,16 @@ const ADMIN_REQUIRED_ROUTES = [
 ];
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
   const cleanPath = pathname.replace(/\/$/, '') || '/';
+
+  // 0. Canonical host unification: thapgia.com, www.thapgia.com, cruxveritatis.org -> www.cruxveritatis.org
+  const reqHost = (request.headers.get('host') || request.nextUrl.hostname || '').toLowerCase().split(':')[0];
+  if (reqHost === 'thapgia.com' || reqHost === 'www.thapgia.com' || reqHost === 'cruxveritatis.org') {
+    const targetUrl = `https://www.cruxveritatis.org${pathname}${search}`;
+    const redirectStatus = request.method === 'GET' || request.method === 'HEAD' ? 301 : 308;
+    return NextResponse.redirect(targetUrl, { status: redirectStatus });
+  }
 
   // 0a. Block legacy WordPress / scanner probes (.php, .asp, .env, wp-login, xmlrpc) before hitting /[slug]
   if (

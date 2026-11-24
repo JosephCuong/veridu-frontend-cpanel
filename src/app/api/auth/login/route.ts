@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { supabaseUrl, supabaseAnonKey } from '@/lib/supabaseClient';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
 
@@ -10,44 +9,63 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { email, password, rememberMe, access_token: providedToken } = body || {};
 
-    const statelessAnon = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
-
     let accessToken = '';
     let refreshToken = '';
     let user: any = null;
 
     if (providedToken && typeof providedToken === 'string') {
-      // Allow syncing an existing Supabase client session into HttpOnly cookie safely
-      const { data: userData, error: verifyErr } = await statelessAnon.auth.getUser(providedToken);
-      if (verifyErr || !userData?.user) {
+      const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
+        method: 'GET',
+        headers: {
+          apikey: supabaseAnonKey,
+          Authorization: `Bearer ${providedToken}`,
+        },
+        cache: 'no-store',
+      });
+      if (!userRes.ok) {
+        return NextResponse.json({ error: 'Phiên đăng nhập không hợp lệ' }, { status: 401 });
+      }
+      const verifiedUser: any = await userRes.json();
+      if (!verifiedUser?.id) {
         return NextResponse.json({ error: 'Phiên đăng nhập không hợp lệ' }, { status: 401 });
       }
       accessToken = providedToken;
-      user = userData.user;
+      user = verifiedUser;
     } else {
       if (!email || !password) {
         return NextResponse.json({ error: 'Vui lòng cung cấp email và mật khẩu' }, { status: 400 });
       }
 
-      const { data, error } = await statelessAnon.auth.signInWithPassword({
-        email: String(email).trim(),
-        password: String(password),
+      const tokenRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: {
+          apikey: supabaseAnonKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: String(email).trim().toLowerCase(),
+          password: String(password),
+        }),
+        cache: 'no-store',
       });
 
-      if (error || !data.session || !data.user) {
+      if (!tokenRes.ok) {
         return NextResponse.json(
           { error: 'Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại.' },
           { status: 401 }
         );
       }
 
-      accessToken = data.session.access_token;
-      refreshToken = data.session.refresh_token;
+      const data: any = await tokenRes.json();
+      if (!data?.access_token || !data?.user?.id) {
+        return NextResponse.json(
+          { error: 'Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại.' },
+          { status: 401 }
+        );
+      }
+
+      accessToken = data.access_token;
+      refreshToken = data.refresh_token || '';
       user = data.user;
     }
 
