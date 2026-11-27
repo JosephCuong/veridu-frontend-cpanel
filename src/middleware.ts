@@ -121,14 +121,16 @@ export async function middleware(request: NextRequest) {
   const tokenCookie =
     request.cookies.get('veridu_auth_token')?.value ||
     request.cookies.get('veridu_token')?.value;
+  const refreshCookie = request.cookies.get('veridu_refresh_token')?.value;
   const userCookie = request.cookies.get('veridu_user')?.value;
   const isWellFormedJwt = Boolean(tokenCookie && tokenCookie.split('.').length === 3);
   const hasValidAuthToken = Boolean(
-    tokenCookie &&
-    tokenCookie !== 'guest_token' &&
-    tokenCookie !== 'sb_session_active' &&
-    tokenCookie !== 'veridu_active_session' &&
-    isWellFormedJwt
+    (tokenCookie &&
+      tokenCookie !== 'guest_token' &&
+      tokenCookie !== 'sb_session_active' &&
+      tokenCookie !== 'veridu_active_session' &&
+      isWellFormedJwt) ||
+      (refreshCookie && refreshCookie.length > 10)
   );
 
   // Check if route requires login
@@ -148,9 +150,9 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginRedirectUrl);
     }
 
-    // Role check from user cookie + JWT structure validation (API routes independently verify DB role)
+    // Role check from user cookie + auth token validation (API routes independently verify DB role)
     let isAuthorized = false;
-    if (userCookie && isWellFormedJwt) {
+    if (userCookie && hasValidAuthToken) {
       try {
         let decoded = userCookie;
         for (let i = 0; i < 2 && decoded.includes('%'); i++) {
@@ -196,7 +198,14 @@ export async function middleware(request: NextRequest) {
     response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate, max-age=0');
     response.headers.set('Pragma', 'no-cache');
     response.headers.set('Expires', '0');
-  } else if (cleanPath === '/dang-nhap' || cleanPath === '/dang-ky') {
+  } else if (
+    cleanPath === '/dang-nhap' ||
+    cleanPath === '/dang-ky' ||
+    cleanPath === '/quen-mat-khau' ||
+    cleanPath === '/dat-lai-mat-khau' ||
+    cleanPath === '/update-password' ||
+    cleanPath === '/auth/callback'
+  ) {
     // Auth screens: Never cache credentials or login state
     response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
     response.headers.set('Pragma', 'no-cache');
@@ -209,13 +218,13 @@ export async function middleware(request: NextRequest) {
   if (!pathname.startsWith('/api/raw-html')) {
     const cspDirectives = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://va.vercel-scripts.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
       "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
       "img-src 'self' data: blob: https:",
       "media-src 'self' data: blob: https:",
       "connect-src 'self' https: wss: https://*.google-analytics.com https://*.analytics.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net",
-      "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com",
+      "frame-src 'self' https://challenges.cloudflare.com https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com",
       "worker-src 'self' blob:",
       "object-src 'none'",
       "base-uri 'self'",

@@ -12,6 +12,9 @@ import { supabase } from '@/lib/supabaseClient';
 import { calculateLevelInfo, ALL_TITLES_CATALOG, TitleDefinition } from '@/lib/gamification';
 import UserAvatarFrame from '@/components/UserAvatarFrame';
 import ProfileDesktopTab from '@/components/profile/ProfileDesktopTab';
+import ProfileBillingTab from '@/components/profile/ProfileBillingTab';
+import ProfileSecurityTab from '@/components/profile/ProfileSecurityTab';
+import { VIETNAM_DIOCESES, VOCATION_OPTIONS, COUNTRY_OPTIONS, getVocationLabel } from '@/lib/catholicConstants';
 import dynamic from 'next/dynamic';
 import type { CertificateData } from '@/components/CourseCertificateModal';
 
@@ -24,7 +27,7 @@ import {
   Settings, BookOpen, CheckCircle, Clock, Save, Phone, Image as ImageIcon,
   Heart, Calendar, Loader2, Trophy, Trash2, ArrowRight, PlayCircle, BarChart3, 
   AlertTriangle, Check, Plus, Eye, Cross, FileText, Zap, Droplets, Scroll,
-  GraduationCap, ExternalLink, ShieldCheck, PenTool, Laptop
+  GraduationCap, ExternalLink, ShieldCheck, PenTool, Laptop, CreditCard, KeyRound, Sparkles, X
 } from 'lucide-react';
 
 import { 
@@ -32,8 +35,8 @@ import {
   fetchUserCourseProgressFromSupabase, fetchCharacters, Character 
 } from '@/lib/api';
 
-type ProfileTab = 'dashboard' | 'desktop' | 'courses' | 'certificates' | 'titles' | 'mana' | 'quiz' | 'posts' | 'authored-courses' | 'settings';
-const VALID_TABS: ProfileTab[] = ['dashboard', 'desktop', 'courses', 'certificates', 'titles', 'mana', 'quiz', 'posts', 'authored-courses', 'settings'];
+type ProfileTab = 'dashboard' | 'desktop' | 'billing' | 'security' | 'courses' | 'certificates' | 'titles' | 'mana' | 'quiz' | 'posts' | 'authored-courses' | 'settings';
+const VALID_TABS: ProfileTab[] = ['dashboard', 'desktop', 'billing', 'security', 'courses', 'certificates', 'titles', 'mana', 'quiz', 'posts', 'authored-courses', 'settings'];
 
 function ProfileDashboardContent() {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -78,6 +81,11 @@ function ProfileDashboardContent() {
 
   // Selected Title state
   const [selectedTitle, setSelectedTitle] = useState<string>('NGƯỜI TÌM HIỂU');
+  const [securityInfo, setSecurityInfo] = useState<{ hasGoogle: boolean; hasPassword: boolean }>({
+    hasGoogle: false,
+    hasPassword: true,
+  });
+  const [showWelcomeBanner, setShowWelcomeBanner] = useState(searchParams.get('welcome') === '1');
 
   // Form State for Profile Settings
   const [formData, setFormData] = useState({
@@ -85,11 +93,15 @@ function ProfileDashboardContent() {
     displayName: '',
     email: '',
     phone: '',
+    vocation: 'layperson',
     parish: '',
     diocese: '',
     feastDay: '',
+    provinceCity: '',
+    country: 'VN',
     bio: '',
-    avatar: ''
+    avatar: '',
+    marketingConsent: true,
   });
 
   useEffect(() => {
@@ -106,64 +118,85 @@ function ProfileDashboardContent() {
         displayName: current.displayName || '',
         email: current.email || '',
         phone: current.phone || '',
+        vocation: current.vocation || 'layperson',
         parish: current.parish || '',
         diocese: current.diocese || '',
-        feastDay: '',
-        bio: '',
-        avatar: current.avatar || ''
+        feastDay: current.feastDay || '',
+        provinceCity: current.provinceCity || '',
+        country: current.country || 'VN',
+        bio: current.bio || '',
+        avatar: current.avatar || '',
+        marketingConsent: current.marketingConsent ?? true,
       });
 
-      // Live fetch from Supabase to guarantee exact up-to-date points, manna, role, and title
-      if (current.id && (typeof current.id === 'string' && current.id.includes('-') || current.email)) {
-        (async () => {
-          try {
-            let query = supabase.from('profiles').select('*');
-            if (typeof current.id === 'string' && current.id.includes('-')) {
-              query = query.eq('id', current.id);
-            } else {
-              query = query.eq('email', current.email);
+      // Live fetch via HttpOnly-authenticated server API (auto-refreshes expired 1h JWTs seamlessly)
+      (async () => {
+        try {
+          const res = await fetch('/api/me/profile', { credentials: 'include' });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data?.success && data.profile) {
+            const dbProfile = data.profile;
+            if (data.security) {
+              setSecurityInfo({
+                hasGoogle: Boolean(data.security.hasGoogle),
+                hasPassword: Boolean(data.security.hasPassword),
+              });
             }
-            const { data: dbProfile } = await query.maybeSingle();
-
-            if (dbProfile) {
-              const liveUser: UserProfile = {
-                ...current,
-                id: dbProfile.id || current.id,
-                displayName: dbProfile.full_name || current.fullName || current.displayName || 'Thành Viên',
-                fullName: dbProfile.full_name || current.fullName || current.displayName || 'Thành Viên',
-                christianName: dbProfile.christian_name || current.christianName,
-                parish: dbProfile.parish || current.parish,
-                diocese: dbProfile.diocese || current.diocese,
-                phone: dbProfile.phone || current.phone,
-                role: dbProfile.role === 'admin' ? 'Quản Trị Viên' : (dbProfile.role || current.role),
-                points: dbProfile.points !== undefined && dbProfile.points !== null ? dbProfile.points : current.points,
-                manna: dbProfile.manna !== undefined && dbProfile.manna !== null ? dbProfile.manna : current.manna,
-                avatar: dbProfile.avatar_url || current.avatar,
-                selected_title: dbProfile.current_title || (current as any).selected_title || 'NGƯỜI TÌM HIỂU',
-                badges: dbProfile.badges || current.badges || ['tan_tong']
-              };
-
-              setUser(liveUser);
-              setSelectedTitle(liveUser.selected_title || 'NGƯỜI TÌM HIỂU');
-              setFormData(prev => ({
-                ...prev,
-                displayName: liveUser.displayName,
-                christianName: liveUser.christianName,
-                parish: liveUser.parish,
-                diocese: liveUser.diocese,
-                phone: liveUser.phone || '',
-                avatar: liveUser.avatar || '',
-                bio: dbProfile.bio || prev.bio
-              }));
-
-              saveAuthSession(liveUser);
-              window.dispatchEvent(new CustomEvent('veridu_user_updated', { detail: liveUser }));
+            if (dbProfile.profile_completed === false) {
+              setShowWelcomeBanner(true);
             }
-          } catch (err) {
-            console.warn('Live profile sync error:', err);
+
+            const liveUser: UserProfile = {
+              ...current,
+              id: dbProfile.id || current.id,
+              email: dbProfile.email || current.email,
+              displayName: dbProfile.full_name || current.fullName || current.displayName || 'Thành Viên',
+              fullName: dbProfile.full_name || current.fullName || current.displayName || 'Thành Viên',
+              christianName: dbProfile.christian_name || '',
+              vocation: dbProfile.vocation || 'layperson',
+              parish: dbProfile.parish || '',
+              diocese: dbProfile.diocese || '',
+              phone: dbProfile.phone || '',
+              feastDay: dbProfile.feast_day || '',
+              provinceCity: dbProfile.province_city || '',
+              country: dbProfile.country || 'VN',
+              bio: dbProfile.bio || '',
+              marketingConsent: dbProfile.marketing_consent ?? true,
+              profile_completed: Boolean(dbProfile.profile_completed),
+              role: dbProfile.role || current.role,
+              points: dbProfile.points !== undefined && dbProfile.points !== null ? dbProfile.points : current.points,
+              manna: dbProfile.manna !== undefined && dbProfile.manna !== null ? dbProfile.manna : current.manna,
+              streak: dbProfile.streak ?? current.streak ?? 1,
+              avatar: dbProfile.avatar_url || current.avatar,
+              selected_title: dbProfile.current_title || (current as any).selected_title || 'NGƯỜI TÌM HIỂU',
+              badges: dbProfile.badges || current.badges || ['tan_tong'],
+            };
+
+            setUser(liveUser);
+            setSelectedTitle(liveUser.selected_title || 'NGƯỜI TÌM HIỂU');
+            setFormData({
+              displayName: liveUser.displayName,
+              christianName: liveUser.christianName,
+              email: liveUser.email,
+              phone: liveUser.phone || '',
+              vocation: liveUser.vocation || 'layperson',
+              parish: liveUser.parish,
+              diocese: liveUser.diocese,
+              feastDay: liveUser.feastDay || '',
+              provinceCity: liveUser.provinceCity || '',
+              country: liveUser.country || 'VN',
+              bio: liveUser.bio || '',
+              avatar: liveUser.avatar || '',
+              marketingConsent: liveUser.marketingConsent ?? true,
+            });
+
+            saveAuthSession(liveUser);
+            window.dispatchEvent(new CustomEvent('veridu_user_updated', { detail: liveUser }));
           }
-        })();
-      }
+        } catch (err) {
+          console.warn('Live profile sync error:', err);
+        }
+      })();
 
       const userIdStr = typeof current.id === 'string' ? current.id : undefined;
       
@@ -232,7 +265,7 @@ function ProfileDashboardContent() {
     }
   }, []);
 
-  // Update Profile Submit Handler
+  // Update Profile Submit Handler (Server-verified via /api/me/profile)
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsUpdating(true);
@@ -241,41 +274,55 @@ function ProfileDashboardContent() {
     try {
       if (!user) return;
 
+      const res = await fetch('/api/me/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          christian_name: formData.christianName,
+          full_name: formData.displayName,
+          vocation: formData.vocation,
+          phone: formData.phone,
+          parish: formData.parish,
+          diocese: formData.diocese,
+          feast_day: formData.feastDay,
+          province_city: formData.provinceCity,
+          country: formData.country,
+          bio: formData.bio,
+          avatar_url: formData.avatar,
+          marketing_consent: formData.marketingConsent,
+          profile_completed: true,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.success) {
+        setMessage({ text: data?.error || 'Không thể lưu cập nhật hồ sơ.', type: 'error' });
+        return;
+      }
+
       const updatedUser: UserProfile = {
         ...user,
+        ...(data.user || {}),
         christianName: formData.christianName,
         displayName: formData.displayName,
         fullName: formData.displayName,
+        vocation: formData.vocation,
         phone: formData.phone,
         parish: formData.parish,
         diocese: formData.diocese,
-        avatar: formData.avatar
+        feastDay: formData.feastDay,
+        provinceCity: formData.provinceCity,
+        country: formData.country,
+        bio: formData.bio,
+        avatar: formData.avatar,
+        marketingConsent: formData.marketingConsent,
+        profile_completed: true,
       };
 
       saveAuthSession(updatedUser);
       setUser(updatedUser);
-
-      if (user.id || user.email) {
-        let updateQuery = supabase
-          .from('profiles')
-          .update({
-            christian_name: formData.christianName,
-            full_name: formData.displayName,
-            phone: formData.phone,
-            parish: formData.parish,
-            diocese: formData.diocese,
-            avatar_url: formData.avatar,
-            updated_at: new Date().toISOString()
-          });
-        if (typeof user.id === 'string' && user.id.includes('-')) {
-          updateQuery = updateQuery.eq('id', user.id);
-        } else if (user.email) {
-          updateQuery = updateQuery.eq('email', user.email);
-        } else {
-          updateQuery = updateQuery.eq('id', user.id);
-        }
-        await updateQuery;
-      }
+      setShowWelcomeBanner(false);
 
       window.dispatchEvent(new CustomEvent('veridu_user_updated', { detail: updatedUser }));
       setMessage({ text: 'Cập nhật thông tin hồ sơ thành công!', type: 'success' });
@@ -300,15 +347,12 @@ function ProfileDashboardContent() {
     saveAuthSession(updatedUser as any);
     setUser(updatedUser as any);
 
-    if (user.id) {
-      await supabase
-        .from('profiles')
-        .update({
-          current_title: titleName,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-    }
+    await fetch('/api/me/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ current_title: titleName }),
+    }).catch(() => {});
 
     window.dispatchEvent(new CustomEvent('veridu_user_updated', { detail: updatedUser }));
     setMessage({ text: `Đã đổi danh hiệu thành: ${titleName}`, type: 'success' });
@@ -441,17 +485,21 @@ function ProfileDashboardContent() {
 
             {/* Parish & Diocese Information */}
             <div className="space-y-2.5 text-xs font-serif border-t border-[var(--border-card)] pt-4">
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-2">
+                <span className="text-[var(--text-muted)]">Bậc Sống:</span>
+                <span className="font-bold text-[var(--text-main)] text-right">{getVocationLabel(user.vocation)}</span>
+              </div>
+              <div className="flex justify-between gap-2">
                 <span className="text-[var(--text-muted)]">Giáo Xứ:</span>
-                <span className="font-bold text-[var(--text-main)]">{user.parish || 'Chưa cập nhật'}</span>
+                <span className="font-bold text-[var(--text-main)] text-right">{user.parish || 'Chưa cập nhật'}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-2">
                 <span className="text-[var(--text-muted)]">Giáo Phận:</span>
-                <span className="font-bold text-[var(--text-main)]">{user.diocese || 'Chưa cập nhật'}</span>
+                <span className="font-bold text-[var(--text-main)] text-right">{user.diocese || 'Chưa cập nhật'}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-2">
                 <span className="text-[var(--text-muted)]">Vai Trò:</span>
-                <span className="font-bold text-amber-700 dark:text-amber-400">{user.role || 'Thành Viên'}</span>
+                <span className="font-bold text-amber-700 dark:text-amber-400 text-right">{user.role || 'Thành Viên'}</span>
               </div>
             </div>
 
@@ -477,6 +525,24 @@ function ProfileDashboardContent() {
                   }`}
                 >
                   <Laptop className="w-4 h-4" /> App VERIDU &amp; Thiết Bị
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('billing')}
+                  className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
+                    activeTab === 'billing' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
+                  }`}
+                >
+                  <CreditCard className="w-4 h-4" /> Thanh Toán &amp; Biên Lai
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('security')}
+                  className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-serif font-bold transition flex items-center gap-2.5 cursor-pointer ${
+                    activeTab === 'security' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'hover:bg-[var(--bg-main)] text-[var(--text-main)]'
+                  }`}
+                >
+                  <KeyRound className="w-4 h-4" /> Bảo Mật &amp; Đăng Nhập
                 </button>
 
                 <button
@@ -598,6 +664,42 @@ function ProfileDashboardContent() {
           {/* ─────────────────────────────────────────────────────────────────────── */}
           <div className="lg:col-span-8 space-y-6">
             
+            {/* ── ONBOARDING WELCOME BANNER FOR NEW GOOGLE / INCOMPLETE USERS ── */}
+            {showWelcomeBanner && activeTab !== 'settings' && (
+              <div className="p-5 rounded-3xl bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border border-amber-500/35 shadow-lg flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-start gap-3 max-w-xl">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="font-serif font-black text-sm text-[var(--text-main)]">
+                      Chào mừng bạn đến với VERIDU! Hãy hoàn thiện hồ sơ Công giáo
+                    </h3>
+                    <p className="text-xs font-serif text-[var(--text-muted)] leading-relaxed">
+                      Bổ sung Tên Thánh, Bậc sống, Giáo xứ và Giáo phận giúp cá nhân hóa chứng chỉ học tập và kết nối đồng bộ tốt hơn với App VERIDU.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('settings')}
+                    className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-xs shadow-sm transition cursor-pointer"
+                  >
+                    Cập Nhật Ngay
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowWelcomeBanner(false)}
+                    className="p-2 rounded-xl hover:bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition cursor-pointer"
+                    aria-label="Đóng thông báo"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
             {message && (
               <div className={`p-4 rounded-2xl text-xs font-serif font-bold flex items-center gap-2 ${
                 message.type === 'success' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30'
@@ -1080,12 +1182,31 @@ function ProfileDashboardContent() {
               <ProfileDesktopTab />
             )}
 
+            {/* ── TAB: BILLING & RECEIPTS ── */}
+            {activeTab === 'billing' && (
+              <ProfileBillingTab />
+            )}
+
+            {/* ── TAB: SECURITY & SIGN-IN METHODS ── */}
+            {activeTab === 'security' && (
+              <ProfileSecurityTab
+                email={user.email}
+                hasGoogle={securityInfo.hasGoogle}
+                hasPassword={securityInfo.hasPassword}
+                onPasswordUpdated={() =>
+                  setSecurityInfo((prev) => ({ ...prev, hasPassword: true }))
+                }
+              />
+            )}
+
             {/* ── TAB 8: SETTINGS ── */}
             {activeTab === 'settings' && (
               <form onSubmit={handleSaveProfile} className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
                 <div className="border-b border-[var(--border-card)] pb-4">
                   <h2 className="text-xl sm:text-2xl font-serif font-black">Cài Đặt Thông Tin Cá Nhân</h2>
-                  <p className="text-xs text-[var(--text-muted)] font-serif mt-1">Cập nhật Tên Thánh, Họ Tên, Giáo Xứ và Giáo Phận.</p>
+                  <p className="text-xs text-[var(--text-muted)] font-serif mt-1">
+                    Cập nhật đầy đủ hồ sơ mục vụ, liên hệ và tùy chọn cá nhân của bạn trên VERIDU.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-serif">
@@ -1095,6 +1216,7 @@ function ProfileDashboardContent() {
                       type="text"
                       value={formData.christianName}
                       onChange={(e) => setFormData({ ...formData, christianName: e.target.value })}
+                      placeholder="VD: Giuse, Maria, Phêrô..."
                       className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>
@@ -1103,9 +1225,47 @@ function ProfileDashboardContent() {
                     <label className="font-bold block mb-1.5">Họ &amp; Tên:</label>
                     <input
                       type="text"
+                      required
                       value={formData.displayName}
                       onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                      placeholder="VD: VERIDU hoặc Nguyễn Văn A"
+                      placeholder="VD: Nguyễn Văn A"
+                      className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold block mb-1.5">Bậc Sống:</label>
+                    <select
+                      value={formData.vocation}
+                      onChange={(e) => setFormData({ ...formData, vocation: e.target.value })}
+                      className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    >
+                      {VOCATION_OPTIONS.map((v) => (
+                        <option key={v.value} value={v.value}>
+                          {v.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="font-bold block mb-1.5">Ngày Bổn Mạng (tùy chọn):</label>
+                    <input
+                      type="text"
+                      value={formData.feastDay}
+                      onChange={(e) => setFormData({ ...formData, feastDay: e.target.value })}
+                      placeholder="VD: 19/03 (Thánh Giuse)"
+                      className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold block mb-1.5">Số Điện Thoại / Zalo (riêng tư):</label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="VD: 09xx xxx xxx"
                       className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>
@@ -1116,27 +1276,84 @@ function ProfileDashboardContent() {
                       type="text"
                       value={formData.parish}
                       onChange={(e) => setFormData({ ...formData, parish: e.target.value })}
+                      placeholder="VD: Giáo xứ Tân Định"
                       className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>
 
                   <div>
                     <label className="font-bold block mb-1.5">Giáo Phận:</label>
-                    <input
-                      type="text"
-                      value={formData.diocese}
+                    <select
+                      value={VIETNAM_DIOCESES.includes(formData.diocese) ? formData.diocese : ''}
                       onChange={(e) => setFormData({ ...formData, diocese: e.target.value })}
                       className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    >
+                      <option value="">-- Chọn Giáo Phận --</option>
+                      {VIETNAM_DIOCESES.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="font-bold block mb-1.5">Tỉnh / Thành Phố:</label>
+                    <input
+                      type="text"
+                      value={formData.provinceCity}
+                      onChange={(e) => setFormData({ ...formData, provinceCity: e.target.value })}
+                      placeholder="VD: TP. Hồ Chí Minh, Đồng Nai..."
+                      className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="font-bold block mb-1.5">Quốc Gia:</label>
+                    <select
+                      value={formData.country}
+                      onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                      className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    >
+                      {COUNTRY_OPTIONS.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="font-bold block mb-1.5">Lời Giới Thiệu / Châm Ngôn Sống (tùy chọn):</label>
+                    <textarea
+                      rows={3}
+                      value={formData.bio}
+                      onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                      placeholder="VD: Lời Chúa là ngọn đèn soi cho con bước..."
+                      className="w-full bg-[var(--bg-main)] border border-[var(--border-card)] rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
                     />
                   </div>
                 </div>
 
+                <label className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-[var(--bg-main)]/70 border border-[var(--border-card)] cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={formData.marketingConsent}
+                    onChange={(e) => setFormData({ ...formData, marketingConsent: e.target.checked })}
+                    className="w-4 h-4 accent-amber-500 cursor-pointer"
+                  />
+                  <span className="text-xs font-serif text-[var(--text-main)]">
+                    Nhận bản tin Phụng Vụ, bài suy niệm mới và thông báo cập nhật App VERIDU qua Email
+                  </span>
+                </label>
+
                 <button
                   type="submit"
                   disabled={isUpdating}
-                  className="px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-xs shadow-md transition cursor-pointer"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-serif font-bold text-xs shadow-md transition cursor-pointer disabled:opacity-50"
                 >
-                  {isUpdating ? 'Đang Lưu...' : 'Lưu Thay Đổi'}
+                  {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  <span>{isUpdating ? 'Đang Lưu...' : 'Lưu Thay Đổi'}</span>
                 </button>
               </form>
             )}

@@ -2,8 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseUrl, supabaseAnonKey } from '@/lib/supabaseClient';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
 
+export interface RefreshedSessionTokens {
+  access_token: string;
+  refresh_token: string;
+}
+
 export interface VerifiedAuthResult {
   authenticated: boolean;
+  accessToken?: string;
+  refreshedSession?: RefreshedSessionTokens;
   user?: {
     id: string;
     email: string;
@@ -11,6 +18,7 @@ export interface VerifiedAuthResult {
     displayName?: string;
     isAdmin: boolean;
     isAuthor: boolean;
+    providers?: string[];
   };
   error?: string;
   response?: NextResponse;
@@ -25,7 +33,7 @@ const INVALID_TOKENS = new Set([
   'veridu_active_session',
 ]);
 
-function extractCookieValue(cookieHeader: string, name: string): string | null {
+export function extractCookieValue(cookieHeader: string, name: string): string | null {
   if (!cookieHeader) return null;
   const parts = cookieHeader.split(';');
   for (const part of parts) {
@@ -48,8 +56,76 @@ function isUsableToken(value: string | null | undefined): value is string {
   if (!value || typeof value !== 'string') return false;
   const trimmed = value.trim();
   if (!trimmed || INVALID_TOKENS.has(trimmed)) return false;
-  // Valid Supabase JWT has 3 dot-separated parts
   return trimmed.split('.').length === 3;
+}
+
+/**
+ * Helper to attach refreshed HttpOnly session cookies onto an outgoing NextResponse
+ * whenever verifyApiAuth silently renewed an expired 1-hour access token.
+ */
+export function applyRefreshedAuthCookies(
+  response: NextResponse,
+  refreshed?: RefreshedSessionTokens
+): NextResponse {
+  if (!refreshed?.access_token) return response;
+  const isProd = process.env.NODE_ENV === 'production';
+  const maxAge = 72 * 60 * 60;
+
+  response.cookies.set('veridu_auth_token', refreshed.access_token, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: 'lax',
+    path: '/',
+    maxAge,
+  });
+
+  if (refreshed.refresh_token) {
+    response.cookies.set('veridu_refresh_token', refreshed.refresh_token, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'lax',
+      path: '/',
+      maxAge,
+    });
+  }
+
+  return response;
+}
+
+async function fetchSupabaseAuthUser(accessToken: string): Promise<any | null> {
+  const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
+    method: 'GET',
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${accessToken}`,
+    },
+    cache: 'no-store',
+  });
+  if (!userRes.ok) return null;
+  const data: any = await userRes.json();
+  return data?.id ? data : null;
+}
+
+async function refreshSupabaseTokens(
+  refreshToken: string
+): Promise<{ user: any; access_token: string; refresh_token: string } | null> {
+  const res = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+    method: 'POST',
+    headers: {
+      apikey: supabaseAnonKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+    cache: 'no-store',
+  });
+  if (!res.ok) return null;
+  const data: any = await res.json();
+  if (!data?.access_token || !data?.user?.id) return null;
+  return {
+    user: data.user,
+    access_token: data.access_token,
+    refresh_token: data.refresh_token || refreshToken,
+  };
 }
 
 export async function verifyApiAuth(
@@ -58,6 +134,7 @@ export async function verifyApiAuth(
 ): Promise<VerifiedAuthResult> {
   try {
     let token: string | null = null;
+    const cookieHeader = req.headers.get('cookie') || '';
 
     // 1. Extract Bearer Token from Authorization Header
     const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
@@ -70,7 +147,6 @@ export async function verifyApiAuth(
 
     // 2. Extract Token from HttpOnly Cookie (veridu_auth_token) or legacy veridu_token cookie
     if (!token) {
-      const cookieHeader = req.headers.get('cookie') || '';
       const httpOnlyToken = extractCookieValue(cookieHeader, 'veridu_auth_token');
       if (isUsableToken(httpOnlyToken)) {
         token = httpOnlyToken;
@@ -82,7 +158,9 @@ export async function verifyApiAuth(
       }
     }
 
-    if (!token) {
+    const refreshTokenCookie = extractCookieValue(cookieHeader, 'veridu_refresh_token')?.trim() || '';
+
+    if (!token && !refreshTokenCookie) {
       return {
         authenticated: false,
         error: 'Chưa đăng nhập. Vui lòng cung cấp mã xác thực hợp lệ.',
@@ -93,28 +171,27 @@ export async function verifyApiAuth(
       };
     }
 
-    // 3. Verify JWT via lightweight direct REST call (avoids heavy SDK construction on Workers CPU budget)
-    const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
-      method: 'GET',
-      headers: {
-        apikey: supabaseAnonKey,
-        Authorization: `Bearer ${token}`,
-      },
-      cache: 'no-store',
-    });
+    // 3. Verify JWT via lightweight direct REST call (auto-refresh if expired and refresh cookie exists)
+    let authUser: any = null;
+    let activeAccessToken = token || '';
+    let refreshedSession: RefreshedSessionTokens | undefined;
 
-    if (!userRes.ok) {
-      return {
-        authenticated: false,
-        error: 'Phiên đăng nhập đã hết hạn hoặc không hợp lệ.',
-        response: NextResponse.json(
-          { success: false, error: 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn.' },
-          { status: 401 }
-        ),
-      };
+    if (token) {
+      authUser = await fetchSupabaseAuthUser(token);
     }
 
-    const authUser: any = await userRes.json();
+    if (!authUser && refreshTokenCookie && refreshTokenCookie.length > 10) {
+      const refreshed = await refreshSupabaseTokens(refreshTokenCookie);
+      if (refreshed) {
+        authUser = refreshed.user;
+        activeAccessToken = refreshed.access_token;
+        refreshedSession = {
+          access_token: refreshed.access_token,
+          refresh_token: refreshed.refresh_token,
+        };
+      }
+    }
+
     if (!authUser?.id) {
       return {
         authenticated: false,
@@ -128,6 +205,11 @@ export async function verifyApiAuth(
 
     const userId = String(authUser.id);
     const userEmail = String(authUser.email || '');
+    const providers: string[] = Array.isArray(authUser?.app_metadata?.providers)
+      ? authUser.app_metadata.providers.map((p: any) => String(p))
+      : authUser?.app_metadata?.provider
+      ? [String(authUser.app_metadata.provider)]
+      : [];
 
     // 4. Query verified role & permissions strictly from Supabase DB (never trust user_metadata.role)
     const adminDb = getSupabaseServerClient();
@@ -195,6 +277,8 @@ export async function verifyApiAuth(
 
     return {
       authenticated: true,
+      accessToken: activeAccessToken,
+      refreshedSession,
       user: {
         id: userId,
         email: userEmail,
@@ -202,6 +286,7 @@ export async function verifyApiAuth(
         displayName: profile?.full_name || authUser.user_metadata?.full_name || userEmail,
         isAdmin,
         isAuthor,
+        providers,
       },
     };
   } catch (err: any) {

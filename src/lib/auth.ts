@@ -20,6 +20,13 @@ export interface UserProfile {
   christianName: string;
   parish: string;
   diocese: string;
+  vocation?: string;
+  feastDay?: string;
+  provinceCity?: string;
+  country?: string;
+  bio?: string;
+  marketingConsent?: boolean;
+  profile_completed?: boolean;
   role: 'Học Viên' | 'Giáo Lý Viên' | 'Quản Trị Viên' | 'Người Đóng Góp' | 'Học Giả VERIDU' | string;
   streak: number;
   points?: number;
