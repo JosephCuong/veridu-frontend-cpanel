@@ -225,7 +225,7 @@ export async function middleware(request: NextRequest) {
       "img-src 'self' data: blob: https:",
       "media-src 'self' data: blob: https:",
       "connect-src 'self' https: wss: https://*.google-analytics.com https://*.analytics.google.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net",
-      "frame-src 'self' https://challenges.cloudflare.com https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com",
+      "frame-src 'self' https://challenges.cloudflare.com https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://drive.google.com https://docs.google.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com",
       "worker-src 'self' blob:",
       "object-src 'none'",
       "base-uri 'self'",
