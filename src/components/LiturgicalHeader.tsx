@@ -285,9 +285,10 @@ export default function LiturgicalHeader() {
     {
       id: 'library',
       title: isEn ? 'LIBRARY' : 'THƯ VIỆN',
-      matchPrefixes: ['/thu-vien', '/sach-tranh'],
+      matchPrefixes: ['/thu-vien', '/sach-tranh', '/thanh-nhac'],
       items: [
         { label: isEn ? 'Articles' : 'Bài Viết', href: '/thu-vien' },
+        { label: isEn ? 'Sacred Music' : 'Thánh Nhạc', href: '/thanh-nhac' },
         { label: isEn ? 'Bookshelf' : 'Tủ Sách', href: '/thu-vien/sach' },
         { label: isEn ? 'Storybooks' : 'Sách Tranh', href: '/sach-tranh' },
         { label: isEn ? 'Documents' : 'Tài Liệu', href: '/thu-vien/tai-lieu' },

@@ -16,6 +16,7 @@ const ADMIN_REQUIRED_ROUTES = [
   '/admin/quiz-bank',
   '/admin/sach-tranh',
   '/admin/khoa-hoc',
+  '/admin/thanh-nhac',
   '/admin/quang-ba',
   '/admin/soan-bai',
   '/quiz/studio',

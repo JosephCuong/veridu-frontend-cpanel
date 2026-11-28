@@ -25,7 +25,8 @@ import {
   Layers,
   ChevronRight,
   Laptop,
-  UserCog
+  UserCog,
+  Music
 } from 'lucide-react';
 import { getStoredUser, UserProfile } from '@/lib/auth';
 import AdminUsersTab from '@/components/admin/AdminUsersTab';
@@ -232,7 +233,7 @@ export default function AdminHubPage() {
             <span className="text-[11px] font-serif text-[var(--text-muted)]">Truy cập trực tiếp</span>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             {/* Sách Tranh Studio */}
             <Link
               href="/admin/sach-tranh"
@@ -292,6 +293,27 @@ export default function AdminHubPage() {
                 </div>
                 <p className="text-[11px] text-[var(--text-muted)] line-clamp-1 mt-0.5">
                   Soạn thảo bài học, chương mục &amp; lộ trình
+                </p>
+              </div>
+            </Link>
+
+            {/* Studio Thánh Nhạc */}
+            <Link
+              href="/admin/thanh-nhac"
+              className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] hover:border-amber-500/50 shadow-md hover:shadow-xl transition-all group flex flex-col justify-between space-y-3"
+            >
+              <div className="flex items-center justify-between">
+                <div className="w-9 h-9 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Music className="w-4 h-4" />
+                </div>
+                <ChevronRight className="w-4 h-4 text-[var(--text-muted)] group-hover:text-purple-500 transition" />
+              </div>
+              <div>
+                <div className="font-serif font-bold text-xs sm:text-sm text-[var(--text-main)] group-hover:text-purple-500 transition">
+                  Studio Thánh Nhạc
+                </div>
+                <p className="text-[11px] text-[var(--text-muted)] line-clamp-1 mt-0.5">
+                  Quản lý Đáp Ca, YouTube &amp; bản nhạc PDF
                 </p>
               </div>
             </Link>

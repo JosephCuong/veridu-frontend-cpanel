@@ -137,6 +137,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.85,
     },
     {
+      url: `${baseUrl}/thanh-nhac`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.85,
+    },
+    {
       url: `${baseUrl}/tac-gia`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
@@ -286,7 +292,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
     }
 
-    // 7. Dynamic Catholic Bible Books (73 Sách Kinh Thánh)
+    // 7. Dynamic Sacred Music (Thư Viện Thánh Nhạc)
+    const { data: sacredMusicItems } = await supabase
+      .from('sacred_music')
+      .select('slug, updated_at, created_at')
+      .eq('status', 'published');
+
+    if (sacredMusicItems) {
+      sacredMusicItems.forEach((song) => {
+        dynamicRoutes.push({
+          url: `${baseUrl}/thanh-nhac/${song.slug}`,
+          lastModified: new Date(song.updated_at || song.created_at || Date.now()),
+          changeFrequency: 'weekly',
+          priority: 0.8,
+        });
+      });
+    }
+
+    // 8. Dynamic Catholic Bible Books (73 Sách Kinh Thánh)
     const { data: bibleBooks } = await supabase
       .from('bible_books')
       .select('code, name, chapters_count')
