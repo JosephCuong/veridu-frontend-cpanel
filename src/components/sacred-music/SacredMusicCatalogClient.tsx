@@ -10,7 +10,7 @@ import {
   Lock,
   PlayCircle,
   BookOpen,
-  Sparkles,
+  Cross,
   Download,
   Eye,
   Mic2,
@@ -97,21 +97,21 @@ export default function SacredMusicCatalogClient({
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] pb-20">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] pt-[98px] sm:pt-[106px] pb-24">
       {/* ── HERO SECTION ── */}
-      <section className="relative overflow-hidden border-b border-[var(--border-card)] bg-gradient-to-b from-amber-500/[0.07] via-[var(--bg-main)] to-[var(--bg-main)]">
+      <section className="relative overflow-hidden border-b border-amber-500/20 bg-gradient-to-b from-amber-500/[0.08] via-amber-500/[0.02] to-[var(--bg-main)] dark:from-stone-950 dark:via-stone-900/70 dark:to-[var(--bg-main)]">
         <div
           className="pointer-events-none absolute inset-0 opacity-30 dark:opacity-20"
           style={{
             backgroundImage:
-              'radial-gradient(circle at 18% 20%, rgba(217, 119, 6, 0.22), transparent 42%), radial-gradient(circle at 82% 25%, rgba(124, 58, 237, 0.16), transparent 40%)',
+              'radial-gradient(circle at 18% 20%, rgba(217, 119, 6, 0.2), transparent 42%), radial-gradient(circle at 82% 25%, rgba(124, 58, 237, 0.14), transparent 40%)',
           }}
         />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-10 sm:pt-14 sm:pb-12">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-            <div className="max-w-3xl space-y-4">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+            <div className="max-w-3xl space-y-5">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-[0.18em] uppercase bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-                <Music className="w-3.5 h-3.5" />
+                <Cross className="w-3.5 h-3.5" />
                 <span>Không Gian Thánh Nhạc &amp; Phụng Vụ</span>
               </div>
 
@@ -127,16 +127,16 @@ export default function SacredMusicCatalogClient({
 
               {/* Quick Stats */}
               <div className="flex flex-wrap items-center gap-3 pt-1 text-xs font-medium text-[var(--text-muted)]">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--bg-card)] border border-[var(--border-card)]">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--bg-card)] border border-[var(--border-card)]">
+                  <Music className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                   <strong className="text-[var(--text-main)]">{items.length}</strong> tác phẩm
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--bg-card)] border border-[var(--border-card)]">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--bg-card)] border border-[var(--border-card)]">
                   <PlayCircle className="w-3.5 h-3.5 text-rose-500" />
                   <strong className="text-[var(--text-main)]">{videoCount}</strong> video hát mẫu /
                   karaoke
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--bg-card)] border border-[var(--border-card)]">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--bg-card)] border border-[var(--border-card)]">
                   <FileText className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   <strong className="text-[var(--text-main)]">{featuredCount}</strong> sheet nhạc PDF
                 </span>
@@ -171,7 +171,7 @@ export default function SacredMusicCatalogClient({
       </section>
 
       {/* ── SEARCH & LITURGICAL FILTERS ── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 space-y-5">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 sm:mt-12 space-y-6">
         <div className="p-4 sm:p-5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] shadow-sm space-y-4">
           {/* Search Bar */}
           <div className="flex flex-col sm:flex-row gap-3">
@@ -367,13 +367,6 @@ export default function SacredMusicCatalogClient({
                         <span className={`w-2 h-2 rounded-full ${seasonStyle.dot}`} />
                         <span>{item.liturgical_season}</span>
                       </span>
-
-                      {item.is_featured && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500 text-stone-950 shadow">
-                          <Sparkles className="w-3 h-3" />
-                          Nổi bật
-                        </span>
-                      )}
                     </div>
 
                     {/* Center Play Icon for YouTube */}

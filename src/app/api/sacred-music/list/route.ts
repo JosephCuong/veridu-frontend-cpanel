@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
 
     if (!isAdminMode) {
       query = query.eq('status', 'published');
+    } else {
+      query = query.neq('status', 'archived');
     }
     if (season && season !== 'all') {
       query = query.eq('liturgical_season', season);

@@ -14,7 +14,6 @@ import {
   RefreshCw,
   Save,
   Search,
-  Sparkles,
   Trash2,
   X,
   PlayCircle,
@@ -249,7 +248,7 @@ export default function AdminSacredMusicPage() {
     getYoutubeThumbnailUrl(form.karaoke_youtube_url);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] pb-20">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] pt-[98px] sm:pt-[106px] pb-24">
       {/* Header */}
       <div className="border-b border-[var(--border-card)] bg-[var(--bg-card)]/70 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -391,8 +390,8 @@ export default function AdminSacredMusicPage() {
                           </span>
                         )}
                         {item.is_featured && (
-                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-500/20 text-amber-600 dark:text-amber-300">
-                            <Sparkles className="w-2.5 h-2.5" /> Nổi bật
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                            Ghim đầu
                           </span>
                         )}
                       </div>
@@ -842,7 +841,7 @@ export default function AdminSacredMusicPage() {
                       onChange={(e) => setForm({ ...form, is_featured: e.target.checked })}
                       className="rounded border-[var(--border-card)] text-amber-600 focus:ring-amber-500"
                     />
-                    <span>Ghim Nổi Bật</span>
+                    <span>Ghim lên đầu danh sách</span>
                   </label>
                 </div>
 

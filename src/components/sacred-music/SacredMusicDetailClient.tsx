@@ -16,7 +16,7 @@ import {
   Mic2,
   Music,
   Play,
-  Sparkles,
+  Cross,
   User,
   PlayCircle,
   Loader2,
@@ -176,10 +176,10 @@ export default function SacredMusicDetailClient({
       : null;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] pb-20">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] pt-[98px] sm:pt-[106px] pb-24">
       {/* Top Breadcrumb Bar */}
       <div className="border-b border-[var(--border-card)] bg-[var(--bg-card)]/60 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap items-center justify-between gap-3">
           <Link
             href="/thanh-nhac"
             className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[var(--text-muted)] hover:text-amber-600 dark:hover:text-amber-400 transition"
@@ -438,7 +438,7 @@ export default function SacredMusicDetailClient({
             {item.description && (
               <div className="rounded-2xl p-5 sm:p-6 bg-[var(--bg-card)] border border-[var(--border-card)] space-y-2">
                 <h2 className="font-serif text-lg font-bold text-[var(--text-main)] flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <Cross className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                   <span>Giới Thiệu &amp; Ghi Chú Phụng Vụ</span>
                 </h2>
                 <p className="text-sm sm:text-base text-[var(--text-muted)] leading-relaxed whitespace-pre-line">
