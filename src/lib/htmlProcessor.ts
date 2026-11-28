@@ -493,9 +493,14 @@ export function normalizeAndSyncHtml(
       const styles = doc.querySelectorAll('style, link[rel="stylesheet"]');
       styles.forEach((s) => s.remove());
 
-      // 4. Remove embedded TOC containers
-      const tocs = doc.querySelectorAll('.toc, #toc, [class*="toc-"], [id*="toc-"], nav#table-of-contents');
+      // 4. Remove embedded TOC containers and offline static .html language switchers
+      const tocs = doc.querySelectorAll('.toc, #toc, [class*="toc-"], [id*="toc-"], nav#table-of-contents, .veridu-lang-switcher');
       tocs.forEach((t) => t.remove());
+
+      // 4b. Normalize local data-source attributes on semantic placeholders
+      doc.querySelectorAll('veridu-timeline-placeholder, veridu-map-placeholder').forEach((ph) => {
+        ph.removeAttribute('data-source');
+      });
 
       // 5. Remove duplicate main <h1> tag inside body (since page header already renders it)
       const firstH1 = body.querySelector('h1');
@@ -606,7 +611,8 @@ export function normalizeAndSyncHtml(
     .replace(/<\/body>/gi, '')
     .replace(/<style[\s\S]*?<\/style>/gi, '')
     .replace(/<script[\s\S]*?<\/script>/gi, (m) => m.includes('mermaid') ? m : '')
-    .replace(/<div\s+class=["'][^"']*toc[^"']*["'][\s\S]*?<\/div>/gi, '');
+    .replace(/<div\s+class=["'][^"']*toc[^"']*["'][\s\S]*?<\/div>/gi, '')
+    .replace(/<div\s+class=["'][^"']*veridu-lang-switcher[^"']*["'][\s\S]*?<\/div>/gi, '');
 
   // 🌟 Automatically transform all Scripture Quotes & Poetry Blocks to Sacred Scripture Callouts
   cleanHtml = transformScriptureQuotesInHtml(cleanHtml);
@@ -627,15 +633,16 @@ export function normalizeAndSyncHtml(
 export function normalizeFootnotesInHtml(html: string): string {
   if (!html || typeof html !== 'string') return '';
 
-  // 1. Normalize in-text footnote links (e.g. <a href="#fn1">[1]</a>)
-  // Strips brackets: [1] -> 1, adds id="fnref-1" and class="footnote-ref"
+  // 1. Normalize in-text footnote links (e.g. <a href="#fn1">[1]</a> or <a href="#fn1" id="ref1">[1]</a>)
+  // Strips brackets: [1] -> 1, normalizes legacy id="ref1" -> id="fnref-1", adds class="footnote-ref"
   let out = html.replace(
     /<a\s+([^>]*?)href=["']#(?:fn|footnote)[-_:]?(\d+)["']([^>]*?)>([\s\S]*?)<\/a>/gi,
     (match, pre, num, post, inner) => {
       let attrs = `${pre} ${post}`.trim();
       attrs = attrs.replace(/\bclass=["'][^"']*["']/gi, '');
-      if (!attrs.includes('id=')) {
-        attrs = `id="fnref-${num}" ` + attrs;
+      attrs = attrs.replace(/\bid=["'](?:ref|fnref)[-_:]?\d+["']/gi, '').trim();
+      if (!/\bid=/i.test(attrs)) {
+        attrs = `id="fnref-${num}"` + (attrs ? ` ${attrs}` : '');
       }
       return `<a href="#fn${num}" ${attrs.trim()} class="footnote-ref" title="Xem chú thích ${num}" aria-label="Xem chú thích ${num}">${num}</a>`;
     }

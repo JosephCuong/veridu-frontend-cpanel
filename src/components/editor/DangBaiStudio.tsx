@@ -626,7 +626,7 @@ function DangBaiContent() {
         }
       } else {
         const isLoc = parsed.some((i: any) => i && (i.latitude !== undefined || i.lat !== undefined));
-        const isEvt = parsed.some((i: any) => i && (i.year_bce_ce !== undefined || i.order_year !== undefined || i.event_title !== undefined || i.period !== undefined));
+        const isEvt = parsed.some((i: any) => i && (i.year_bce_ce !== undefined || i.order_year !== undefined || i.event_title !== undefined || i.title_vi !== undefined || i.display_date_vi !== undefined || i.period !== undefined || i.period_vi !== undefined));
         if (isLoc && !isEvt) {
           incomingLocs = parsed;
         } else if (isEvt) {
@@ -669,12 +669,12 @@ function DangBaiContent() {
       }
     }
 
-    // Merge locations
+    // Merge locations (supports both standard keys and AGENT-VERIDU bilingual _vi/_en keys)
     const sourceLocs = incomingLocs.length > 0 ? incomingLocs : existingLocs;
     const finalLocsMap = new Map<string, any>();
     if (incomingLocs.length > 0 && existingLocs.length > 0) {
       existingLocs.forEach(l => {
-        const key = (l.name || l.title || '').trim().toLowerCase();
+        const key = (l.name || l.name_vi || l.title || '').trim().toLowerCase();
         if (key) finalLocsMap.set(key, l);
       });
     }
@@ -683,26 +683,39 @@ function DangBaiContent() {
       const lat = Number(raw.latitude ?? raw.lat);
       const lng = Number(raw.longitude ?? raw.lng ?? raw.lon);
       if (isNaN(lat) || isNaN(lng)) return;
-      const name = (raw.name || raw.title || 'Địa danh').trim();
+      const name = (raw.name || raw.name_vi || raw.title || raw.name_en || 'Địa danh').trim();
+      const refsArr = Array.isArray(raw.biblical_references)
+        ? raw.biblical_references
+        : Array.isArray(raw.bible_references)
+          ? raw.bible_references
+          : raw.scripture_or_history
+            ? [raw.scripture_or_history]
+            : [];
       const normLoc = {
+        ...(raw.id ? { id: raw.id } : {}),
         name,
+        ...(raw.name_en ? { name_en: raw.name_en } : {}),
         latitude: lat,
         longitude: lng,
-        description: raw.description || raw.summary || raw.historical_notes || raw.notes || '',
-        scripture_or_history: raw.scripture_or_history || (Array.isArray(raw.biblical_references) ? raw.biblical_references.join(', ') : (Array.isArray(raw.bible_references) ? raw.bible_references.join(', ') : (raw.biblical_references || raw.bible_references || ''))),
+        description: raw.description || raw.description_vi || raw.summary || raw.historical_notes_vi || raw.historical_notes || raw.notes || '',
+        biblical_references: refsArr,
+        scripture_or_history: raw.scripture_or_history || refsArr.join(', '),
         ancient_name: raw.ancient_name || raw.name_original || '',
-        historical_period: raw.historical_period || raw.period || raw.era || raw.territory || raw.category || ''
+        historical_period: raw.historical_period || raw.historical_period_vi || raw.period || raw.period_vi || raw.era || raw.territory || raw.category || '',
+        archaeological_evidence: raw.archaeological_evidence || raw.archaeological_evidence_vi || raw.archaeology || '',
+        ...(raw.region ? { region: raw.region } : {}),
+        ...(raw.testament ? { testament: raw.testament } : {})
       };
       finalLocsMap.set(name.toLowerCase(), normLoc);
     });
     const finalLocs = Array.from(finalLocsMap.values());
 
-    // Merge timeline events
+    // Merge timeline events (supports both standard keys and AGENT-VERIDU bilingual _vi/_en keys)
     const sourceEvts = incomingEvts.length > 0 ? incomingEvts : existingEvts;
     const finalEvtsMap = new Map<string, any>();
     if (incomingEvts.length > 0 && existingEvts.length > 0) {
       existingEvts.forEach(e => {
-        const key = `${e.year_bce_ce ?? e.order_year}_${(e.event_title || e.title || '').trim().toLowerCase()}`;
+        const key = `${e.year_bce_ce ?? e.order_year}_${(e.event_title || e.event_title_vi || e.title_vi || e.title || '').trim().toLowerCase()}`;
         finalEvtsMap.set(key, e);
       });
     }
@@ -717,14 +730,18 @@ function DangBaiContent() {
             : typeof raw.year === 'number' 
               ? raw.year 
               : 0;
-      const title = (raw.event_title || raw.title || 'Sự kiện').trim();
+      const title = (raw.event_title || raw.event_title_vi || raw.title_vi || raw.title || raw.title_en || 'Sự kiện').trim();
       const normEvt = {
+        ...(raw.id ? { id: raw.id } : {}),
         year_bce_ce: yr,
         event_title: title,
-        period: raw.period || raw.era_name || raw.category || '',
-        display_date: raw.display_date || raw.year_label || (yr < 0 ? `${Math.abs(yr)} TCN` : `${yr} SCN`),
-        description: raw.description || raw.archaeological_anchor || raw.summary || '',
-        significance: raw.significance || raw.theology || raw.summary || ''
+        ...(raw.event_title_en || raw.title_en ? { event_title_en: raw.event_title_en || raw.title_en } : {}),
+        period: raw.period || raw.period_vi || raw.era_name || raw.category || '',
+        display_date: raw.display_date || raw.display_date_vi || raw.year_label || (yr < 0 ? `${Math.abs(yr)} TCN` : `${yr} SCN`),
+        biblical_anchor: raw.biblical_anchor || raw.scripture || '',
+        archaeological_anchor: raw.archaeological_anchor || raw.archaeology || '',
+        description: raw.description || raw.description_vi || raw.archaeological_anchor || raw.summary || '',
+        significance: raw.significance || raw.significance_vi || raw.theology || raw.summary || ''
       };
       const key = `${yr}_${title.toLowerCase()}`;
       finalEvtsMap.set(key, normEvt);

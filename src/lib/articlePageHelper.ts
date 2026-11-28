@@ -68,8 +68,8 @@ export async function prepareArticlePageData(slug: string) {
             scriptures: item.scriptures || item.biblical_references || item.bible_references || [],
             theology: item.theology || item.historical_notes_vi || '',
             ancient_name: item.ancient_name || item.name_original || '',
-            historical_period: item.historical_period || '',
-            archaeological_evidence: item.archaeological_evidence || '',
+            historical_period: item.historical_period || item.historical_period_vi || '',
+            archaeological_evidence: item.archaeological_evidence || item.archaeological_evidence_vi || '',
             bible_references: Array.isArray(item.biblical_references) ? item.biblical_references : (Array.isArray(item.bible_references) ? item.bible_references : (item.biblical_references ? [item.biblical_references] : [])),
             article_slugs: [slug]
           }));
@@ -83,8 +83,8 @@ export async function prepareArticlePageData(slug: string) {
               slug: ev.slug || ev.id || `evt-${idx}`,
               order_year: yr,
               year_label: ev.display_date || ev.display_date_vi || ev.year_label || (yr < 0 ? `${Math.abs(yr)} TCN` : `${yr} SCN`),
-              title: ev.event_title || ev.event_title_vi || ev.title || 'Sự kiện',
-              subtitle: ev.subtitle || ev.event_title_en || ev.biblical_anchor || '',
+              title: ev.event_title || ev.event_title_vi || ev.title_vi || ev.title || ev.title_en || 'Sự kiện',
+              subtitle: ev.subtitle || ev.event_title_en || ev.title_en || ev.biblical_anchor || '',
               biblical_anchor: ev.biblical_anchor || ev.scripture || '',
               archaeological_anchor: ev.archaeological_anchor || ev.archaeology || '',
               significance: ev.significance || ev.significance_vi || ev.theology || ev.summary || '',
@@ -96,7 +96,7 @@ export async function prepareArticlePageData(slug: string) {
               article_slugs: [slug],
               bible_references: ev.biblical_anchor ? [ev.biblical_anchor] : [],
               era_id: ev.era_id || 'era-cuu-uoc',
-              era_name: ev.era_name || ev.period || '',
+              era_name: ev.era_name || ev.period || ev.period_vi || '',
               category: ev.category || 'cuu-uoc'
             };
           }).sort((a: any, b: any) => a.order_year - b.order_year);

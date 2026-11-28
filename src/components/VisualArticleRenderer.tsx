@@ -382,12 +382,13 @@ export default function VisualArticleRenderer({
       }
 
       // B. Footnote backref clicked (↩) -> smooth scroll back to in-text reference
-      if (/#fnref[-_:]?(\d+)/i.test(href) || link.classList.contains('footnote-backref')) {
-        const match = href.match(/#fnref[-_:]?(\d+)/i);
+      if (/#(?:fnref|ref)[-_:]?(\d+)/i.test(href) || link.classList.contains('footnote-backref')) {
+        const match = href.match(/#(?:fnref|ref)[-_:]?(\d+)/i);
         const num = match ? match[1] : '';
         if (num) {
           const dest = document.getElementById(`fnref-${num}`)
             || document.getElementById(`fnref${num}`)
+            || document.getElementById(`ref${num}`)
             || containerRef.current?.querySelector(`a[href="#fn${num}"], a[href="#fn-${num}"]`);
 
           if (dest) {
@@ -501,8 +502,8 @@ export default function VisualArticleRenderer({
         }
       }
 
-      // E. Scholarly Anchors (#chu-thich, #tham-chieu, #bang-thuat-ngu, #thu-muc-tai-lieu)
-      const scholarlyDestMatch = href.match(/^#(chu-thich|tham-chieu|bang-thuat-ngu|thu-muc-tai-lieu)$/i);
+      // E. Scholarly Anchors (VI & EN: #chu-thich, #footnotes, #tham-chieu, #scripture-refs, #bang-thuat-ngu, #glossary, #tai-lieu-tham-khao, #bibliography)
+      const scholarlyDestMatch = href.match(/^#(chu-thich|footnotes|tham-chieu|scripture-refs|bang-thuat-ngu|glossary|thu-muc-tai-lieu|tai-lieu-tham-khao|bibliography)$/i);
       if (scholarlyDestMatch) {
         const targetId = scholarlyDestMatch[1].toLowerCase();
         const dest = document.getElementById(targetId) || containerRef.current?.querySelector(`[id="${targetId}"]`);
@@ -619,7 +620,7 @@ export default function VisualArticleRenderer({
               onClick={(e) => {
                 e.preventDefault();
                 setTermPopover(null);
-                const target = document.getElementById('bang-thuat-ngu');
+                const target = document.getElementById('bang-thuat-ngu') || document.getElementById('glossary');
                 if (target) {
                   target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   target.classList.add('footnote-target-glow-active');

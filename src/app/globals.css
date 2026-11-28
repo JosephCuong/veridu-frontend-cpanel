@@ -1773,14 +1773,18 @@ sup.veridu-footnote {
   margin-bottom: 1rem;
   font-family: var(--font-serif);
 }
-.dictionary-meta .dictionary-entry {
+.dictionary-meta .dictionary-entry,
+.dictionary-meta .veridu-term-item {
   padding: 0.75rem 0;
   border-bottom: 1px dashed var(--border-card);
-  font-size: 0.875rem;
-  line-height: 1.6;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--text-main);
 }
-.dictionary-meta .dictionary-entry:last-child {
+.dictionary-meta .dictionary-entry:last-child,
+.dictionary-meta .veridu-term-item:last-child {
   border-bottom: none;
+  padding-bottom: 0;
 }
 .dictionary-meta .term-keyword {
   font-weight: 700;
@@ -1792,6 +1796,161 @@ sup.veridu-footnote {
   color: var(--text-muted);
   font-size: 0.8125rem;
   margin-right: 0.35rem;
+}
+
+/* ─── 11. AGENT-VERIDU SYNC BLOCKS (PULL QUOTE, FOCUS, FAQ, DISCUSSION, TABLE, TAGS) ─── */
+/* Hide offline static .html language switcher inside web reader (website renders native bilingual pills) */
+.article-content .veridu-lang-switcher,
+.prose-veridu-sanitized .veridu-lang-switcher {
+  display: none !important;
+}
+
+.article-type-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.9rem;
+  border-radius: 9999px;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--gold-light);
+  color: var(--accent-gold-text);
+  border: 1px solid var(--gold-border);
+  margin: 0 auto 1rem auto;
+}
+.article-type-tag.article {
+  background: var(--crimson-light);
+  color: var(--crimson-primary);
+  border-color: rgba(139, 30, 45, 0.28);
+}
+html.dark .article-type-tag.article {
+  background: rgba(245, 158, 11, 0.14);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.abstract-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding-top: 0.75rem;
+  margin-top: 0.85rem;
+  border-top: 1px dashed rgba(99, 102, 241, 0.25);
+}
+.tag-badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-sans) !important;
+  font-size: 0.75rem !important;
+  line-height: 1.3 !important;
+  font-weight: 600;
+  padding: 0.2rem 0.65rem;
+  border-radius: 0.5rem;
+  background: var(--bg-main);
+  color: var(--indigo-primary) !important;
+  border: 1px solid var(--border-card);
+}
+
+.veridu-pull-quote {
+  margin: 2rem 0;
+  padding: 1.5rem 1.75rem;
+  border-radius: 0 1.25rem 1.25rem 0;
+  border-left: 4px solid var(--gold-primary);
+  background: linear-gradient(135deg, var(--gold-light) 0%, transparent 100%);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.15rem;
+  line-height: 1.8;
+  color: var(--text-main);
+  box-shadow: 0 6px 20px -4px rgba(0, 0, 0, 0.06);
+}
+
+.theological-focus-block {
+  margin: 2.25rem 0;
+  padding: 1.6rem 1.85rem;
+  border-radius: 1.25rem;
+  border: 1px solid var(--gold-border);
+  border-top: 4px solid var(--gold-primary);
+  background: linear-gradient(135deg, var(--gold-light) 0%, var(--bg-card) 55%, rgba(99, 102, 241, 0.08) 100%);
+  box-shadow: 0 10px 28px -6px rgba(0, 0, 0, 0.08);
+}
+.theological-focus-title {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--accent-gold-text);
+  margin-bottom: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.faq-section,
+.discussion-section {
+  margin: 2.25rem 0;
+  padding: 1.6rem 1.85rem;
+  border-radius: 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.06);
+}
+.faq-item {
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px dashed var(--border-card);
+}
+.faq-item:last-child {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+.faq-q {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--accent-gold-text);
+  margin-bottom: 0.45rem;
+  line-height: 1.5;
+}
+.faq-a {
+  margin-bottom: 0;
+  font-size: 0.98rem;
+  color: var(--text-main);
+  line-height: 1.75;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.75rem 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  font-size: 0.95rem;
+}
+.comparison-table th {
+  background: var(--gold-light);
+  color: var(--accent-gold-text);
+  font-family: var(--font-serif);
+  font-weight: 700;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-card);
+  text-align: left;
+}
+.comparison-table td {
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border-card);
+  color: var(--text-main);
+  vertical-align: top;
+}
+.comparison-table tbody tr:nth-child(even) {
+  background: rgba(148, 163, 184, 0.06);
 }
 
 .bibliography {

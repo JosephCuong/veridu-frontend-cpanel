@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
 import { verifyApiAuth } from '@/lib/apiAuth';
+import { revalidatePostPaths } from '@/lib/revalidateHelper';
 
 export const dynamic = 'force-dynamic';
 
@@ -104,7 +104,8 @@ export async function POST(request: Request) {
     const existingLocations: any[] = existingLocationsData || [];
 
     for (const rawLoc of locations as any[]) {
-      const locName = rawLoc.name || rawLoc.title;
+      const locName = rawLoc.name || rawLoc.name_vi || rawLoc.title || rawLoc.name_en;
+      const locNameEn = rawLoc.name_en || '';
       const lat = typeof rawLoc.latitude === 'number' ? rawLoc.latitude : Number(rawLoc.lat);
       const lng = typeof rawLoc.longitude === 'number' ? rawLoc.longitude : Number(rawLoc.lng ?? rawLoc.lon);
 
@@ -120,10 +121,10 @@ export async function POST(request: Request) {
             ? [rawLoc.scripture_or_history] 
             : [];
 
-      const description = rawLoc.description || rawLoc.summary || rawLoc.historical_notes || rawLoc.notes || '';
+      const description = rawLoc.description || rawLoc.description_vi || rawLoc.summary || rawLoc.historical_notes_vi || rawLoc.historical_notes || rawLoc.notes || '';
       const ancientName = rawLoc.ancient_name || rawLoc.name_original || '';
-      const historicalPeriod = rawLoc.historical_period || rawLoc.period || rawLoc.era || rawLoc.territory || rawLoc.category || '';
-      const archEvidence = rawLoc.archaeological_evidence || rawLoc.archaeology || '';
+      const historicalPeriod = rawLoc.historical_period || rawLoc.historical_period_vi || rawLoc.period || rawLoc.period_vi || rawLoc.era || rawLoc.territory || rawLoc.category || '';
+      const archEvidence = rawLoc.archaeological_evidence || rawLoc.archaeological_evidence_vi || rawLoc.archaeology || '';
 
       // Tìm xem địa danh đã tồn tại chưa:
       // Tiêu chí 1: Khoảng cách Haversine < 3km (cùng tọa độ địa lý đồi/thành cổ)
@@ -185,6 +186,7 @@ export async function POST(request: Request) {
         const insertPayload: any = {
           slug: rawLoc.id || rawLoc.slug || `loc-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
           name: locName,
+          name_en: locNameEn || null,
           ancient_name: ancientName,
           latitude: lat,
           longitude: lng,
@@ -194,7 +196,7 @@ export async function POST(request: Request) {
           description: description,
           summary: description,
           article_slugs: [article_slug],
-          aliases: [locName],
+          aliases: Array.from(new Set([locName, locNameEn].filter(Boolean))),
           importance_level: 2,
           region: rawLoc.region || 'Thánh Địa (Holy Land)',
           testament: rawLoc.testament || (lat < 30 ? 'cuu-uoc' : 'tan-uoc'),
@@ -224,7 +226,7 @@ export async function POST(request: Request) {
     const existingEvents: any[] = existingEventsData || [];
 
     for (const rawEvt of timeline_events as any[]) {
-      const title = rawEvt.event_title || rawEvt.title;
+      const title = rawEvt.event_title || rawEvt.event_title_vi || rawEvt.title_vi || rawEvt.title || rawEvt.title_en;
       const year = typeof rawEvt.year_bce_ce === 'number' 
         ? rawEvt.year_bce_ce 
         : typeof rawEvt.year_bce === 'number'
@@ -240,14 +242,14 @@ export async function POST(request: Request) {
       }
 
       const eraInfo = determineEraAndCategory(year);
-      const eraName = rawEvt.era_name || rawEvt.period || eraInfo.era_name;
+      const eraName = rawEvt.era_name || rawEvt.period || rawEvt.period_vi || eraInfo.era_name;
       const eventSlug = rawEvt.id || rawEvt.slug || `evt-${Math.abs(year)}-${normalizeSearchText(title).slice(0, 30)}`;
 
-      const displayDate = rawEvt.display_date || rawEvt.year_label || (year < 0 ? `${Math.abs(year)} TCN` : `${year} SCN`);
+      const displayDate = rawEvt.display_date || rawEvt.display_date_vi || rawEvt.year_label || (year < 0 ? `${Math.abs(year)} TCN` : `${year} SCN`);
       const biblicalAnchor = rawEvt.biblical_anchor || rawEvt.scripture || '';
       const archAnchor = rawEvt.archaeological_anchor || rawEvt.archaeology || '';
-      const significance = rawEvt.significance || rawEvt.theology || rawEvt.summary || '';
-      const description = rawEvt.description || archAnchor || significance || '';
+      const significance = rawEvt.significance || rawEvt.significance_vi || rawEvt.theology || rawEvt.summary || '';
+      const description = rawEvt.description || rawEvt.description_vi || archAnchor || significance || '';
 
       // Kiểm tra sự kiện đã tồn tại chưa:
       // Tiêu chí 1: Trùng slug
@@ -347,14 +349,16 @@ export async function POST(request: Request) {
     // 3. TỰ ĐỘNG ĐÍNH KÈM THẺ SCRIPT JSON VÀO CONTENT BÀI VIẾT (SELF-CONTAINED BACKUP)
     // ─────────────────────────────────────────────────────────────
     let postUpdated = false;
+    let postTitleEn: string | null = null;
     try {
       const { data: postData } = await supabase
         .from('posts')
-        .select('id, content')
+        .select('id, content, title_en')
         .eq('slug', article_slug)
         .maybeSingle();
 
       if (postData && postData.content) {
+        postTitleEn = postData.title_en || null;
         let content = postData.content;
         // Xóa thẻ script JSON cũ nếu có
         content = content.replace(/<script\s+type="application\/json"\s+id="veridu-article-geo-timeline"[^>]*>[\s\S]*?<\/script>/gi, '').trim();
@@ -382,16 +386,12 @@ export async function POST(request: Request) {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // 4. FLUSH ISR CACHE CHO BÀI VIẾT
+    // 4. FLUSH ISR CACHE CHO BÀI VIẾT (VI + EN)
     // ─────────────────────────────────────────────────────────────
-    try {
-      revalidatePath(`/${article_slug}`);
-      revalidatePath(`/thu-vien/${article_slug}`);
-      revalidatePath('/');
-      revalidatePath('/thu-vien');
-    } catch (cacheErr) {
-      console.warn('Lỗi khi revalidatePath:', cacheErr);
-    }
+    revalidatePostPaths({
+      slug: article_slug,
+      titleEn: postTitleEn,
+    });
 
     return NextResponse.json({
       success: true,
