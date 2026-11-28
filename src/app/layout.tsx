@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Lora, Cinzel, Playfair_Display } from "next/font/google";
+import { Open_Sans, Lora, Cinzel, Playfair_Display } from "next/font/google";
 import BackToTop from "@/components/BackToTop";
 import LiturgicalHeader from "@/components/LiturgicalHeader";
 import Footer from "@/components/Footer";
@@ -9,9 +9,11 @@ import { LanguageProvider } from "@/context/LanguageContext";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+const openSans = Open_Sans({
+  variable: "--font-open-sans",
   subsets: ["latin", "vietnamese"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
   display: "swap",
 });
 
@@ -60,6 +62,14 @@ export const metadata: Metadata = {
   publisher: "VERIDU Catholic Knowledge Platform",
   alternates: {
     canonical: SITE_URL,
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico?v=2", sizes: "any" },
+      { url: "/images/veridu-app-icon.png?v=2", type: "image/png", sizes: "256x256" },
+    ],
+    shortcut: "/favicon.ico?v=2",
+    apple: [{ url: "/apple-icon.png?v=2", sizes: "180x180", type: "image/png" }],
   },
   robots: {
     index: true,
@@ -138,7 +148,7 @@ export default function RootLayout({
     <html
       lang="vi"
       suppressHydrationWarning
-      className={`${inter.variable} ${lora.variable} ${cinzel.variable} ${playfair.variable} antialiased light`}
+      className={`${openSans.variable} ${lora.variable} ${cinzel.variable} ${playfair.variable} antialiased light`}
     >
       <head>
         {/* ── GOOGLE TAG (gtag.js) - STRICTLY IN HEAD FOR GOOGLE SEARCH CONSOLE VERIFICATION ── */}

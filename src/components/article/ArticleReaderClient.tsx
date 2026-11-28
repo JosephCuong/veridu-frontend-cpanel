@@ -12,9 +12,9 @@ import {
   Headphones, 
   Video, 
   Globe, 
-  Check, 
-  Sparkles 
+  Check
 } from 'lucide-react';
+import { VeriduCrossIcon } from '@/components/icons/VeriduIcons';
 import VisualArticleRenderer from '@/components/VisualArticleRenderer';
 import ArticleGeoTimelineWidget from '@/components/ArticleGeoTimelineWidget';
 import ShareButtons from '@/components/ShareButtons';
@@ -348,7 +348,7 @@ export default function ArticleReaderClient({
                       className="px-3.5 py-1.5 rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-600 dark:text-amber-400 text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-sm cursor-pointer hover:scale-105"
                       title="Read English Translation"
                     >
-                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      <VeriduCrossIcon className="w-3.5 h-3.5 text-amber-500" />
                       <span>🇬🇧 Read in English</span>
                     </button>
                   )}

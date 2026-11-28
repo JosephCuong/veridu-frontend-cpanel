@@ -10,13 +10,13 @@ import {
   Cloud,
   Layers,
   Calendar,
-  Sparkles,
   FileText,
   CheckCircle,
   Monitor,
   HelpCircle,
   Lock,
 } from 'lucide-react';
+import { VeriduStarIcon } from '@/components/icons/VeriduIcons';
 import { supabaseUrl, supabaseAnonKey } from '@/lib/supabaseClient';
 import AppShowcaseGallery from '@/components/AppShowcaseGallery';
 
@@ -110,7 +110,7 @@ export default async function DesktopAppDownloadPage() {
       desc: 'Hiển thị Bài Đọc I, Đáp Ca, Bài Đọc II, Tin Mừng và Lễ Trong/Lễ Kính hằng ngày hoàn toàn không cần kết nối mạng.',
     },
     {
-      icon: Sparkles,
+      icon: VeriduStarIcon,
       title: 'Khám Phá Câu & Thiệp Lời Chúa',
       desc: 'Tính năng Passage Guide liên kết chéo câu Kinh Thánh với số Giáo Lý, ghi chú cá nhân và xuất ảnh Thiệp Lời Chúa trang nhã.',
     },

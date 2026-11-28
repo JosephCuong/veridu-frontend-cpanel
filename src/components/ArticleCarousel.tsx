@@ -3,8 +3,9 @@
 import React, { useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronLeft, ChevronRight, Calendar, BookOpen, Layers } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, BookOpen } from 'lucide-react';
 import { Article } from '@/lib/api';
+import VeriduPlaceholder from '@/components/VeriduPlaceholder';
 
 interface ArticleCarouselProps {
   articles: Article[];
@@ -90,10 +91,11 @@ export default function ArticleCarousel({ articles }: ArticleCarouselProps) {
                     sizes="(max-width: 640px) 280px, 320px"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-amber-500/20 via-slate-900 to-indigo-900/40 flex flex-col items-center justify-center gap-2 p-4 text-center">
-                    <BookOpen className="w-10 h-10 text-amber-500/70" />
-                    <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">VERIDU Library</span>
-                  </div>
+                  <VeriduPlaceholder
+                    categoryHint={`${article.category || ''} ${titleText}`}
+                    alt={titleText}
+                    className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
+                  />
                 )}
 
                 {article.category && (

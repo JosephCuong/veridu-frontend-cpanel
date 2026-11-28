@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { fetchCourses } from '@/lib/api';
 import AdBanner from '@/components/AdBanner';
+import VeriduPlaceholder from '@/components/VeriduPlaceholder';
 import { 
   BookOpen, 
   Search, 
@@ -227,9 +228,11 @@ export default async function CoursesPage({
                             className="object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-500/10 to-slate-900">
-                            <BookOpen className="w-12 h-12 text-amber-500/40" />
-                          </div>
+                          <VeriduPlaceholder
+                            variant="course"
+                            alt={course.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
                         )}
 
                         {/* Category Badge */}

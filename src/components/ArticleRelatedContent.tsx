@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { RelatedItem } from '@/lib/api';
+import VeriduPlaceholder from '@/components/VeriduPlaceholder';
 import { 
   FileText, 
   MapPin, 
@@ -165,12 +166,11 @@ export default function ArticleRelatedContent({ items }: ArticleRelatedContentPr
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-amber-500/10 via-slate-900 to-indigo-950/40 flex flex-col items-center justify-center gap-1.5 p-4 text-center">
-                      <BookOpen className="w-8 h-8 text-amber-500/50" />
-                      <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
-                        {config.label}
-                      </span>
-                    </div>
+                    <VeriduPlaceholder
+                      categoryHint={`${item.typeLabel || ''} ${item.title}`}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                    />
                   )}
 
                   {/* Badge Overlay */}

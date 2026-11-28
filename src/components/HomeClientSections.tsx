@@ -10,6 +10,7 @@ import Hero3DSection from '@/components/Hero3DSection';
 import SocialFeed from '@/components/SocialFeed';
 import ArticleCarousel from '@/components/ArticleCarousel';
 import { useTranslation } from '@/context/LanguageContext';
+import VeriduPlaceholder from '@/components/VeriduPlaceholder';
 
 interface HomeClientSectionsProps {
   courses: any[];
@@ -114,9 +115,11 @@ export default function HomeClientSections({
                   {course.thumbnail ? (
                     <Image src={course.thumbnail} alt={course.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 768px) 100vw, 33vw" />
                   ) : (
-                    <div className="w-full h-full bg-slate-800 flex items-center justify-center">
-                      <BookOpen className="w-12 h-12 text-slate-600" />
-                    </div>
+                    <VeriduPlaceholder
+                      variant="course"
+                      alt={course.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
                   )}
                 </div>
                 <div className="p-6 space-y-3">

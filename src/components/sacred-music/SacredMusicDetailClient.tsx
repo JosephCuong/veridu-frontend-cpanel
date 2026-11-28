@@ -30,6 +30,8 @@ import {
 } from '@/lib/sacredMusic';
 import { getStoredUser, UserProfile } from '@/lib/auth';
 import AuthModal from '@/components/AuthModal';
+import { VeriduCrossIcon, VeriduLyreIcon } from '@/components/icons/VeriduIcons';
+import VeriduPlaceholder from '@/components/VeriduPlaceholder';
 
 interface RelatedPostSummary {
   slug: string;
@@ -438,7 +440,7 @@ export default function SacredMusicDetailClient({
             {item.description && (
               <div className="rounded-2xl p-5 sm:p-6 bg-[var(--bg-card)] border border-[var(--border-card)] space-y-2">
                 <h2 className="font-serif text-lg font-bold text-[var(--text-main)] flex items-center gap-2">
-                  <Cross className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <VeriduCrossIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                   <span>Giới Thiệu &amp; Ghi Chú Phụng Vụ</span>
                 </h2>
                 <p className="text-sm sm:text-base text-[var(--text-muted)] leading-relaxed whitespace-pre-line">
@@ -486,7 +488,7 @@ export default function SacredMusicDetailClient({
             {/* Liturgical Metadata Box */}
             <div className="rounded-2xl p-5 bg-[var(--bg-card)] border border-[var(--border-card)] space-y-4">
               <h3 className="font-serif text-base font-bold text-[var(--text-main)] flex items-center gap-2">
-                <Music className="w-4 h-4 text-amber-500" />
+                <VeriduLyreIcon className="w-4 h-4 text-amber-500" />
                 <span>Thông Tin Tác Phẩm</span>
               </h3>
               <dl className="divide-y divide-[var(--border-card)] text-xs sm:text-sm">
@@ -609,7 +611,7 @@ export default function SacredMusicDetailClient({
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <Music className="w-4 h-4 text-amber-400" />
+                          <VeriduPlaceholder variant="music" alt={rel.title} className="w-full h-full object-cover" />
                         )}
                       </div>
                       <div className="min-w-0 flex-1">

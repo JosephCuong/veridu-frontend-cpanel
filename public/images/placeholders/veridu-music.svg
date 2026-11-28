@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#171224"/>
+      <stop offset="55%" stop-color="#211834"/>
+      <stop offset="100%" stop-color="#110D1B"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="46%" r="48%">
+      <stop offset="0%" stop-color="#D4A048" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#D4A048" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg)"/>
+  <rect width="800" height="500" fill="url(#glow)"/>
+  <rect x="28" y="28" width="744" height="444" rx="14" fill="none" stroke="#D4A048" stroke-opacity="0.28" stroke-width="1"/>
+  <!-- Minimalist 5-Line Musical Staff -->
+  <g stroke="#D4A048" stroke-opacity="0.16" stroke-width="1">
+    <line x1="76" y1="186" x2="724" y2="186"/>
+    <line x1="76" y1="204" x2="724" y2="204"/>
+    <line x1="76" y1="222" x2="724" y2="222"/>
+    <line x1="76" y1="240" x2="724" y2="240"/>
+    <line x1="76" y1="258" x2="724" y2="258"/>
+  </g>
+  <!-- Sacred Lyre & Cross -->
+  <g transform="translate(400,220)" fill="none" stroke="#E0B15A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="0" cy="0" r="76" fill="#171224" fill-opacity="0.82" stroke-opacity="0.32" stroke-width="1.2"/>
+    <path d="M-36 -40h72"/>
+    <path d="M-30 -40C-44 -10-36 28-16 42"/>
+    <path d="M30 -40C44 -10 36 28 16 42"/>
+    <path d="M-12 -40v80M0 -40v80M12 -40v80" stroke-opacity="0.6" stroke-width="1.5"/>
+    <path d="M-22 42h44l-6 18h-32l-6-18Z"/>
+  </g>
+  <text x="400" y="422" text-anchor="middle" fill="#E0B15A" fill-opacity="0.9" font-family="Georgia, 'Times New Roman', serif" font-size="18" letter-spacing="10">VERIDU</text>
+  <text x="400" y="446" text-anchor="middle" fill="#D4A048" fill-opacity="0.58" font-family="Arial, sans-serif" font-size="10" letter-spacing="4">THÁNH NHẠC · ĐÁP CA PHỤNG VỤ</text>
+</svg>

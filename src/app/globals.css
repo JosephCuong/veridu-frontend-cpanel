@@ -56,7 +56,8 @@ html.dark {
 @theme inline {
   --color-background: var(--bg-main);
   --color-foreground: var(--text-main);
-  --font-sans: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: var(--font-open-sans), "Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: var(--font-open-sans), "Open Sans", system-ui, -apple-system, sans-serif;
   --font-serif: var(--font-lora), ui-serif, Georgia, serif;
   --font-cinzel: var(--font-cinzel), var(--font-lora), ui-serif, Georgia, serif;
   --font-playfair: var(--font-playfair), "Playfair Display", var(--font-lora), ui-serif, Georgia, serif;
@@ -65,7 +66,7 @@ html.dark {
 body {
   background-color: var(--bg-main);
   color: var(--text-main);
-  font-family: var(--font-sans);
+  font-family: var(--font-open-sans), "Open Sans", system-ui, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -112,9 +113,33 @@ html.dark .prose-veridu-sanitized a[href*="#fn"] {
 .prose-veridu-sanitized span,
 .prose-veridu-sanitized li {
   color: var(--text-main) !important;
-  font-family: var(--font-lora), Georgia, serif !important;
-  font-size: 1.125rem !important;
-  line-height: 1.8 !important;
+  font-family: var(--font-open-sans), "Open Sans", system-ui, sans-serif !important;
+  font-size: 1.0625rem !important;
+  line-height: 1.82 !important;
+}
+
+/* Preserve specialized Biblical Hebrew & Ancient Greek typography inside article body */
+.prose-veridu-sanitized [lang="he"],
+.prose-veridu-sanitized .hebrew,
+.prose-veridu-sanitized .hebrew-text,
+.prose-veridu-sanitized .biblical-hebrew,
+.article-content [lang="he"],
+.article-content .hebrew,
+.article-content .hebrew-text {
+  font-family: 'SBL Hebrew', 'Ezra SIL', 'Times New Roman', serif !important;
+  direction: rtl;
+  unicode-bidi: isolate;
+}
+
+.prose-veridu-sanitized [lang="el"],
+.prose-veridu-sanitized [lang="grc"],
+.prose-veridu-sanitized .greek,
+.prose-veridu-sanitized .greek-text,
+.article-content [lang="el"],
+.article-content [lang="grc"],
+.article-content .greek,
+.article-content .greek-text {
+  font-family: 'Gentium Plus', var(--font-lora), 'Times New Roman', serif !important;
 }
 
 .prose-veridu-sanitized h1,
@@ -123,7 +148,7 @@ html.dark .prose-veridu-sanitized a[href*="#fn"] {
 .prose-veridu-sanitized h4,
 .prose-veridu-sanitized h5,
 .prose-veridu-sanitized h6 {
-  font-family: var(--font-lora), Georgia, serif !important;
+  font-family: var(--font-playfair), var(--font-lora), Georgia, serif !important;
   color: var(--accent-gold-text) !important;
   border-bottom-color: rgba(245, 158, 11, 0.3) !important;
   margin-top: 2rem !important;
@@ -226,12 +251,12 @@ html.dark .dark-mode-bg-override {
 
 .canon-card-title, .canon-title-sm {
   color: var(--accent-gold-text) !important;
-  font-family: var(--font-lora), Georgia, serif !important;
+  font-family: var(--font-playfair), var(--font-lora), Georgia, serif !important;
 }
 
 .canon-latin-text, .canon-viet-text, .canon-text {
   color: var(--text-main) !important;
-  font-family: var(--font-lora), Georgia, serif !important;
+  font-family: var(--font-open-sans), "Open Sans", system-ui, sans-serif !important;
 }
 
 /* MERMAID DIAGRAM THEME ENGINE */
@@ -1331,8 +1356,8 @@ article.veridu-scholarly-article,
   max-width: 840px;
   margin-left: auto;
   margin-right: auto;
-  font-family: var(--font-serif);
-  line-height: 1.8;
+  font-family: var(--font-open-sans), "Open Sans", system-ui, sans-serif;
+  line-height: 1.82;
 }
 
 /* ─── 2. MOUNTING PLACEHOLDERS (D3 TIMELINE & LEAFLET MAP) ──────────────── */

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0F1722"/>
+      <stop offset="55%" stop-color="#162233"/>
+      <stop offset="100%" stop-color="#0C121B"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="44%" r="48%">
+      <stop offset="0%" stop-color="#C89238" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#C89238" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg)"/>
+  <rect width="800" height="500" fill="url(#glow)"/>
+  <rect x="28" y="28" width="744" height="444" rx="14" fill="none" stroke="#C89238" stroke-opacity="0.28" stroke-width="1"/>
+  <line x1="400" y1="62" x2="400" y2="118" stroke="#C89238" stroke-opacity="0.55" stroke-width="1.2"/>
+  <line x1="400" y1="318" x2="400" y2="378" stroke="#C89238" stroke-opacity="0.55" stroke-width="1.2"/>
+  <!-- VERIDU Sacred Flame + Key + V-Book Emblem -->
+  <g transform="translate(400,218)" fill="none" stroke="#D8A74E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="0" cy="0" r="78" stroke-opacity="0.26" stroke-width="1.2"/>
+    <path d="M0 -64C-12 -40-40 -22-40 16c0 25 18 45 40 52 22-7 40-27 40-52 0-18-8-33-16-44-3 9-8 14-14 16 5-15 2-33-10-52Z"/>
+    <circle cx="0" cy="-2" r="9.5"/>
+    <path d="M0 8v28M0 24h9"/>
+    <path d="M-18 32L0 52L18 32"/>
+  </g>
+  <text x="400" y="422" text-anchor="middle" fill="#D8A74E" fill-opacity="0.9" font-family="Georgia, 'Times New Roman', serif" font-size="18" letter-spacing="10">VERIDU</text>
+  <text x="400" y="446" text-anchor="middle" fill="#C89238" fill-opacity="0.58" font-family="Arial, sans-serif" font-size="10" letter-spacing="4">KHÓA HỌC · ĐÀO TẠO ĐỨC TIN</text>
+</svg>

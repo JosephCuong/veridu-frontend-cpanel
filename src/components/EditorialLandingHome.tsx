@@ -4,45 +4,60 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
-  BookOpen, GraduationCap, Shield, Library, Cross, Quote, ArrowRight, 
-  ChevronRight, Play, Award, Church, User, CheckCircle2, Settings, ExternalLink
+  ArrowRight, Play, CheckCircle2
 } from 'lucide-react';
+import {
+  VeriduChaliceIcon,
+  VeriduChiRhoIcon,
+  VeriduCrossIcon,
+  VeriduEmblemIcon,
+  VeriduKeysIcon,
+  VeriduScriptureIcon,
+  VeriduScrollIcon,
+} from '@/components/icons/VeriduIcons';
 import { useTranslation } from '@/context/LanguageContext';
 import { LANDING_MEDIA_CONFIG, PillarCardConfig, TrainingTrackConfig } from '@/config/landingMediaConfig';
 import { getGoogleDriveImageUrl } from '@/lib/driveHelper';
 import ArticleCarousel from '@/components/ArticleCarousel';
+import AdventSeasonSection from '@/components/AdventSeasonSection';
+import {
+  ACTIVE_LITURGICAL_SEASON,
+  AdventShowcaseItem,
+} from '@/config/liturgicalSeasonConfig';
 
 interface EditorialLandingHomeProps {
   courses: any[];
   homepageData: any;
   embedUrl: string | null;
+  adventItems?: AdventShowcaseItem[];
 }
 
 export default function EditorialLandingHome({
   courses,
   homepageData,
+  adventItems = [],
 }: EditorialLandingHomeProps) {
   const { t, locale, isEn } = useTranslation();
   const [config, setConfig] = useState(LANDING_MEDIA_CONFIG);
 
   const renderPillarIcon = (name: string, className: string) => {
     switch (name) {
-      case 'book': return <BookOpen className={className} />;
-      case 'graduation': return <GraduationCap className={className} />;
-      case 'shield': return <Shield className={className} />;
-      case 'library': return <Library className={className} />;
-      default: return <BookOpen className={className} />;
+      case 'book': return <VeriduScriptureIcon className={className} />;
+      case 'graduation': return <VeriduChaliceIcon className={className} />;
+      case 'shield': return <VeriduKeysIcon className={className} />;
+      case 'library': return <VeriduScrollIcon className={className} />;
+      default: return <VeriduScriptureIcon className={className} />;
     }
   };
 
   const renderBadgeIcon = (name: string, className: string) => {
     switch (name) {
-      case 'cross': return <Cross className={className} />;
-      case 'book': return <BookOpen className={className} />;
-      case 'award': return <Award className={className} />;
-      case 'church': return <Church className={className} />;
-      case 'user': return <User className={className} />;
-      default: return <Church className={className} />;
+      case 'cross': return <VeriduCrossIcon className={className} />;
+      case 'book': return <VeriduScriptureIcon className={className} />;
+      case 'award': return <VeriduChiRhoIcon className={className} />;
+      case 'church': return <VeriduChaliceIcon className={className} />;
+      case 'user': return <VeriduEmblemIcon className={className} />;
+      default: return <VeriduCrossIcon className={className} />;
     }
   };
 
@@ -151,6 +166,15 @@ export default function EditorialLandingHome({
         </div>
 
       </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════════
+          1.5. SECTION MÙA VỌNG (MINIMALIST ADVENT JOURNEY & CURATED SLIDER)
+         ══════════════════════════════════════════════════════════════════════════ */}
+      {ACTIVE_LITURGICAL_SEASON === 'advent' && (
+        <div className="-mt-16 sm:-mt-20 lg:-mt-24">
+          <AdventSeasonSection items={adventItems} />
+        </div>
+      )}
 
       {/* ══════════════════════════════════════════════════════════════════════════
           2. SECTION 2: 4-COLUMN CINEMATIC FEATURE STRIP (THE DARK HORIZONTAL BAND)

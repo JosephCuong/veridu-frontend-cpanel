@@ -20,6 +20,7 @@ import {
   Video
 } from 'lucide-react';
 import { formatImageUrl } from '@/lib/htmlProcessor';
+import VeriduPlaceholder from '@/components/VeriduPlaceholder';
 import { useTranslation } from '@/context/LanguageContext';
 
 interface LibraryClientProps {
@@ -216,9 +217,11 @@ export default function LibraryClient({ initialArticles }: LibraryClientProps) {
                               unoptimized={imgSrc.includes('googleusercontent.com') || imgSrc.includes('drive.google.com')}
                             />
                           ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950 text-slate-700">
-                              <BookOpen className="w-12 h-12 stroke-[1.2]" />
-                            </div>
+                            <VeriduPlaceholder
+                              categoryHint={`${article.category || ''} ${titleText}`}
+                              alt={titleText.replace(/<[^>]+>/g, '')}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                            />
                           )}
 
                           {/* Gradient Dark Overlay */}

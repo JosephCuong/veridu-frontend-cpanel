@@ -26,6 +26,8 @@ import {
   SacredMusicItem,
 } from '@/lib/sacredMusic';
 import { getStoredUser, UserProfile } from '@/lib/auth';
+import { VeriduCrossIcon, VeriduLyreIcon } from '@/components/icons/VeriduIcons';
+import VeriduPlaceholder from '@/components/VeriduPlaceholder';
 
 interface SacredMusicCatalogClientProps {
   initialItems: SacredMusicItem[];
@@ -111,7 +113,7 @@ export default function SacredMusicCatalogClient({
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
             <div className="max-w-3xl space-y-5">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-[0.18em] uppercase bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-                <Cross className="w-3.5 h-3.5" />
+                <VeriduCrossIcon className="w-3.5 h-3.5" />
                 <span>Không Gian Thánh Nhạc &amp; Phụng Vụ</span>
               </div>
 
@@ -128,7 +130,7 @@ export default function SacredMusicCatalogClient({
               {/* Quick Stats */}
               <div className="flex flex-wrap items-center gap-3 pt-1 text-xs font-medium text-[var(--text-muted)]">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--bg-card)] border border-[var(--border-card)]">
-                  <Music className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                  <VeriduLyreIcon className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                   <strong className="text-[var(--text-main)]">{items.length}</strong> tác phẩm
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--bg-card)] border border-[var(--border-card)]">
@@ -346,14 +348,11 @@ export default function SacredMusicCatalogClient({
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-amber-900/40 via-stone-900/90 to-amber-950/90">
-                        <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center mb-3">
-                          <Music className="w-6 h-6 text-amber-300" />
-                        </div>
-                        <span className="font-serif text-sm font-semibold text-amber-100/90 line-clamp-2">
-                          {item.title}
-                        </span>
-                      </div>
+                      <VeriduPlaceholder
+                        variant="music"
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
                     )}
 
                     {/* Gradient overlay */}

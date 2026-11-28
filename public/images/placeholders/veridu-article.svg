@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#111528"/>
+      <stop offset="55%" stop-color="#171C36"/>
+      <stop offset="100%" stop-color="#0E1120"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="44%" r="48%">
+      <stop offset="0%" stop-color="#C89238" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#C89238" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg)"/>
+  <rect width="800" height="500" fill="url(#glow)"/>
+  <!-- Architectural Hairline Frame & Cathedral Arch -->
+  <rect x="28" y="28" width="744" height="444" rx="14" fill="none" stroke="#C89238" stroke-opacity="0.28" stroke-width="1"/>
+  <path d="M295 415V220c0-68 47-122 105-122s105 54 105 122v195" fill="none" stroke="#C89238" stroke-opacity="0.22" stroke-width="1.2"/>
+  <line x1="400" y1="62" x2="400" y2="132" stroke="#C89238" stroke-opacity="0.55" stroke-width="1.2"/>
+  <line x1="400" y1="306" x2="400" y2="376" stroke="#C89238" stroke-opacity="0.55" stroke-width="1.2"/>
+  <!-- Chi-Rho Sacred Monogram -->
+  <g transform="translate(400,220)" fill="none" stroke="#D8A74E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="0" cy="0" r="64" stroke-opacity="0.35" stroke-width="1.2"/>
+    <path d="M0 -42V44"/>
+    <path d="M0 -40H15a16 16 0 0 1 0 32H0"/>
+    <path d="M-28 -10L28 36"/>
+    <path d="M28 -10L-28 36"/>
+  </g>
+  <!-- VERIDU Wordmark -->
+  <text x="400" y="422" text-anchor="middle" fill="#D8A74E" fill-opacity="0.88" font-family="Georgia, 'Times New Roman', serif" font-size="18" letter-spacing="10">VERIDU</text>
+  <text x="400" y="446" text-anchor="middle" fill="#C89238" fill-opacity="0.58" font-family="Arial, sans-serif" font-size="10" letter-spacing="4">THẦN HỌC · SUY NIỆM · KHẢO LUẬN</text>
+</svg>
